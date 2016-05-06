@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="gz" />
+		<Option makefile="$(MAKEFILE)" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="n64-slim" />
+		<Option extended_obj_names="1" />
+		<MakeCommands>
+			<Build command="" />
+			<CompileFile command="" />
+			<Clean command="" />
+			<DistClean command="" />
+			<AskRebuildNeeded command="" />
+			<SilentBuild command=" &gt; $(CMD_NULL)" />
+		</MakeCommands>
+		<Build>
+			<Target title="all">
+				<Option output="bin/$(PROJECT_NAME).elf" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(EMUDIR)" />
+				<Option object_output="obj" />
+				<Option type="3" />
+				<Option compiler="n64-slim" />
+				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option run_host_application_in_terminal="0" />
+				<Compiler>
+					<Add option="-O3" />
+				</Compiler>
+				<Environment>
+					<Variable name="address" value="80600000" />
+					<Variable name="cflags" value="-std=c11" />
+					<Variable name="cxxflags" value="-std=c++14" />
+					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-test.State&quot;' />
+					<Variable name="emurom" value="..\n64\roms\Zelda no Densetsu - Toki no Ocarina v1.0 (Japan).z64" />
+					<Variable name="flags" value="-Wall -O3 -DZ64_VERSION=Z64_OOT10" />
+					<Variable name="inc" value="" />
+					<Variable name="ldflags" value="-O3" />
+					<Variable name="lib" value="" />
+					<Variable name="libdir" value="" />
+				</Environment>
+				<MakeCommands>
+					<Build command="$make -f $makefile $target $ENV" />
+					<CompileFile command="$make -f $makefile $file $ENV" />
+					<Clean command="$make -f $makefile clean$target $ENV" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target $ENV" />
+					<SilentBuild command="$make -f $makefile $target $ENV &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="console.c">
+			<Option compilerVar="CPP" />
+		</Unit>
+		<Unit filename="console.h" />
+		<Unit filename="gz.cpp" />
+		<Unit filename="gz.h" />
+		<Unit filename="menu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu.h" />
+		<Unit filename="menu_address.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_datatype.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_watch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_watchlist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sys.h" />
+		<Unit filename="text_hook.gsc" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
