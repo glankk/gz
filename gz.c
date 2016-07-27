@@ -190,10 +190,16 @@ static void advance_proc(struct menu_item *item, void *data)
 ENTRY void _start(void* text_ptr)
 {
   init_gp();
-  g_text_ptr = text_ptr;
   if (!ready) {
     ready = 1;
     do_global_ctors();
+
+  /* disable map toggling */
+  (*(uint32_t*)0x8006CD50) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
+  (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+
+  g_text_ptr = text_ptr;
+
 #if 0
     console_init(36, 288);
     console_set_view(2, 8, 36, 18);
@@ -264,9 +270,6 @@ ENTRY void _start(void* text_ptr)
                                     "adult\0""child\0", 0);
     menu_add_button(&g_menu_warps, 2, 9, "warp", warp_proc, &warp_info, 0);
   }
-
-  /* disable map toggling */
-  (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
 #if 1
   static uint16_t pad_prev = 0;
