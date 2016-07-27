@@ -23,8 +23,7 @@ static int tp_slot = 0;
 
 static z64_controller_t *input_ptr = (z64_controller_t*)0x8011D730;
 
-static int input_frames = -1;
-static int update_frames = -1;
+static int frames_queued = -1;
 
 
 enum equipment_entry
@@ -147,18 +146,15 @@ static void warp_proc(struct menu_item *item, void *data)
 
 static void input_hook()
 {
-  if (input_frames != 0) {
-    if (input_frames > 0)
-      --input_frames;
+  if (frames_queued != 0)
     ((void(*)())0x800A0BA0)();
-  }
 }
 
 static void update_hook()
 {
-  if (update_frames != 0) {
-    if (update_frames > 0)
-      --update_frames;
+  if (frames_queued != 0) {
+    if (frames_queued > 0)
+      --frames_queued;
     ((void(*)())0x8009AF1C)();
   }
 }
@@ -169,22 +165,18 @@ static void pause_proc(struct menu_item *item, void *data)
   *input_call = MIPS_JAL(&input_hook);
   uint32_t *update_call = (uint32_t*)0x8009CAE8;
   *update_call = MIPS_JAL(&update_hook);
-  if (input_frames >= 0)
-    input_frames = -1;
+  if (frames_queued >= 0)
+    frames_queued = -1;
   else
-    input_frames = 0;
-  if (update_frames >= 0)
-    update_frames = -1;
-  else
-    update_frames = 0;
+    frames_queued = 0;
 }
 
 static void advance_proc(struct menu_item *item, void *data)
 {
-  if (input_frames >= 0)
-    ++input_frames;
-  if (update_frames >= 0)
-    ++update_frames;
+  if (frames_queued >= 0)
+    ++frames_queued;
+  else
+    pause_proc(item, data);
 }
 
 ENTRY void _start(void* text_ptr)
@@ -276,6 +268,13 @@ ENTRY void _start(void* text_ptr)
   uint16_t pad_pressed = (pad_prev ^ input_ptr->pad) &
                          input_ptr->pad;
   pad_prev = input_ptr->pad;
+  static int button_time[16] = {0};
+  for (int i = 0; i < 16; ++i) {
+    int button_state = (input_ptr->pad >> i) & 0x0001;
+    button_time[i] = (button_time[i] + button_state) * button_state;
+    if (button_time[i] >= 8)
+      pad_pressed |= 1 << i;
+  }
 
   /* infinite energy */
   if (g_cheats_energy)
@@ -298,7 +297,7 @@ ENTRY void _start(void* text_ptr)
     (*(uint8_t*) 0x8011A664) = 0x09;
   }
   /* activated */
-  if (input_frames == -1 && input_ptr->pad & BUTTON_Z) {
+  if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
     /* reload zone with d-pad down */
     if (input_ptr->pad & BUTTON_D_DOWN)
       (*(uint16_t*)0x801DA2B4) = 0x0014;
