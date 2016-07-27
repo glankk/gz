@@ -83,10 +83,10 @@ static int plus_activate_proc(struct menu *menu, struct menu_item *item)
     struct member *last_member = vector_at(&data->members,
                                            data->members.size - 1);
     struct menu_item *last_watch = last_member->watch;
-    uint32_t address = menu_address_get(menu_watch_address(last_watch));
-    enum data_type type = menu_datatype_get(menu_watch_type(last_watch));
-    menu_address_set(menu_watch_address(watch), address);
-    menu_datatype_set(menu_watch_type(watch), type);
+    uint32_t address = menu_intinput_get(menu_watch_address(last_watch));
+    enum data_type type = menu_option_get(menu_watch_type(last_watch));
+    menu_intinput_set(menu_watch_address(watch), address);
+    menu_option_set(menu_watch_type(watch), type);
   }
   struct member member = {minus, watch};
   vector_push_back(&data->members, 1, &member);

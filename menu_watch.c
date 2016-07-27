@@ -11,12 +11,25 @@ struct item_data
   struct menu_item *type;
 };
 
+static const char *datatype_options =
+  "u8\0"
+  "s8\0"
+  "x8\0"
+  "u16\0"
+  "s16\0"
+  "x16\0"
+  "u32\0"
+  "s32\0"
+  "x32\0"
+  "f32\0"
+;
+
 
 static int think_proc(struct menu *menu, struct menu_item *item)
 {
   struct item_data *data = item->data;
-  uint32_t address = menu_address_get(data->address);
-  enum data_type type = menu_datatype_get(data->type);
+  uint32_t address = menu_intinput_get(data->address);
+  enum data_type type = menu_option_get(data->type);
   if (address == 0)
     return 1;
   switch (type) {
@@ -69,8 +82,8 @@ static int remove_proc(struct menu *menu, struct menu_item *item)
 struct menu_item *menu_add_watch(struct menu *menu, int x, int y, int priority)
 {
   struct item_data *data = malloc(sizeof(struct item_data));
-  data->address = menu_add_address(menu, x, y, priority);
-  data->type = menu_add_datatype(menu, x + 9, y, priority);
+  data->address = menu_add_intinput(menu, x, y, 16, 8, priority);
+  data->type = menu_add_option(menu, x + 9, y, datatype_options, priority);
   struct menu_item *item = menu_add_item(menu, NULL);
   menu_item_init(item, x + 13, y, NULL, 0xA0A0A0);
   item->text = malloc(17);

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
 #include <list/list.h>
 #include <z64.h>
 #include "gz.h"
@@ -11,9 +12,14 @@ void menu_init(struct menu *menu)
 {
   list_init(&menu->items, sizeof(struct menu_item));
   menu->selector = NULL;
+  menu->parent = NULL;
+  menu->child = NULL;
   menu->animate_highlight = 0;
   menu->highlight_color_animated = 0x000000;
   menu->highlight_color_static = 0x5050FF;
+  menu->highlight_state[0] = 17;
+  menu->highlight_state[1] = 19;
+  menu->highlight_state[2] = 23;
 }
 
 struct menu_item *menu_add_item(struct menu *menu, struct menu_item *item)
@@ -23,15 +29,16 @@ struct menu_item *menu_add_item(struct menu *menu, struct menu_item *item)
 
 void menu_draw(struct menu *menu)
 {
+  if (menu->child)
+    return menu_draw(menu->child);
   for (int i = 0; i < 3; ++i) {
-    static int n[] = {17, 19, 23};
     int shift = i * 8;
     uint32_t mask = 0xFF << shift;
     int v = (menu->highlight_color_animated & mask) >> shift;
-    v += n[i];
+    v += menu->highlight_state[i];
     if (v < 0x00 || v > 0xFF) {
       v = -v + (v > 0xFF ? 2 * 0xFF : 0);
-      n[i] = -n[i];
+      menu->highlight_state[i] = -menu->highlight_state[i];
     }
     menu->highlight_color_animated &= ~mask;
     menu->highlight_color_animated |= (uint32_t)v << shift;
@@ -59,6 +66,8 @@ void menu_draw(struct menu *menu)
 
 void menu_navigate(struct menu *menu, enum menu_navigation nav)
 {
+  if (menu->child)
+    return menu_navigate(menu->child, nav);
   if (!menu->selector) {
     for (struct menu_item *item = menu->items.first;
          item; item = list_next(item))
@@ -123,8 +132,30 @@ void menu_navigate(struct menu *menu, enum menu_navigation nav)
 
 void menu_activate(struct menu *menu)
 {
+  if (menu->child)
+    return menu_activate(menu->child);
   if (menu->selector && menu->selector->activate_proc)
     menu->selector->activate_proc(menu, menu->selector);
+}
+
+void menu_enter(struct menu *menu, struct menu *submenu)
+{
+  if (menu->child)
+    return menu_enter(menu->child, submenu);
+  menu->child = submenu;
+  submenu->parent = menu;
+}
+
+struct menu *menu_return(struct menu *menu)
+{
+  if (menu->child)
+    return menu_return(menu->child);
+  struct menu *parent = menu->parent;
+  if (!parent)
+    return NULL;
+  menu->parent = NULL;
+  parent->child = NULL;
+  return parent;
 }
 
 void menu_item_init(struct menu_item *item, int x, int y,
@@ -167,4 +198,13 @@ void menu_item_remove(struct menu *menu, struct menu_item *item)
   }
   if (menu->selector == item)
     menu->selector = NULL;
+}
+
+struct menu_item *menu_add_static(struct menu *menu, int x, int y,
+                                  const char *text, uint32_t color)
+{
+  struct menu_item *item = menu_add_item(menu, NULL);
+  menu_item_init(item, x, y, text, color);
+  item->priority = INT_MIN;
+  return item;
 }

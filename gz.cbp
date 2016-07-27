@@ -54,16 +54,27 @@
 			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="console.h" />
-		<Unit filename="gz.cpp" />
+		<Unit filename="gz.c">
+			<Option compilerVar="CPP" />
+		</Unit>
 		<Unit filename="gz.h" />
 		<Unit filename="menu.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="menu.h" />
-		<Unit filename="menu_address.c">
+		<Unit filename="menu_button.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="menu_datatype.c">
+		<Unit filename="menu_intinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_option.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_submenu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="menu_switch.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="menu_watch.c">
