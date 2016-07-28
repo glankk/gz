@@ -103,7 +103,7 @@ static int child_think_proc(struct menu *menu, struct menu_item *item)
   return !data->active;
 }
 
-static int child_navigate_proc(struct menu* menu, struct menu_item *item,
+static int child_navigate_proc(struct menu *menu, struct menu_item *item,
                                enum menu_navigation nav)
 {
   struct item_data *data = item->data;

@@ -5,8 +5,8 @@
 #include "console.h"
 #include "menu.h"
 
-void* g_text_ptr;
-static int ready = 0;
+void *g_text_ptr;
+static int g_ready = 0;
 static struct menu g_menu_main;
 static struct menu g_menu_watches;
 static struct menu g_menu_equipment;
@@ -179,11 +179,11 @@ static void advance_proc(struct menu_item *item, void *data)
     pause_proc(item, data);
 }
 
-ENTRY void _start(void* text_ptr)
+ENTRY void _start(void *text_ptr)
 {
   init_gp();
-  if (!ready) {
-    ready = 1;
+  if (!g_ready) {
+    g_ready = 1;
     do_global_ctors();
 
   /* disable map toggling */

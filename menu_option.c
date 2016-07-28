@@ -11,7 +11,7 @@ struct item_data
 };
 
 
-static int navigate_proc(struct menu* menu, struct menu_item *item,
+static int navigate_proc(struct menu *menu, struct menu_item *item,
                          enum menu_navigation nav)
 {
   struct item_data *data = item->data;
