@@ -45,7 +45,7 @@ enum equipment_entry
   EQUIPMENT_MAX,
 };
 
-struct equipment_info
+static struct equipment_info
 {
   const char *name;
   uint8_t    *address;
@@ -336,6 +336,45 @@ ENTRY void _start(void *text_ptr)
       menu_activate(&g_menu_main);
   }
   menu_draw(&g_menu_main);
+#endif
+
+#if 1
+  SetTextRGBA(g_text_ptr, 0xC8, 0xC8, 0xC8, 0xFF);
+  SetTextXY(g_text_ptr, 2, 28);
+  SetTextString(g_text_ptr, "%4i %4i", input_ptr->x, input_ptr->y);
+  static struct
+  {
+    uint16_t    mask;
+    const char *name;
+    uint32_t    color;
+  }
+  buttons[] =
+  {
+    {0x8000, "A", 0x0000FF},
+    {0x4000, "B", 0x00FF00},
+    {0x1000, "S", 0xFF0000},
+    {0x0020, "L", 0xC8C8C8},
+    {0x0010, "R", 0xC8C8C8},
+    {0x2000, "Z", 0xC8C8C8},
+    {0x0008, "u", 0xFFFF00},
+    {0x0004, "d", 0xFFFF00},
+    {0x0002, "l", 0xFFFF00},
+    {0x0001, "r", 0xFFFF00},
+    {0x0800, "u", 0xC8C8C8},
+    {0x0400, "d", 0xC8C8C8},
+    {0x0200, "l", 0xC8C8C8},
+    {0x0100, "r", 0xC8C8C8},
+  };
+  for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
+    if (!(input_ptr->pad & buttons[i].mask))
+      continue;
+    SetTextRGBA(g_text_ptr, (buttons[i].color >> 16) & 0xFF,
+                            (buttons[i].color >> 8)  & 0xFF,
+                            (buttons[i].color >> 0)  & 0xFF,
+                            0xFF);
+    SetTextXY(g_text_ptr, 12 + i, 28);
+    SetTextString(g_text_ptr, "%s", buttons[i].name);
+  }
 #endif
 
 #if 0
