@@ -317,9 +317,10 @@ ENTRY void _start(void *text_ptr)
       stored_rot[tp_slot] = z64_link_rot;
     }
     if (input_ptr->pad & BUTTON_D_RIGHT) {
-      (*(z64_xyz_t*)0x801DAA38) = stored_pos[tp_slot]; /* secondary position */
       z64_link_pos = stored_pos[tp_slot];
+      (*(z64_xyz_t*)0x801DAA38) = stored_pos[tp_slot]; /* actor position */
       z64_link_rot = stored_rot[tp_slot];
+      (*(uint16_t*)0x801DB25E) = stored_rot[tp_slot].y; /* locked rotation */
       /* (*(uint8_t*)0x801DAADE) = 0xFF; prevents collision with actors */
     }
   }
