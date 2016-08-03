@@ -1,3 +1,4 @@
+#include <string.h>
 #include <startup.h>
 #include <n64.h>
 #include <z64.h>
@@ -5,11 +6,28 @@
 #include "console.h"
 #include "menu.h"
 
+struct switch_info
+{
+  const char *name;
+  uint8_t    *address;
+  uint8_t     mask;
+};
+
+struct warp_info
+{
+  struct menu_item *entrance;
+  struct menu_item *age;
+};
+
+
 void *g_text_ptr;
 static int g_ready = 0;
+
+static int g_menu_active = 1;
 static struct menu g_menu_main;
 static struct menu g_menu_watches;
 static struct menu g_menu_equipment;
+static struct menu g_menu_items;
 static struct menu g_menu_misc;
 static struct menu g_menu_cheats;
 static struct menu g_menu_warps;
@@ -25,33 +43,7 @@ static z64_controller_t *input_ptr = (z64_controller_t*)0x8011D730;
 
 static int frames_queued = -1;
 
-
-enum equipment_entry
-{
-  EQUIPMENT_SWORD_KOKIRI,
-  EQUIPMENT_SWORD_MASTER,
-  EQUIPMENT_SWORD_GIANT,
-  EQUIPMENT_SHIELD_DEKU,
-  EQUIPMENT_SHIELD_HYLIAN,
-  EQUIPMENT_SHIELD_MIRROR,
-  EQUIPMENT_TUNIC_KOKIRI,
-  EQUIPMENT_TUNIC_GORON,
-  EQUIPMENT_TUNIC_ZORA,
-  EQUIPMENT_BOOTS_KOKIRI,
-  EQUIPMENT_BOOTS_IRON,
-  EQUIPMENT_BOOTS_HOVER,
-  EQUIPMENT_SWORD_BROKEN,
-  EQUIPMENT_SWORD_BIGGORON,
-  EQUIPMENT_MAX,
-};
-
-static struct equipment_info
-{
-  const char *name;
-  uint8_t    *address;
-  uint8_t     mask;
-}
-equipment_list[] =
+static struct switch_info equipment_list[] =
 {
   {"kokiri sword",          (uint8_t*)0x8011A66D, 0b00000001},
   {"master sword",          (uint8_t*)0x8011A66D, 0b00000010},
@@ -69,10 +61,28 @@ equipment_list[] =
   {"biggoron's sword",      (uint8_t*)0x8011A60E, 0b00000001},
 };
 
-struct warp_info
+static struct switch_info item_list[] =
 {
-  struct menu_item *entrance;
-  struct menu_item *age;
+  {"deku stick",      (uint8_t*)0x8011a644, 0x00},
+  {"deku nut",        (uint8_t*)0x8011a645, 0x01},
+  {"bomb",            (uint8_t*)0x8011a646, 0x02},
+  {"bow",             (uint8_t*)0x8011a647, 0x03},
+  {"fire arrow",      (uint8_t*)0x8011A648, 0x04},
+  {"ice arrow",       (uint8_t*)0x8011A64E, 0x0C},
+  {"light arrow",     (uint8_t*)0x8011A654, 0x12},
+  {"din's fire",      (uint8_t*)0x8011A649, 0x05},
+  {"farore's wind",   (uint8_t*)0x8011A64F, 0x0D},
+  {"nayru's love",    (uint8_t*)0x8011A655, 0x13},
+  {"slingshot",       (uint8_t*)0x8011a64a, 0x06},
+  {"fairy ocarina",   (uint8_t*)0x8011A64B, 0x07},
+  {"ocarina of time", (uint8_t*)0x8011A64B, 0x08},
+  {"bombchu",         (uint8_t*)0x8011a64c, 0x09},
+  {"hookshot",        (uint8_t*)0x8011A64D, 0x0A},
+  {"longshot",        (uint8_t*)0x8011A64D, 0x0B},
+  {"boomerang",       (uint8_t*)0x8011A650, 0x0E},
+  {"lens of truth",   (uint8_t*)0x8011A651, 0x0F},
+  {"magic bean",      (uint8_t*)0x8011A652, 0x10},
+  {"megaton hammer",  (uint8_t*)0x8011A653, 0x11},
 };
 
 static int generic_switch_proc(struct menu_item *item,
@@ -89,17 +99,36 @@ static int generic_switch_proc(struct menu_item *item,
   return 0;
 }
 
+static void main_return_proc(struct menu_item *item, void *data)
+{
+  g_menu_active = 0;
+}
+
 static int equipment_switch_proc(struct menu_item *item,
                                  enum menu_callback_reason reason,
                                  void *data)
 {
-  struct equipment_info *e = data;
+  struct switch_info *e = data;
   if (reason == MENU_CALLBACK_SWITCH_ON)
     *e->address |= e->mask;
   else if (reason == MENU_CALLBACK_SWITCH_OFF)
     *e->address &= ~e->mask;
   else if (reason == MENU_CALLBACK_THINK)
-    menu_switch_set(item, *e->address & e->mask);
+    menu_switch_set(item, (*e->address & e->mask) == e->mask);
+  return 0;
+}
+
+static int item_switch_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  struct switch_info *e = data;
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    *e->address = e->mask;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    *e->address = -1;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_switch_set(item, *e->address == e->mask);
   return 0;
 }
 
@@ -179,6 +208,41 @@ static void advance_proc(struct menu_item *item, void *data)
     pause_proc(item, data);
 }
 
+#if 0
+static uint8_t old_exc_handler[MIPS_EVSIZE];
+static uint8_t new_exc_handler[4 * 32];
+
+static void sup_exc_proc(struct menu_item *item, void *data)
+{
+  memcpy(&old_exc_handler, (void*)MIPS_EV_GE, MIPS_EVSIZE);
+  uint32_t exc_handler[] =
+  {
+    MIPS_MFC0(MIPS_K0, MIPS_CP0_CAUSE),
+    MIPS_LA(MIPS_K1, MIPS_CAUSE_EXCMASK),
+    MIPS_AND(MIPS_K0, MIPS_K0, MIPS_K1),
+    MIPS_LA(MIPS_K1, MIPS_MAKE_FIELD(MIPS_CAUSE_EXC, MIPS_EXC_TLBL)),
+    MIPS_BNE(MIPS_K0, MIPS_K1, 4 * 7),
+    MIPS_NOP,
+    MIPS_MFC0(MIPS_K0, MIPS_CP0_SR),
+    MIPS_LA(MIPS_K1, ~MIPS_STATUS_EXL),
+    MIPS_AND(MIPS_K0, MIPS_K0, MIPS_K1),
+    MIPS_MTC0(MIPS_K0, MIPS_CP0_SR),
+    MIPS_ERET,
+    MIPS_LA(MIPS_K0, &old_exc_handler),
+    MIPS_JR(MIPS_K0),
+    MIPS_NOP,
+  };
+  memcpy(&new_exc_handler, &exc_handler, sizeof(exc_handler));
+  uint32_t exc_hook[] =
+  {
+    MIPS_LA(MIPS_K0, &new_exc_handler),
+    MIPS_JR(MIPS_K0),
+    MIPS_NOP,
+  };
+  memcpy((void*)MIPS_EV_GE, &exc_hook, sizeof(exc_hook));
+}
+#endif
+
 ENTRY void _start(void *text_ptr)
 {
   init_gp();
@@ -186,23 +250,25 @@ ENTRY void _start(void *text_ptr)
     g_ready = 1;
     do_global_ctors();
 
-  /* disable map toggling */
-  (*(uint32_t*)0x8006CD50) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
-  (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+    /* disable map toggling */
+    (*(uint32_t*)0x8006CD50) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
+    (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
-  g_text_ptr = text_ptr;
+    g_text_ptr = text_ptr;
 
 #if 0
     console_init(36, 288);
     console_set_view(2, 8, 36, 18);
 #endif
     menu_init(&g_menu_main);
-    g_menu_main.selector = menu_add_submenu(&g_menu_main, 2, 6, &g_menu_watches,
-                                            "watches", 0);
-    menu_add_submenu(&g_menu_main, 2, 7, &g_menu_equipment, "equipment", 0);
-    menu_add_submenu(&g_menu_main, 2, 8, &g_menu_misc, "misc", 0);
-    menu_add_submenu(&g_menu_main, 2, 9, &g_menu_cheats, "cheats", 0);
-    menu_add_submenu(&g_menu_main, 2, 10, &g_menu_warps, "warps", 0);
+    g_menu_main.selector = menu_add_button(&g_menu_main, 2, 6, "return",
+                                           main_return_proc, NULL, 0);
+    menu_add_submenu(&g_menu_main, 2, 7, &g_menu_watches, "watches", 0);
+    menu_add_submenu(&g_menu_main, 2, 8, &g_menu_equipment, "equipment", 0);
+    menu_add_submenu(&g_menu_main, 2, 9, &g_menu_items, "items", 0);
+    menu_add_submenu(&g_menu_main, 2, 10, &g_menu_misc, "misc", 0);
+    menu_add_submenu(&g_menu_main, 2, 11, &g_menu_cheats, "cheats", 0);
+    menu_add_submenu(&g_menu_main, 2, 12, &g_menu_warps, "warps", 0);
 
     menu_init(&g_menu_watches);
     g_menu_watches.selector = menu_add_submenu(&g_menu_watches, 2, 6, NULL,
@@ -212,13 +278,25 @@ ENTRY void _start(void *text_ptr)
     menu_init(&g_menu_equipment);
     g_menu_equipment.selector = menu_add_submenu(&g_menu_equipment, 2, 6, NULL,
                                                  "return", 0);
-    for (int i = 0; i < EQUIPMENT_MAX; ++i)
+    for (int i = 0; i < sizeof(equipment_list) / sizeof(*equipment_list); ++i)
       menu_add_switch(&g_menu_equipment,
                       2 + i / 3 % 2 * 20,
                       7 + i / 6 * 3 + i % 3,
                       equipment_list[i].name,
                       equipment_switch_proc,
                       &equipment_list[i],
+                      0);
+
+    menu_init(&g_menu_items);
+    g_menu_items.selector = menu_add_submenu(&g_menu_items, 2, 6, NULL,
+                                             "return", 0);
+    for (int i = 0; i < sizeof(item_list) / sizeof(*item_list); ++i)
+      menu_add_switch(&g_menu_items,
+                      2 + i % 2 * 20,
+                      7 + i / 2,
+                      item_list[i].name,
+                      item_switch_proc,
+                      &item_list[i],
                       0);
 
     menu_init(&g_menu_misc);
@@ -236,8 +314,14 @@ ENTRY void _start(void *text_ptr)
                     tp_slot_display, 0);
     menu_add_button(&g_menu_misc, 20, 9, "+", tp_slot_inc_proc,
                     tp_slot_display, 0);
-    menu_add_button(&g_menu_misc, 2, 10, "pause / unpause", pause_proc, NULL, 0);
-    menu_add_button(&g_menu_misc, 2, 11, "frame advance", advance_proc, NULL, 0);
+    menu_add_button(&g_menu_misc, 2, 10, "pause / unpause", pause_proc,
+                    NULL, 0);
+    menu_add_button(&g_menu_misc, 2, 11, "frame advance", advance_proc,
+                    NULL, 0);
+#if 0
+    menu_add_button(&g_menu_misc, 2, 12, "suppress exceptions", sup_exc_proc,
+                    NULL, 0);
+#endif
 
     menu_init(&g_menu_cheats);
     g_menu_cheats.selector = menu_add_submenu(&g_menu_cheats, 2, 6, NULL,
@@ -299,10 +383,10 @@ ENTRY void _start(void *text_ptr)
   /* activated */
   if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
     /* reload zone with d-pad down */
-    if (input_ptr->pad & BUTTON_D_DOWN)
+    if (button_time[BUTTON_INDEX_D_DOWN] >= 20)
       (*(uint16_t*)0x801DA2B4) = 0x0014;
     /* title screen with d-pad up */
-    if (input_ptr->pad & BUTTON_D_UP) {
+    if (button_time[BUTTON_INDEX_D_UP] >= 20) {
       (*(uint8_t*) 0x8011B92F) = 0x02;
       (*(uint16_t*)0x801DA2B4) = 0x0014;
     }
@@ -325,18 +409,25 @@ ENTRY void _start(void *text_ptr)
     }
   }
   else {
-    if (pad_pressed & BUTTON_D_UP)
-      menu_navigate(&g_menu_main, MENU_NAVIGATE_UP);
-    if (pad_pressed & BUTTON_D_DOWN)
-      menu_navigate(&g_menu_main, MENU_NAVIGATE_DOWN);
-    if (pad_pressed & BUTTON_D_LEFT)
-      menu_navigate(&g_menu_main, MENU_NAVIGATE_LEFT);
-    if (pad_pressed & BUTTON_D_RIGHT)
-      menu_navigate(&g_menu_main, MENU_NAVIGATE_RIGHT);
-    if (pad_pressed & BUTTON_L)
-      menu_activate(&g_menu_main);
+    if (g_menu_active) {
+      if (pad_pressed & BUTTON_D_UP)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_UP);
+      if (pad_pressed & BUTTON_D_DOWN)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_DOWN);
+      if (pad_pressed & BUTTON_D_LEFT)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_LEFT);
+      if (pad_pressed & BUTTON_D_RIGHT)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_RIGHT);
+      if (pad_pressed & BUTTON_L)
+        menu_activate(&g_menu_main);
+    }
+    else {
+      if (pad_pressed & BUTTON_L)
+        g_menu_active = 1;
+    }
   }
-  menu_draw(&g_menu_main);
+  if (g_menu_active)
+    menu_draw(&g_menu_main);
 #endif
 
 #if 1
