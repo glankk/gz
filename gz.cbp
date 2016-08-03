@@ -51,7 +51,7 @@
 			</Target>
 		</Build>
 		<Unit filename="console.c">
-			<Option compilerVar="CPP" />
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="console.h" />
 		<Unit filename="gz.c">

@@ -34,8 +34,18 @@ static struct menu g_menu_warps;
 
 static int g_cheats_energy    = 0;
 static int g_cheats_magic     = 0;
+static int g_cheats_sticks    = 0;
+static int g_cheats_nuts      = 0;
 static int g_cheats_bombs     = 0;
+static int g_cheats_arrows    = 0;
+static int g_cheats_seeds     = 0;
 static int g_cheats_bombchus  = 0;
+static int g_cheats_beans     = 0;
+static int g_cheats_keys      = 0;
+static int g_cheats_rupees    = 0;
+static int g_cheats_nayru     = 0;
+static int g_cheats_time      = 0;
+
 
 static int tp_slot = 0;
 
@@ -330,10 +340,28 @@ ENTRY void _start(void *text_ptr)
                     generic_switch_proc, &g_cheats_energy, 0);
     menu_add_switch(&g_menu_cheats, 2, 8, "magic",
                     generic_switch_proc, &g_cheats_magic, 0);
-    menu_add_switch(&g_menu_cheats, 2, 9, "bombs",
+    menu_add_switch(&g_menu_cheats, 2, 9, "deku sticks",
+                    generic_switch_proc, &g_cheats_sticks, 0);
+    menu_add_switch(&g_menu_cheats, 2, 10, "deku nuts",
+                    generic_switch_proc, &g_cheats_nuts, 0);
+    menu_add_switch(&g_menu_cheats, 2, 11, "bombs",
                     generic_switch_proc, &g_cheats_bombs, 0);
-    menu_add_switch(&g_menu_cheats, 2, 10, "bombchus",
+    menu_add_switch(&g_menu_cheats, 2, 12, "arrows",
+                    generic_switch_proc, &g_cheats_arrows, 0);
+    menu_add_switch(&g_menu_cheats, 2, 13, "deku seeds",
+                    generic_switch_proc, &g_cheats_seeds, 0);
+    menu_add_switch(&g_menu_cheats, 2, 14, "bombchus",
                     generic_switch_proc, &g_cheats_bombchus, 0);
+    menu_add_switch(&g_menu_cheats, 2, 15, "magic beans",
+                    generic_switch_proc, &g_cheats_beans, 0);
+    menu_add_switch(&g_menu_cheats, 2, 16, "small keys",
+                    generic_switch_proc, &g_cheats_keys, 0);
+    menu_add_switch(&g_menu_cheats, 2, 17, "rupees",
+                    generic_switch_proc, &g_cheats_rupees, 0);
+    menu_add_switch(&g_menu_cheats, 2, 18, "nayru's love",
+                    generic_switch_proc, &g_cheats_nayru, 0);
+    menu_add_switch(&g_menu_cheats, 2, 19, "fast time",
+                    generic_switch_proc, &g_cheats_time, 0);
 
     menu_init(&g_menu_warps);
     g_menu_warps.selector = menu_add_submenu(&g_menu_warps, 2, 6, NULL,
@@ -360,33 +388,51 @@ ENTRY void _start(void *text_ptr)
       pad_pressed |= 1 << i;
   }
 
-  /* infinite energy */
   if (g_cheats_energy)
     (*(uint16_t*)0x8011A600) = 0x0140;
-  /* infinite magic */
   if (g_cheats_magic) {
     if ((*(uint8_t*) 0x8011A609) == 0x08)
       (*(uint8_t*) 0x8011A60A) = 0x01;
     (*(uint8_t*) 0x8011A60C) = 0x01;
     (*(uint8_t*) 0x8011A603) = 0x60;
   }
-  /* infinite bombs */
-  if (g_cheats_bombs) {
-    (*(uint8_t*) 0x8011A646) = 0x02;
+  if (g_cheats_sticks)
+    (*(uint8_t*) 0x8011A65C) = 0x09;
+  if (g_cheats_nuts)
+    (*(uint8_t*) 0x8011A65D) = 0x09;
+  if (g_cheats_bombs)
     (*(uint8_t*) 0x8011A65E) = 0x09;
-  }
-  /* infinite bombchus */
-  if (g_cheats_bombchus) {
-    (*(uint8_t*) 0x8011A64C) = 0x09;
+  if (g_cheats_arrows)
+    (*(uint8_t*) 0x8011A65F) = 0x09;
+  if (g_cheats_seeds)
+    (*(uint8_t*) 0x8011A662) = 0x09;
+  if (g_cheats_bombchus)
     (*(uint8_t*) 0x8011A664) = 0x09;
+  if (g_cheats_beans)
+    (*(uint8_t*) 0x8011A66A) = 0x09;
+  if (g_cheats_keys) {
+    (*(uint8_t*) 0x8011A68F) = 0x09;
+    (*(uint8_t*) 0x8011A690) = 0x09;
+    (*(uint8_t*) 0x8011A691) = 0x09;
+    (*(uint8_t*) 0x8011A692) = 0x09;
+    (*(uint8_t*) 0x8011A693) = 0x09;
+    (*(uint8_t*) 0x8011A697) = 0x09;
+    (*(uint8_t*) 0x8011A699) = 0x09;
+    (*(uint8_t*) 0x8011A69C) = 0x09;
   }
+  if (g_cheats_rupees)
+    (*(uint16_t*)0x8011A604) = 0x03E7;
+  if (g_cheats_nayru)
+    (*(uint16_t*)0x8011B998) = 0x044B;
+  if (g_cheats_time)
+    (*(uint16_t*)0x8011A5DC) += 0x0100;
   /* activated */
   if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
     /* reload zone with d-pad down */
-    if (button_time[BUTTON_INDEX_D_DOWN] >= 20)
+    if (button_time[BUTTON_INDEX_D_DOWN] >= 10)
       (*(uint16_t*)0x801DA2B4) = 0x0014;
     /* title screen with d-pad up */
-    if (button_time[BUTTON_INDEX_D_UP] >= 20) {
+    if (button_time[BUTTON_INDEX_D_UP] >= 10) {
       (*(uint8_t*) 0x8011B92F) = 0x02;
       (*(uint16_t*)0x801DA2B4) = 0x0014;
     }
