@@ -5,16 +5,37 @@
 
 struct item_data
 {
-  struct vector options;
-  int           value;
-  int           active;
+  struct vector         options;
+  menu_generic_callback callback_proc;
+  void                 *callback_data;
+  int                   value;
+  int                   active;
 };
 
+
+static int think_proc(struct menu *menu, struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  if (data->callback_proc) {
+    data->callback_proc(item, MENU_CALLBACK_THINK, data->callback_data);
+    if (data->active)
+      data->callback_proc(item, MENU_CALLBACK_THINK_ACTIVE,
+                          data->callback_data);
+    else
+      data->callback_proc(item, MENU_CALLBACK_THINK_INACTIVE,
+                          data->callback_data);
+  }
+  return 0;
+}
 
 static int navigate_proc(struct menu *menu, struct menu_item *item,
                          enum menu_navigation nav)
 {
   struct item_data *data = item->data;
+  if (data->callback_proc && data->callback_proc(item,
+                                                 MENU_CALLBACK_NAV_UP + nav,
+                                                 data->callback_data))
+    return 1;
   int value = data->value;
   switch (nav) {
     case MENU_NAVIGATE_UP:    value += 1; break;
@@ -28,6 +49,8 @@ static int navigate_proc(struct menu *menu, struct menu_item *item,
   data->value = value;
   char **option = vector_at(&data->options, data->value);
   item->text = *option;
+  if (data->callback_proc)
+      data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
   return 1;
 };
 
@@ -35,10 +58,18 @@ static int activate_proc(struct menu *menu, struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->active) {
+    if (data->callback_proc && data->callback_proc(item,
+                                                   MENU_CALLBACK_DEACTIVATE,
+                                                   data->callback_data))
+      return 1;
     item->navigate_proc = NULL;
     menu->animate_highlight = 0;
   }
   else {
+    if (data->callback_proc && data->callback_proc(item,
+                                                   MENU_CALLBACK_ACTIVATE,
+                                                   data->callback_data))
+      return 1;
     item->navigate_proc = navigate_proc;
     menu->animate_highlight = 1;
   }
@@ -59,7 +90,9 @@ static int remove_proc(struct menu *menu, struct menu_item *item)
 }
 
 struct menu_item *menu_add_option(struct menu *menu, int x, int y,
-                                  const char *options, int priority)
+                                  const char *options,
+                                  menu_generic_callback callback_proc,
+                                  void *callback_data, int priority)
 {
   struct item_data *data = malloc(sizeof(struct item_data));
   vector_init(&data->options, sizeof(char*));
@@ -70,6 +103,8 @@ struct menu_item *menu_add_option(struct menu *menu, int x, int y,
     vector_push_back(&data->options, 1, &new_option);
     option += option_length + 1;
   }
+  data->callback_proc = callback_proc;
+  data->callback_data = callback_data;
   data->value = 0;
   data->active = 0;
   struct menu_item *item = menu_add_item(menu, NULL);
@@ -78,6 +113,7 @@ struct menu_item *menu_add_option(struct menu *menu, int x, int y,
   item->text = *option;
   item->priority = priority;
   item->data = data;
+  item->think_proc = think_proc;
   item->activate_proc = activate_proc;
   item->remove_proc = remove_proc;
   return item;

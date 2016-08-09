@@ -3,7 +3,7 @@
 
 struct item_data
 {
-  menu_button_callback  callback_proc;
+  menu_action_callback  callback_proc;
   void                 *callback_data;
 };
 
@@ -17,7 +17,7 @@ static int activate_proc(struct menu *menu, struct menu_item *item)
 
 struct menu_item *menu_add_button(struct menu *menu, int x, int y,
                                   const char *name,
-                                  menu_button_callback callback_proc,
+                                  menu_action_callback callback_proc,
                                   void *callback_data, int priority)
 {
   struct item_data *data = malloc(sizeof(struct item_data));

@@ -27,6 +27,7 @@ static int g_menu_active = 1;
 static struct menu g_menu_main;
 static struct menu g_menu_watches;
 static struct menu g_menu_equipment;
+static struct menu g_menu_equips;
 static struct menu g_menu_items;
 static struct menu g_menu_misc;
 static struct menu g_menu_cheats;
@@ -125,6 +126,37 @@ static int equipment_switch_proc(struct menu_item *item,
     *e->address &= ~e->mask;
   else if (reason == MENU_CALLBACK_THINK)
     menu_switch_set(item, (*e->address & e->mask) == e->mask);
+  return 0;
+}
+
+static int equip_option_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  uint16_t *equips_ptr = (uint16_t*)0x8011A640;
+  int equip_row = (int)data;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    int equip = (*equips_ptr >> equip_row * 4) & 0x000F;
+    if (equip != menu_option_get(item))
+      menu_option_set(item, equip);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *equips_ptr = (*equips_ptr & ~(0x000F << equip_row * 4)) |
+                  (menu_option_get(item) << equip_row * 4);
+  return 0;
+}
+
+static int bytemod_proc(struct menu_item *item,
+                        enum menu_callback_reason reason,
+                        void *data)
+{
+  uint8_t *data_ptr = data;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (*data_ptr != menu_intinput_get(item))
+      menu_intinput_set(item, *data_ptr);
+  }
+  else if (reason == MENU_CALLBACK_CHANGED)
+    *data_ptr = menu_intinput_get(item);
   return 0;
 }
 
@@ -275,10 +307,11 @@ ENTRY void _start(void *text_ptr)
                                            main_return_proc, NULL, 0);
     menu_add_submenu(&g_menu_main, 2, 7, &g_menu_watches, "watches", 0);
     menu_add_submenu(&g_menu_main, 2, 8, &g_menu_equipment, "equipment", 0);
-    menu_add_submenu(&g_menu_main, 2, 9, &g_menu_items, "items", 0);
-    menu_add_submenu(&g_menu_main, 2, 10, &g_menu_misc, "misc", 0);
-    menu_add_submenu(&g_menu_main, 2, 11, &g_menu_cheats, "cheats", 0);
-    menu_add_submenu(&g_menu_main, 2, 12, &g_menu_warps, "warps", 0);
+    menu_add_submenu(&g_menu_main, 2, 9, &g_menu_equips, "equips", 0);
+    menu_add_submenu(&g_menu_main, 2, 10, &g_menu_items, "items", 0);
+    menu_add_submenu(&g_menu_main, 2, 11, &g_menu_misc, "misc", 0);
+    menu_add_submenu(&g_menu_main, 2, 12, &g_menu_cheats, "cheats", 0);
+    menu_add_submenu(&g_menu_main, 2, 13, &g_menu_warps, "warps", 0);
 
     menu_init(&g_menu_watches);
     g_menu_watches.selector = menu_add_submenu(&g_menu_watches, 2, 6, NULL,
@@ -296,6 +329,38 @@ ENTRY void _start(void *text_ptr)
                       equipment_switch_proc,
                       &equipment_list[i],
                       0);
+
+    menu_init(&g_menu_equips);
+    g_menu_equips.selector = menu_add_submenu(&g_menu_equips, 2, 6, NULL,
+                                              "return", 0);
+    menu_add_static(&g_menu_equips, 2, 7, "sword", 0xFFFFFF);
+    menu_add_option(&g_menu_equips, 12, 7,
+                    "none\0""kokiri\0""master\0""biggoron\0",
+                    equip_option_proc, (void*)0, 0);
+    menu_add_static(&g_menu_equips, 2, 8, "shield", 0xFFFFFF);
+    menu_add_option(&g_menu_equips, 12, 8,
+                    "none\0""deku\0""hylian\0""mirror\0",
+                    equip_option_proc, (void*)1, 0);
+    menu_add_static(&g_menu_equips, 2, 9, "tunic", 0xFFFFFF);
+    menu_add_option(&g_menu_equips, 12, 9,
+                    "none\0""kokiri\0""goron\0""zora\0",
+                    equip_option_proc, (void*)2, 0);
+    menu_add_static(&g_menu_equips, 2, 10, "boots", 0xFFFFFF);
+    menu_add_option(&g_menu_equips, 12, 10,
+                    "none\0""kokiri\0""iron\0""hover\0",
+                    equip_option_proc, (void*)3, 0);
+    menu_add_static(&g_menu_equips, 2, 11, "b button", 0xFFFFFF);
+    menu_add_intinput(&g_menu_equips, 12, 11, 16, 2, bytemod_proc,
+                      (void*)0x8011A638, 0);
+    menu_add_static(&g_menu_equips, 2, 12, "c left", 0xFFFFFF);
+    menu_add_intinput(&g_menu_equips, 12, 12, 16, 2, bytemod_proc,
+                      (void*)0x8011A639, 0);
+    menu_add_static(&g_menu_equips, 2, 13, "c down", 0xFFFFFF);
+    menu_add_intinput(&g_menu_equips, 12, 13, 16, 2, bytemod_proc,
+                      (void*)0x8011A63A, 0);
+    menu_add_static(&g_menu_equips, 2, 14, "c right", 0xFFFFFF);
+    menu_add_intinput(&g_menu_equips, 12, 14, 16, 2, bytemod_proc,
+                      (void*)0x8011A63B, 0);
 
     menu_init(&g_menu_items);
     g_menu_items.selector = menu_add_submenu(&g_menu_items, 2, 6, NULL,
@@ -360,7 +425,7 @@ ENTRY void _start(void *text_ptr)
                     generic_switch_proc, &g_cheats_rupees, 0);
     menu_add_switch(&g_menu_cheats, 2, 18, "nayru's love",
                     generic_switch_proc, &g_cheats_nayru, 0);
-    menu_add_switch(&g_menu_cheats, 2, 19, "fast time",
+    menu_add_switch(&g_menu_cheats, 2, 19, "advance time",
                     generic_switch_proc, &g_cheats_time, 0);
 
     menu_init(&g_menu_warps);
@@ -368,10 +433,11 @@ ENTRY void _start(void *text_ptr)
                                              "return", 0);
     static struct warp_info warp_info;
     menu_add_static(&g_menu_warps, 2, 7, "entrance", 0xFFFFFF);
-    warp_info.entrance = menu_add_intinput(&g_menu_warps, 12, 7, 16, 4, 0);
+    warp_info.entrance = menu_add_intinput(&g_menu_warps, 12, 7, 16, 4,
+                                           NULL, NULL, 0);
     menu_add_static(&g_menu_warps, 2, 8, "age", 0xFFFFFF);
     warp_info.age = menu_add_option(&g_menu_warps, 12, 8,
-                                    "adult\0""child\0", 0);
+                                    "adult\0""child\0", NULL, NULL, 0);
     menu_add_button(&g_menu_warps, 2, 9, "warp", warp_proc, &warp_info, 0);
   }
 

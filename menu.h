@@ -17,14 +17,23 @@ enum menu_navigation
 enum menu_callback_reason
 {
   MENU_CALLBACK_THINK,
+  MENU_CALLBACK_THINK_ACTIVE,
+  MENU_CALLBACK_THINK_INACTIVE,
+  MENU_CALLBACK_ACTIVATE,
+  MENU_CALLBACK_DEACTIVATE,
   MENU_CALLBACK_SWITCH_ON,
   MENU_CALLBACK_SWITCH_OFF,
+  MENU_CALLBACK_NAV_UP,
+  MENU_CALLBACK_NAV_DOWN,
+  MENU_CALLBACK_NAV_LEFT,
+  MENU_CALLBACK_NAV_RIGHT,
+  MENU_CALLBACK_CHANGED,
 };
 
-typedef int  (*menu_switch_callback)(struct menu_item *item,
-                                     enum menu_callback_reason reason,
-                                     void *data);
-typedef void (*menu_button_callback)(struct menu_item *item, void *data);
+typedef int  (*menu_generic_callback)(struct menu_item *item,
+                                      enum menu_callback_reason reason,
+                                      void *data);
+typedef void (*menu_action_callback) (struct menu_item *item, void *data);
 
 struct menu_item
 {
@@ -91,11 +100,15 @@ struct menu_item   *menu_add_static(struct menu *menu, int x, int y,
                                     const char *text, uint32_t color);
 
 struct menu_item   *menu_add_intinput(struct menu *menu, int x, int y,
-                                      int base, int length, int priority);
+                                      int base, int length,
+                                      menu_generic_callback callback_proc,
+                                      void *callback_data, int priority);
 uint32_t            menu_intinput_get(struct menu_item *item);
 void                menu_intinput_set(struct menu_item *item, uint32_t value);
 struct menu_item   *menu_add_option(struct menu *menu, int x, int y,
-                                    const char *options, int priority);
+                                    const char *options,
+                                    menu_generic_callback callback_proc,
+                                    void *callback_data, int priority);
 int                 menu_option_get(struct menu_item *item);
 void                menu_option_set(struct menu_item *item,
                                     int value);
@@ -110,14 +123,14 @@ struct menu_item   *menu_add_submenu(struct menu *menu, int x, int y,
                                      int priority);
 struct menu_item   *menu_add_switch(struct menu *menu, int x, int y,
                                     const char *name,
-                                    menu_switch_callback callback_proc,
+                                    menu_generic_callback callback_proc,
                                     void *callback_data, int priority);
 void                menu_switch_set(struct menu_item *item, int state);
 int                 menu_switch_get(struct menu_item *item);
 void                menu_switch_toggle(struct menu_item *item);
 struct menu_item   *menu_add_button(struct menu *menu, int x, int y,
                                     const char *name,
-                                    menu_button_callback callback_proc,
+                                    menu_action_callback callback_proc,
                                     void *callback_data, int priority);
 #ifdef __cplusplus
 }

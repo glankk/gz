@@ -6,13 +6,15 @@
 
 struct item_data
 {
-  int                 base;
-  int                 length;
-  uint32_t            value;
-  int                 active;
-  struct menu_item   *parent;
-  struct menu_item  **children;
-  struct menu_item   *selector;
+  int                   base;
+  int                   length;
+  menu_generic_callback callback_proc;
+  void                 *callback_data;
+  uint32_t              value;
+  int                   active;
+  struct menu_item     *parent;
+  struct menu_item    **children;
+  struct menu_item     *selector;
 };
 
 
@@ -34,10 +36,54 @@ static inline int int_to_char(int x)
   return -1;
 }
 
+static int parent_think_proc(struct menu *menu, struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  if (data->callback_proc) {
+    data->callback_proc(item, MENU_CALLBACK_THINK, data->callback_data);
+    if (data->active)
+      data->callback_proc(item, MENU_CALLBACK_THINK_ACTIVE,
+                          data->callback_data);
+    else
+      data->callback_proc(item, MENU_CALLBACK_THINK_INACTIVE,
+                          data->callback_data);
+  }
+  return data->active;
+}
+
+static int child_think_proc(struct menu *menu, struct menu_item *item)
+{
+  item->color = menu->highlight_color_static;
+  struct item_data *data = item->data;
+  return !data->active;
+}
+
+static int child_navigate_proc(struct menu *menu, struct menu_item *item,
+                               enum menu_navigation nav)
+{
+  struct item_data *data = item->data;
+  int value = char_to_int(item->text[0]);
+  if (nav == MENU_NAVIGATE_UP)
+    ++value;
+  else if (nav == MENU_NAVIGATE_DOWN)
+    --value;
+  else
+    return 0;
+  value = value % data->base;
+  if (value < 0)
+    value += data->base;
+  item->text[0] = int_to_char(value);
+  return 1;
+}
+
 static int activate_proc(struct menu *menu, struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->active) {
+    if (data->callback_proc && data->callback_proc(item,
+                                                   MENU_CALLBACK_DEACTIVATE,
+                                                   data->callback_data))
+      return 1;
     data->selector = menu->selector;
     menu->selector = data->parent;
     menu->animate_highlight = 0;
@@ -51,8 +97,14 @@ static int activate_proc(struct menu *menu, struct menu_item *item)
       mul *= data->base;
     }
     data->value = value;
+    if (data->callback_proc)
+      data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
   }
   else {
+    if (data->callback_proc && data->callback_proc(item,
+                                                   MENU_CALLBACK_ACTIVATE,
+                                                   data->callback_data))
+      return 1;
     menu->selector = data->selector;
     menu->animate_highlight = 1;
     for (int i = 0; i < data->length; ++i)
@@ -90,43 +142,16 @@ static int remove_proc(struct menu *menu, struct menu_item *item)
   return 1;
 }
 
-static int parent_think_proc(struct menu *menu, struct menu_item *item)
-{
-  struct item_data *data = item->data;
-  return data->active;
-}
-
-static int child_think_proc(struct menu *menu, struct menu_item *item)
-{
-  item->color = menu->highlight_color_static;
-  struct item_data *data = item->data;
-  return !data->active;
-}
-
-static int child_navigate_proc(struct menu *menu, struct menu_item *item,
-                               enum menu_navigation nav)
-{
-  struct item_data *data = item->data;
-  int value = char_to_int(item->text[0]);
-  if (nav == MENU_NAVIGATE_UP)
-    ++value;
-  else if (nav == MENU_NAVIGATE_DOWN)
-    --value;
-  else
-    return 0;
-  value = value % data->base;
-  if (value < 0)
-    value += data->base;
-  item->text[0] = int_to_char(value);
-  return 1;
-};
-
 struct menu_item *menu_add_intinput(struct menu *menu, int x, int y,
-                                    int base, int length, int priority)
+                                    int base, int length,
+                                    menu_generic_callback callback_proc,
+                                    void *callback_data, int priority)
 {
   struct item_data *data = malloc(sizeof(struct item_data));
   data->base = base;
   data->length = length;
+  data->callback_proc = callback_proc;
+  data->callback_data = callback_data;
   data->value = 0;
   data->active = 0;
   data->children = malloc(sizeof(struct menu_item) * length);

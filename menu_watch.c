@@ -82,8 +82,9 @@ static int remove_proc(struct menu *menu, struct menu_item *item)
 struct menu_item *menu_add_watch(struct menu *menu, int x, int y, int priority)
 {
   struct item_data *data = malloc(sizeof(struct item_data));
-  data->address = menu_add_intinput(menu, x, y, 16, 8, priority);
-  data->type = menu_add_option(menu, x + 9, y, datatype_options, priority);
+  data->address = menu_add_intinput(menu, x, y, 16, 8, NULL, NULL, priority);
+  data->type = menu_add_option(menu, x + 9, y, datatype_options, NULL, NULL,
+                               priority);
   struct menu_item *item = menu_add_item(menu, NULL);
   menu_item_init(item, x + 13, y, NULL, 0xA0A0A0);
   item->text = malloc(17);
