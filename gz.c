@@ -159,17 +159,16 @@ static int bottle_option_proc(struct menu_item *item,
   return 0;
 }
 
-static int child_trade_option_proc(struct menu_item *item,
+static int adult_trade_option_proc(struct menu_item *item,
                                    enum menu_callback_reason reason,
                                    void *data)
 {
   uint8_t *slot_ptr = (void*)0x8011A65A;
   uint8_t item_ids[] =
   {
-    0xFF, 0x21, 0x22, 0x23,
-    0x24, 0x25, 0x26, 0x27,
-    0x28, 0x29, 0x2A, 0x2B,
-    0x2C,
+    0xFF, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33,
+    0x34, 0x35, 0x36, 0x37,
   };
   int num_items = sizeof(item_ids) / sizeof(*item_ids);
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
@@ -187,16 +186,17 @@ static int child_trade_option_proc(struct menu_item *item,
   return 0;
 }
 
-static int adult_trade_option_proc(struct menu_item *item,
+static int child_trade_option_proc(struct menu_item *item,
                                    enum menu_callback_reason reason,
                                    void *data)
 {
   uint8_t *slot_ptr = (void*)0x8011A65B;
   uint8_t item_ids[] =
   {
-    0xFF, 0x2D, 0x2E, 0x2F,
-    0x30, 0x31, 0x32, 0x33,
-    0x34, 0x35, 0x36, 0x37,
+    0xFF, 0x21, 0x22, 0x23,
+    0x24, 0x25, 0x26, 0x27,
+    0x28, 0x29, 0x2A, 0x2B,
+    0x2C,
   };
   int num_items = sizeof(item_ids) / sizeof(*item_ids);
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
@@ -497,22 +497,22 @@ ENTRY void _start(void *text_ptr)
                       "bug\0""big poe\0""half milk\0""poe\0",
                       bottle_option_proc, (void*)(0x8011A656 + i), 0);
     }
-    menu_add_static(&g_menu_variable_items, 2, 11, "child trade item:",
+    menu_add_static(&g_menu_variable_items, 2, 11, "adult trade item:",
                     0xFFFFFF);
     menu_add_option(&g_menu_variable_items, 20, 11,
-                    "nothing\0""weird egg\0""chicken\0""zelda's letter\0"
-                    "keaton mask\0""skull mask\0""spooky mask\0""bunny hood\0"
-                    "goron mask\0""zora mask\0""gerudo mask\0""mask of truth\0"
-                    "sold out\0",
-                    child_trade_option_proc, NULL, 0);
-    menu_add_static(&g_menu_variable_items, 2, 12, "adult trade item:",
-                    0xFFFFFF);
-    menu_add_option(&g_menu_variable_items, 20, 12,
                     "nothing\0""pocket egg\0""pocket cucco\0""cojiro\0"
                     "odd mushroom\0""odd potion\0""poacher's saw\0"
                     "broken goron's sword\0""prescription\0""eyeball frog\0"
                     "eye drops\0""claim check\0",
                     adult_trade_option_proc, NULL, 0);
+    menu_add_static(&g_menu_variable_items, 2, 12, "child trade item:",
+                    0xFFFFFF);
+    menu_add_option(&g_menu_variable_items, 20, 12,
+                    "nothing\0""weird egg\0""chicken\0""zelda's letter\0"
+                    "keaton mask\0""skull mask\0""spooky mask\0""bunny hood\0"
+                    "goron mask\0""zora mask\0""gerudo mask\0""mask of truth\0"
+                    "sold out\0",
+                    child_trade_option_proc, NULL, 0);
 
     menu_init(&g_menu_misc);
     g_menu_misc.selector = menu_add_submenu(&g_menu_misc, 2, 6, NULL,
