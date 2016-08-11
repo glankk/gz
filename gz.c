@@ -316,7 +316,8 @@ static void warp_proc(struct menu_item *item, void *data)
 
 static void clear_csp_proc(struct menu_item *item, void *data)
 {
-  (*(uint32_t*)0x801CA208) = 0;
+  static uint32_t null_cs[] = {0, 0};
+  (*(void**)0x801CA208) = &null_cs;
 }
 
 static void input_hook()
