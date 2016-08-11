@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <startup.h>
 #include <n64.h>
@@ -29,6 +30,7 @@ static struct menu g_menu_watches;
 static struct menu g_menu_equipment;
 static struct menu g_menu_equips;
 static struct menu g_menu_items;
+static struct menu g_menu_variable_items;
 static struct menu g_menu_misc;
 static struct menu g_menu_cheats;
 static struct menu g_menu_warps;
@@ -50,50 +52,50 @@ static int g_cheats_time      = 0;
 
 static int tp_slot = 0;
 
-static z64_controller_t *input_ptr = (z64_controller_t*)0x8011D730;
+static z64_controller_t *input_ptr = (void*)0x8011D730;
 
 static int frames_queued = -1;
 
 static struct switch_info equipment_list[] =
 {
-  {"kokiri sword",          (uint8_t*)0x8011A66D, 0b00000001},
-  {"master sword",          (uint8_t*)0x8011A66D, 0b00000010},
-  {"giant's knife",         (uint8_t*)0x8011A66D, 0b00000100},
-  {"deku shield",           (uint8_t*)0x8011A66D, 0b00010000},
-  {"hylian shield",         (uint8_t*)0x8011A66D, 0b00100000},
-  {"mirror shield",         (uint8_t*)0x8011A66D, 0b01000000},
-  {"kokiri tunic",          (uint8_t*)0x8011A66C, 0b00000001},
-  {"goron tunic",           (uint8_t*)0x8011A66C, 0b00000010},
-  {"zora tunic",            (uint8_t*)0x8011A66C, 0b00000100},
-  {"kokiri boots",          (uint8_t*)0x8011A66C, 0b00010000},
-  {"iron boots",            (uint8_t*)0x8011A66C, 0b00100000},
-  {"hover boots",           (uint8_t*)0x8011A66C, 0b01000000},
-  {"broken giant's knife",  (uint8_t*)0x8011A66D, 0b00001000},
-  {"biggoron's sword",      (uint8_t*)0x8011A60E, 0b00000001},
+  {"kokiri sword",          (void*)0x8011A66D, 0b00000001},
+  {"master sword",          (void*)0x8011A66D, 0b00000010},
+  {"giant's knife",         (void*)0x8011A66D, 0b00000100},
+  {"deku shield",           (void*)0x8011A66D, 0b00010000},
+  {"hylian shield",         (void*)0x8011A66D, 0b00100000},
+  {"mirror shield",         (void*)0x8011A66D, 0b01000000},
+  {"kokiri tunic",          (void*)0x8011A66C, 0b00000001},
+  {"goron tunic",           (void*)0x8011A66C, 0b00000010},
+  {"zora tunic",            (void*)0x8011A66C, 0b00000100},
+  {"kokiri boots",          (void*)0x8011A66C, 0b00010000},
+  {"iron boots",            (void*)0x8011A66C, 0b00100000},
+  {"hover boots",           (void*)0x8011A66C, 0b01000000},
+  {"broken giant's knife",  (void*)0x8011A66D, 0b00001000},
+  {"biggoron's sword",      (void*)0x8011A60E, 0b00000001},
 };
 
 static struct switch_info item_list[] =
 {
-  {"deku stick",      (uint8_t*)0x8011a644, 0x00},
-  {"deku nut",        (uint8_t*)0x8011a645, 0x01},
-  {"bomb",            (uint8_t*)0x8011a646, 0x02},
-  {"bow",             (uint8_t*)0x8011a647, 0x03},
-  {"fire arrow",      (uint8_t*)0x8011A648, 0x04},
-  {"ice arrow",       (uint8_t*)0x8011A64E, 0x0C},
-  {"light arrow",     (uint8_t*)0x8011A654, 0x12},
-  {"din's fire",      (uint8_t*)0x8011A649, 0x05},
-  {"farore's wind",   (uint8_t*)0x8011A64F, 0x0D},
-  {"nayru's love",    (uint8_t*)0x8011A655, 0x13},
-  {"slingshot",       (uint8_t*)0x8011a64a, 0x06},
-  {"fairy ocarina",   (uint8_t*)0x8011A64B, 0x07},
-  {"ocarina of time", (uint8_t*)0x8011A64B, 0x08},
-  {"bombchu",         (uint8_t*)0x8011a64c, 0x09},
-  {"hookshot",        (uint8_t*)0x8011A64D, 0x0A},
-  {"longshot",        (uint8_t*)0x8011A64D, 0x0B},
-  {"boomerang",       (uint8_t*)0x8011A650, 0x0E},
-  {"lens of truth",   (uint8_t*)0x8011A651, 0x0F},
-  {"magic bean",      (uint8_t*)0x8011A652, 0x10},
-  {"megaton hammer",  (uint8_t*)0x8011A653, 0x11},
+  {"deku stick",      (void*)0x8011a644, 0x00},
+  {"deku nut",        (void*)0x8011a645, 0x01},
+  {"bomb",            (void*)0x8011a646, 0x02},
+  {"bow",             (void*)0x8011a647, 0x03},
+  {"fire arrow",      (void*)0x8011A648, 0x04},
+  {"ice arrow",       (void*)0x8011A64E, 0x0C},
+  {"light arrow",     (void*)0x8011A654, 0x12},
+  {"din's fire",      (void*)0x8011A649, 0x05},
+  {"farore's wind",   (void*)0x8011A64F, 0x0D},
+  {"nayru's love",    (void*)0x8011A655, 0x13},
+  {"slingshot",       (void*)0x8011a64a, 0x06},
+  {"fairy ocarina",   (void*)0x8011A64B, 0x07},
+  {"ocarina of time", (void*)0x8011A64B, 0x08},
+  {"bombchu",         (void*)0x8011a64c, 0x09},
+  {"hookshot",        (void*)0x8011A64D, 0x0A},
+  {"longshot",        (void*)0x8011A64D, 0x0B},
+  {"boomerang",       (void*)0x8011A650, 0x0E},
+  {"lens of truth",   (void*)0x8011A651, 0x0F},
+  {"magic bean",      (void*)0x8011A652, 0x10},
+  {"megaton hammer",  (void*)0x8011A653, 0x11},
 };
 
 static int generic_switch_proc(struct menu_item *item,
@@ -129,15 +131,98 @@ static int equipment_switch_proc(struct menu_item *item,
   return 0;
 }
 
+static int bottle_option_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  uint8_t *slot_ptr = data;
+  uint8_t item_ids[] =
+  {
+    0xFF, 0x14, 0x15, 0x16,
+    0x17, 0x18, 0x19, 0x1A,
+    0x1C, 0x1D, 0x1E, 0x1F,
+    0x20,
+  };
+  int num_items = sizeof(item_ids) / sizeof(*item_ids);
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    int item_index = 0;
+    for (int i = 0; i < num_items; ++i)
+      if (*slot_ptr ==item_ids[i]) {
+        item_index = i;
+        break;
+      }
+    if (menu_option_get(item) != item_index)
+      menu_option_set(item, item_index);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *slot_ptr = item_ids[menu_option_get(item)];
+  return 0;
+}
+
+static int child_trade_option_proc(struct menu_item *item,
+                                   enum menu_callback_reason reason,
+                                   void *data)
+{
+  uint8_t *slot_ptr = (void*)0x8011A65A;
+  uint8_t item_ids[] =
+  {
+    0xFF, 0x21, 0x22, 0x23,
+    0x24, 0x25, 0x26, 0x27,
+    0x28, 0x29, 0x2A, 0x2B,
+    0x2C,
+  };
+  int num_items = sizeof(item_ids) / sizeof(*item_ids);
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    int item_index = 0;
+    for (int i = 0; i < num_items; ++i)
+      if (*slot_ptr ==item_ids[i]) {
+        item_index = i;
+        break;
+      }
+    if (menu_option_get(item) != item_index)
+      menu_option_set(item, item_index);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *slot_ptr = item_ids[menu_option_get(item)];
+  return 0;
+}
+
+static int adult_trade_option_proc(struct menu_item *item,
+                                   enum menu_callback_reason reason,
+                                   void *data)
+{
+  uint8_t *slot_ptr = (void*)0x8011A65B;
+  uint8_t item_ids[] =
+  {
+    0xFF, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33,
+    0x34, 0x35, 0x36, 0x37,
+  };
+  int num_items = sizeof(item_ids) / sizeof(*item_ids);
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    int item_index = 0;
+    for (int i = 0; i < num_items; ++i)
+      if (*slot_ptr ==item_ids[i]) {
+        item_index = i;
+        break;
+      }
+    if (menu_option_get(item) != item_index)
+      menu_option_set(item, item_index);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *slot_ptr = item_ids[menu_option_get(item)];
+  return 0;
+}
+
 static int equip_option_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
 {
-  uint16_t *equips_ptr = (uint16_t*)0x8011A640;
+  uint16_t *equips_ptr = (void*)0x8011A640;
   int equip_row = (int)data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     int equip = (*equips_ptr >> equip_row * 4) & 0x000F;
-    if (equip != menu_option_get(item))
+    if (menu_option_get(item) != equip)
       menu_option_set(item, equip);
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
@@ -152,11 +237,25 @@ static int bytemod_proc(struct menu_item *item,
 {
   uint8_t *data_ptr = data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (*data_ptr != menu_intinput_get(item))
+    if (menu_intinput_get(item) != *data_ptr)
       menu_intinput_set(item, *data_ptr);
   }
   else if (reason == MENU_CALLBACK_CHANGED)
     *data_ptr = menu_intinput_get(item);
+  return 0;
+}
+
+static int swordless_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  uint8_t *flag_ptr = (void*)0x8011B503;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != *flag_ptr)
+      menu_option_set(item, *flag_ptr);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *flag_ptr = menu_option_get(item);
   return 0;
 }
 
@@ -215,6 +314,11 @@ static void warp_proc(struct menu_item *item, void *data)
   (*(uint16_t*)0x801DA2B4) = 0x0014;
 }
 
+static void clear_csp_proc(struct menu_item *item, void *data)
+{
+  (*(uint32_t*)0x801CA208) = 0;
+}
+
 static void input_hook()
 {
   if (frames_queued != 0)
@@ -232,9 +336,9 @@ static void update_hook()
 
 static void pause_proc(struct menu_item *item, void *data)
 {
-  uint32_t *input_call = (uint32_t*)0x800A16AC;
+  uint32_t *input_call = (void*)0x800A16AC;
   *input_call = MIPS_JAL(&input_hook);
-  uint32_t *update_call = (uint32_t*)0x8009CAE8;
+  uint32_t *update_call = (void*)0x8009CAE8;
   *update_call = MIPS_JAL(&update_hook);
   if (frames_queued >= 0)
     frames_queued = -1;
@@ -361,6 +465,9 @@ ENTRY void _start(void *text_ptr)
     menu_add_static(&g_menu_equips, 2, 14, "c right", 0xFFFFFF);
     menu_add_intinput(&g_menu_equips, 12, 14, 16, 2, bytemod_proc,
                       (void*)0x8011A63B, 0);
+    menu_add_static(&g_menu_equips, 2, 15, "swordless", 0xFFFFFF);
+    menu_add_option(&g_menu_equips, 12, 15, "no\0""yes\0",
+                    swordless_proc, NULL, 0);
 
     menu_init(&g_menu_items);
     g_menu_items.selector = menu_add_submenu(&g_menu_items, 2, 6, NULL,
@@ -373,6 +480,38 @@ ENTRY void _start(void *text_ptr)
                       item_switch_proc,
                       &item_list[i],
                       0);
+    menu_add_submenu(&g_menu_items, 2, 17, &g_menu_variable_items,
+                     "variable items", 0);
+
+    menu_init(&g_menu_variable_items);
+    g_menu_variable_items.selector = menu_add_submenu(&g_menu_variable_items,
+                                                      2, 6, NULL, "return", 0);
+    for (int i = 0; i < 4; ++i) {
+      char s[41];
+      sprintf(s, "bottle %i:", i + 1);
+      menu_add_static(&g_menu_variable_items, 2, 7 + i, s, 0xFFFFFF);
+      menu_add_option(&g_menu_variable_items, 20, 7 + i,
+                      "nothing\0""bottle\0""red potion\0""green potion\0"
+                      "blue potion\0""fairy\0""fish\0""milk\0""blue fire\0"
+                      "bug\0""big poe\0""half milk\0""poe\0",
+                      bottle_option_proc, (void*)(0x8011A656 + i), 0);
+    }
+    menu_add_static(&g_menu_variable_items, 2, 11, "child trade item:",
+                    0xFFFFFF);
+    menu_add_option(&g_menu_variable_items, 20, 11,
+                    "nothing\0""weird egg\0""chicken\0""zelda's letter\0"
+                    "keaton mask\0""skull mask\0""spooky mask\0""bunny hood\0"
+                    "goron mask\0""zora mask\0""gerudo mask\0""mask of truth\0"
+                    "sold out\0",
+                    child_trade_option_proc, NULL, 0);
+    menu_add_static(&g_menu_variable_items, 2, 12, "adult trade item:",
+                    0xFFFFFF);
+    menu_add_option(&g_menu_variable_items, 20, 12,
+                    "nothing\0""pocket egg\0""pocket cucco\0""cojiro\0"
+                    "odd mushroom\0""odd potion\0""poacher's saw\0"
+                    "broken goron's sword\0""prescription\0""eyeball frog\0"
+                    "eye drops\0""claim check\0",
+                    adult_trade_option_proc, NULL, 0);
 
     menu_init(&g_menu_misc);
     g_menu_misc.selector = menu_add_submenu(&g_menu_misc, 2, 6, NULL,
@@ -389,12 +528,14 @@ ENTRY void _start(void *text_ptr)
                     tp_slot_display, 0);
     menu_add_button(&g_menu_misc, 20, 9, "+", tp_slot_inc_proc,
                     tp_slot_display, 0);
-    menu_add_button(&g_menu_misc, 2, 10, "pause / unpause", pause_proc,
+    menu_add_button(&g_menu_misc, 2, 10, "clear cutscene pointer",
+                    clear_csp_proc, NULL, 0);
+    menu_add_button(&g_menu_misc, 2, 11, "pause / unpause", pause_proc,
                     NULL, 0);
-    menu_add_button(&g_menu_misc, 2, 11, "frame advance", advance_proc,
+    menu_add_button(&g_menu_misc, 2, 12, "frame advance", advance_proc,
                     NULL, 0);
 #if 0
-    menu_add_button(&g_menu_misc, 2, 12, "suppress exceptions", sup_exc_proc,
+    menu_add_button(&g_menu_misc, 2, 13, "suppress exceptions", sup_exc_proc,
                     NULL, 0);
 #endif
 
