@@ -273,19 +273,19 @@ static int item_switch_proc(struct menu_item *item,
   return 0;
 }
 
+static void reset_gs_proc(struct menu_item *item, void *data)
+{
+  memset((void*)0x8011B46C, 0x00, 0x38);
+}
+
 static void clear_flags_proc(struct menu_item *item, void *data)
 {
-  (*(uint32_t*)0x801CA1C8) = 0x00000000;
-  (*(uint32_t*)0x801CA1CC) = 0x00000000;
-  (*(uint32_t*)0x801CA1D8) = 0x00000000;
-  (*(uint32_t*)0x801CA1DC) = 0x00000000;
+  memset((void*)0x801CA1C8, 0x00, 0x24);
 }
+
 static void set_flags_proc(struct menu_item *item, void *data)
 {
-  (*(uint32_t*)0x801CA1C8) = 0xFFFFFFFF;
-  (*(uint32_t*)0x801CA1CC) = 0xFFFFFFFF;
-  (*(uint32_t*)0x801CA1D8) = 0xFFFFFFFF;
-  (*(uint32_t*)0x801CA1DC) = 0xFFFFFFFF;
+  memset((void*)0x801CA1C8, 0xFF, 0x24);
 }
 
 static void tp_slot_dec_proc(struct menu_item *item, void *data)
@@ -517,23 +517,25 @@ ENTRY void _start(void *text_ptr)
     menu_init(&g_menu_misc);
     g_menu_misc.selector = menu_add_submenu(&g_menu_misc, 2, 6, NULL,
                                             "return", 0);
-    menu_add_button(&g_menu_misc, 2, 7, "clear flags",
+    menu_add_button(&g_menu_misc, 2, 7, "reset all gs",
+                    reset_gs_proc, NULL, 0);
+    menu_add_button(&g_menu_misc, 2, 8, "clear scene flags",
                     clear_flags_proc, NULL, 0);
-    menu_add_button(&g_menu_misc, 2, 8, "set flags",
+    menu_add_button(&g_menu_misc, 2, 9, "set scene flags",
                     set_flags_proc, NULL, 0);
-    menu_add_static(&g_menu_misc, 2, 9, "teleport slot", 0xFFFFFF);
+    menu_add_static(&g_menu_misc, 2, 10, "teleport slot", 0xFFFFFF);
     struct menu_item *tp_slot_display = menu_add_static(&g_menu_misc,
                                                         18, 9, "0",
                                                         0xA0A0A0);
-    menu_add_button(&g_menu_misc, 16, 9, "-", tp_slot_dec_proc,
+    menu_add_button(&g_menu_misc, 16, 10, "-", tp_slot_dec_proc,
                     tp_slot_display, 0);
-    menu_add_button(&g_menu_misc, 20, 9, "+", tp_slot_inc_proc,
+    menu_add_button(&g_menu_misc, 20, 10, "+", tp_slot_inc_proc,
                     tp_slot_display, 0);
-    menu_add_button(&g_menu_misc, 2, 10, "clear cutscene pointer",
+    menu_add_button(&g_menu_misc, 2, 11, "clear cutscene pointer",
                     clear_csp_proc, NULL, 0);
-    menu_add_button(&g_menu_misc, 2, 11, "pause / unpause", pause_proc,
+    menu_add_button(&g_menu_misc, 2, 12, "pause / unpause", pause_proc,
                     NULL, 0);
-    menu_add_button(&g_menu_misc, 2, 12, "frame advance", advance_proc,
+    menu_add_button(&g_menu_misc, 2, 13, "frame advance", advance_proc,
                     NULL, 0);
 #if 0
     menu_add_button(&g_menu_misc, 2, 13, "suppress exceptions", sup_exc_proc,
