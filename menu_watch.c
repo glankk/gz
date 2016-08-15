@@ -12,17 +12,19 @@ struct item_data
 };
 
 static const char *datatype_options =
-  "u8\0"
-  "s8\0"
-  "x8\0"
-  "u16\0"
-  "s16\0"
-  "x16\0"
-  "u32\0"
-  "s32\0"
-  "x32\0"
+  "u8\0""s8\0""x8\0"
+  "u16\0""s16\0""x16\0"
+  "u32\0""s32\0""x32\0"
   "f32\0"
 ;
+
+static int datatype_size[] =
+{
+  1, 1, 1,
+  2, 2, 2,
+  4, 4, 4,
+  4,
+};
 
 
 static int think_proc(struct menu *menu, struct menu_item *item)
@@ -32,6 +34,7 @@ static int think_proc(struct menu *menu, struct menu_item *item)
   enum data_type type = menu_option_get(data->type);
   if (address == 0)
     return 1;
+  address -= address % datatype_size[type];
   switch (type) {
   case DATA_TYPE_U8:
     snprintf(item->text, 17, "%"   PRIu8,  *(uint8_t*) address); break;

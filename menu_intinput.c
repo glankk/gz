@@ -193,11 +193,11 @@ uint32_t menu_intinput_get(struct menu_item *item)
 void menu_intinput_set(struct menu_item *item, uint32_t value)
 {
   struct item_data *data = item->data;
+  data->value = value;
   for (int i = data->length - 1; i >= 0; --i) {
     int c = int_to_char(value % data->base);
     value /= data->base;
     data->children[i]->text[0] = c;
     data->parent->text[i] = c;
   }
-  data->value = value;
 }
