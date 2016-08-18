@@ -22,9 +22,8 @@ struct warp_info
 
 
 void *g_text_ptr;
-static int g_ready = 0;
 
-static int g_menu_active = 1;
+static int g_menu_active = 0;
 static struct menu g_menu_main;
 static struct menu g_menu_watches;
 static struct menu g_menu_equipment;
@@ -390,19 +389,178 @@ static void sup_exc_proc(struct menu_item *item, void *data)
 }
 #endif
 
+void main_hook()
+{
+#if 1
+  static uint16_t pad_prev = 0;
+  uint16_t pad_pressed = (pad_prev ^ input_ptr->pad) &
+                         input_ptr->pad;
+  pad_prev = input_ptr->pad;
+  static int button_time[16] = {0};
+  for (int i = 0; i < 16; ++i) {
+    int button_state = (input_ptr->pad >> i) & 0x0001;
+    button_time[i] = (button_time[i] + button_state) * button_state;
+    if (button_time[i] >= 8)
+      pad_pressed |= 1 << i;
+  }
+
+  if (g_cheats_energy)
+    (*(uint16_t*)0x8011A600) = 0x0140;
+  if (g_cheats_magic) {
+    if ((*(uint8_t*) 0x8011A609) == 0x08)
+      (*(uint8_t*) 0x8011A60A) = 0x01;
+    (*(uint8_t*) 0x8011A60C) = 0x01;
+    (*(uint8_t*) 0x8011A603) = 0x60;
+  }
+  if (g_cheats_sticks)
+    (*(uint8_t*) 0x8011A65C) = 0x09;
+  if (g_cheats_nuts)
+    (*(uint8_t*) 0x8011A65D) = 0x09;
+  if (g_cheats_bombs)
+    (*(uint8_t*) 0x8011A65E) = 0x09;
+  if (g_cheats_arrows)
+    (*(uint8_t*) 0x8011A65F) = 0x09;
+  if (g_cheats_seeds)
+    (*(uint8_t*) 0x8011A662) = 0x09;
+  if (g_cheats_bombchus)
+    (*(uint8_t*) 0x8011A664) = 0x09;
+  if (g_cheats_beans)
+    (*(uint8_t*) 0x8011A66A) = 0x09;
+  if (g_cheats_keys) {
+    (*(uint8_t*) 0x8011A68F) = 0x09;
+    (*(uint8_t*) 0x8011A690) = 0x09;
+    (*(uint8_t*) 0x8011A691) = 0x09;
+    (*(uint8_t*) 0x8011A692) = 0x09;
+    (*(uint8_t*) 0x8011A693) = 0x09;
+    (*(uint8_t*) 0x8011A697) = 0x09;
+    (*(uint8_t*) 0x8011A699) = 0x09;
+    (*(uint8_t*) 0x8011A69C) = 0x09;
+  }
+  if (g_cheats_rupees)
+    (*(uint16_t*)0x8011A604) = 0x03E7;
+  if (g_cheats_nayru)
+    (*(uint16_t*)0x8011B998) = 0x044B;
+  if (g_cheats_time)
+    (*(uint16_t*)0x8011A5DC) += 0x0100;
+  /* activated */
+  if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
+    /* reload zone with d-pad down */
+    if (button_time[BUTTON_INDEX_D_DOWN] >= 10)
+      (*(uint16_t*)0x801DA2B4) = 0x0014;
+    /* title screen with d-pad up */
+    if (button_time[BUTTON_INDEX_D_UP] >= 10) {
+      (*(uint8_t*) 0x8011B92F) = 0x02;
+      (*(uint16_t*)0x801DA2B4) = 0x0014;
+    }
+    /* levitate with l */
+    if (input_ptr->pad & BUTTON_L)
+      (*(uint16_t*)0x801DAA90) = 0x40CB;
+    /* teleportation */
+    static z64_xyz_t stored_pos[10];
+    static z64_rot_t stored_rot[10];
+    if (input_ptr->pad & BUTTON_D_LEFT) {
+      stored_pos[tp_slot] = z64_link_pos;
+      stored_rot[tp_slot] = z64_link_rot;
+    }
+    if (input_ptr->pad & BUTTON_D_RIGHT) {
+      z64_link_pos = stored_pos[tp_slot];
+      (*(z64_xyz_t*)0x801DAA38) = stored_pos[tp_slot]; /* actor position */
+      z64_link_rot = stored_rot[tp_slot];
+      (*(uint16_t*)0x801DB25E) = stored_rot[tp_slot].y; /* locked rotation */
+      /* (*(uint8_t*)0x801DAADE) = 0xFF; prevents collision with actors */
+    }
+  }
+  else {
+    if (g_menu_active) {
+      if (pad_pressed & BUTTON_D_UP)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_UP);
+      if (pad_pressed & BUTTON_D_DOWN)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_DOWN);
+      if (pad_pressed & BUTTON_D_LEFT)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_LEFT);
+      if (pad_pressed & BUTTON_D_RIGHT)
+        menu_navigate(&g_menu_main, MENU_NAVIGATE_RIGHT);
+      if (pad_pressed & BUTTON_L)
+        menu_activate(&g_menu_main);
+    }
+    else {
+      if (pad_pressed & BUTTON_L)
+        g_menu_active = 1;
+    }
+  }
+  if (g_menu_active)
+    menu_draw(&g_menu_main);
+#endif
+
+#if 1
+  SetTextRGBA(g_text_ptr, 0xC8, 0xC8, 0xC8, 0xFF);
+  SetTextXY(g_text_ptr, 2, 28);
+  SetTextString(g_text_ptr, "%4i %4i", input_ptr->x, input_ptr->y);
+  static struct
+  {
+    uint16_t    mask;
+    const char *name;
+    uint32_t    color;
+  }
+  buttons[] =
+  {
+    {0x8000, "A", 0x0000FF},
+    {0x4000, "B", 0x00FF00},
+    {0x1000, "S", 0xFF0000},
+    {0x0020, "L", 0xC8C8C8},
+    {0x0010, "R", 0xC8C8C8},
+    {0x2000, "Z", 0xC8C8C8},
+    {0x0008, "u", 0xFFFF00},
+    {0x0004, "d", 0xFFFF00},
+    {0x0002, "l", 0xFFFF00},
+    {0x0001, "r", 0xFFFF00},
+    {0x0800, "u", 0xC8C8C8},
+    {0x0400, "d", 0xC8C8C8},
+    {0x0200, "l", 0xC8C8C8},
+    {0x0100, "r", 0xC8C8C8},
+  };
+  for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
+    if (!(input_ptr->pad & buttons[i].mask))
+      continue;
+    SetTextRGBA(g_text_ptr, (buttons[i].color >> 16) & 0xFF,
+                            (buttons[i].color >> 8)  & 0xFF,
+                            (buttons[i].color >> 0)  & 0xFF,
+                            0xFF);
+    SetTextXY(g_text_ptr, 12 + i, 28);
+    SetTextString(g_text_ptr, "%s", buttons[i].name);
+  }
+#endif
+
+#if 0
+  if (input_ptr->du)
+    console_scroll(0, -1);
+  if (input_ptr->dd)
+    console_scroll(0, 1);
+  if (input_ptr->dl)
+    console_scroll(-1, 0);
+  if (input_ptr->dr)
+    console_scroll(1, 0);
+  console_print();
+#endif
+}
+
 ENTRY void _start(void *text_ptr)
 {
-  init_gp();
-  if (!g_ready) {
-    g_ready = 1;
+  /* startup */
+  {
+    init_gp();
+    clear_bss();
     do_global_ctors();
+  }
 
-    /* disable map toggling */
-    (*(uint32_t*)0x8006CD50) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
-    (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+  /* disable map toggling */
+  (*(uint32_t*)0x8006CD50) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
+  (*(uint32_t*)0x8006D4E4) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
-    g_text_ptr = text_ptr;
+  g_text_ptr = text_ptr;
 
+  /* initialize menus */
+  {
 #if 0
     console_init(36, 288);
     console_set_view(2, 8, 36, 18);
@@ -585,157 +743,17 @@ ENTRY void _start(void *text_ptr)
     menu_add_button(&g_menu_warps, 2, 9, "warp", warp_proc, &warp_info, 0);
   }
 
-#if 1
-  static uint16_t pad_prev = 0;
-  uint16_t pad_pressed = (pad_prev ^ input_ptr->pad) &
-                         input_ptr->pad;
-  pad_prev = input_ptr->pad;
-  static int button_time[16] = {0};
-  for (int i = 0; i < 16; ++i) {
-    int button_state = (input_ptr->pad >> i) & 0x0001;
-    button_time[i] = (button_time[i] + button_state) * button_state;
-    if (button_time[i] >= 8)
-      pad_pressed |= 1 << i;
-  }
-
-  if (g_cheats_energy)
-    (*(uint16_t*)0x8011A600) = 0x0140;
-  if (g_cheats_magic) {
-    if ((*(uint8_t*) 0x8011A609) == 0x08)
-      (*(uint8_t*) 0x8011A60A) = 0x01;
-    (*(uint8_t*) 0x8011A60C) = 0x01;
-    (*(uint8_t*) 0x8011A603) = 0x60;
-  }
-  if (g_cheats_sticks)
-    (*(uint8_t*) 0x8011A65C) = 0x09;
-  if (g_cheats_nuts)
-    (*(uint8_t*) 0x8011A65D) = 0x09;
-  if (g_cheats_bombs)
-    (*(uint8_t*) 0x8011A65E) = 0x09;
-  if (g_cheats_arrows)
-    (*(uint8_t*) 0x8011A65F) = 0x09;
-  if (g_cheats_seeds)
-    (*(uint8_t*) 0x8011A662) = 0x09;
-  if (g_cheats_bombchus)
-    (*(uint8_t*) 0x8011A664) = 0x09;
-  if (g_cheats_beans)
-    (*(uint8_t*) 0x8011A66A) = 0x09;
-  if (g_cheats_keys) {
-    (*(uint8_t*) 0x8011A68F) = 0x09;
-    (*(uint8_t*) 0x8011A690) = 0x09;
-    (*(uint8_t*) 0x8011A691) = 0x09;
-    (*(uint8_t*) 0x8011A692) = 0x09;
-    (*(uint8_t*) 0x8011A693) = 0x09;
-    (*(uint8_t*) 0x8011A697) = 0x09;
-    (*(uint8_t*) 0x8011A699) = 0x09;
-    (*(uint8_t*) 0x8011A69C) = 0x09;
-  }
-  if (g_cheats_rupees)
-    (*(uint16_t*)0x8011A604) = 0x03E7;
-  if (g_cheats_nayru)
-    (*(uint16_t*)0x8011B998) = 0x044B;
-  if (g_cheats_time)
-    (*(uint16_t*)0x8011A5DC) += 0x0100;
-  /* activated */
-  if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
-    /* reload zone with d-pad down */
-    if (button_time[BUTTON_INDEX_D_DOWN] >= 10)
-      (*(uint16_t*)0x801DA2B4) = 0x0014;
-    /* title screen with d-pad up */
-    if (button_time[BUTTON_INDEX_D_UP] >= 10) {
-      (*(uint8_t*) 0x8011B92F) = 0x02;
-      (*(uint16_t*)0x801DA2B4) = 0x0014;
-    }
-    /* levitate with l */
-    if (input_ptr->pad & BUTTON_L)
-      (*(uint16_t*)0x801DAA90) = 0x40CB;
-    /* teleportation */
-    static z64_xyz_t stored_pos[10];
-    static z64_rot_t stored_rot[10];
-    if (input_ptr->pad & BUTTON_D_LEFT) {
-      stored_pos[tp_slot] = z64_link_pos;
-      stored_rot[tp_slot] = z64_link_rot;
-    }
-    if (input_ptr->pad & BUTTON_D_RIGHT) {
-      z64_link_pos = stored_pos[tp_slot];
-      (*(z64_xyz_t*)0x801DAA38) = stored_pos[tp_slot]; /* actor position */
-      z64_link_rot = stored_rot[tp_slot];
-      (*(uint16_t*)0x801DB25E) = stored_rot[tp_slot].y; /* locked rotation */
-      /* (*(uint8_t*)0x801DAADE) = 0xFF; prevents collision with actors */
-    }
-  }
-  else {
-    if (g_menu_active) {
-      if (pad_pressed & BUTTON_D_UP)
-        menu_navigate(&g_menu_main, MENU_NAVIGATE_UP);
-      if (pad_pressed & BUTTON_D_DOWN)
-        menu_navigate(&g_menu_main, MENU_NAVIGATE_DOWN);
-      if (pad_pressed & BUTTON_D_LEFT)
-        menu_navigate(&g_menu_main, MENU_NAVIGATE_LEFT);
-      if (pad_pressed & BUTTON_D_RIGHT)
-        menu_navigate(&g_menu_main, MENU_NAVIGATE_RIGHT);
-      if (pad_pressed & BUTTON_L)
-        menu_activate(&g_menu_main);
-    }
-    else {
-      if (pad_pressed & BUTTON_L)
-        g_menu_active = 1;
-    }
-  }
-  if (g_menu_active)
-    menu_draw(&g_menu_main);
-#endif
-
-#if 1
-  SetTextRGBA(g_text_ptr, 0xC8, 0xC8, 0xC8, 0xFF);
-  SetTextXY(g_text_ptr, 2, 28);
-  SetTextString(g_text_ptr, "%4i %4i", input_ptr->x, input_ptr->y);
-  static struct
+  /* replace start routine with a jump to main hook */
   {
-    uint16_t    mask;
-    const char *name;
-    uint32_t    color;
+    uint32_t main_jump[] =
+    {
+      MIPS_SW(MIPS_RA, -4, MIPS_SP),
+      MIPS_LA(MIPS_RA, &main_hook),
+      MIPS_JR(MIPS_RA),
+      MIPS_LW(MIPS_RA, -4, MIPS_SP),
+    };
+    memcpy(&_start, &main_jump, sizeof(main_jump));
   }
-  buttons[] =
-  {
-    {0x8000, "A", 0x0000FF},
-    {0x4000, "B", 0x00FF00},
-    {0x1000, "S", 0xFF0000},
-    {0x0020, "L", 0xC8C8C8},
-    {0x0010, "R", 0xC8C8C8},
-    {0x2000, "Z", 0xC8C8C8},
-    {0x0008, "u", 0xFFFF00},
-    {0x0004, "d", 0xFFFF00},
-    {0x0002, "l", 0xFFFF00},
-    {0x0001, "r", 0xFFFF00},
-    {0x0800, "u", 0xC8C8C8},
-    {0x0400, "d", 0xC8C8C8},
-    {0x0200, "l", 0xC8C8C8},
-    {0x0100, "r", 0xC8C8C8},
-  };
-  for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
-    if (!(input_ptr->pad & buttons[i].mask))
-      continue;
-    SetTextRGBA(g_text_ptr, (buttons[i].color >> 16) & 0xFF,
-                            (buttons[i].color >> 8)  & 0xFF,
-                            (buttons[i].color >> 0)  & 0xFF,
-                            0xFF);
-    SetTextXY(g_text_ptr, 12 + i, 28);
-    SetTextString(g_text_ptr, "%s", buttons[i].name);
-  }
-#endif
-
-#if 0
-  if (input_ptr->du)
-    console_scroll(0, -1);
-  if (input_ptr->dd)
-    console_scroll(0, 1);
-  if (input_ptr->dl)
-    console_scroll(-1, 0);
-  if (input_ptr->dr)
-    console_scroll(1, 0);
-  console_print();
-#endif
 }
 
 
