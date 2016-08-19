@@ -77,6 +77,9 @@
 		<Unit filename="menu_switch.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="menu_userwatch.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="menu_watch.c">
 			<Option compilerVar="CC" />
 		</Unit>

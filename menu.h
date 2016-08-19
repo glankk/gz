@@ -64,19 +64,19 @@ struct menu
   int                 highlight_state[3];
 };
 
-enum data_type
+enum watch_type
 {
-  DATA_TYPE_U8,
-  DATA_TYPE_S8,
-  DATA_TYPE_X8,
-  DATA_TYPE_U16,
-  DATA_TYPE_S16,
-  DATA_TYPE_X16,
-  DATA_TYPE_U32,
-  DATA_TYPE_S32,
-  DATA_TYPE_X32,
-  DATA_TYPE_F32,
-  DATA_TYPE_MAX,
+  WATCH_TYPE_U8,
+  WATCH_TYPE_S8,
+  WATCH_TYPE_X8,
+  WATCH_TYPE_U16,
+  WATCH_TYPE_S16,
+  WATCH_TYPE_X16,
+  WATCH_TYPE_U32,
+  WATCH_TYPE_S32,
+  WATCH_TYPE_X32,
+  WATCH_TYPE_F32,
+  WATCH_TYPE_MAX,
 };
 
 #ifdef __cplusplus
@@ -113,9 +113,19 @@ int                 menu_option_get(struct menu_item *item);
 void                menu_option_set(struct menu_item *item,
                                     int value);
 struct menu_item   *menu_add_watch(struct menu *menu, int x, int y,
-                                   int priority);
-struct menu_item   *menu_watch_address(struct menu_item *item);
-struct menu_item   *menu_watch_type(struct menu_item *item);
+                                   uint32_t address, enum watch_type type);
+uint32_t            menu_watch_get_address(struct menu_item *item);
+void                menu_watch_set_address(struct menu_item *item,
+                                           uint32_t address);
+enum watch_type     menu_watch_get_type(struct menu_item *item);
+void                menu_watch_set_type(struct menu_item *item,
+                                        enum watch_type type);
+struct menu_item   *menu_add_userwatch(struct menu *menu, int x, int y,
+                                       uint32_t address, enum watch_type type,
+                                       int priority);
+struct menu_item   *menu_userwatch_address(struct menu_item *item);
+struct menu_item   *menu_userwatch_type(struct menu_item *item);
+struct menu_item   *menu_userwatch_watch(struct menu_item *item);
 struct menu_item   *menu_add_watchlist(struct menu *menu, int x, int y,
                                        int priority);
 struct menu_item   *menu_add_submenu(struct menu *menu, int x, int y,

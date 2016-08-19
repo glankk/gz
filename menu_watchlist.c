@@ -10,14 +10,14 @@ struct member
 
 struct item_data
 {
-  struct vector members;
+  struct vector     members;
   struct menu_item *plus;
 };
 
 struct minus_data
 {
   struct item_data *data;
-  int index;
+  int               index;
 };
 
 
@@ -77,17 +77,17 @@ static int plus_activate_proc(struct menu *menu, struct menu_item *item)
   minus->activate_proc = minus_activate_proc;
   minus->move_proc = minus_move_proc;
   minus->remove_proc = minus_remove_proc;
-  struct menu_item *watch = menu_add_watch(menu, item->x + 2, item->y,
-                                           item->priority);
+  uint32_t address = 0x00000000;
+  enum watch_type type = WATCH_TYPE_U8;
   if (data->members.size > 0) {
     struct member *last_member = vector_at(&data->members,
                                            data->members.size - 1);
-    struct menu_item *last_watch = last_member->watch;
-    uint32_t address = menu_intinput_get(menu_watch_address(last_watch));
-    enum data_type type = menu_option_get(menu_watch_type(last_watch));
-    menu_intinput_set(menu_watch_address(watch), address);
-    menu_option_set(menu_watch_type(watch), type);
+    struct menu_item *last_watch = menu_userwatch_watch(last_member->watch);
+    address = menu_watch_get_address(last_watch);
+    type = menu_watch_get_type(last_watch);
   }
+  struct menu_item *watch = menu_add_userwatch(menu, item->x + 2, item->y,
+                                               address, type, item->priority);
   struct member member = {minus, watch};
   vector_push_back(&data->members, 1, &member);
   ++item->y;

@@ -168,7 +168,7 @@ void menu_item_init(struct menu_item *item, int x, int y,
     strcpy(item->text, text);
   }
   else
-    text = NULL;
+    item->text = NULL;
   item->color = color;
   item->priority = 0;
   item->data = NULL;
