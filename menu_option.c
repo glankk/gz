@@ -50,7 +50,7 @@ static int navigate_proc(struct menu *menu, struct menu_item *item,
   char **option = vector_at(&data->options, data->value);
   item->text = *option;
   if (data->callback_proc)
-      data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
+    data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
   return 1;
 };
 
