@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <z64.h>
+#include "z64.h"
 #include "sys.h"
 #include "gz.h"
 

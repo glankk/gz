@@ -91,6 +91,7 @@
 		</Unit>
 		<Unit filename="sys.h" />
 		<Unit filename="text_hook.gsc" />
+		<Unit filename="z64.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

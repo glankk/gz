@@ -3,7 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <list/list.h>
-#include <z64.h>
+#include "z64.h"
 #include "gz.h"
 #include "menu.h"
 
