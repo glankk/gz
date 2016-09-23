@@ -270,7 +270,7 @@ static int magic_switch_proc(struct menu_item *item,
                              void *data)
 {
   uint8_t *have_magic   = (void*)z64_has_magic_addr;
-  uint8_t *update_magic = (void*)z64_update_magic_func_addr;
+  uint8_t *update_magic = (void*)z64_flag_update_magic_addr;
   if (reason == MENU_CALLBACK_SWITCH_ON) {
     *have_magic = 0x01;
     *update_magic = 0x00;
@@ -288,8 +288,8 @@ static int magic_capacity_proc(struct menu_item *item,
                                enum menu_callback_reason reason,
                                void *data)
 {
-  uint8_t *magic_capacity = (void*)z64_has_dbl_magic_addr;
-  uint8_t *update_magic   = (void*)z64_update_magic_func_addr;
+  uint8_t *magic_capacity = (void*)z64_magic_capacity_addr;
+  uint8_t *update_magic   = (void*)z64_flag_update_magic_addr;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     if (menu_intinput_get(item) != *magic_capacity)
       menu_intinput_set(item, *magic_capacity);
@@ -508,7 +508,7 @@ void main_hook()
   if (cheats_energy)
     (*(uint16_t*)z64_hearts_addr) = (*(uint16_t*)z64_max_hearts_addr);
   if (cheats_magic)
-    (*(uint8_t*) z64_magic_addr) = ((*(uint8_t*) z64_has_dbl_magic_addr) + 1) * 0x30;
+    (*(uint8_t*) z64_magic_addr) = ((*(uint8_t*) z64_magic_capacity_addr) + 1) * 0x30;
   if (cheats_sticks) {
     int stick = ((*(uint32_t*)z64_upgrades_addr) >> 17) & 0b111;
     int stick_capacity[] = {1, 10, 20, 30, 1, 20, 30, 40};
@@ -551,7 +551,7 @@ void main_hook()
   if (cheats_nayru)
     (*(uint16_t*)z64_flag_nayrus_addr) = 0x044B;
   if (cheats_time)
-    (*(uint16_t*)z64_active_timer_addr) += 0x0100;
+    (*(uint16_t*)z64_curr_day_time_addr) += 0x0100;
   /* activated */
   if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
     /* reload zone with d-pad down */
