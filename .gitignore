@@ -47,6 +47,15 @@ Temporary Items
 .apdisk
 
 
-# binaries
-bin/
+# generated files
+*.layout
+*.depend
 obj/
+bin/
+*.o
+*.elf
+*.bin
+*.ups
+*.z64
+*.n64
+*.v64
