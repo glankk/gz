@@ -12,9 +12,9 @@ or in an [existing issue](https://github.com/glankk/gz/issues),
 you may [submit a new issue](https://github.com/glankk/gz/issues/new).
 
 ## Building
-See [BUILDING.md](https://github.com/glankk/gz/blob/master/BUILDING.md).
+See [BUILDING](https://github.com/glankk/gz/blob/master/BUILDING.md).
 
 ## Contributing
-See [CONTRIBUTING.md](https://github.com/glankk/gz/blob/master/BUILDING.md).
+See [CONTRIBUTING](https://github.com/glankk/gz/blob/master/BUILDING.md).
 Credits are given in [AUTHORS](https://github.com/glankk/gz/blob/master/AUTHORS)
 and [THANKS](https://github.com/glankk/gz/blob/master/THANKS).
