@@ -14,18 +14,19 @@ You will need:
   and has only been tested with a version 3.3 Gameshark.
 
 Follow these steps;
-- Boot the Gameshark with your game cartridge. If your game requires a special keycode to boot, you'll first
-  need to boot the Gameshark with a game that works with the default keycode, select the the required keycode in
-  the Key Codes menu, and then reboot with the game you wish to use with gz.
-- In the Select Cheat Codes menu, select your game and make sure the (M) code is active, if one exists.
-- In the Start Game submenu, enable the Code Generator option, and select Start Game With Selected Codes.
-- Connect the Gameshark to your computer with your Parallel to USB adapter cable.
-- Start Zadig and select the Gameshark in the device the list (probably named USB Device or something similar).
-- Select libusbK in the driver list and click Replace Driver.
-- Navigate to the directory that corresponds to your game and run the `upload.bat` script.
-  This will instruct the Gameshark utility to upload gz to the game's memory,
-  and then disconnect the Gameshark. The operation will take a little while.
-- When the upload is completed, you can disconnect the USB cable and start playing.
+
+1.  Boot the Gameshark with your game cartridge. If your game requires a special keycode to boot, you'll first
+    need to boot the Gameshark with a game that works with the default keycode, select the the required keycode in
+    the Key Codes menu, and then reboot with the game you wish to use with gz.
+2.  In the Select Cheat Codes menu, select your game and make sure the `(M)` code is active, if one exists.
+3.  In the Start Game submenu, enable the Code Generator option, and select Start Game With Selected Codes.
+4.  Connect the Gameshark to your computer with your Parallel to USB adapter cable.
+5.  Start Zadig and select the Gameshark in the device the list (probably named USB Device or something similar).
+6.  Select libusbK in the driver list and click Replace Driver.
+7.  Navigate to the directory that corresponds to your game and run the `upload.bat` script.
+    This will instruct the Gameshark utility to upload gz to the game's memory,
+    and then disconnect the Gameshark. The operation will take a little while.
+8.  When the upload is completed, you can disconnect the USB cable and start playing.
 
 ### Using gz with an emulator / flash cart
 Drag and drop the rom you wish to patch onto the `patch.bat` script. A patched rom will be
