@@ -7,17 +7,17 @@ if rom_info == nil then
 end
 local rom_id = rom_info.game .. "-" .. rom_info.version
 print("rom is " .. rom_id .. "-" .. rom_info.region)
-print("loading file system...")
+print("loading file system")
 local fs = gru.z64fs_load_blob(rom)
-print("patching code file...")
+print("patching code file")
 local code_file = fs:get(rom_info.code_ind)
 local text_hook = gru.gsc_load(rom_id .. "/text_hook.gsc")
 text_hook:shift(-rom_info.code_ram)
 text_hook:apply_be(code_file)
 fs:replace(rom_info.code_ind, code_file, fs:compressed(rom_info.code_ind))
-print("reassembling rom...")
+print("reassembling rom")
 local patched_rom = fs:assemble_rom()
-print("building dependencies...")
+print("building dependencies")
 local _,_,make_result = os.execute("make gz-" .. rom_id)
 if make_result ~= 0 then
   error("failed to build gz", 0)
@@ -32,7 +32,7 @@ local _,_,make_result = os.execute(string.format("make cleanldr && make ldr " ..
 if make_result ~= 0 then
   error("failed to build ldr", 0)
 end
-print("inserting payload...")
+print("inserting payload")
 gru.gsc_load(rom_id .. "/patch/bss_patch.gsc"):apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)
@@ -40,5 +40,4 @@ patched_rom:write(0x1000, ldr)
 patched_rom:write(payload_rom, old_ldr)
 patched_rom:write(payload_rom + 0x60, gz)
 patched_rom:crc_update()
-print("done")
 return rom_info, rom, patched_rom
