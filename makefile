@@ -28,7 +28,7 @@ GZ                  = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 all                 : $(GZ)
 cleanall            :
 	rm -rf $(OBJDIR) $(BINDIR)
-.PHONY              : cleanall
+.PHONY              : all cleanall
 
 .SECONDEXPANSION:
 
