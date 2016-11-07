@@ -5,7 +5,6 @@
 		<Option title="ldr" />
 		<Option makefile="makefile" />
 		<Option makefile_is_custom="1" />
-		<Option execution_dir="." />
 		<Option pch_mode="2" />
 		<Option compiler="n64-slim" />
 		<Option extended_obj_names="1" />
@@ -23,24 +22,12 @@
 				<Option object_output="obj" />
 				<Option type="3" />
 				<Option compiler="n64-slim" />
-				<Compiler>
-					<Add option="-O3" />
-				</Compiler>
-				<MakeCommands>
-					<Build command="$make -f $makefile $target" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean$target" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
-				</MakeCommands>
 			</Target>
 		</Build>
 		<Unit filename="src/ldr/ldr.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
-			<envvars />
 			<code_completion />
 			<debugger />
 		</Extensions>
