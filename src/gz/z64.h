@@ -1,6 +1,7 @@
 #ifndef Z64_H
 #define Z64_H
 #include <stdint.h>
+#include <n64.h>
 
 #define Z64_OOT10     0x00
 #define Z64_OOT11     0x01
@@ -10,6 +11,71 @@
 #ifndef Z64_VERSION
 #define Z64_VERSION   Z64_OOT10
 #endif
+
+typedef struct
+{
+  Gfx      *w_poly_opa_disp;
+  Gfx      *w_poly_xlu_disp;
+  uint32_t  unk_00_[2];
+  Gfx      *w_overlay_disp;
+  uint32_t  unk_01_[41];
+  Gfx      *c_work_disp;
+  size_t    c_work_disp_size;
+  uint32_t  unk_02_[60];
+  Gfx      *w_work_disp;
+  size_t    work_disp_size;
+  Gfx      *work_disp;
+  Gfx      *work_disp_app;
+  Gfx      *work_disp_end;
+  uint32_t  unk_03_[57];
+  size_t    overlay_disp_size;
+  Gfx      *overlay_disp;
+  Gfx      *overlay_disp_app;
+  Gfx      *overlay_disp_end;
+  size_t    poly_opa_disp_size;
+  Gfx      *poly_opa_disp;
+  Gfx      *poly_opa_disp_app;
+  Gfx      *poly_opa_disp_end;
+  size_t    poly_xlu_disp_size;
+  Gfx      *poly_xlu_disp;
+  Gfx      *poly_xlu_disp_app;
+  Gfx      *poly_xlu_disp_end;
+  size_t    frame_count_1;
+  void     *frame_buffer;
+  uint32_t  unk_04_[2];
+  size_t    frame_count_2;
+} z64_gctxt_t;
+
+typedef union
+{
+  struct
+  {
+    unsigned a  : 1;
+    unsigned b  : 1;
+    unsigned z  : 1;
+    unsigned s  : 1;
+    unsigned du : 1;
+    unsigned dd : 1;
+    unsigned dl : 1;
+    unsigned dr : 1;
+    unsigned    : 2;
+    unsigned l  : 1;
+    unsigned r  : 1;
+    unsigned cu : 1;
+    unsigned cd : 1;
+    unsigned cl : 1;
+    unsigned cr : 1;
+    signed   x  : 8;
+    signed   y  : 8;
+  };
+  uint16_t pad;
+  uint32_t data;
+} z64_controller_t;
+
+typedef struct
+{
+  z64_gctxt_t *gctxt;
+} z64_ctxt_t;
 
 typedef union
 {
@@ -70,38 +136,13 @@ enum
   BUTTON_INDEX_A       = 15,
 };
 
-typedef union
-{
-  struct
-  {
-    unsigned a  : 1;
-    unsigned b  : 1;
-    unsigned z  : 1;
-    unsigned s  : 1;
-    unsigned du : 1;
-    unsigned dd : 1;
-    unsigned dl : 1;
-    unsigned dr : 1;
-    unsigned    : 2;
-    unsigned l  : 1;
-    unsigned r  : 1;
-    unsigned cu : 1;
-    unsigned cd : 1;
-    unsigned cl : 1;
-    unsigned cr : 1;
-    signed   x  : 8;
-    signed   y  : 8;
-  };
-  uint16_t pad;
-  uint32_t data;
-} z64_controller_t;
-
-typedef void (*SetTextRGBAProc)  (void* DList, uint8_t r, uint8_t g, uint8_t b,
+typedef void (*SetTextRGBAProc)  (void *a0, uint8_t r, uint8_t g, uint8_t b,
                                   uint8_t a);
-typedef void (*SetTextXYProc)    (void* DList, uint16_t x, uint16_t y);
-typedef void (*SetTextStringProc)(void* DList, const char* format, ...);
+typedef void (*SetTextXYProc)    (void *a0, uint16_t x, uint16_t y);
+typedef void (*SetTextStringProc)(void *a0, const char* format, ...);
 
 #if Z64_VERSION == Z64_OOT10
+#define z64_ctxt           (*(z64_ctxt_t*)      0x801C84A0)
 #define z64_controller_1   (*(z64_controller_t*)0x801C84B4)
 #define z64_rupees         (*(uint16_t*)        0x8011A604)
 #define z64_link_pos       (*(z64_xyz_t*)       0x801DAA54)

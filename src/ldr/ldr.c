@@ -22,7 +22,7 @@ struct
 static volatile *dma_regs = (void*)0xA4600000;
 
 
-ENTRY __attribute__((noreturn)) void _start()
+ENTRY _Noreturn void _start()
 {
   dma_regs->ram_address = DMA_RAM & 0x00FFFFFF;
   dma_regs->rom_address = DMA_ROM | 0x10000000;

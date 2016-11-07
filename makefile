@@ -45,8 +45,10 @@ define bin_template =
  COBJ-$(1)          = $$(patsubst $$(SRCDIR-$(1))/%,$$(OBJDIR-$(1))/%.o,$$(CSRC-$(1)))
  CXXOBJ-$(1)        = $$(patsubst $$(SRCDIR-$(1))/%,$$(OBJDIR-$(1))/%.o,$$(CXXSRC-$(1)))
  OBJ-$(1)           = $$(COBJ-$(1)) $$(CXXOBJ-$(1))
+ DEPS-$(1)          = $$(patsubst %.o,%.d,$$(OBJ-$(1)))
  BIN-$(1)           = $$(BINDIR-$(1))/$$(NAME-$(1)).bin
  ELF-$(1)           = $$(BINDIR-$(1))/$$(NAME-$(1)).elf
+ -include $$(DEPS-$(1))
  $(1)               : LDFLAGS += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
  $(1)               : $$(BIN-$(1))
  clean$(1)          :
@@ -57,9 +59,9 @@ define bin_template =
  $$(ELF-$(1))       : $$(OBJ-$(1)) | $$$$(dir $$$$@)
 	$$(LD) $$(LDFLAGS) $$^ $$(LDLIBS) -o $$@
  $$(COBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CC) -c $$(CFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
+	$$(CC) -c -MMD -MP $$(CFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
  $$(CXXOBJ-$(1))    : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CXX) -c $$(CXXFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
+	$$(CXX) -c -MMD -MP $$(CXXFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
 
 endef
 

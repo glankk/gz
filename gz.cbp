@@ -54,6 +54,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/console.h" />
+		<Unit filename="src/gz/gui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gui.h" />
 		<Unit filename="src/gz/gz.c">
 			<Option compilerVar="CC" />
 		</Unit>

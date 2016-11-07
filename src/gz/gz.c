@@ -1,9 +1,13 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include <startup.h>
 #include <n64.h>
-#include "z64.h"
 #include <mips.h>
+#include "z64.h"
+#include "gfx.h"
+#include "resource.h"
 #include "console.h"
 #include "menu.h"
 
@@ -410,6 +414,27 @@ static void clear_csp_proc(struct menu_item *item, void *data)
   (*(void**)z64_cutscene_ptr_addr) = &null_cs;
 }
 
+static void load_room_proc(struct menu_item *item, void *data)
+{
+  void    (*load_room)(void*, void*, uint8_t) = (void*)0x80080A3C;
+  void    (*unload_other_rooms)(void*, void*) = (void*)0x80080C98;
+  uint8_t  *p_room_index  = (void*)((char*)&z64_ctxt + 0x00011CBC);
+  void    **p_room_ptr    = (void*)((char*)&z64_ctxt + 0x00011CC8);
+  uint8_t  *p_room_count  = (void*)((char*)&z64_ctxt + 0x00011DEC);
+  uint8_t new_room_index = menu_intinput_get(data);
+  if (new_room_index < *p_room_count) {
+    if (new_room_index == *p_room_index) {
+      *p_room_index = 0xFF;
+      unload_other_rooms(&z64_ctxt, p_room_index);
+      *p_room_ptr = NULL;
+    }
+    else {
+      load_room(&z64_ctxt, p_room_index, new_room_index);
+      unload_other_rooms(&z64_ctxt, p_room_index);
+    }
+  }
+}
+
 static void input_hook()
 {
   if (frames_queued != 0)
@@ -493,13 +518,14 @@ void main_hook()
   }
 
 #if 1
-  static uint16_t pad_prev = 0;
-  uint16_t pad_pressed = (pad_prev ^ input_ptr->pad) &
+  static uint16_t pad = 0;
+  uint16_t pad_pressed = (pad ^ input_ptr->pad) &
                          input_ptr->pad;
-  pad_prev = input_ptr->pad;
+  uint16_t pad_pressed_raw = pad_pressed;
+  pad = input_ptr->pad;
   static int button_time[16] = {0};
   for (int i = 0; i < 16; ++i) {
-    int button_state = (input_ptr->pad >> i) & 0x0001;
+    int button_state = (pad >> i) & 0x0001;
     button_time[i] = (button_time[i] + button_state) * button_state;
     if (button_time[i] >= 8)
       pad_pressed |= 1 << i;
@@ -553,27 +579,71 @@ void main_hook()
     (*(uint16_t*)z64_flag_nayrus_addr) = 0x044B;
   if (cheats_time)
     (*(uint16_t*)z64_curr_day_time_addr) += 0x0100;
-  /* activated */
-  if (frames_queued == -1 && input_ptr->pad & BUTTON_Z) {
-    /* reload zone with d-pad down */
-    if (button_time[BUTTON_INDEX_D_DOWN] >= 10)
+
+  if (menu_active) {
+    if (pad_pressed & BUTTON_D_UP)
+      menu_navigate(&menu_main, MENU_NAVIGATE_UP);
+    if (pad_pressed & BUTTON_D_DOWN)
+      menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
+    if (pad_pressed & BUTTON_D_LEFT)
+      menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
+    if (pad_pressed & BUTTON_D_RIGHT)
+      menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
+    if (pad_pressed & BUTTON_L) {
+      if (pad & BUTTON_R)
+        menu_active = 0;
+      else
+        menu_activate(&menu_main);
+    }
+    menu_draw(&menu_main);
+  }
+  else {
+    /* l-activated commands */
+    static uint16_t l_pad = 0;
+    if (pad_pressed_raw & BUTTON_L)
+      l_pad = pad;
+    else if (!(pad & BUTTON_L))
+      l_pad = 0;
+    if (l_pad & BUTTON_R) {
+      /* show menu */
+      menu_active = 1;
+      l_pad = 0;
+    }
+    else if (l_pad & BUTTON_C_UP)
+      clear_csp_proc(NULL, NULL);
+    else if ((l_pad & BUTTON_A) && (l_pad & BUTTON_B)) {
+      /* void out */
+      z64_link_pos.y = -0x8000;
+      (*(z64_xyz_t*)z64_actor_pos_addr).y = -0x8000;
+    }
+    else if (l_pad & BUTTON_A)
+      /* reload zone */
       (*(uint16_t*)z64_flag_reload_scn_addr) = 0x0014;
-    /* title screen with d-pad up */
-    if (button_time[BUTTON_INDEX_D_UP] >= 10) {
-      (*(uint8_t*) z64_flag_interface_addr) = 0x02;
+    else if (l_pad & BUTTON_B) {
+      /* go to title screen */
+      (*(uint8_t*) z64_flag_interface_addr)  = 0x02;
       (*(uint16_t*)z64_flag_reload_scn_addr) = 0x0014;
     }
-    /* levitate with l */
-    if (input_ptr->pad & BUTTON_L)
+    else if (l_pad)
+      /* levitate */
       (*(uint16_t*)z64_levitate_addr) = 0x40CB;
-    /* teleportation */
+    /* dpad-activated commands */
+    static uint16_t d_pad = 0;
+    if (!d_pad && (pad_pressed_raw & (BUTTON_D_UP | BUTTON_D_DOWN |
+                                      BUTTON_D_LEFT | BUTTON_D_RIGHT)))
+      d_pad = pad;
+    else if (!(pad & (BUTTON_D_UP | BUTTON_D_DOWN |
+                      BUTTON_D_LEFT | BUTTON_D_RIGHT)))
+      d_pad = 0;
     static z64_xyz_t stored_pos[10];
     static z64_rot_t stored_rot[10];
-    if (input_ptr->pad & BUTTON_D_LEFT) {
+    if (d_pad & BUTTON_D_LEFT) {
+      /* save position and orientation */
       stored_pos[tp_slot] = z64_link_pos;
       stored_rot[tp_slot] = z64_link_rot;
     }
-    if (input_ptr->pad & BUTTON_D_RIGHT) {
+    else if (d_pad & BUTTON_D_RIGHT) {
+      /* teleport */
       z64_link_pos = stored_pos[tp_slot];
       /* actor position */
       (*(z64_xyz_t*)z64_actor_pos_addr) = stored_pos[tp_slot];
@@ -583,27 +653,11 @@ void main_hook()
       /* prevents collision with actors */
       /* (*(uint8_t*)z64_collision_detect_addr) = 0xFF; */
     }
+    else if (d_pad & pad_pressed & BUTTON_D_DOWN)
+      pause_proc(NULL, NULL);
+    else if (d_pad & pad_pressed & BUTTON_D_UP)
+      advance_proc(NULL, NULL);
   }
-  else {
-    if (menu_active) {
-      if (pad_pressed & BUTTON_D_UP)
-        menu_navigate(&menu_main, MENU_NAVIGATE_UP);
-      if (pad_pressed & BUTTON_D_DOWN)
-        menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
-      if (pad_pressed & BUTTON_D_LEFT)
-        menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
-      if (pad_pressed & BUTTON_D_RIGHT)
-        menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
-      if (pad_pressed & BUTTON_L)
-        menu_activate(&menu_main);
-    }
-    else {
-      if (pad_pressed & BUTTON_L)
-        menu_active = 1;
-    }
-  }
-  if (menu_active)
-    menu_draw(&menu_main);
 #endif
 
 #if 1
@@ -656,6 +710,28 @@ void main_hook()
     console_scroll(1, 0);
   console_print();
 #endif
+
+  {
+    int8_t *item_in_hand = (void*)0x801DAB72;
+    int sprite_x = 167;
+    int sprite_y = 56;
+    gfx_mode_default();
+    if (*item_in_hand >= 0) {
+      struct gfx_sprite item_sprite =
+      {
+        resource_get(RES_ZICON_ITEM),
+        *item_in_hand,
+        sprite_x, sprite_y,
+        0.75, 0.75,
+      };
+      gfx_sprite_draw(&item_sprite);
+    }
+    gfx_mode_filter(G_TF_POINT);
+    gfx_printf(resource_get(RES_FONT_ORIGAMIMOMMY10),
+               sprite_x + 12, sprite_y + 14,
+               "%02" PRIx8, (uint8_t)*item_in_hand);
+    gfx_flush();
+  }
 }
 
 ENTRY void _start(void *text_ptr)
@@ -1109,6 +1185,12 @@ ENTRY void _start(void *text_ptr)
     menu_add_button(&menu_warps, 2, 9, "clear cutscene pointer",
                     clear_csp_proc, NULL, 0);
     menu_add_button(&menu_warps, 2, 10, "warp", warp_proc, &warp_info, 0);
+    menu_add_static(&menu_warps, 2, 11, "room", 0xFFFFFF);
+    struct menu_item *room_index_input = menu_add_intinput(&menu_warps, 12, 11,
+                                                           16, 2, NULL, NULL,
+                                                           0);
+    menu_add_button(&menu_warps, 2, 12, "load room", load_room_proc,
+                    room_index_input, 0);
 
     menu_init(&menu_watches);
     menu_watches.selector = menu_add_submenu(&menu_watches, 2, 6, NULL,
