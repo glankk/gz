@@ -1,6 +1,7 @@
 #ifndef GZ_H
 #define GZ_H
+#include "gfx.h"
 
-extern void *g_text_ptr;
+extern struct gfx_font *menu_font;
 
 #endif

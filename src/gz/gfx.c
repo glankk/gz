@@ -5,8 +5,8 @@
 #include <malloc.h>
 #include <mips.h>
 #include <n64.h>
-#include "gfx.h"
 #include "z64.h"
+#include "gfx.h"
 
 #define GFX_DISP_BUFFERS                              2
 static int      gfx_current_disp                    = 0;
@@ -42,8 +42,15 @@ const struct gfx_colormatrix gfx_cm_desaturate =
   0.,    0.,    0.,    1.,
 };
 
-void gfx_mode_init(int filter)
+void gfx_mode_init(int filter, _Bool blend)
 {
+  Gfx g_blend[] =
+  {
+    gsDPSetCombineMode(G_CC_DECALRGBA,
+                       G_CC_DECALRGBA),
+    gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
+                       G_CC_MODULATERGBA_PRIM),
+  };
   gfx_disp(
     gsDPPipeSync(),
     gsSPClearGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
@@ -57,13 +64,13 @@ void gfx_mode_init(int filter)
     gsDPSetTextureLOD(G_TL_TILE),
     gsDPSetTextureLUT(G_TT_NONE),
     gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
-    gsDPSetCombineMode(G_CC_DECALRGBA, G_CC_DECALRGBA),
+    g_blend[blend],
   );
 }
 
 void gfx_mode_default()
 {
-  gfx_mode_init(G_TF_BILERP);
+  gfx_mode_init(G_TF_BILERP, 0);
 }
 
 void gfx_mode_filter(int filter)
@@ -71,6 +78,29 @@ void gfx_mode_filter(int filter)
   gfx_disp(
     gsDPPipeSync(),
     gsDPSetTextureFilter(filter),
+  );
+}
+
+void gfx_mode_blend(_Bool blend)
+{
+  Gfx g_blend[] =
+  {
+    gsDPSetCombineMode(G_CC_DECALRGBA,
+                       G_CC_DECALRGBA),
+    gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
+                       G_CC_MODULATERGBA_PRIM),
+  };
+  gfx_disp(
+    gsDPPipeSync(),
+    g_blend[blend],
+  );
+}
+
+void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+  gfx_disp(
+    gsDPPipeSync(),
+    gsDPSetPrimColor(0, 0, r, g, b, a),
   );
 }
 
@@ -139,19 +169,13 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
         return NULL;
       }
       texldr->file_vaddr = texdesc->file_vaddr;
-      void (*GetFile)(void*) = (void*)0x80000B0C;
-      struct
-      {
-        uint32_t  vrom_start;
-        void     *ram_dest;
-        uint32_t  size;
-      } f =
+      z64_getfile_t f =
       {
         texldr->file_vaddr,
         texldr->file_data,
         texdesc->file_vsize,
       };
-      GetFile(&f);
+      z64_GetFile(&f);
     }
     if (texdesc->file_vsize == texture_size) {
       texture_data = texldr->file_data;
@@ -358,7 +382,7 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       tile_end = texture->images;
       chars_per_tile = tile_end - tile_begin;
     }
-    int tile_loaded = 0;
+    _Bool tile_loaded = 0;
     int cx = 0;
     int cy = 0;
     for (int j = 0; j < l; ++j, cx += texture->width + font->spacing) {

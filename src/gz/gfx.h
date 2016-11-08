@@ -60,9 +60,11 @@ struct gfx_font
   int16_t spacing;
 };
 
-void gfx_mode_init(int filter);
+void gfx_mode_init(int filter, _Bool blend);
 void gfx_mode_default();
 void gfx_mode_filter(int filter);
+void gfx_mode_blend(_Bool blend);
+void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 /* all sizes are specified in number of bytes */
 Gfx  *gfx_disp_append(Gfx *disp, size_t size);
 void *gfx_data_append(void *data, size_t size);

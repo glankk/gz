@@ -6,6 +6,7 @@
 #include "z64.h"
 #include "gz.h"
 #include "menu.h"
+#include "gfx.h"
 
 
 void menu_init(struct menu *menu)
@@ -55,12 +56,11 @@ void menu_draw(struct menu *menu)
                        menu->highlight_color_animated :
                        menu->highlight_color_static) :
                       item->color);
-    SetTextRGBA(g_text_ptr, (color >> 16) & 0xFF,
-                            (color >> 8)  & 0xFF,
-                            (color >> 0)  & 0xFF,
-                            0xFF);
-    SetTextXY(g_text_ptr, item->x, item->y);
-    SetTextString(g_text_ptr, "%s", item->text);
+    gfx_mode_color((color >> 16) & 0xFF,
+                   (color >> 8)  & 0xFF,
+                   (color >> 0)  & 0xFF,
+                   0xFF);
+    gfx_printf(menu_font, item->x * 6, item->y * 8, "%s", item->text);
   }
 }
 

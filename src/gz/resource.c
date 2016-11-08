@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "z64.h"
 #include "resource.h"
 #include "gfx.h"
 
@@ -28,7 +29,8 @@ static void *rc_zicon_item()
   {
     G_IM_FMT_RGBA, G_IM_SIZ_32b, 0x0,
     32, 32, 90,
-    0x007BD000, 0x000888A0,
+    z64_icon_item_static_vaddr,
+    z64_icon_item_static_vsize,
   };
   return gfx_texture_load(&td_icon_item_static, NULL);
 }
@@ -39,7 +41,8 @@ static void *rc_zfont_nes()
   {
     G_IM_FMT_I, G_IM_SIZ_4b, 0x0,
     16, 16, 140,
-    0x00928000, 0x00004580,
+    z64_nes_font_static_vaddr,
+    z64_nes_font_static_vsize,
   };
   return rc_font_generic(&td_nes_font_static, 32, -6);
 }

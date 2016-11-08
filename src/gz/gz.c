@@ -47,7 +47,7 @@ struct byte_option
 };
 
 
-void *g_text_ptr;
+struct gfx_font *menu_font;
 
 static struct menu menu_main;
 static struct menu menu_inventory;
@@ -507,13 +507,14 @@ static void sup_exc_proc(struct menu_item *item, void *data)
 
 void main_hook()
 {
+  gfx_mode_init(G_TF_POINT, G_ON);
+
   {
     static int splash_time = 230;
     if (splash_time > 0) {
       --splash_time;
-      SetTextRGBA(g_text_ptr, 0xA0, 0x00, 0x00, 0xFF);
-      SetTextXY(g_text_ptr, 2, 27);
-      SetTextString(g_text_ptr, "gz-0.2.0 github.com/glankk/gz");
+      gfx_mode_color(0xA0, 0x00, 0x00, 0xFF);
+      gfx_printf(menu_font, 2 * 6, 27 * 8, "gz-0.2.0 github.com/glankk/gz");
     }
   }
 
@@ -661,9 +662,8 @@ void main_hook()
 #endif
 
 #if 1
-  SetTextRGBA(g_text_ptr, 0xC8, 0xC8, 0xC8, 0xFF);
-  SetTextXY(g_text_ptr, 2, 28);
-  SetTextString(g_text_ptr, "%4i %4i", input_ptr->x, input_ptr->y);
+  gfx_mode_color(0xC8, 0xC8, 0xC8, 0xFF);
+  gfx_printf(menu_font, 2 * 6, 28 * 8, "%4i %4i", input_ptr->x, input_ptr->y);
   static struct
   {
     uint16_t    mask;
@@ -690,12 +690,11 @@ void main_hook()
   for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
     if (!(input_ptr->pad & buttons[i].mask))
       continue;
-    SetTextRGBA(g_text_ptr, (buttons[i].color >> 16) & 0xFF,
-                            (buttons[i].color >> 8)  & 0xFF,
-                            (buttons[i].color >> 0)  & 0xFF,
-                            0xFF);
-    SetTextXY(g_text_ptr, 12 + i, 28);
-    SetTextString(g_text_ptr, "%s", buttons[i].name);
+    gfx_mode_color((buttons[i].color >> 16) & 0xFF,
+                   (buttons[i].color >> 8)  & 0xFF,
+                   (buttons[i].color >> 0)  & 0xFF,
+                   0xFF);
+    gfx_printf(menu_font, (12 + i) * 6, 28 * 8, "%s", buttons[i].name);
   }
 #endif
 
@@ -712,10 +711,13 @@ void main_hook()
 #endif
 
   {
+#if Z64_VERSION == Z64_OOT10
     int8_t *item_in_hand = (void*)0x801DAB72;
+#elif Z64_VERSION == Z64_OOT12
+    int8_t *item_in_hand = (void*)0x801DB432;
+#endif
     int sprite_x = 167;
     int sprite_y = 56;
-    gfx_mode_default();
     if (*item_in_hand >= 0) {
       struct gfx_sprite item_sprite =
       {
@@ -724,17 +726,22 @@ void main_hook()
         sprite_x, sprite_y,
         0.75, 0.75,
       };
+      gfx_mode_filter(G_TF_BILERP);
+      gfx_mode_blend(G_OFF);
       gfx_sprite_draw(&item_sprite);
     }
     gfx_mode_filter(G_TF_POINT);
+    gfx_mode_blend(G_ON);
+    gfx_mode_color(0xFF, 0xFF, 0xFF, 0xFF);
     gfx_printf(resource_get(RES_FONT_ORIGAMIMOMMY10),
                sprite_x + 12, sprite_y + 14,
                "%02" PRIx8, (uint8_t)*item_in_hand);
-    gfx_flush();
   }
+
+  gfx_flush();
 }
 
-ENTRY void _start(void *text_ptr)
+ENTRY void _start()
 {
   /* startup */
   {
@@ -747,7 +754,7 @@ ENTRY void _start(void *text_ptr)
   (*(uint32_t*)z64_minimap_disable_1_addr) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
   (*(uint32_t*)z64_minimap_disable_2_addr) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
-  g_text_ptr = text_ptr;
+  menu_font = resource_get(RES_FONT_ORIGAMIMOMMY10);
 
   /* initialize menus */
   {

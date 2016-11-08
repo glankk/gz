@@ -100,6 +100,13 @@ typedef struct
   uint16_t z;
 } z64_rot_t;
 
+typedef struct
+{
+  uint32_t  vrom_start;
+  void     *ram_dest;
+  uint32_t  size;
+} z64_getfile_t;
+
 enum
 {
   BUTTON_C_RIGHT = 0x0001,
@@ -136,32 +143,20 @@ enum
   BUTTON_INDEX_A       = 15,
 };
 
-typedef void (*SetTextRGBAProc)  (void *a0, uint8_t r, uint8_t g, uint8_t b,
-                                  uint8_t a);
-typedef void (*SetTextXYProc)    (void *a0, uint16_t x, uint16_t y);
-typedef void (*SetTextStringProc)(void *a0, const char* format, ...);
-
 #if Z64_VERSION == Z64_OOT10
-#define z64_ctxt           (*(z64_ctxt_t*)      0x801C84A0)
-#define z64_controller_1   (*(z64_controller_t*)0x801C84B4)
-#define z64_rupees         (*(uint16_t*)        0x8011A604)
-#define z64_link_pos       (*(z64_xyz_t*)       0x801DAA54)
-#define z64_link_rot       (*(z64_rot_t*)       0x801DAAE4)
+#define z64_ctxt          (*(z64_ctxt_t*)       0x801C84A0)
+#define z64_controller_1  (*(z64_controller_t*) 0x801C84B4)
+#define z64_link_pos      (*(z64_xyz_t*)        0x801DAA54)
+#define z64_link_rot      (*(z64_rot_t*)        0x801DAAE4)
 
-#define SetTextRGBA        ((SetTextRGBAProc)   0x800CBE58)
-#define SetTextXY          ((SetTextXYProc)     0x800CBEC8)
-#define SetTextString      ((SetTextStringProc) 0x800CC588)
-
-/*Addresses*/
+/* dram addresses */
+#define z64_GetFile_addr                        0x80000B0C
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_frame_update_func_addr              0x8009AF1C
 #define z64_frame_update_call_addr              0x8009CAE8
 #define z64_frame_input_call_func_addr          0x800A0BA0
 #define z64_frame_input_call_call_addr          0x800A16AC
-#define z64_SetTextRGBA_addr                    0x800CBE58
-#define z64_SetTextXY_addr                      0x800CBEC8
-#define z64_SetTextString_addr                  0x800CC588
 #define z64_curr_day_time_addr                  0x8011A5DC
 #define z64_max_hearts_addr                     0x8011A5FE
 #define z64_hearts_addr                         0x8011A600
@@ -236,20 +231,21 @@ typedef void (*SetTextStringProc)(void *a0, const char* format, ...);
 #define z64_collision_detect_addr               0x801DAADE
 #define z64_actor_rot_addr                      0x801DB25E
 
-
+/* rom addresses */
+#define z64_icon_item_static_vaddr              0x007BD000
+#define z64_icon_item_static_vsize              0x000888A0
+#define z64_nes_font_static_vaddr               0x00928000
+#define z64_nes_font_static_vsize               0x00004580
 #endif
 
 #if Z64_VERSION == Z64_OOT12
-#define z64_controller_1   (*(z64_controller_t*)0x801C8D70)
-#define z64_rupees         (*(uint16_t*)        0x8011ACB4)
-#define z64_link_pos       (*(z64_xyz_t*)       0x801DB2F8)
-#define z64_link_rot       (*(z64_rot_t*)       0x801DB3A4)
+#define z64_ctxt          (*(z64_ctxt_t*)       0x801C8D60)
+#define z64_controller_1  (*(z64_controller_t*) 0x801C8D74)
+#define z64_link_pos      (*(z64_xyz_t*)        0x801DB2F8)
+#define z64_link_rot      (*(z64_rot_t*)        0x801DB3A4)
 
-#define SetTextRGBA        ((SetTextRGBAProc)   0x800CC698)
-#define SetTextXY          ((SetTextXYProc)     0x800CC708)
-#define SetTextString      ((SetTextStringProc) 0x800CCDC8)
-
-/*Addresses*/
+/* dram ddresses */
+#define z64_GetFile_addr                        0x80000C9C
 #define z64_minimap_disable_1_addr              0x8006D3B0
 #define z64_minimap_disable_2_addr              0x8006DB40
 #define z64_frame_update_func_addr              0x8009B60C
@@ -329,6 +325,18 @@ typedef void (*SetTextStringProc)(void *a0, const char* format, ...);
 #define z64_levitate_addr                       0x801DB350
 #define z64_collision_detect_addr               0x801DB39E
 #define z64_actor_rot_addr                      0x801DBB1E
+
+/* rom addresses */
+#define z64_icon_item_static_vaddr              0x007BD000
+#define z64_icon_item_static_vsize              0x000888A0
+#define z64_nes_font_static_vaddr               0x008ED000
+#define z64_nes_font_static_vsize               0x00004580
 #endif
+
+/* function prototypes */
+typedef void (*z64_GetFile_proc)(z64_getfile_t*);
+
+/* functions */
+#define z64_GetFile       ((z64_GetFile_proc)   z64_GetFile_addr)
 
 #endif
