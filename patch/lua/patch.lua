@@ -12,7 +12,7 @@ for i = 1, #arg do
     error("unrecognized rom", 0)
   end
   local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
-  local patch = gru.ups_load("gz-" .. rom_id .. ".ups")
+  local patch = gru.ups_load("ups/gz-" .. rom_id .. ".ups")
   patch:apply(rom)
   rom:save_file("gz-" .. rom_id ..  ".z64")
 end
