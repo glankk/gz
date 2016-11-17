@@ -663,6 +663,36 @@ typedef struct
 #define z64_nes_font_static_vaddr               0x00928000
 #define z64_nes_font_static_vsize               0x00004580
 
+#elif Z64_VERSION == Z64_OOT11
+
+/* dram ddresses */
+#define z64_GetFile_addr                        0x80000B0C
+#define z64_osSendMesg_addr                     0x80001E20
+#define z64_osRecvMesg_addr                     0x80002030
+#define z64_osCreateMesgQueue_addr              0x80004220
+#define z64_file_mq_addr                        0x80007D40
+#define z64_minimap_disable_1_addr              0x8006CD50
+#define z64_minimap_disable_2_addr              0x8006D4E4
+#define z64_LoadRoom_addr                       0x80080A3C
+#define z64_UnloadRoom_addr                     0x80080C98
+#define z64_frame_update_func_addr              0x8009AF2C
+#define z64_frame_update_call_addr              0x8009CAF8
+#define z64_frame_input_func_addr               0x800A0BB0
+#define z64_frame_input_call_addr               0x800A16BC
+#define z64_scene_table_addr                    0x800FB6A0
+#define z64_scene_config_table_addr             0x800FBED8
+#define z64_file_addr                           0x8011A790
+#define z64_input_direct_addr                   0x8011D8F0
+#define z64_stab_addr                           0x80120DF8
+#define z64_ctxt_addr                           0x801C8660
+#define z64_link_addr                           0x801DABF0
+
+/* rom addresses */
+#define z64_icon_item_static_vaddr              0x007BD000
+#define z64_icon_item_static_vsize              0x000888A0
+#define z64_nes_font_static_vaddr               0x008ED000
+#define z64_nes_font_static_vsize               0x00004580
+
 #elif Z64_VERSION == Z64_OOT12
 
 /* dram ddresses */

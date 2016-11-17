@@ -14,6 +14,20 @@ rom_table =
                     code_ind  = 27,
                     code_ram  = 0x800110A0,
                   },
+  [0x26E73887]  = {
+                    game      = "oot",
+                    version   = "1.1",
+                    region    = "j",
+                    code_ind  = 27,
+                    code_ram  = 0x800110A0,
+                  },
+  [0x3FD2151E]  = {
+                    game      = "oot",
+                    version   = "1.1",
+                    region    = "u",
+                    code_ind  = 27,
+                    code_ram  = 0x800110A0,
+                  },
   [0x2B2721BA]  = {
                     game      = "oot",
                     version   = "1.2",

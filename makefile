@@ -15,7 +15,7 @@ LDSCRIPT_DEBUG      = $(N64ROOT)/ldscripts/gl-n64-debug.ld
 LDFLAGS_DEBUG       =
 LDLIBS_DEBUG        =
 LUAFILE             = $(EMUDIR)/Lua/patch-data.lua
-GZ_VERSIONS         = oot-1.0 oot-1.2
+GZ_VERSIONS         = oot-1.0 oot-1.1 oot-1.2
 GZ_ADDRESS          = 80600000
 LDR_ADDRESS         = 80000400
 SRCDIR              = src
@@ -26,6 +26,7 @@ CXXFILES            = *.cpp *.cxx *.cc *.c++
 GSCFILES            = *.gsc
 
 gz-oot-1.0          : CPPFLAGS += -DZ64_VERSION=Z64_OOT10
+gz-oot-1.1          : CPPFLAGS += -DZ64_VERSION=Z64_OOT11
 gz-oot-1.2          : CPPFLAGS += -DZ64_VERSION=Z64_OOT12
 
 GZ                  = $(foreach v,$(GZ_VERSIONS),gz-$(v))
