@@ -7,6 +7,15 @@
 #define gfx_disp(...) {Gfx gfx_disp__[]={__VA_ARGS__};                        \
                        gfx_disp_append(gfx_disp__,sizeof(gfx_disp__));}
 
+extern Gfx   *gfx_disp;
+extern Gfx   *gfx_disp_p;
+extern Gfx   *gfx_disp_e;
+extern Gfx   *gfx_disp_w;
+extern char  *gfx_data;
+extern char  *gfx_data_p;
+extern char  *gfx_data_e;
+extern char  *gfx_data_w;
+
 struct gfx_texdesc
 {
   g_ifmt_t  fmt;
@@ -68,7 +77,7 @@ void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 /* all sizes are specified in number of bytes */
 Gfx  *gfx_disp_append(Gfx *disp, size_t size);
 void *gfx_data_append(void *data, size_t size);
-int   gfx_flush();
+void  gfx_flush();
 
 void                gfx_texldr_init(struct gfx_texldr *texldr);
 struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,

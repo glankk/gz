@@ -59,8 +59,11 @@ void menu_draw(struct menu *menu)
     gfx_mode_color((color >> 16) & 0xFF,
                    (color >> 8)  & 0xFF,
                    (color >> 0)  & 0xFF,
-                   0xFF);
-    gfx_printf(menu_font, item->x * 6, item->y * 8, "%s", item->text);
+                   menu_alpha);
+    gfx_printf(menu_font,
+               item->x * menu_cell_width,
+               item->y * menu_cell_height,
+               "%s", item->text);
   }
 }
 

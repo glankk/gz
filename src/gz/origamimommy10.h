@@ -1,11 +1,11 @@
 /* GIMP RGBA C-Source image dump (origamimommy10.h) */
 
 static const struct {
-  unsigned int   width;
-  unsigned int   height;
-  unsigned int   bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
-  char          *comment;
-  unsigned char  pixel_data[8 * 940 * 4 + 1];
+  unsigned int  width;
+  unsigned int  height;
+  unsigned int  bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
+  char         *comment;
+  _Alignas(64)  unsigned char pixel_data[8 * 940 * 4 + 1];
 } origamimommy10 = {
   8, 940, 4,
   "Origami Mommy font courtesy of Tepid Monkey Fonts. Created with GIMP.",

@@ -176,9 +176,11 @@ void console_scroll(int cx, int cy)
 void console_print()
 {
   fflush(stdout);
-  gfx_mode_color(0xFF, 0xFF, 0xFF, 0xFF);
+  gfx_mode_color(0xFF, 0xFF, 0xFF, menu_alpha);
   for (int i = 0; i < c_height; ++i) {
-    gfx_printf(menu_font, c_x * 6, (c_y + i) * 8,
+    gfx_printf(menu_font,
+               c_x * menu_cell_width,
+               (c_y + i) * menu_cell_height,
                "%.*s", c_width, b_ptr + b_width * (c_cy + i) + c_cx);
   }
   int cursor_x = b_pos % b_width;
@@ -187,7 +189,8 @@ void console_print()
       c_cy <= cursor_y && c_cy + c_height > cursor_y)
   {
     gfx_printf(menu_font,
-               (c_x + cursor_x - c_cx) * 6, (c_y + cursor_y - c_cy) * 8,
+               (c_x + cursor_x - c_cx) * menu_cell_width,
+               (c_y + cursor_y - c_cy) * menu_cell_height,
                "_");
   }
   c_n = (c_n + 1) % 20;

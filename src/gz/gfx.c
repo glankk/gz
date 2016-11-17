@@ -5,40 +5,28 @@
 #include <malloc.h>
 #include <mips.h>
 #include <n64.h>
-#include "z64.h"
 #include "gfx.h"
+#include "zu.h"
+#include "z64.h"
 
-#define GFX_DISP_BUFFERS                              2
-static int      gfx_current_disp                    = 0;
-static Gfx     *gfx_disp[GFX_DISP_BUFFERS]          = {NULL};
-static size_t   gfx_disp_size[GFX_DISP_BUFFERS]     = {0};
-static size_t   gfx_disp_capacity[GFX_DISP_BUFFERS] = {0};
-static void    *gfx_data[GFX_DISP_BUFFERS]          = {NULL};
-static size_t   gfx_data_size[GFX_DISP_BUFFERS]     = {0};
-static size_t   gfx_data_capacity[GFX_DISP_BUFFERS] = {0};
-
-static void *buf_append(void **p_buf, size_t *p_buf_size,
-                        size_t *p_buf_capacity, void *data, size_t data_size)
-{
-  size_t new_buf_size = *p_buf_size + data_size;
-  if (new_buf_size > *p_buf_capacity) {
-    void *new_buf = realloc(*p_buf, new_buf_size);
-    if (!new_buf)
-      return new_buf;
-    *p_buf = new_buf;
-    *p_buf_capacity = new_buf_size;
-  }
-  void *app_ptr = (char*)*p_buf + *p_buf_size;
-  *p_buf_size = new_buf_size;
-  memcpy(app_ptr, data, data_size);
-  return app_ptr;
-}
+#define       GFX_DISP_SIZE   0x3000
+#define       GFX_DATA_SIZE   0x400
+static char   gfx_disp_buffers[2][GFX_DISP_SIZE];
+static char   gfx_data_buffers[2][GFX_DATA_SIZE];
+Gfx          *gfx_disp      = (void*)&gfx_disp_buffers[0][0];
+Gfx          *gfx_disp_p    = (void*)&gfx_disp_buffers[0][0];
+Gfx          *gfx_disp_e    = (void*)&gfx_disp_buffers[0][GFX_DISP_SIZE];
+Gfx          *gfx_disp_w    = (void*)&gfx_disp_buffers[1][0];
+char         *gfx_data      = (void*)&gfx_data_buffers[0][0];
+char         *gfx_data_p    = (void*)&gfx_data_buffers[0][0];
+char         *gfx_data_e    = (void*)&gfx_data_buffers[0][GFX_DATA_SIZE];
+char         *gfx_data_w    = (void*)&gfx_data_buffers[1][0];
 
 const struct gfx_colormatrix gfx_cm_desaturate =
 {
-  0.299, 0.587, 0.114, 0.,
-  0.299, 0.587, 0.114, 0.,
-  0.299, 0.587, 0.114, 0.,
+  0.3086, 0.6094, 0.0820, 0.,
+  0.3086, 0.6094, 0.0820, 0.,
+  0.3086, 0.6094, 0.0820, 0.,
   0.,    0.,    0.,    1.,
 };
 
@@ -51,7 +39,8 @@ void gfx_mode_init(int filter, _Bool blend)
     gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
                        G_CC_MODULATERGBA_PRIM),
   };
-  gfx_disp(
+  gfx_disp
+  (
     gsDPPipeSync(),
     gsSPClearGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
                           G_CULL_BOTH | G_FOG | G_LIGHTING),
@@ -60,7 +49,6 @@ void gfx_mode_init(int filter, _Bool blend)
     gsDPSetTextureFilter(filter),
     gsDPSetTextureConvert(G_TC_FILT),
     gsDPSetTexturePersp(G_TP_NONE),
-    gsDPSetTextureDetail(G_TD_CLAMP),
     gsDPSetTextureLOD(G_TL_TILE),
     gsDPSetTextureLUT(G_TT_NONE),
     gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
@@ -75,7 +63,8 @@ void gfx_mode_default()
 
 void gfx_mode_filter(int filter)
 {
-  gfx_disp(
+  gfx_disp
+  (
     gsDPPipeSync(),
     gsDPSetTextureFilter(filter),
   );
@@ -90,7 +79,8 @@ void gfx_mode_blend(_Bool blend)
     gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
                        G_CC_MODULATERGBA_PRIM),
   };
-  gfx_disp(
+  gfx_disp
+  (
     gsDPPipeSync(),
     g_blend[blend],
   );
@@ -98,7 +88,8 @@ void gfx_mode_blend(_Bool blend)
 
 void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-  gfx_disp(
+  gfx_disp
+  (
     gsDPPipeSync(),
     gsDPSetPrimColor(0, 0, r, g, b, a),
   );
@@ -106,34 +97,34 @@ void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 Gfx *gfx_disp_append(Gfx *disp, size_t size)
 {
-  return buf_append((void**)&gfx_disp[gfx_current_disp],
-                    &gfx_disp_size[gfx_current_disp],
-                    &gfx_disp_capacity[gfx_current_disp],
-                    disp, size);
+  Gfx *p = gfx_disp_p;
+  memcpy(gfx_disp_p, disp, size);
+  gfx_disp_p += (size + sizeof(Gfx) - 1) / sizeof(Gfx);
+  return p;
 }
 
 void *gfx_data_append(void *data, size_t size)
 {
-  return buf_append((void**)&gfx_data[gfx_current_disp],
-                    &gfx_data_size[gfx_current_disp],
-                    &gfx_data_capacity[gfx_current_disp],
-                    data, size);
+  void *p = gfx_data_p;
+  memcpy(gfx_data_p, data, size);
+  gfx_data_p += (size + 7) / 8 * 8;
+  return p;
 }
 
-int gfx_flush()
+void gfx_flush()
 {
-  Gfx disp = gsSPEndDisplayList();
-  void *disp_ptr = gfx_disp_append(&disp, sizeof(disp));
-  gfx_disp_size[gfx_current_disp] = 0;
-  gfx_data_size[gfx_current_disp] = 0;
-  if (!disp_ptr)
-    return 0;
-  if (z64_ctxt.gctxt->overlay_disp_app >= z64_ctxt.gctxt->overlay_disp_end)
-    return 0;
-  gSPDisplayList(z64_ctxt.gctxt->overlay_disp_app++,
-                 gfx_disp[gfx_current_disp]);
-  gfx_current_disp = (gfx_current_disp + 1) % GFX_DISP_BUFFERS;
-  return 1;
+  gSPEndDisplayList(gfx_disp_p++);
+  gSPDisplayList(z64_ctxt.gfx->overlay_disp_p++, gfx_disp);
+  Gfx *disp_w = gfx_disp_w;
+  gfx_disp_w = gfx_disp;
+  gfx_disp = disp_w;
+  gfx_disp_p = gfx_disp;
+  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(Gfx) - 1) / sizeof(Gfx);
+  char *data_w = gfx_data_w;
+  gfx_data_w = gfx_data;
+  gfx_data = data_w;
+  gfx_data_p = gfx_data;
+  gfx_data_e = gfx_data + GFX_DATA_SIZE;
 }
 
 void gfx_texldr_init(struct gfx_texldr *texldr)
@@ -169,13 +160,7 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
         return NULL;
       }
       texldr->file_vaddr = texdesc->file_vaddr;
-      z64_getfile_t f =
-      {
-        texldr->file_vaddr,
-        texldr->file_data,
-        texdesc->file_vsize,
-      };
-      z64_GetFile(&f);
+      zu_getfile(texldr->file_vaddr, texldr->file_data, texdesc->file_vsize);
     }
     if (texdesc->file_vsize == texture_size) {
       texture_data = texldr->file_data;
@@ -298,8 +283,7 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
 void gfx_sprite_draw(const struct gfx_sprite *sprite)
 {
   struct gfx_texture *texture = sprite->texture;
-  uint32_t pixel_data = MIPS_KSEG0_TO_PHYS(gfx_texture_data(texture, sprite->
-                                                            texture_image));
+  void *pixel_data = gfx_texture_data(texture, sprite->texture_image);
   size_t tmem_size = 0x1000;
   if (texture->siz == G_IM_SIZ_4b)
     tmem_size /= 2;
@@ -316,7 +300,8 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
       if (x2 > texture->width)
         x2 = texture->width;
       if (texture->siz == G_IM_SIZ_4b) {
-        gfx_disp(
+        gfx_disp
+        (
           gsDPLoadTextureTile_4b(pixel_data,
                                  texture->fmt,
                                  texture->width, texture->height,
@@ -330,7 +315,8 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
         );
       }
       else {
-        gfx_disp(
+        gfx_disp
+        (
           gsDPLoadTextureTile(pixel_data,
                               texture->fmt, texture->siz,
                               texture->width, texture->height,
@@ -343,15 +329,16 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
                               G_TX_NOLOD, G_TX_NOLOD),
         );
       }
-      gfx_disp(
-        gsSPScisTextureRectangle(ntoqs102(sprite->x + x1 * sprite->xscale) & ~3,
-                                 ntoqs102(sprite->y + y1 * sprite->yscale) & ~3,
-                                 ntoqs102(sprite->x + x2 * sprite->xscale) & ~3,
-                                 ntoqs102(sprite->y + y2 * sprite->yscale) & ~3,
+      gfx_disp
+      (
+        gsSPScisTextureRectangle(qs102(sprite->x + x1 * sprite->xscale) & ~3,
+                                 qs102(sprite->y + y1 * sprite->yscale) & ~3,
+                                 qs102(sprite->x + x2 * sprite->xscale) & ~3,
+                                 qs102(sprite->y + y2 * sprite->yscale) & ~3,
                                  G_TX_RENDERTILE,
-                                 ntoqu105(x1), ntoqu105(y1),
-                                 ntoqu510(1.f / sprite->xscale),
-                                 ntoqu510(1.f / sprite->yscale)),
+                                 qu105(x1), qu105(y1),
+                                 qu510(1.f / sprite->xscale),
+                                 qu510(1.f / sprite->yscale)),
       );
     }
   }
@@ -395,12 +382,12 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       c -= tile_begin;
       if (!tile_loaded) {
         tile_loaded = 1;
-        uint32_t pixel_data = MIPS_KSEG0_TO_PHYS(gfx_texture_data(texture,
-                                                                  tile_begin));
+        void *pixel_data = gfx_texture_data(texture, tile_begin);
         int tile_width = texture->width;
         int tile_height = texture->height * chars_per_tile;
         if (texture->siz == G_IM_SIZ_4b) {
-          gfx_disp(
+          gfx_disp
+          (
             gsDPLoadTextureTile_4b(pixel_data,
                                    texture->fmt,
                                    tile_width, tile_height,
@@ -414,7 +401,8 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
           );
         }
         else {
-          gfx_disp(
+          gfx_disp
+          (
             gsDPLoadTextureTile(pixel_data,
                                 texture->fmt, texture->siz,
                                 tile_width, tile_height,
@@ -428,14 +416,15 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
           );
         }
       }
-      gfx_disp(
-        gsSPScisTextureRectangle(ntoqs102(x + cx),
-                                 ntoqs102(y + cy),
-                                 ntoqs102(x + cx + texture->width),
-                                 ntoqs102(y + cy + texture->height),
+      gfx_disp
+      (
+        gsSPScisTextureRectangle(qs102(x + cx),
+                                 qs102(y + cy),
+                                 qs102(x + cx + texture->width),
+                                 qs102(y + cy + texture->height),
                                  G_TX_RENDERTILE,
-                                 ntoqu105(0), ntoqu105(c * texture->height),
-                                 ntoqu510(1), ntoqu510(1)),
+                                 qu105(0), qu105(c * texture->height),
+                                 qu510(1), qu510(1)),
       );
     }
   }

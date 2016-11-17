@@ -5,22 +5,23 @@
 #include <startup.h>
 #include <n64.h>
 #include <mips.h>
-#include "z64.h"
 #include "gfx.h"
 #include "resource.h"
 #include "console.h"
 #include "menu.h"
+#include "explorer.h"
+#include "z64.h"
 
 struct switch_info
 {
   const char *name;
-  uint8_t    *data;
+  void       *data;
   uint8_t     mask;
 };
 
 struct option_info
 {
-  uint32_t   *data;
+  void       *data;
   int         shift;
   uint32_t    mask;
 };
@@ -30,7 +31,7 @@ struct dungeon_menu_data
   struct switch_info  boss_key_switch_info;
   struct switch_info  compass_switch_info;
   struct switch_info  map_switch_info;
-  uint8_t            *keys_ptr;
+  int8_t             *keys_ptr;
 };
 
 struct warp_info
@@ -41,13 +42,16 @@ struct warp_info
 
 struct byte_option
 {
-  uint8_t *data;
-  uint8_t *option_list;
+  void    *data;
+  int8_t  *option_list;
   int      num_options;
 };
 
 
-struct gfx_font *menu_font;
+struct gfx_font  *menu_font;
+uint8_t           menu_alpha        = 0x80;
+int               menu_cell_width   = 8;
+int               menu_cell_height  = 8;
 
 static struct menu menu_main;
 static struct menu menu_inventory;
@@ -82,77 +86,97 @@ static int cheats_rupees    = 0;
 static int cheats_nayru     = 0;
 static int cheats_time      = 0;
 
-static z64_controller_t *input_ptr = (void*)z64_control_input_ptr_addr;
+static z64_controller_t *input_ptr = &z64_input_direct;
 
 static struct switch_info equipment_list[] =
 {
-  {"kokiri sword",          (void*)z64_equipment_2_addr, 0b00000001},
-  {"master sword",          (void*)z64_equipment_2_addr, 0b00000010},
-  {"giant's knife",         (void*)z64_equipment_2_addr, 0b00000100},
-  {"deku shield",           (void*)z64_equipment_2_addr, 0b00010000},
-  {"hylian shield",         (void*)z64_equipment_2_addr, 0b00100000},
-  {"mirror shield",         (void*)z64_equipment_2_addr, 0b01000000},
-  {"kokiri tunic",          (void*)z64_equipment_1_addr, 0b00000001},
-  {"goron tunic",           (void*)z64_equipment_1_addr, 0b00000010},
-  {"zora tunic",            (void*)z64_equipment_1_addr, 0b00000100},
-  {"kokiri boots",          (void*)z64_equipment_1_addr, 0b00010000},
-  {"iron boots",            (void*)z64_equipment_1_addr, 0b00100000},
-  {"hover boots",           (void*)z64_equipment_1_addr, 0b01000000},
-  {"broken giant's knife",  (void*)z64_equipment_2_addr, 0b00001000},
-  {"biggoron's sword",      (void*)z64_equipment_3_addr, 0b00000001},
+  {"kokiri sword",          (char*)&z64_file.equipment + 1, 0b00000001},
+  {"master sword",          (char*)&z64_file.equipment + 1, 0b00000010},
+  {"giant's knife",         (char*)&z64_file.equipment + 1, 0b00000100},
+  {"deku shield",           (char*)&z64_file.equipment + 1, 0b00010000},
+  {"hylian shield",         (char*)&z64_file.equipment + 1, 0b00100000},
+  {"mirror shield",         (char*)&z64_file.equipment + 1, 0b01000000},
+  {"kokiri tunic",          (char*)&z64_file.equipment + 0, 0b00000001},
+  {"goron tunic",           (char*)&z64_file.equipment + 0, 0b00000010},
+  {"zora tunic",            (char*)&z64_file.equipment + 0, 0b00000100},
+  {"kokiri boots",          (char*)&z64_file.equipment + 0, 0b00010000},
+  {"iron boots",            (char*)&z64_file.equipment + 0, 0b00100000},
+  {"hover boots",           (char*)&z64_file.equipment + 0, 0b01000000},
+  {"broken giant's knife",  (char*)&z64_file.equipment + 1, 0b00001000},
+  {"biggoron's sword",             &z64_file.bgs_flag,      0b00000001},
 };
 
 static struct switch_info item_list[] =
 {
-  {"deku stick",      (void*)z64_deku_stick_addr,     0x00},
-  {"deku nut",        (void*)z64_deku_nut_addr,       0x01},
-  {"bomb",            (void*)z64_bomb_addr,           0x02},
-  {"bow",             (void*)z64_bow_addr,            0x03},
-  {"fire arrow",      (void*)z64_arrow_fire_addr,     0x04},
-  {"ice arrow",       (void*)z64_arrow_ice_addr,      0x0C},
-  {"light arrow",     (void*)z64_arrow_light_addr,    0x12},
-  {"din's fire",      (void*)z64_dins_fire_addr,      0x05},
-  {"farore's wind",   (void*)z64_farores_wind_addr,   0x0D},
-  {"nayru's love",    (void*)z64_nayrus_love_addr,    0x13},
-  {"slingshot",       (void*)z64_slingshot_addr,      0x06},
-  {"fairy ocarina",   (void*)z64_ocarina_addr,        0x07},
-  {"ocarina of time", (void*)z64_ocarina_addr,        0x08},
-  {"bombchu",         (void*)z64_bombchu_addr,        0x09},
-  {"hookshot",        (void*)z64_hookshot_addr,       0x0A},
-  {"longshot",        (void*)z64_hookshot_addr,       0x0B},
-  {"boomerang",       (void*)z64_boomerang_addr,      0x0E},
-  {"lens of truth",   (void*)z64_lens_of_truth_addr,  0x0F},
-  {"magic bean",      (void*)z64_magic_bean_addr,     0x10},
-  {"megaton hammer",  (void*)z64_megaton_hammer_addr, 0x11},
+  {"deku stick",
+   &z64_file.items[Z64_SLOT_STICK],         Z64_ITEM_STICK},
+  {"deku nut",
+   &z64_file.items[Z64_SLOT_NUT],           Z64_ITEM_NUT},
+  {"bomb",
+   &z64_file.items[Z64_SLOT_BOMB],          Z64_ITEM_BOMB},
+  {"bow",
+   &z64_file.items[Z64_SLOT_BOW],           Z64_ITEM_BOW},
+  {"fire arrow",
+   &z64_file.items[Z64_SLOT_FIRE_ARROW],    Z64_ITEM_FIRE_ARROW},
+  {"ice arrow",
+   &z64_file.items[Z64_SLOT_ICE_ARROW],     Z64_ITEM_ICE_ARROW},
+  {"light arrow",
+   &z64_file.items[Z64_SLOT_LIGHT_ARROW],   Z64_ITEM_LIGHT_ARROW},
+  {"din's fire",
+   &z64_file.items[Z64_SLOT_DINS_FIRE],     Z64_ITEM_DINS_FIRE},
+  {"farore's wind",
+   &z64_file.items[Z64_SLOT_FARORES_WIND],  Z64_ITEM_FARORES_WIND},
+  {"nayru's love",
+   &z64_file.items[Z64_SLOT_NAYRUS_LOVE],   Z64_ITEM_NAYRUS_LOVE},
+  {"slingshot",
+   &z64_file.items[Z64_SLOT_SLINGSHOT],     Z64_ITEM_SLINGSHOT},
+  {"fairy ocarina",
+   &z64_file.items[Z64_SLOT_OCARINA],       Z64_ITEM_FAIRY_OCARINA},
+  {"ocarina of time",
+   &z64_file.items[Z64_SLOT_OCARINA],       Z64_ITEM_OCARINA_OF_TIME},
+  {"bombchu",
+   &z64_file.items[Z64_SLOT_BOMBCHU],       Z64_ITEM_BOMBCHU},
+  {"hookshot",
+   &z64_file.items[Z64_SLOT_HOOKSHOT],      Z64_ITEM_HOOKSHOT},
+  {"longshot",
+   &z64_file.items[Z64_SLOT_HOOKSHOT],      Z64_ITEM_LONGSHOT},
+  {"boomerang",
+   &z64_file.items[Z64_SLOT_BOOMERANG],     Z64_ITEM_BOOMERANG},
+  {"lens of truth",
+   &z64_file.items[Z64_SLOT_LENS],          Z64_ITEM_LENS},
+  {"magic bean",
+   &z64_file.items[Z64_SLOT_BEANS],         Z64_ITEM_BEANS},
+  {"megaton hammer",
+   &z64_file.items[Z64_SLOT_HAMMER],        Z64_ITEM_HAMMER},
 };
 
 static struct switch_info song_list[] =
 {
-  {"zelda's lullaby",       (void*)z64_quest_itm_3_addr, 0b00010000},
-  {"epona's song",          (void*)z64_quest_itm_3_addr, 0b00100000},
-  {"saria's song",          (void*)z64_quest_itm_3_addr, 0b01000000},
-  {"sun's song",            (void*)z64_quest_itm_3_addr, 0b10000000},
-  {"song of time",          (void*)z64_quest_itm_2_addr, 0b00000001},
-  {"song of storms",        (void*)z64_quest_itm_2_addr, 0b00000010},
-  {"minuet",                (void*)z64_quest_itm_4_addr, 0b01000000},
-  {"bolero",                (void*)z64_quest_itm_4_addr, 0b10000000},
-  {"serenade",              (void*)z64_quest_itm_3_addr, 0b00000001},
-  {"requiem",               (void*)z64_quest_itm_3_addr, 0b00000010},
-  {"nocturne",              (void*)z64_quest_itm_3_addr, 0b00000100},
-  {"prelude",               (void*)z64_quest_itm_3_addr, 0b00001000},
+  {"zelda's lullaby",       (char*)&z64_file.quest_items + 2, 0b00010000},
+  {"epona's song",          (char*)&z64_file.quest_items + 2, 0b00100000},
+  {"saria's song",          (char*)&z64_file.quest_items + 2, 0b01000000},
+  {"sun's song",            (char*)&z64_file.quest_items + 2, 0b10000000},
+  {"song of time",          (char*)&z64_file.quest_items + 1, 0b00000001},
+  {"song of storms",        (char*)&z64_file.quest_items + 1, 0b00000010},
+  {"minuet",                (char*)&z64_file.quest_items + 3, 0b01000000},
+  {"bolero",                (char*)&z64_file.quest_items + 3, 0b10000000},
+  {"serenade",              (char*)&z64_file.quest_items + 2, 0b00000001},
+  {"requiem",               (char*)&z64_file.quest_items + 2, 0b00000010},
+  {"nocturne",              (char*)&z64_file.quest_items + 2, 0b00000100},
+  {"prelude",               (char*)&z64_file.quest_items + 2, 0b00001000},
 };
 
 static struct switch_info reward_list[] =
 {
-  {"kokiri's emerald",      (void*)z64_quest_itm_2_addr, 0b00000100},
-  {"goron's ruby",          (void*)z64_quest_itm_2_addr, 0b00001000},
-  {"zora's sapphire",       (void*)z64_quest_itm_2_addr, 0b00010000},
-  {"light medal",           (void*)z64_quest_itm_4_addr, 0b00100000},
-  {"forest medal",          (void*)z64_quest_itm_4_addr, 0b00000001},
-  {"fire   medal",          (void*)z64_quest_itm_4_addr, 0b00000010},
-  {"water  medal",          (void*)z64_quest_itm_4_addr, 0b00000100},
-  {"spirit medal",          (void*)z64_quest_itm_4_addr, 0b00001000},
-  {"shadow medal",          (void*)z64_quest_itm_4_addr, 0b00010000},
+  {"kokiri's emerald",      (char*)&z64_file.quest_items + 1, 0b00000100},
+  {"goron's ruby",          (char*)&z64_file.quest_items + 1, 0b00001000},
+  {"zora's sapphire",       (char*)&z64_file.quest_items + 1, 0b00010000},
+  {"light medal",           (char*)&z64_file.quest_items + 3, 0b00100000},
+  {"forest medal",          (char*)&z64_file.quest_items + 3, 0b00000001},
+  {"fire   medal",          (char*)&z64_file.quest_items + 3, 0b00000010},
+  {"water  medal",          (char*)&z64_file.quest_items + 3, 0b00000100},
+  {"spirit medal",          (char*)&z64_file.quest_items + 3, 0b00001000},
+  {"shadow medal",          (char*)&z64_file.quest_items + 3, 0b00010000},
 };
 
 static int generic_switch_proc(struct menu_item *item,
@@ -179,12 +203,13 @@ static int equipment_switch_proc(struct menu_item *item,
                                  void *data)
 {
   struct switch_info *e = data;
+  uint8_t *p = e->data;
   if (reason == MENU_CALLBACK_SWITCH_ON)
-    *e->data |= e->mask;
+    *p |= e->mask;
   else if (reason == MENU_CALLBACK_SWITCH_OFF)
-    *e->data &= ~e->mask;
+    *p &= ~e->mask;
   else if (reason == MENU_CALLBACK_THINK)
-    menu_switch_set(item, (*e->data & e->mask) == e->mask);
+    menu_switch_set(item, (*p & e->mask) == e->mask);
   return 0;
 }
 
@@ -193,14 +218,15 @@ static int equipment_option_proc(struct menu_item *item,
                                  void *data)
 {
   struct option_info *e = data;
+  uint32_t *p = e->data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    int value = (*e->data >> e->shift) & e->mask;
+    int value = (*p >> e->shift) & e->mask;
     if (menu_option_get(item) != value)
       menu_option_set(item, value);
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
-    *e->data = (*e->data & ~(e->mask << e->shift)) |
-               (menu_option_get(item) << e->shift);
+    *p = (*p & ~(e->mask << e->shift)) |
+         (menu_option_get(item) << e->shift);
   return 0;
 }
 
@@ -208,16 +234,15 @@ static int equip_option_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
 {
-  uint16_t *equips_ptr = (void*)z64_equipment_ptr_addr;
   int equip_row = (int)data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    int value = (*equips_ptr >> equip_row * 4) & 0x000F;
+    int value = (z64_file.equips >> equip_row * 4) & 0x000F;
     if (menu_option_get(item) != value)
       menu_option_set(item, value);
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
-    *equips_ptr = (*equips_ptr & ~(0x000F << equip_row * 4)) |
-                  (menu_option_get(item) << equip_row * 4);
+    z64_file.equips = (z64_file.equips & ~(0x000F << equip_row * 4)) |
+                      (menu_option_get(item) << equip_row * 4);
   return 0;
 }
 
@@ -254,10 +279,11 @@ static int byte_option_proc(struct menu_item *item,
                             void *data)
 {
   struct byte_option *option = data;
+  uint8_t *p = option->data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     int item_index = 0;
     for (int i = 0; i < option->num_options; ++i)
-      if (*option->data == option->option_list[i]) {
+      if (*p == option->option_list[i]) {
         item_index = i;
         break;
       }
@@ -265,7 +291,7 @@ static int byte_option_proc(struct menu_item *item,
       menu_option_set(item, item_index);
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
-    *option->data = option->option_list[menu_option_get(item)];
+    *p = option->option_list[menu_option_get(item)];
   return 0;
 }
 
@@ -273,18 +299,16 @@ static int magic_switch_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
 {
-  uint8_t *have_magic   = (void*)z64_has_magic_addr;
-  uint8_t *update_magic = (void*)z64_flag_update_magic_addr;
   if (reason == MENU_CALLBACK_SWITCH_ON) {
-    *have_magic = 0x01;
-    *update_magic = 0x00;
+    z64_file.magic_acquired = 1;
+    z64_file.magic_capacity_set = 0;
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
-    *have_magic = 0x00;
-    *update_magic = 0x00;
+    z64_file.magic_acquired = 0;
+    z64_file.magic_capacity_set = 0;
   }
   else if (reason == MENU_CALLBACK_THINK)
-    menu_switch_set(item, *have_magic != 0x00);
+    menu_switch_set(item, z64_file.magic_acquired != 0x00);
   return 0;
 }
 
@@ -292,15 +316,13 @@ static int magic_capacity_proc(struct menu_item *item,
                                enum menu_callback_reason reason,
                                void *data)
 {
-  uint8_t *magic_capacity = (void*)z64_magic_capacity_addr;
-  uint8_t *update_magic   = (void*)z64_flag_update_magic_addr;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (menu_intinput_get(item) != *magic_capacity)
-      menu_intinput_set(item, *magic_capacity);
+    if (menu_intinput_get(item) != z64_file.magic_capacity)
+      menu_intinput_set(item, z64_file.magic_capacity);
   }
   else if (reason == MENU_CALLBACK_CHANGED) {
-    *magic_capacity = menu_intinput_get(item);
-    *update_magic = 0x00;
+    z64_file.magic_capacity = menu_intinput_get(item);
+    z64_file.magic_capacity_set = 0;
   }
   return 0;
 }
@@ -312,10 +334,8 @@ static int dungeon_option_proc(struct menu_item *item,
   struct dungeon_menu_data *dungeon_menu_data = data;
   if (reason == MENU_CALLBACK_DEACTIVATE) {
     int dungeon = menu_option_get(item);
-    uint8_t *items = (void*)z64_dungeon_itm_addr;
-    uint8_t *keys = (void*)z64_dungeon_key_addr;
-    items += dungeon;
-    keys += dungeon;
+    uint8_t *items = &z64_file.dungeon_items[dungeon].items;
+    int8_t *keys = &z64_file.dungeon_keys[dungeon];
     dungeon_menu_data->boss_key_switch_info.data = items;
     dungeon_menu_data->map_switch_info.data = items;
     dungeon_menu_data->compass_switch_info.data = items;
@@ -329,7 +349,7 @@ static int dungeon_keys_proc(struct menu_item *item,
                              void *data)
 {
   struct dungeon_menu_data *dungeon_menu_data = data;
-  uint8_t *keys = dungeon_menu_data->keys_ptr;
+  int8_t *keys = dungeon_menu_data->keys_ptr;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     if (menu_intinput_get(item) != *keys)
       menu_intinput_set(item, *keys);
@@ -343,13 +363,13 @@ static int swordless_proc(struct menu_item *item,
                           enum menu_callback_reason reason,
                           void *data)
 {
-  uint8_t *flag_ptr = (void*)z64_flag_swordless_addr;
+  uint16_t *flag_ptr = &z64_file.inf_table[29];
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (menu_option_get(item) != *flag_ptr)
-      menu_option_set(item, *flag_ptr);
+    if (menu_option_get(item) != (*flag_ptr & 0x0001))
+      menu_option_set(item, *flag_ptr & 0x0001);
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
-    *flag_ptr = menu_option_get(item);
+    *flag_ptr = (*flag_ptr & ~0x0001) | menu_option_get(item);
   return 0;
 }
 
@@ -358,28 +378,29 @@ static int item_switch_proc(struct menu_item *item,
                             void *data)
 {
   struct switch_info *e = data;
+  uint8_t *p = e->data;
   if (reason == MENU_CALLBACK_SWITCH_ON)
-    *e->data = e->mask;
+    *p = e->mask;
   else if (reason == MENU_CALLBACK_SWITCH_OFF)
-    *e->data = -1;
+    *p = -1;
   else if (reason == MENU_CALLBACK_THINK)
-    menu_switch_set(item, *e->data == e->mask);
+    menu_switch_set(item, *p == e->mask);
   return 0;
 }
 
 static void reset_gs_proc(struct menu_item *item, void *data)
 {
-  memset((void*)z64_reset_gs_addr, 0x00, 0x38);
+  memset(&z64_file.gs_flags, 0x00, sizeof(z64_file.gs_flags));
 }
 
 static void clear_flags_proc(struct menu_item *item, void *data)
 {
-  memset((void*)z64_flag_switch_addr, 0x00, 0x24);
+  memset(&z64_game.switch_flags, 0x00, 0x24);
 }
 
 static void set_flags_proc(struct menu_item *item, void *data)
 {
-  memset((void*)z64_flag_switch_addr, 0xFF, 0x24);
+  memset(&z64_game.switch_flags, 0xFF, 0x24);
 }
 
 static void tp_slot_dec_proc(struct menu_item *item, void *data)
@@ -401,36 +422,29 @@ static void tp_slot_inc_proc(struct menu_item *item, void *data)
 static void warp_proc(struct menu_item *item, void *data)
 {
   struct warp_info *warp_info = data;
-  uint16_t entrance = menu_intinput_get(warp_info->entrance);
-  uint8_t  age      = menu_option_get(warp_info->age);
-  (*(uint16_t*)z64_scene_entrance_addr) = entrance;
-  (*(uint8_t*) z64_scene_age_addr) = age;
-  (*(uint16_t*)z64_flag_reload_scn_addr) = 0x0014;
+  z64_game.entrance_index = menu_intinput_get(warp_info->entrance);
+  z64_game.link_age = menu_option_get(warp_info->age);
+  z64_game.scene_load_flags = 0x0014;
 }
 
 static void clear_csp_proc(struct menu_item *item, void *data)
 {
   static uint32_t null_cs[] = {0, 0};
-  (*(void**)z64_cutscene_ptr_addr) = &null_cs;
+  z64_game.cutscene_ptr = &null_cs;
 }
 
 static void load_room_proc(struct menu_item *item, void *data)
 {
-  void    (*load_room)(void*, void*, uint8_t) = (void*)0x80080A3C;
-  void    (*unload_other_rooms)(void*, void*) = (void*)0x80080C98;
-  uint8_t  *p_room_index  = (void*)((char*)&z64_ctxt + 0x00011CBC);
-  void    **p_room_ptr    = (void*)((char*)&z64_ctxt + 0x00011CC8);
-  uint8_t  *p_room_count  = (void*)((char*)&z64_ctxt + 0x00011DEC);
   uint8_t new_room_index = menu_intinput_get(data);
-  if (new_room_index < *p_room_count) {
-    if (new_room_index == *p_room_index) {
-      *p_room_index = 0xFF;
-      unload_other_rooms(&z64_ctxt, p_room_index);
-      *p_room_ptr = NULL;
+  if (new_room_index < z64_game.no_rooms) {
+    if (new_room_index == z64_game.room_index) {
+      z64_game.room_index = -1;
+      z64_UnloadRoom(&z64_ctxt, &z64_game.room_index);
+      z64_game.room_ptr = NULL;
     }
     else {
-      load_room(&z64_ctxt, p_room_index, new_room_index);
-      unload_other_rooms(&z64_ctxt, p_room_index);
+      z64_LoadRoom(&z64_ctxt, &z64_game.room_index, new_room_index);
+      z64_UnloadRoom(&z64_ctxt, &z64_game.room_index);
     }
   }
 }
@@ -438,7 +452,7 @@ static void load_room_proc(struct menu_item *item, void *data)
 static void input_hook()
 {
   if (frames_queued != 0)
-    ((void(*)())z64_frame_input_call_func_addr)();
+    ((void(*)())z64_frame_input_func_addr)();
 }
 
 static void update_hook()
@@ -452,7 +466,7 @@ static void update_hook()
 
 static void pause_proc(struct menu_item *item, void *data)
 {
-  uint32_t *input_call = (void*)z64_frame_input_call_call_addr;
+  uint32_t *input_call = (void*)z64_frame_input_call_addr;
   *input_call = MIPS_JAL(&input_hook);
   uint32_t *update_call = (void*)z64_frame_update_call_addr;
   *update_call = MIPS_JAL(&update_hook);
@@ -507,18 +521,6 @@ static void sup_exc_proc(struct menu_item *item, void *data)
 
 void main_hook()
 {
-  gfx_mode_init(G_TF_POINT, G_ON);
-
-  {
-    static int splash_time = 230;
-    if (splash_time > 0) {
-      --splash_time;
-      gfx_mode_color(0xA0, 0x00, 0x00, 0xFF);
-      gfx_printf(menu_font, 2 * 6, 27 * 8, "gz-0.2.0 github.com/glankk/gz");
-    }
-  }
-
-#if 1
   static uint16_t pad = 0;
   uint16_t pad_pressed = (pad ^ input_ptr->pad) &
                          input_ptr->pad;
@@ -532,54 +534,61 @@ void main_hook()
       pad_pressed |= 1 << i;
   }
 
+  gfx_mode_init(G_TF_POINT, G_ON);
+
+  {
+    static int splash_time = 230;
+    if (splash_time > 0) {
+      --splash_time;
+      gfx_mode_color(0xA0, 0x00, 0x00, menu_alpha);
+      gfx_printf(menu_font,
+                 2 * menu_cell_width,
+                 27 * menu_cell_height,
+                 "gz-0.2.0 github.com/glankk/gz");
+    }
+  }
+
   if (cheats_energy)
-    (*(uint16_t*)z64_hearts_addr) = (*(uint16_t*)z64_max_hearts_addr);
+    z64_file.energy = z64_file.energy_capacity;
   if (cheats_magic)
-    (*(uint8_t*) z64_magic_addr) = ((*(uint8_t*) z64_magic_capacity_addr) +
-                                    1) * 0x30;
+    z64_file.magic = (z64_file.magic_capacity + 1) * 0x30;
   if (cheats_sticks) {
-    int stick = ((*(uint32_t*)z64_upgrades_addr) >> 17) & 0b111;
     int stick_capacity[] = {1, 10, 20, 30, 1, 20, 30, 40};
-    (*(uint8_t*) z64_qty_deku_stick_addr) = stick_capacity[stick];
+    z64_file.ammo[Z64_SLOT_STICK] = stick_capacity[z64_file.stick_upgrade];
   }
   if (cheats_nuts) {
-    int nut = ((*(uint32_t*)z64_upgrades_addr) >> 20) & 0b111;
     int nut_capacity[] = {1, 20, 30, 40, 1, 0x7F, 1, 0x7F};
-    (*(uint8_t*) z64_qty_deku_nut_addr) = nut_capacity[nut];
+    z64_file.ammo[Z64_SLOT_NUT] = nut_capacity[z64_file.nut_upgrade];
   }
   if (cheats_bombs) {
-    int bombbag = ((*(uint32_t*)z64_upgrades_addr) >> 3) & 0b111;
-    int bombbag_capacity[] = {1, 20, 30, 40, 1, 1, 1, 1};
-    (*(uint8_t*) z64_qty_bomb_addr) = bombbag_capacity[bombbag];
+    int bomb_bag_capacity[] = {1, 20, 30, 40, 1, 1, 1, 1};
+    z64_file.ammo[Z64_SLOT_BOMB] = bomb_bag_capacity[z64_file.bomb_bag];
   }
   if (cheats_arrows) {
-    int quiver = ((*(uint32_t*)z64_upgrades_addr) >> 0) & 0b111;
     int quiver_capacity[] = {1, 30, 40, 50, 1, 20, 30, 40};
-    (*(uint8_t*) z64_qty_arrow_addr) = quiver_capacity[quiver];
+    z64_file.ammo[Z64_SLOT_BOW] = quiver_capacity[z64_file.quiver];
   }
   if (cheats_seeds) {
-    int bulletbag = ((*(uint32_t*)z64_upgrades_addr) >> 14) & 0b111;
-    int bulletbag_capacity[] = {1, 30, 40, 50, 1, 10, 20, 30};
-    (*(uint8_t*) z64_qty_deku_seed_addr) = bulletbag_capacity[bulletbag];
+    int bullet_bag_capacity[] = {1, 30, 40, 50, 1, 10, 20, 30};
+    z64_file.ammo[Z64_SLOT_SLINGSHOT] =
+      bullet_bag_capacity[z64_file.bullet_bag];
   }
   if (cheats_bombchus)
-    (*(uint8_t*) z64_qty_bombchu_addr) = 50;
+    z64_file.ammo[Z64_SLOT_BOMBCHU] = 50;
   if (cheats_beans)
-    (*(uint8_t*) z64_qty_magic_bean_addr) = 0x01;
+    z64_file.ammo[Z64_SLOT_BEANS] = 0x01;
   if (cheats_keys) {
-    int scene_no = *(uint16_t*)z64_scene_num_addr;
-    if (scene_no >= 0x0000 && scene_no <= 0x0010)
-      *((uint8_t*)z64_dungeon_key_addr + scene_no) = 0x01;
+    if (z64_game.scene_index >= 0x0000 && z64_game.scene_index <= 0x0010)
+      z64_file.dungeon_keys[z64_game.scene_index] = 1;
   }
   if (cheats_rupees) {
-    int wallet = ((*(uint32_t*)z64_upgrades_addr) >> 12) & 0b11;
     int wallet_capacity[] = {99, 200, 500, 0xFFFF};
-    (*(uint16_t*)z64_rupees_addr) = wallet_capacity[wallet];
+    z64_file.rupees = wallet_capacity[z64_file.wallet];
   }
   if (cheats_nayru)
-    (*(uint16_t*)z64_flag_nayrus_addr) = 0x044B;
+    z64_file.nayrus_love_timer = 0x044B;
   if (cheats_time)
-    (*(uint16_t*)z64_curr_day_time_addr) += 0x0100;
+    z64_file.day_time += 0x0100;
 
   if (menu_active) {
     if (pad_pressed & BUTTON_D_UP)
@@ -612,22 +621,20 @@ void main_hook()
     }
     else if (l_pad & BUTTON_C_UP)
       clear_csp_proc(NULL, NULL);
-    else if ((l_pad & BUTTON_A) && (l_pad & BUTTON_B)) {
+    else if ((l_pad & BUTTON_A) && (l_pad & BUTTON_B))
       /* void out */
-      z64_link_pos.y = -0x8000;
-      (*(z64_xyz_t*)z64_actor_pos_addr).y = -0x8000;
-    }
+      z64_link.common.pos_1.y = z64_link.common.pos_2.y = -0x8000;
     else if (l_pad & BUTTON_A)
       /* reload zone */
-      (*(uint16_t*)z64_flag_reload_scn_addr) = 0x0014;
+      z64_game.scene_load_flags = 0x0014;
     else if (l_pad & BUTTON_B) {
       /* go to title screen */
-      (*(uint8_t*) z64_flag_interface_addr)  = 0x02;
-      (*(uint16_t*)z64_flag_reload_scn_addr) = 0x0014;
+      z64_file.interface_flags  = 0x02;
+      z64_game.scene_load_flags = 0x0014;
     }
     else if (l_pad)
       /* levitate */
-      (*(uint16_t*)z64_levitate_addr) = 0x40CB;
+      z64_link.common.vel_1.y = 6.34375;
     /* dpad-activated commands */
     static uint16_t d_pad = 0;
     if (!d_pad && (pad_pressed_raw & (BUTTON_D_UP | BUTTON_D_DOWN |
@@ -640,30 +647,27 @@ void main_hook()
     static z64_rot_t stored_rot[10];
     if (d_pad & BUTTON_D_LEFT) {
       /* save position and orientation */
-      stored_pos[tp_slot] = z64_link_pos;
-      stored_rot[tp_slot] = z64_link_rot;
+      stored_pos[tp_slot] = z64_link.common.pos_2;
+      stored_rot[tp_slot] = z64_link.common.rot_2;
     }
     else if (d_pad & BUTTON_D_RIGHT) {
       /* teleport */
-      z64_link_pos = stored_pos[tp_slot];
-      /* actor position */
-      (*(z64_xyz_t*)z64_actor_pos_addr) = stored_pos[tp_slot];
-      z64_link_rot = stored_rot[tp_slot];
-      /* locked rotation */
-      (*(uint16_t*)z64_actor_rot_addr) = stored_rot[tp_slot].y;
-      /* prevents collision with actors */
-      /* (*(uint8_t*)z64_collision_detect_addr) = 0xFF; */
+      z64_link.common.pos_1 = z64_link.common.pos_2 = stored_pos[tp_slot];
+      z64_link.common.rot_2 = stored_rot[tp_slot];
+      z64_link.yaw          = stored_rot[tp_slot].y;
     }
     else if (d_pad & pad_pressed & BUTTON_D_DOWN)
       pause_proc(NULL, NULL);
     else if (d_pad & pad_pressed & BUTTON_D_UP)
       advance_proc(NULL, NULL);
   }
-#endif
 
 #if 1
-  gfx_mode_color(0xC8, 0xC8, 0xC8, 0xFF);
-  gfx_printf(menu_font, 2 * 6, 28 * 8, "%4i %4i", input_ptr->x, input_ptr->y);
+  gfx_mode_color(0xC8, 0xC8, 0xC8, menu_alpha);
+  gfx_printf(menu_font,
+             2 * menu_cell_width,
+             28 * menu_cell_height,
+             "%4i %4i", input_ptr->x, input_ptr->y);
   static struct
   {
     uint16_t    mask;
@@ -672,20 +676,20 @@ void main_hook()
   }
   buttons[] =
   {
-    {0x8000, "A", 0x0000FF},
-    {0x4000, "B", 0x00FF00},
-    {0x1000, "S", 0xFF0000},
-    {0x0020, "L", 0xC8C8C8},
-    {0x0010, "R", 0xC8C8C8},
-    {0x2000, "Z", 0xC8C8C8},
-    {0x0008, "u", 0xFFFF00},
-    {0x0004, "d", 0xFFFF00},
-    {0x0002, "l", 0xFFFF00},
-    {0x0001, "r", 0xFFFF00},
-    {0x0800, "u", 0xC8C8C8},
-    {0x0400, "d", 0xC8C8C8},
-    {0x0200, "l", 0xC8C8C8},
-    {0x0100, "r", 0xC8C8C8},
+    {BUTTON_A,        "A", 0x0000FF},
+    {BUTTON_B,        "B", 0x00FF00},
+    {BUTTON_START,    "S", 0xFF0000},
+    {BUTTON_L,        "L", 0xC8C8C8},
+    {BUTTON_R,        "R", 0xC8C8C8},
+    {BUTTON_Z,        "Z", 0xC8C8C8},
+    {BUTTON_C_UP,     "u", 0xFFFF00},
+    {BUTTON_C_DOWN,   "d", 0xFFFF00},
+    {BUTTON_C_LEFT,   "l", 0xFFFF00},
+    {BUTTON_C_RIGHT,  "r", 0xFFFF00},
+    {BUTTON_D_UP,     "u", 0xC8C8C8},
+    {BUTTON_D_DOWN,   "d", 0xC8C8C8},
+    {BUTTON_D_LEFT,   "l", 0xC8C8C8},
+    {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
   };
   for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
     if (!(input_ptr->pad & buttons[i].mask))
@@ -693,8 +697,11 @@ void main_hook()
     gfx_mode_color((buttons[i].color >> 16) & 0xFF,
                    (buttons[i].color >> 8)  & 0xFF,
                    (buttons[i].color >> 0)  & 0xFF,
-                   0xFF);
-    gfx_printf(menu_font, (12 + i) * 6, 28 * 8, "%s", buttons[i].name);
+                   menu_alpha);
+    gfx_printf(menu_font,
+               (12 + i) * menu_cell_width,
+               28 * menu_cell_height,
+               "%s", buttons[i].name);
   }
 #endif
 
@@ -709,34 +716,6 @@ void main_hook()
     console_scroll(1, 0);
   console_print();
 #endif
-
-  {
-#if Z64_VERSION == Z64_OOT10
-    int8_t *item_in_hand = (void*)0x801DAB72;
-#elif Z64_VERSION == Z64_OOT12
-    int8_t *item_in_hand = (void*)0x801DB432;
-#endif
-    int sprite_x = 167;
-    int sprite_y = 56;
-    if (*item_in_hand >= 0) {
-      struct gfx_sprite item_sprite =
-      {
-        resource_get(RES_ZICON_ITEM),
-        *item_in_hand,
-        sprite_x, sprite_y,
-        0.75, 0.75,
-      };
-      gfx_mode_filter(G_TF_BILERP);
-      gfx_mode_blend(G_OFF);
-      gfx_sprite_draw(&item_sprite);
-    }
-    gfx_mode_filter(G_TF_POINT);
-    gfx_mode_blend(G_ON);
-    gfx_mode_color(0xFF, 0xFF, 0xFF, 0xFF);
-    gfx_printf(resource_get(RES_FONT_ORIGAMIMOMMY10),
-               sprite_x + 12, sprite_y + 14,
-               "%02" PRIx8, (uint8_t)*item_in_hand);
-  }
 
   gfx_flush();
 }
@@ -813,19 +792,20 @@ ENTRY void _start()
     menu_init(&menu_variable_items);
     menu_variable_items.selector = menu_add_submenu(&menu_variable_items,
                                                     2, 6, NULL, "return", 0);
-    static uint8_t bottle_options[] =
+    static int8_t bottle_options[] =
     {
-      0xFF, 0x14, 0x15, 0x16,
-      0x17, 0x18, 0x19, 0x1A,
-      0x1C, 0x1D, 0x1E, 0x1F,
-      0x20,
+      Z64_ITEM_NULL,          Z64_ITEM_BOTTLE,      Z64_ITEM_RED_POTION,
+      Z64_ITEM_GREEN_POTION,  Z64_ITEM_BLUE_POTION, Z64_ITEM_FAIRY,
+      Z64_ITEM_FISH,          Z64_ITEM_MILK,        Z64_ITEM_LETTER,
+      Z64_ITEM_BLUE_FIRE,     Z64_ITEM_BUG,         Z64_ITEM_BIG_POE,
+      Z64_ITEM_HALF_MILK,     Z64_ITEM_POE
     };
     static struct byte_option bottle_option_data[] =
     {
-      {(void*)z64_bottle_1_opt_addr, bottle_options, 13},
-      {(void*)z64_bottle_2_opt_addr, bottle_options, 13},
-      {(void*)z64_bottle_3_opt_addr, bottle_options, 13},
-      {(void*)z64_bottle_4_opt_addr, bottle_options, 13},
+      {&z64_file.items[Z64_SLOT_BOTTLE_1], bottle_options, 14},
+      {&z64_file.items[Z64_SLOT_BOTTLE_2], bottle_options, 14},
+      {&z64_file.items[Z64_SLOT_BOTTLE_3], bottle_options, 14},
+      {&z64_file.items[Z64_SLOT_BOTTLE_4], bottle_options, 14},
     };
     for (int i = 0; i < 4; ++i) {
       char s[41];
@@ -833,21 +813,22 @@ ENTRY void _start()
       menu_add_static(&menu_variable_items, 2, 7 + i, s, 0xFFFFFF);
       menu_add_option(&menu_variable_items, 20, 7 + i,
                       "nothing\0""bottle\0""red potion\0""green potion\0"
-                      "blue potion\0""fairy\0""fish\0""milk\0""blue fire\0"
-                      "bug\0""big poe\0""half milk\0""poe\0",
+                      "blue potion\0""fairy\0""fish\0""milk\0""ruto's letter\0"
+                      "blue fire\0""bug\0""big poe\0""half milk\0""poe\0",
                       byte_option_proc, &bottle_option_data[i], 0);
     }
-    static uint8_t adult_trade_options[] =
+    static int8_t adult_trade_options[] =
     {
-      0xFF, 0x2D, 0x2E, 0x2F,
-      0x30, 0x31, 0x32, 0x33,
-      0x34, 0x35, 0x36, 0x37,
+      Z64_ITEM_NULL,          Z64_ITEM_POCKET_EGG,
+      Z64_ITEM_POCKET_CUCCO,  Z64_ITEM_COJIRO,
+      Z64_ITEM_ODD_MUSHROOM,  Z64_ITEM_ODD_POTION,
+      Z64_ITEM_POACHERS_SAW,  Z64_ITEM_BROKEN_GORONS_SWORD,
+      Z64_ITEM_PRESCRIPTION,  Z64_ITEM_EYEBALL_FROG,
+      Z64_ITEM_EYE_DROPS,     Z64_ITEM_CLAIM_CHECK,
     };
     static struct byte_option adult_trade_option_data =
     {
-      (void*)z64_trade_itm_adult_addr,
-      adult_trade_options,
-      12
+      &z64_file.items[Z64_SLOT_ADULT_TRADE], adult_trade_options, 12,
     };
     menu_add_static(&menu_variable_items, 2, 11, "adult trade item",
                     0xFFFFFF);
@@ -857,18 +838,17 @@ ENTRY void _start()
                     "goron's sword\0""prescription\0""eyeball frog\0"
                     "eye drops\0""claim check\0",
                     byte_option_proc, &adult_trade_option_data, 0);
-    static uint8_t child_trade_options[] =
+    static int8_t child_trade_options[] =
     {
-      0xFF, 0x21, 0x22, 0x23,
-      0x24, 0x25, 0x26, 0x27,
-      0x28, 0x29, 0x2A, 0x2B,
-      0x2C,
+      Z64_ITEM_NULL,          Z64_ITEM_WEIRD_EGG,   Z64_ITEM_CHICKEN,
+      Z64_ITEM_ZELDAS_LETTER, Z64_ITEM_KEATON_MASK, Z64_ITEM_SKULL_MASK,
+      Z64_ITEM_SPOOKY_MASK,   Z64_ITEM_BUNNY_HOOD,  Z64_ITEM_GORON_MASK,
+      Z64_ITEM_ZORA_MASK,     Z64_ITEM_GERUDO_MASK, Z64_ITEM_MASK_OF_TRUTH,
+      Z64_ITEM_SOLD_OUT,
     };
     static struct byte_option child_trade_option_data =
     {
-      (void*)z64_trade_itm_child_addr,
-      child_trade_options,
-      13
+      &z64_file.items[Z64_SLOT_CHILD_TRADE], child_trade_options, 13,
     };
     menu_add_static(&menu_variable_items, 2, 12, "child trade item",
                     0xFFFFFF);
@@ -886,48 +866,40 @@ ENTRY void _start()
                     magic_switch_proc, NULL, 0);
     static struct switch_info stone_switch =
     {
-      "stone of agony",
-      (void*)z64_quest_itm_2_addr,
-      0b00100000
+      "stone of agony", (char*)&z64_file.quest_items + 1, 0b00100000,
     };
     menu_add_switch(&menu_quest_items, 2, 8, stone_switch.name,
                     equipment_switch_proc, &stone_switch, 0);
     static struct switch_info gerudo_switch =
     {
-      "gerudo's card",
-      (void*)z64_quest_itm_2_addr,
-      0b01000000
+      "gerudo's card", (char*)&z64_file.quest_items + 1, 0b01000000,
     };
     menu_add_switch(&menu_quest_items, 2, 9, gerudo_switch.name,
                     equipment_switch_proc, &gerudo_switch, 0);
     static struct switch_info gs_switch =
     {
-      "gs visible",
-      (void*)z64_quest_itm_2_addr,
-      0b10000000
+      "gs visible", (char*)&z64_file.quest_items + 1, 0b10000000,
     };
     menu_add_switch(&menu_quest_items, 2, 10, gs_switch.name,
                     equipment_switch_proc, &gs_switch, 0);
     menu_add_static(&menu_quest_items, 2, 11, "energy capacity", 0xFFFFFF);
     menu_add_intinput(&menu_quest_items, 18, 11, 16, 4,
-                      halfword_mod_proc, (void*)z64_max_hearts_addr, 0);
+                      halfword_mod_proc, &z64_file.energy_capacity, 0);
     menu_add_static(&menu_quest_items, 2, 12, "defense hearts", 0xFFFFFF);
     menu_add_intinput(&menu_quest_items, 18, 12, 16, 2,
-                      byte_mod_proc, (void*)z64_defense_hearts_addr, 0);
+                      byte_mod_proc, &z64_file.defense_hearts, 0);
     menu_add_static(&menu_quest_items, 2, 13, "magic capacity", 0xFFFFFF);
     menu_add_intinput(&menu_quest_items, 18, 13, 16, 2,
                       magic_capacity_proc, NULL, 0);
     menu_add_static(&menu_quest_items, 2, 14, "gs tokens", 0xFFFFFF);
     menu_add_intinput(&menu_quest_items, 18, 14, 10, 3,
-                      byte_mod_proc, (void*)z64_gs_tokens_addr, 0);
+                      halfword_mod_proc, &z64_file.gs_tokens, 0);
     menu_add_static(&menu_quest_items, 2, 15, "heart pieces", 0xFFFFFF);
     menu_add_intinput(&menu_quest_items, 18, 15, 16, 2,
-                      byte_mod_proc, (void*)z64_quest_itm_1_addr, 0);
+                      byte_mod_proc, (char*)&z64_file.quest_items + 0, 0);
     static struct option_info bulletbag_option =
     {
-      (void*)z64_upgrades_addr,
-      14,
-      0b111
+      &z64_file.equipment_items, 14, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 16, "bullet bag", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 16,
@@ -937,9 +909,7 @@ ENTRY void _start()
                     equipment_option_proc, &bulletbag_option, 0);
     static struct option_info quiver_option =
     {
-      (void*)z64_upgrades_addr,
-      0,
-      0b111
+      &z64_file.equipment_items, 0, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 17, "quiver", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 17,
@@ -949,9 +919,7 @@ ENTRY void _start()
                     equipment_option_proc, &quiver_option, 0);
     static struct option_info bombbag_option =
     {
-      (void*)z64_upgrades_addr,
-      3,
-      0b111
+      &z64_file.equipment_items, 3, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 18, "bomb bag", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 18,
@@ -961,9 +929,7 @@ ENTRY void _start()
                     equipment_option_proc, &bombbag_option, 0);
     static struct option_info strength_option =
     {
-      (void*)z64_upgrades_addr,
-      6,
-      0b111
+      &z64_file.equipment_items, 6, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 19, "strength", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 19,
@@ -973,21 +939,17 @@ ENTRY void _start()
                     equipment_option_proc, &strength_option, 0);
     static struct option_info diving_option =
     {
-      (void*)z64_upgrades_addr,
-      9,
-      0b111
+      &z64_file.equipment_items, 9, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 20, "diving", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 20,
                     "none\0""silver scale\0""gold scale\0"
                     "* goron's sword\0""* adult's wallet\0"
-                    "* giant's wallet\0""* deku seeds\0""* fishing rod\0",
+                    "* giant's wallet\0""* deku seeds\0""* fishing pole\0",
                     equipment_option_proc, &diving_option, 0);
     static struct option_info wallet_option =
     {
-      (void*)z64_upgrades_addr,
-      12,
-      0b11
+      &z64_file.equipment_items, 12, 0b11,
     };
     menu_add_static(&menu_quest_items, 2, 21, "wallet", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 21,
@@ -996,9 +958,7 @@ ENTRY void _start()
                     equipment_option_proc, &wallet_option, 0);
     static struct option_info stick_option =
     {
-      (void*)z64_upgrades_addr,
-      17,
-      0b111
+      &z64_file.equipment_items, 17, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 22, "stick capacity", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 22,
@@ -1007,9 +967,7 @@ ENTRY void _start()
                     equipment_option_proc, &stick_option, 0);
     static struct option_info nut_option =
     {
-      (void*)z64_upgrades_addr,
-      20,
-      0b111
+      &z64_file.equipment_items, 20, 0b111,
     };
     menu_add_static(&menu_quest_items, 2, 23, "nut capacity", 0xFFFFFF);
     menu_add_option(&menu_quest_items, 18, 23,
@@ -1022,10 +980,10 @@ ENTRY void _start()
                                                    NULL, "return", 0);
     static struct dungeon_menu_data dungeon_menu_data =
     {
-      {"boss key", (void*)z64_dungeon_itm_addr, 0b001},
-      {"compass",  (void*)z64_dungeon_itm_addr, 0b010},
-      {"map",      (void*)z64_dungeon_itm_addr, 0b100},
-      (void*)z64_dungeon_key_addr,
+      {"boss key",  &z64_file.dungeon_items[0], 0b001},
+      {"compass",   &z64_file.dungeon_items[0], 0b010},
+      {"map",       &z64_file.dungeon_items[0], 0b100},
+      &z64_file.dungeon_keys[0],
     };
     menu_add_static(&menu_dungeon_items, 2, 7, "dungeon", 0xFFFFFF);
     menu_add_option(&menu_dungeon_items, 14, 7,
@@ -1099,16 +1057,16 @@ ENTRY void _start()
                     equip_option_proc, (void*)3, 0);
     menu_add_static(&menu_equips, 2, 11, "b button", 0xFFFFFF);
     menu_add_intinput(&menu_equips, 12, 11, 16, 2, byte_mod_proc,
-                      (void*)z64_b_btn_itm_id_addr, 0);
+                      &z64_file.button_items[0], 0);
     menu_add_static(&menu_equips, 2, 12, "c left", 0xFFFFFF);
     menu_add_intinput(&menu_equips, 12, 12, 16, 2, byte_mod_proc,
-                      (void*)z64_cl_btn_itm_id_addr, 0);
+                      &z64_file.button_items[1], 0);
     menu_add_static(&menu_equips, 2, 13, "c down", 0xFFFFFF);
     menu_add_intinput(&menu_equips, 12, 13, 16, 2, byte_mod_proc,
-                      (void*)z64_cd_btn_itm_id_addr, 0);
+                      &z64_file.button_items[2], 0);
     menu_add_static(&menu_equips, 2, 14, "c right", 0xFFFFFF);
     menu_add_intinput(&menu_equips, 12, 14, 16, 2, byte_mod_proc,
-                      (void*)z64_cr_btn_itm_id_addr, 0);
+                      &z64_file.button_items[3], 0);
     menu_add_static(&menu_equips, 2, 15, "swordless", 0xFFFFFF);
     menu_add_option(&menu_equips, 12, 15, "no\0""yes\0",
                     swordless_proc, NULL, 0);
@@ -1130,12 +1088,10 @@ ENTRY void _start()
                     tp_slot_display, 0);
     menu_add_button(&menu_misc, 20, 10, "+", tp_slot_inc_proc,
                     tp_slot_display, 0);
-    static uint8_t language_options[] = {0x00, 0x01};
+    static int8_t language_options[] = {0x00, 0x01};
     static struct byte_option language_option_data =
     {
-      (void*)z64_opt_lang_addr,
-      language_options,
-      2
+      &z64_file.language, language_options, 2,
     };
     menu_add_static(&menu_misc, 2, 11, "language", 0xFFFFFF);
     menu_add_option(&menu_misc, 11, 11, "japanese\0""english\0",
@@ -1198,6 +1154,9 @@ ENTRY void _start()
                                                            0);
     menu_add_button(&menu_warps, 2, 12, "load room", load_room_proc,
                     room_index_input, 0);
+    static struct menu explorer;
+    explorer_create(&explorer);
+    menu_add_submenu(&menu_warps, 2, 13, &explorer, "scene explorer", 0);
 
     menu_init(&menu_watches);
     menu_watches.selector = menu_add_submenu(&menu_watches, 2, 6, NULL,

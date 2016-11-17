@@ -48,10 +48,19 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/console.h" />
+		<Unit filename="src/gz/explorer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/explorer.h" />
+		<Unit filename="src/gz/explorer_crosshair.h" />
 		<Unit filename="src/gz/gfx.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/gfx.h" />
+		<Unit filename="src/gz/gu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gu.h" />
 		<Unit filename="src/gz/gz.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -94,6 +103,10 @@
 		</Unit>
 		<Unit filename="src/gz/sys.h" />
 		<Unit filename="src/gz/z64.h" />
+		<Unit filename="src/gz/zu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/zu.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

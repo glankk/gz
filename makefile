@@ -10,6 +10,10 @@ override INCLUDE   += -I $(N64ROOT)/include
 LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
 override LDFLAGS   += -T $(LDSCRIPT) -nostdlib -O3 -flto -Wl,--gc-sections
 override LDLIBS    += -lstdc++ -lsupc++ -lc -lg -lm -lgcc -lnosys
+CPPFLAGS_DEBUG      = -fno-lto -g
+LDSCRIPT_DEBUG      = $(N64ROOT)/ldscripts/gl-n64-debug.ld
+LDFLAGS_DEBUG       =
+LDLIBS_DEBUG        =
 LUAFILE             = $(EMUDIR)/Lua/patch-data.lua
 GZ_VERSIONS         = oot-1.0 oot-1.2
 GZ_ADDRESS          = 80600000
@@ -48,14 +52,20 @@ define bin_template =
  DEPS-$(1)          = $$(patsubst %.o,%.d,$$(OBJ-$(1)))
  BIN-$(1)           = $$(BINDIR-$(1))/$$(NAME-$(1)).bin
  ELF-$(1)           = $$(BINDIR-$(1))/$$(NAME-$(1)).elf
+ BUILD-$(1)         = $(1) $(1)-debug
+ CLEAN-$(1)         = clean$(1) clean$(1)-debug
  -include $$(DEPS-$(1))
- $(1)               : LDFLAGS += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
- $(1)               : $$(BIN-$(1))
- clean$(1)          :
+ $$(BUILD-$(1))     : LDFLAGS  += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
+ $(1)-debug         : CPPFLAGS += $$(CPPFLAGS_DEBUG)
+ $(1)-debug         : LDSCRIPT  = $$(LDSCRIPT_DEBUG)
+ $(1)-debug         : LDFLAGS  += $$(LDFLAGS_DEBUG)
+ $(1)-debug         : LDLIBS   := $$(LDLIBS_DEBUG) $$(LDLIBS)
+ $$(BUILD-$(1))     : $$(BIN-$(1))
+ $$(CLEAN-$(1))     :
 	rm -rf $$(OBJDIR-$(1)) $$(BINDIR-$(1))
- .PHONY             : $(1) clean$(1)
+ .PHONY             : $$(BUILD-$(1)) $$(CLEAN-$(1))
  $$(BIN-$(1))       : $$(ELF-$(1)) | $$$$(dir $$$$@)
-	$$(OBJCOPY) $$< $$@ -O binary
+	$$(OBJCOPY) $$< $$@ -O binary -g
  $$(ELF-$(1))       : $$(OBJ-$(1)) | $$$$(dir $$$$@)
 	$$(LD) $$(LDFLAGS) $$^ $$(LDLIBS) -o $$@
  $$(COBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
@@ -66,11 +76,17 @@ define bin_template =
 endef
 
 define lua_template =
+ BUILD-$(1)-lua     = $(1)-lua $(1)-debug-lua
+ CLEAN-$(1)-lua     = clean$(1)-lua clean$(1)-debug-lua
  $(1)-lua           : $(1)
-	$$(LUAPATCH) $(2) $$(patsubst %,-text % ,$$(GSC-$(1))) -bin $$(ADDRESS-$(1)) $$(BIN-$(1))
+ $(1)-debug-lua     : $(1)-debug
  clean$(1)-lua      : clean$(1)
-	rm -rf $2
- .PHONY             : $(1)-lua clean$(1)-lua
+ clean$(1)-debug-lua: clean$(1)-debug
+ $$(BUILD-$(1)-lua) :
+	$$(LUAPATCH) $(2) $$(patsubst %,-text % ,$$(GSC-$(1))) -bin $$(ADDRESS-$(1)) $$(BIN-$(1))
+ $$(CLEAN-$(1)-lua) :
+	rm -rf $(2)
+ .PHONY             : $$(BUILD-$(1)-lua) $$(CLEAN-$(1)-lua)
 
 endef
 
