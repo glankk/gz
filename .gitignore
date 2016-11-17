@@ -49,10 +49,10 @@ Temporary Items
 
 # generated files
 *.layout
-*.depend
 obj/
 bin/
 *.o
+*.d
 *.elf
 *.bin
 *.ups
