@@ -9,18 +9,16 @@
 #include "zu.h"
 #include "z64.h"
 
-#define       GFX_DISP_SIZE   0x3000
-#define       GFX_DATA_SIZE   0x400
-static char   gfx_disp_buffers[2][GFX_DISP_SIZE];
-static char   gfx_data_buffers[2][GFX_DATA_SIZE];
-Gfx          *gfx_disp      = (void*)&gfx_disp_buffers[0][0];
-Gfx          *gfx_disp_p    = (void*)&gfx_disp_buffers[0][0];
-Gfx          *gfx_disp_e    = (void*)&gfx_disp_buffers[0][GFX_DISP_SIZE];
-Gfx          *gfx_disp_w    = (void*)&gfx_disp_buffers[1][0];
-char         *gfx_data      = (void*)&gfx_data_buffers[0][0];
-char         *gfx_data_p    = (void*)&gfx_data_buffers[0][0];
-char         *gfx_data_e    = (void*)&gfx_data_buffers[0][GFX_DATA_SIZE];
-char         *gfx_data_w    = (void*)&gfx_data_buffers[1][0];
+#define   GFX_DISP_SIZE 0x8000
+#define   GFX_DATA_SIZE 0x0800
+Gfx      *gfx_disp;
+Gfx      *gfx_disp_w;
+Gfx      *gfx_disp_p;
+Gfx      *gfx_disp_e;
+char     *gfx_data;
+char     *gfx_data_w;
+char     *gfx_data_p;
+char     *gfx_data_e;
 
 const struct gfx_colormatrix gfx_cm_desaturate =
 {
@@ -32,6 +30,19 @@ const struct gfx_colormatrix gfx_cm_desaturate =
 
 void gfx_mode_init(int filter, _Bool blend)
 {
+  static _Bool alloc = 1;
+  if (alloc) {
+    alloc = 0;
+    gfx_disp = malloc(GFX_DISP_SIZE);
+    gfx_disp_w = malloc(GFX_DISP_SIZE);
+    gfx_disp_p = gfx_disp;
+    gfx_disp_e = (void*)((char*)gfx_disp + GFX_DISP_SIZE);
+    gfx_data = malloc(GFX_DATA_SIZE);
+    gfx_data_w = malloc(GFX_DATA_SIZE);
+    gfx_data_p = gfx_data;
+    gfx_data_e = (void*)((char*)gfx_data + GFX_DATA_SIZE);
+  }
+
   Gfx g_blend[] =
   {
     gsDPSetCombineMode(G_CC_DECALRGBA,

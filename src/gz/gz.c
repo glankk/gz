@@ -10,6 +10,7 @@
 #include "console.h"
 #include "menu.h"
 #include "explorer.h"
+#include "zu.h"
 #include "z64.h"
 
 struct switch_info
@@ -178,6 +179,96 @@ static struct switch_info reward_list[] =
   {"spirit medal",          (char*)&z64_file.quest_items + 3, 0b00001000},
   {"shadow medal",          (char*)&z64_file.quest_items + 3, 0b00010000},
 };
+
+struct scene_category
+{
+  const char     *category_name;
+  int             no_scenes;
+  const uint8_t  *scenes;
+}
+scene_categories[] =
+{
+  {
+    "dungeons",
+    17, (uint8_t[])
+    {
+      0,   1,   2,   3,
+      4,   5,   6,   7,
+      8,   9,   10,  11,
+      12,  13,  14,  15,
+      26,
+    },
+  },
+  {
+    "bosses",
+    10, (uint8_t[])
+    {
+      17,  18,  19,  20,
+      21,  22,  23,  24,
+      25,  79,
+    },
+  },
+  {
+    "towns",
+    12, (uint8_t[])
+    {
+      27,  28,  29,  30,
+      31,  32,  33,  34,
+      35,  36,  37,  82,
+    },
+  },
+  {
+    "houses",
+    15, (uint8_t[])
+    {
+      38,  39,  40,  41,
+      42,  43,  52,  53,
+      54,  55,  57,  58,
+      76,  77,  80,
+    },
+  },
+  {
+    "shops",
+    12, (uint8_t[])
+    {
+      16,  44,  45,  46,
+      47,  48,  49,  50,
+      51,  66,  75,  78,
+    },
+  },
+  {
+    "misc",
+    15, (uint8_t[])
+    {
+      56,  59,  60,  61,
+      62,  63,  64,  65,
+      67,  68,  69,  70,
+      71,  72,  74,
+    },
+  },
+  {
+    "overworld",
+    20, (uint8_t[])
+    {
+      73,  81,  83,  84,
+      85,  86,  87,  88,
+      89,  90,  91,  92,
+      93,  94,  95,  96,
+      97,  98,  99,  100,
+    },
+  },
+  {
+    "beta",
+    9, (uint8_t[])
+    {
+      101, 102, 103, 104,
+      105, 106, 107, 108,
+      109,
+    },
+  },
+};
+static int no_scene_categories = sizeof(scene_categories) /
+                                 sizeof(*scene_categories);
 
 static int generic_switch_proc(struct menu_item *item,
                                enum menu_callback_reason reason,
@@ -425,6 +516,22 @@ static void warp_proc(struct menu_item *item, void *data)
   z64_game.entrance_index = menu_intinput_get(warp_info->entrance);
   z64_game.link_age = menu_option_get(warp_info->age);
   z64_game.scene_load_flags = 0x0014;
+}
+
+static void places_proc(struct menu_item *item, void *data)
+{
+  uintptr_t d = (uintptr_t)data;
+  int scene_index = (d & 0xFF00) >> 8;
+  int entrance_index = (d & 0x00FF) >> 0;
+  for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
+    z64_entrance_table_t *e = &z64_entrance_table[i];
+    if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
+      z64_game.entrance_index = i;
+      z64_file.cutscene_index = 0;
+      z64_game.scene_load_flags = 0x0014;
+      break;
+    }
+  }
 }
 
 static void clear_csp_proc(struct menu_item *item, void *data)
@@ -1154,9 +1261,40 @@ ENTRY void _start()
                                                            0);
     menu_add_button(&menu_warps, 2, 12, "load room", load_room_proc,
                     room_index_input, 0);
+    static struct menu places;
+    menu_init(&places);
+    places.selector = menu_add_submenu(&places, 2, 6, NULL, "return", 0);
+    for (int i = 0; i < no_scene_categories; ++i) {
+      struct scene_category *cat = &scene_categories[i];
+      struct menu *cat_menu = malloc(sizeof(*cat_menu));
+      menu_init(cat_menu);
+      cat_menu->selector = menu_add_submenu(cat_menu, 2, 6, NULL, "return", 0);
+      for (int j = 0; j < cat->no_scenes; ++j) {
+        uint8_t scene_index = cat->scenes[j];
+        struct zu_scene_info *scene = &zu_scene_info[scene_index];
+        if (scene->no_entrances > 1) {
+          struct menu *scene_menu = malloc(sizeof(*scene_menu));
+          menu_init(scene_menu);
+          scene_menu->selector = menu_add_submenu(scene_menu, 2, 6, NULL,
+                                                  "return", 0);
+          for (uint8_t k = 0; k < scene->no_entrances; ++k)
+            menu_add_button(scene_menu, 2, 7 + k, scene->entrance_names[k],
+                            places_proc, (void*)((scene_index << 8) | k), 0);
+          menu_add_submenu(cat_menu, 2, 7 + j, scene_menu,
+                           scene->scene_name, 0);
+        }
+        else
+          menu_add_button(cat_menu, 2, 7 + j, scene->scene_name,
+                          places_proc, (void*)((scene_index << 8) | 0), 0);
+      }
+      menu_add_submenu(&places, 2, 7 + i, cat_menu,
+                       cat->category_name, 0);
+    }
+    menu_add_submenu(&menu_warps, 2, 13, &places, "places", 0);
     static struct menu explorer;
     explorer_create(&explorer);
-    menu_add_submenu(&menu_warps, 2, 13, &explorer, "scene explorer", 0);
+    menu_add_submenu(&menu_warps, 2, 14, &explorer, "scene explorer", 0);
+
 
     menu_init(&menu_watches);
     menu_watches.selector = menu_add_submenu(&menu_watches, 2, 6, NULL,

@@ -22,6 +22,8 @@
 #define Z64_SEG_ZIMG          0x0E
 #define Z64_SEG_CIMG          0x0F
 
+#define Z64_ETAB_LENGTH       0x0614
+
 #define BUTTON_C_RIGHT        0x0001
 #define BUTTON_C_LEFT         0x0002
 #define BUTTON_C_DOWN         0x0004
@@ -396,6 +398,23 @@ typedef struct
 
 typedef struct
 {
+  uint8_t       scene_index;
+  uint8_t       entrance_index;
+  union
+  {
+    uint16_t    variable;
+    struct
+    {
+      uint16_t  transition_out  : 7;
+      uint16_t  transition_in   : 7;
+      uint16_t  unk_00_         : 1;
+      uint16_t  continue_music  : 1;
+    };
+  };
+} z64_entrance_table_t;
+
+typedef struct
+{
   uint32_t scene_vrom_start;
   uint32_t scene_vrom_end;
   uint32_t title_vrom_start;
@@ -649,6 +668,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAE8
 #define z64_frame_input_func_addr               0x800A0BA0
 #define z64_frame_input_call_addr               0x800A16AC
+#define z64_entrance_table_addr                 0x800F9C90
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
 #define z64_file_addr                           0x8011A5D0
@@ -679,6 +699,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAF8
 #define z64_frame_input_func_addr               0x800A0BB0
 #define z64_frame_input_call_addr               0x800A16BC
+#define z64_entrance_table_addr                 0x800F9E50
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
 #define z64_file_addr                           0x8011A790
@@ -709,6 +730,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009D1D8
 #define z64_frame_input_func_addr               0x800A1290
 #define z64_frame_input_call_addr               0x800A1D8C
+#define z64_entrance_table_addr                 0x800FA2E0
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
 #define z64_file_addr                           0x8011AC80
@@ -735,6 +757,8 @@ typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
 /* data */
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)
+#define z64_entrance_table      ( (z64_entrance_table_t*)                     \
+                                   z64_entrance_table_addr)
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \
                                    z64_scene_config_table_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)

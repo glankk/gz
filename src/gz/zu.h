@@ -60,6 +60,13 @@ struct zu_bbox
         z1, z2;
 };
 
+struct zu_scene_info
+{
+  const char     *scene_name;
+  int             no_entrances;
+  const char    **entrance_names;
+};
+
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);
 void *zu_zseg_locate(uint32_t seg_addr);
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size);
@@ -78,5 +85,6 @@ void zu_vlist_bbox(const struct zu_vlist *vlist, struct zu_bbox *bbox);
 void zu_vlist_transform(const struct zu_vlist *vlist, const MtxF *mf);
 void zu_vlist_destroy(struct zu_vlist *vlist);
 
+extern struct zu_scene_info zu_scene_info[];
 
 #endif

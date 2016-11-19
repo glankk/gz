@@ -1,6 +1,7 @@
 local arg = {...}
 if #arg < 1 then
-  print("usage: `patch <rom-file>`")
+  print("usage: `patch <rom-file>` " ..
+       "(or drag and drop the rom file you wish to patch onto the patch script)")
   return
 end
 require("lua/rom_table")
