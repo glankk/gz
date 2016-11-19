@@ -5,7 +5,7 @@ OBJCOPY             = mips64-objcopy
 LUAPATCH            = luapatch
 override CFLAGS    += -std=c11
 override CXXFLAGS  += -std=c++14
-override CPPFLAGS  += -Wall -O3 -G 4 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
+override CPPFLAGS  += -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
 override INCLUDE   += -I $(N64ROOT)/include
 LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
 override LDFLAGS   += -T $(LDSCRIPT) -nostdlib -O3 -flto -Wl,--gc-sections
