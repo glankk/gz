@@ -529,6 +529,10 @@ static void places_proc(struct menu_item *item, void *data)
       z64_game.entrance_index = i;
       z64_file.cutscene_index = 0;
       z64_game.scene_load_flags = 0x0014;
+      if (zu_scene_info[scene_index].no_entrances > 1)
+        menu_return(&menu_main);
+      menu_return(&menu_main);
+      menu_return(&menu_main);
       break;
     }
   }
