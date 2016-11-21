@@ -35,12 +35,6 @@ struct dungeon_menu_data
   int8_t             *keys_ptr;
 };
 
-struct warp_info
-{
-  struct menu_item *entrance;
-  struct menu_item *age;
-};
-
 struct byte_option
 {
   void    *data;
@@ -68,6 +62,13 @@ static struct menu menu_misc;
 static struct menu menu_cheats;
 static struct menu menu_warps;
 static struct menu menu_watches;
+
+static struct
+{
+  struct menu_item *entrance;
+  struct menu_item *age;
+  _Bool             override_offset;
+} warp_info;
 
 static int menu_active      = 0;
 static int tp_slot          = 0;
@@ -512,10 +513,11 @@ static void tp_slot_inc_proc(struct menu_item *item, void *data)
 
 static void warp_proc(struct menu_item *item, void *data)
 {
-  struct warp_info *warp_info = data;
-  z64_game.entrance_index = menu_intinput_get(warp_info->entrance);
-  z64_game.link_age = menu_option_get(warp_info->age);
+  z64_game.entrance_index = menu_intinput_get(warp_info.entrance);
+  z64_file.cutscene_index = 0;
+  z64_game.link_age = menu_option_get(warp_info.age);
   z64_game.scene_load_flags = 0x0014;
+  warp_info.override_offset = 1;
 }
 
 static void places_proc(struct menu_item *item, void *data)
@@ -528,7 +530,9 @@ static void places_proc(struct menu_item *item, void *data)
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
       z64_game.entrance_index = i;
       z64_file.cutscene_index = 0;
+      z64_game.link_age = menu_option_get(warp_info.age);
       z64_game.scene_load_flags = 0x0014;
+      warp_info.override_offset = 1;
       if (zu_scene_info[scene_index].no_entrances > 1)
         menu_return(&menu_main);
       menu_return(&menu_main);
@@ -765,7 +769,7 @@ void main_hook()
       /* teleport */
       z64_link.common.pos_1 = z64_link.common.pos_2 = stored_pos[tp_slot];
       z64_link.common.rot_2 = stored_rot[tp_slot];
-      z64_link.yaw          = stored_rot[tp_slot].y;
+      z64_link.target_yaw   = stored_rot[tp_slot].y;
     }
     else if (d_pad & pad_pressed & BUTTON_D_DOWN)
       pause_proc(NULL, NULL);
@@ -831,6 +835,22 @@ void main_hook()
   gfx_flush();
 }
 
+void entrance_offset_hook()
+{
+  uint32_t at;
+  uint32_t offset;
+  __asm__ volatile (".set noat  \n"
+                    "sw $at, %0 \n" : "=m"(at));
+  if (warp_info.override_offset) {
+    offset = 0;
+    warp_info.override_offset = 0;
+  }
+  else
+    offset = z64_file.scene_setup_index;
+  __asm__ volatile ("lw $v1, %0 \n"
+                    "lw $at, %1 \n" :: "m"(offset), "m"(at));
+}
+
 ENTRY void _start()
 {
   /* startup */
@@ -840,9 +860,12 @@ ENTRY void _start()
     do_global_ctors();
   }
 
+  /* install entrance offset hook */
+  *(uint32_t*)z64_entrance_offset_hook_addr = MIPS_JAL(&entrance_offset_hook);
+
   /* disable map toggling */
-  (*(uint32_t*)z64_minimap_disable_1_addr) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
-  (*(uint32_t*)z64_minimap_disable_2_addr) = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+  *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
+  *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
   menu_font = resource_get(RES_FONT_ORIGAMIMOMMY10);
 
@@ -1249,16 +1272,16 @@ ENTRY void _start()
     menu_init(&menu_warps);
     menu_warps.selector = menu_add_submenu(&menu_warps, 2, 6, NULL,
                                            "return", 0);
-    static struct warp_info warp_info;
     menu_add_static(&menu_warps, 2, 7, "entrance", 0xFFFFFF);
     warp_info.entrance = menu_add_intinput(&menu_warps, 12, 7, 16, 4,
                                            NULL, NULL, 0);
     menu_add_static(&menu_warps, 2, 8, "age", 0xFFFFFF);
     warp_info.age = menu_add_option(&menu_warps, 12, 8,
                                     "adult\0""child\0", NULL, NULL, 0);
+    warp_info.override_offset = 0;
     menu_add_button(&menu_warps, 2, 9, "clear cutscene pointer",
                     clear_csp_proc, NULL, 0);
-    menu_add_button(&menu_warps, 2, 10, "warp", warp_proc, &warp_info, 0);
+    menu_add_button(&menu_warps, 2, 10, "warp", warp_proc, NULL, 0);
     menu_add_static(&menu_warps, 2, 11, "room", 0xFFFFFF);
     struct menu_item *room_index_input = menu_add_intinput(&menu_warps, 12, 11,
                                                            16, 2, NULL, NULL,

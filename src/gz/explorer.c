@@ -222,7 +222,10 @@ static int think_proc(struct menu *menu, struct menu_item *item)
     }
     z64_xyz_t pos = {data->x, data->y, data->z};
     z64_link.common.pos_1 = z64_link.common.pos_2 = pos;
-    z64_link.common.rot_2.y = z64_link.yaw = 0x8000 + data->yaw * 0x8000 / M_PI;
+    z64_link.common.rot_2.y = z64_link.target_yaw = 0x8000 + data->yaw *
+                                                    0x8000 / M_PI;
+    z64_link.drop_y = pos.y;
+    z64_link.drop_distance = 0;
     menu_return(menu);
     return 1;
   }

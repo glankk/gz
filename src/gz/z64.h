@@ -550,9 +550,12 @@ struct z64_actor_s
 typedef struct
 {
   z64_actor_t common;             /* 0x0000 */
-  char        unk_00_[0x6F2];     /* 0x013C */
-  uint16_t    yaw;                /* 0x082E */
-                                  /* 0x0830 */
+  char        unk_00_[0x06F2];    /* 0x013C */
+  uint16_t    target_yaw;         /* 0x082E */
+  char        unk_01_[0x0054];    /* 0x0830 */
+  int16_t     drop_y;             /* 0x0884 */
+  int16_t     drop_distance;      /* 0x0886 */
+                                  /* 0x0888 */
 } z64_link_t;
 
 typedef struct
@@ -671,6 +674,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
+#define z64_entrance_offset_hook_addr           0x8009AA44
 #define z64_frame_update_func_addr              0x8009AF1C
 #define z64_frame_update_call_addr              0x8009CAE8
 #define z64_frame_input_func_addr               0x800A0BA0
@@ -702,6 +706,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
+#define z64_entrance_offset_hook_addr           0x8009AA54
 #define z64_frame_update_func_addr              0x8009AF2C
 #define z64_frame_update_call_addr              0x8009CAF8
 #define z64_frame_input_func_addr               0x800A0BB0
@@ -733,6 +738,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006DB40
 #define z64_LoadRoom_addr                       0x80081064
 #define z64_UnloadRoom_addr                     0x800812C0
+#define z64_entrance_offset_hook_addr           0x8009B134
 #define z64_frame_update_func_addr              0x8009B60C
 #define z64_frame_update_call_addr              0x8009D1D8
 #define z64_frame_input_func_addr               0x800A1290
