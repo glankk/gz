@@ -1235,9 +1235,9 @@ ENTRY void _start()
     static int8_t target_options[] = {0x00, 0x01};
     static struct byte_option target_option_data =
     {
-      &z64_file.target, target_options, 2,
+      &z64_file.z_targeting, target_options, 2,
     };
-    menu_add_static(&menu_misc, 2, 12, "targetting", 0xFFFFFF);
+    menu_add_static(&menu_misc, 2, 12, "z targeting", 0xFFFFFF);
     menu_add_option(&menu_misc, 14, 12, "switch\0""hold\0",
                     byte_option_proc, &target_option_data,  0);
     menu_add_button(&menu_misc, 2, 13, "pause / unpause", pause_proc,
