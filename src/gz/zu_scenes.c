@@ -614,7 +614,7 @@ struct zu_scene_info zu_scene_info[] =
     },
   },
   {
-    "chamber of sages",
+    "chamber of the sages",
     2, (const char*[])
     {
       "default",

@@ -1,0 +1,16 @@
+{
+  "origamimommy10.png":
+  {
+    "type":         "texture",
+    "name":         "origamimommy10",
+    "format":       "ia4",
+    "tile_height":  240
+  },
+  "crosshair.png":
+  {
+    "type":         "texture",
+    "name":         "crosshair",
+    "format":       "i4",
+    "tile_height":  32
+  }
+}

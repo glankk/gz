@@ -20,7 +20,7 @@ char     *gfx_data_w;
 char     *gfx_data_p;
 char     *gfx_data_e;
 
-const struct gfx_colormatrix gfx_cm_desaturate =
+const gfx_colormatrix_t gfx_cm_desaturate =
 {
   0.3086, 0.6094, 0.0820, 0.,
   0.3086, 0.6094, 0.0820, 0.,
@@ -138,25 +138,33 @@ void gfx_flush()
   gfx_data_e = gfx_data + GFX_DATA_SIZE;
 }
 
-void gfx_texldr_init(struct gfx_texldr *texldr)
+void gfx_texldr_init(gfx_texldr_t *texldr)
 {
   texldr->file_vaddr = GFX_FILE_DRAM;
   texldr->file_data = NULL;
 }
 
-struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
-                                    const struct gfx_texdesc *texdesc,
-                                    struct gfx_texture *texture)
+gfx_texture_t *gfx_texldr_load(gfx_texldr_t *texldr,
+                               const gfx_texdesc_t *texdesc,
+                               gfx_texture_t *texture)
 {
-  struct gfx_texture *new_texture = NULL;
+  gfx_texture_t *new_texture = NULL;
   if (!texture) {
     new_texture = malloc(sizeof(*new_texture));
     if (!new_texture)
       return new_texture;
     texture = new_texture;
   }
-  size_t texture_size = (texdesc->width * texdesc->height *
-                         G_SIZ_BITS(texdesc->siz) + 7) / 8 * texdesc->images;
+  texture->im_fmt = texdesc->im_fmt;
+  texture->im_siz = texdesc->im_siz;
+  texture->tile_width = texdesc->tile_width;
+  texture->tile_height = texdesc->tile_height;
+  texture->tiles_x = texdesc->tiles_x;
+  texture->tiles_y = texdesc->tiles_y;
+  texture->tile_size = ((texture->tile_width * texture->tile_height *
+                        G_SIZ_BITS(texture->im_siz) + 7) / 8 + 63) / 64 * 64;
+  size_t texture_size = texture->tile_size *
+                        texture->tiles_x * texture->tiles_y;
   void *texture_data = NULL;
   void *file_start = NULL;
   if (texdesc->file_vaddr != GFX_FILE_DRAM) {
@@ -190,64 +198,53 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
     }
     memcpy(texture_data, (char*)file_start + texdesc->address, texture_size);
   }
-  texture->fmt = texdesc->fmt;
-  texture->siz = texdesc->siz;
   texture->data = texture_data;
-  texture->width = texdesc->width;
-  texture->height = texdesc->height;
-  texture->images = texdesc->images;
   return texture;
 }
 
-void gfx_texldr_destroy(struct gfx_texldr *texldr)
+void gfx_texldr_destroy(gfx_texldr_t *texldr)
 {
   if (texldr->file_data)
     free(texldr->file_data);
 }
 
-struct gfx_texture *gfx_texture_load(const struct gfx_texdesc *texdesc,
-                                     struct gfx_texture *texture)
+gfx_texture_t *gfx_texture_load(const gfx_texdesc_t *texdesc,
+                                gfx_texture_t *texture)
 {
-  struct gfx_texldr texldr;
+  gfx_texldr_t texldr;
   gfx_texldr_init(&texldr);
   texture = gfx_texldr_load(&texldr, texdesc, texture);
   gfx_texldr_destroy(&texldr);
   return texture;
 }
 
-void gfx_texture_destroy(struct gfx_texture *texture)
+void gfx_texture_destroy(gfx_texture_t *texture)
 {
   if (texture->data)
     free(texture->data);
 }
 
-void gfx_texture_free(struct gfx_texture *texture)
+void gfx_texture_free(gfx_texture_t *texture)
 {
   gfx_texture_destroy(texture);
   free(texture);
 }
 
-size_t gfx_texture_image_size(const struct gfx_texture *texture)
+void *gfx_texture_data(const gfx_texture_t *texture, int16_t tile)
 {
-  return (texture->width * texture->height * G_SIZ_BITS(texture->siz) + 7) / 8;
+  return (char*)texture->data + texture->tile_size * tile;
 }
 
-void *gfx_texture_data(const struct gfx_texture *texture, int16_t image)
+gfx_texture_t *gfx_texture_copy(const gfx_texture_t *src, gfx_texture_t *dest)
 {
-  return (char*)texture->data + gfx_texture_image_size(texture) * image;
-}
-
-struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
-                                     struct gfx_texture *dest)
-{
-  struct gfx_texture *new_texture = NULL;
+  gfx_texture_t *new_texture = NULL;
   if (!dest) {
     new_texture = malloc(sizeof(*new_texture));
     if (!new_texture)
       return new_texture;
     dest = new_texture;
   }
-  size_t texture_size = gfx_texture_image_size(src) * src->images;
+  size_t texture_size = src->tile_size * src->tiles_x * src->tiles_y;
   void *texture_data = memalign(64, texture_size);
   if (!texture_data) {
     if (new_texture)
@@ -260,9 +257,11 @@ struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
   return dest;
 }
 
-void gfx_texture_colortransform(struct gfx_texture *texture,
-                                const struct gfx_colormatrix *matrix)
+void gfx_texture_colortransform(gfx_texture_t *texture,
+                                const gfx_colormatrix_t *matrix)
 {
+  if (texture->im_fmt != G_IM_FMT_RGBA || texture->im_siz != G_IM_SIZ_32b)
+    return;
   struct rgba32
   {
     uint8_t r;
@@ -270,9 +269,10 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
     uint8_t b;
     uint8_t a;
   };
-  size_t texture_pixels = texture->width * texture->height * texture->images;
+  size_t texture_pixels = texture->tile_width * texture->tile_height *
+                          texture->tiles_x * texture->tiles_y;
   struct rgba32 *pixel_data = texture->data;
-  struct gfx_colormatrix m = *matrix;
+  gfx_colormatrix_t m = *matrix;
   for (size_t i = 0; i < texture_pixels; ++i)
   {
     struct rgba32 p = pixel_data[i];
@@ -291,81 +291,66 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
   }
 }
 
-void gfx_sprite_draw(const struct gfx_sprite *sprite)
+void gfx_rdp_load_tile(const gfx_texture_t *texture, int16_t texture_tile)
 {
-  struct gfx_texture *texture = sprite->texture;
-  void *pixel_data = gfx_texture_data(texture, sprite->texture_image);
-  size_t tmem_size = 0x1000;
-  if (texture->siz == G_IM_SIZ_4b)
-    tmem_size /= 2;
-  int tile_pixels = tmem_size * 8 / G_SIZ_BITS(texture->siz);
-  int tile_width = (texture->width < tile_pixels ?
-                    texture->width : tile_pixels);
-  int tile_height = tile_pixels / tile_width;
-  for (int y1 = 0; y1 < texture->height; y1 += tile_height) {
-    int y2 = y1 + tile_height;
-    if (y2 > texture->height)
-      y2 = texture->height;
-    for (int x1 = 0; x1 < texture->width; x1 += tile_width) {
-      int x2 = x1 + tile_width;
-      if (x2 > texture->width)
-        x2 = texture->width;
-      if (texture->siz == G_IM_SIZ_4b) {
-        gfx_disp
-        (
-          gsDPLoadTextureTile_4b(pixel_data,
-                                 texture->fmt,
-                                 texture->width, texture->height,
-                                 x1, y1,
-                                 x2 - 1, y2 - 1,
-                                 0,
-                                 G_TX_NOMIRROR | G_TX_WRAP,
-                                 G_TX_NOMIRROR | G_TX_WRAP,
-                                 G_TX_NOMASK, G_TX_NOMASK,
-                                 G_TX_NOLOD, G_TX_NOLOD),
-        );
-      }
-      else {
-        gfx_disp
-        (
-          gsDPLoadTextureTile(pixel_data,
-                              texture->fmt, texture->siz,
-                              texture->width, texture->height,
-                              x1, y1,
-                              x2 - 1, y2 - 1,
-                              0,
-                              G_TX_NOMIRROR | G_TX_WRAP,
-                              G_TX_NOMIRROR | G_TX_WRAP,
-                              G_TX_NOMASK, G_TX_NOMASK,
-                              G_TX_NOLOD, G_TX_NOLOD),
-        );
-      }
-      gfx_disp
-      (
-        gsSPScisTextureRectangle(qs102(sprite->x + x1 * sprite->xscale) & ~3,
-                                 qs102(sprite->y + y1 * sprite->yscale) & ~3,
-                                 qs102(sprite->x + x2 * sprite->xscale) & ~3,
-                                 qs102(sprite->y + y2 * sprite->yscale) & ~3,
-                                 G_TX_RENDERTILE,
-                                 qu105(x1), qu105(y1),
-                                 qu510(1.f / sprite->xscale),
-                                 qu510(1.f / sprite->yscale)),
-      );
-    }
+  if (texture->im_siz == G_IM_SIZ_4b) {
+    gfx_disp
+    (
+      gsDPLoadTextureTile_4b(gfx_texture_data(texture, texture_tile),
+                             texture->im_fmt,
+                             texture->tile_width, texture->tile_height,
+                             0, 0,
+                             texture->tile_width - 1, texture->tile_height - 1,
+                             0,
+                             G_TX_NOMIRROR | G_TX_WRAP,
+                             G_TX_NOMIRROR | G_TX_WRAP,
+                             G_TX_NOMASK, G_TX_NOMASK,
+                             G_TX_NOLOD, G_TX_NOLOD),
+    );
+  }
+  else {
+    gfx_disp
+    (
+      gsDPLoadTextureTile(gfx_texture_data(texture, texture_tile),
+                          texture->im_fmt, texture->im_siz,
+                          texture->tile_width, texture->tile_height,
+                          0, 0,
+                          texture->tile_width - 1, texture->tile_height - 1,
+                          0,
+                          G_TX_NOMIRROR | G_TX_WRAP,
+                          G_TX_NOMIRROR | G_TX_WRAP,
+                          G_TX_NOMASK, G_TX_NOMASK,
+                          G_TX_NOLOD, G_TX_NOLOD),
+    );
   }
 }
 
-void gfx_printf(const struct gfx_font *font, int x, int y,
-                const char *format, ...)
+void gfx_sprite_draw(const gfx_sprite_t *sprite)
+{
+  gfx_texture_t *texture = sprite->texture;
+  gfx_rdp_load_tile(texture, sprite->texture_tile);
+  gfx_disp
+  (
+    gsSPScisTextureRectangle(qs102(sprite->x) & ~3,
+                             qs102(sprite->y) & ~3,
+                             qs102(sprite->x + texture->tile_width *
+                                   sprite->xscale) & ~3,
+                             qs102(sprite->y + texture->tile_height *
+                                   sprite->yscale) & ~3,
+                             G_TX_RENDERTILE,
+                             qu105(0), qu105(0),
+                             qu510(1.f / sprite->xscale),
+                             qu510(1.f / sprite->yscale)),
+  );
+}
+
+void gfx_printf(const gfx_font_t *font, int x, int y, const char *format, ...)
 {
   const size_t bufsize = 1024;
-  struct gfx_texture *texture = font->texture;
-  size_t char_size = gfx_texture_image_size(texture);
-  size_t tmem_size = 0x1000;
-  if (texture->siz == G_IM_SIZ_4b)
-    tmem_size /= 2;
-  int chars_per_tile = tmem_size / char_size;
-  int num_tiles = (texture->images + chars_per_tile - 1) / chars_per_tile;
+  gfx_texture_t *texture = font->texture;
+  int chars_per_tile = font->chars_xtile * font->chars_ytile;
+  int no_tiles = texture->tiles_x * texture->tiles_y;
+  int no_chars = chars_per_tile * no_tiles;
   char buf[bufsize];
   va_list args;
   va_start(args, format);
@@ -373,19 +358,15 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
   if (l > bufsize - 1)
     l = bufsize - 1;
   va_end(args);
-  for (int i = 0; i < num_tiles; ++i) {
+  for (int i = 0; i < no_tiles; ++i) {
     int tile_begin = chars_per_tile * i;
     int tile_end = tile_begin + chars_per_tile;
-    if (tile_end > texture->images) {
-      tile_end = texture->images;
-      chars_per_tile = tile_end - tile_begin;
-    }
     _Bool tile_loaded = 0;
     int cx = 0;
     int cy = 0;
-    for (int j = 0; j < l; ++j, cx += texture->width + font->spacing) {
+    for (int j = 0; j < l; ++j, cx += font->char_width + font->spacing) {
       uint8_t c = buf[j];
-      if (c < font->code_start || c >= font->code_start + texture->images)
+      if (c < font->code_start || c >= font->code_start + no_chars)
         continue;
       c -= font->code_start;
       if (c < tile_begin || c >= tile_end)
@@ -393,48 +374,19 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       c -= tile_begin;
       if (!tile_loaded) {
         tile_loaded = 1;
-        void *pixel_data = gfx_texture_data(texture, tile_begin);
-        int tile_width = texture->width;
-        int tile_height = texture->height * chars_per_tile;
-        if (texture->siz == G_IM_SIZ_4b) {
-          gfx_disp
-          (
-            gsDPLoadTextureTile_4b(pixel_data,
-                                   texture->fmt,
-                                   tile_width, tile_height,
-                                   0, 0,
-                                   tile_width - 1, tile_height - 1,
-                                   0,
-                                   G_TX_NOMIRROR | G_TX_WRAP,
-                                   G_TX_NOMIRROR | G_TX_WRAP,
-                                   G_TX_NOMASK, G_TX_NOMASK,
-                                   G_TX_NOLOD, G_TX_NOLOD),
-          );
-        }
-        else {
-          gfx_disp
-          (
-            gsDPLoadTextureTile(pixel_data,
-                                texture->fmt, texture->siz,
-                                tile_width, tile_height,
-                                0, 0,
-                                tile_width - 1, tile_height - 1,
-                                0,
-                                G_TX_NOMIRROR | G_TX_WRAP,
-                                G_TX_NOMIRROR | G_TX_WRAP,
-                                G_TX_NOMASK, G_TX_NOMASK,
-                                G_TX_NOLOD, G_TX_NOLOD),
-          );
-        }
+        gfx_rdp_load_tile(texture, i);
       }
       gfx_disp
       (
         gsSPScisTextureRectangle(qs102(x + cx),
                                  qs102(y + cy),
-                                 qs102(x + cx + texture->width),
-                                 qs102(y + cy + texture->height),
+                                 qs102(x + cx + font->char_width),
+                                 qs102(y + cy + font->char_height),
                                  G_TX_RENDERTILE,
-                                 qu105(0), qu105(c * texture->height),
+                                 qu105(c % font->chars_xtile *
+                                       font->char_width),
+                                 qu105(c / font->chars_xtile *
+                                       font->char_height),
                                  qu510(1), qu510(1)),
       );
     }

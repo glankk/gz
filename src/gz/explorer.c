@@ -5,6 +5,7 @@
 #include <n64.h>
 #include "menu.h"
 #include "gfx.h"
+#include "resource.h"
 #include "zu.h"
 #include "gu.h"
 #include "z64.h"
@@ -76,25 +77,21 @@ static void execute_scene_config(int config_index, Gfx **p_opa, Gfx **p_xlu)
 static void draw_crosshair(struct menu_item *item)
 {
   struct item_data *data = item->data;
-#include "explorer_crosshair.h"
-  const void *tex_00 = explorer_crosshair.pixel_data + 4 * 32 * 32 * 0;
-  const void *tex_01 = explorer_crosshair.pixel_data + 4 * 32 * 32 * 1;
-  const void *tex_02 = explorer_crosshair.pixel_data + 4 * 32 * 32 * 2;
-  const void *tex_03 = explorer_crosshair.pixel_data + 4 * 32 * 32 * 3;
+  gfx_texture_t *texture = resource_get(RES_TEXTURE_CROSSHAIR);
   /* define meshes */
   static Vtx lat_mesh[] =
   {
-    {{{-16, 0, 16},  0, {qs105(0),  qs105(0)},  {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{16,  0, 16},  0, {qs105(62), qs105(0)},  {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{-16, 0, -16}, 0, {qs105(0),  qs105(62)}, {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{16,  0, -16}, 0, {qs105(62), qs105(62)}, {0xFF, 0xFF, 0xFF, 0x40}}},
+    {{{-16, 0, 16},  0, {qs105(0),  qs105(0)}}},
+    {{{16,  0, 16},  0, {qs105(62), qs105(0)}}},
+    {{{-16, 0, -16}, 0, {qs105(0),  qs105(62)}}},
+    {{{16,  0, -16}, 0, {qs105(62), qs105(62)}}},
   };
   static Vtx vert_mesh[] =
   {
-    {{{-16, 16,  0}, 0, {qs105(0),  qs105(0)},  {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{16,  16,  0}, 0, {qs105(62), qs105(0)},  {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{-16, -16, 0}, 0, {qs105(0),  qs105(62)}, {0xFF, 0xFF, 0xFF, 0x40}}},
-    {{{16,  -16, 0}, 0, {qs105(62), qs105(62)}, {0xFF, 0xFF, 0xFF, 0x40}}},
+    {{{-16, 16,  0}, 0, {qs105(0),  qs105(0)}}},
+    {{{16,  16,  0}, 0, {qs105(62), qs105(0)}}},
+    {{{-16, -16, 0}, 0, {qs105(0),  qs105(62)}}},
+    {{{16,  -16, 0}, 0, {qs105(62), qs105(62)}}},
   };
   /* create modelview matrices */
   float xscale = 1.5f;
@@ -111,7 +108,13 @@ static void draw_crosshair(struct menu_item *item)
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_lat_mtx = gfx_data_append(&m, sizeof(m));
+  Mtx *p_latz_mtx = gfx_data_append(&m, sizeof(m));
+  {
+    guRotateF(&mt, -M_PI / 2, 0.f, 1.f, 0.f);
+    guMtxCatF(&mt, &mf, &mf);
+  }
+  guMtxF2L(&mf, &m);
+  Mtx *p_latx_mtx = gfx_data_append(&m, sizeof(m));
   {
     guTranslateF(&mf, data->x, data->y, data->z);
   }
@@ -130,7 +133,7 @@ static void draw_crosshair(struct menu_item *item)
   (
     gsDPPipeSync(),
     /* rsp state */
-    gsSPGeometryMode(~0, G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH),
+    gsSPGeometryMode(~0, G_ZBUFFER),
     /* rdp state */
     gsDPSetCycleType(G_CYC_1CYCLE),
     /* texture engine */
@@ -142,7 +145,7 @@ static void draw_crosshair(struct menu_item *item)
     gsDPSetTextureFilter(G_TF_BILERP),
     gsDPSetTextureConvert(G_TC_FILT),
     /* color combiner */
-    gsDPSetCombineMode(G_CC_MODULATERGBA, G_CC_MODULATERGBA),
+    gsDPSetCombineMode(G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM),
     /* blender */
     gsDPSetAlphaCompare(G_AC_NONE),
     gsDPSetDepthSource(G_ZS_PIXEL),
@@ -151,54 +154,34 @@ static void draw_crosshair(struct menu_item *item)
     gsDPSetColorDither(G_CD_DISABLE),
     gsDPSetAlphaDither(G_AD_DISABLE),
     /* load meshes */
-    gsSPMatrix(p_lat_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
+    gsSPMatrix(p_latx_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
     gsSPVertex(&lat_mesh, 4, 0),
     gsSPMatrix(p_vert_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
     gsSPVertex(&vert_mesh, 4, 4),
+    gsSPMatrix(p_latz_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
+    gsSPVertex(&lat_mesh, 4, 8),
   );
   /* render navigation indicator primitives */
+  gfx_disp(gsDPSetPrimColor(0, 0, 0xFF, 0xFF, 0xFF, 0x40));
   if (z64_input_direct.pad & BUTTON_Z) {
-    gfx_disp
-    (
-      gsDPLoadTextureTile(tex_03, G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                          32, 32, 0, 0, 31, 31, 0,
-                          G_TX_NOMIRROR | G_TX_WRAP,
-                          G_TX_NOMIRROR | G_TX_WRAP,
-                          G_TX_NOMASK, G_TX_NOMASK,
-                          G_TX_NOLOD, G_TX_NOLOD),
-      gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0),
-    );
+    gfx_rdp_load_tile(texture, 2);
+    gfx_disp(gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0));
   }
   else {
-    gfx_disp
-    (
-      gsDPLoadTextureTile(tex_01, G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                          32, 32, 0, 0, 31, 31, 0,
-                          G_TX_NOMIRROR | G_TX_WRAP,
-                          G_TX_NOMIRROR | G_TX_WRAP,
-                          G_TX_NOMASK, G_TX_NOMASK,
-                          G_TX_NOLOD, G_TX_NOLOD),
-      gsSP2Triangles(0, 1, 2, 0, 2, 1, 3, 0),
-    );
+    gfx_rdp_load_tile(texture, 1);
+    gfx_disp(gsSP2Triangles(0, 1, 2, 0, 2, 1, 3, 0));
   }
+  /* render crosshair primitives */
+  gfx_rdp_load_tile(texture, 0);
   gfx_disp
   (
-    /* render crosshair primitives */
+    gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x40),
+    gsSP2Triangles(8, 9, 10, 0, 10, 9, 11, 0),
     gsDPPipeSync(),
-    gsDPLoadTextureTile(tex_00, G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                        32, 32, 0, 0, 31, 31, 0,
-                        G_TX_NOMIRROR | G_TX_WRAP,
-                        G_TX_NOMIRROR | G_TX_WRAP,
-                        G_TX_NOMASK, G_TX_NOMASK,
-                        G_TX_NOLOD, G_TX_NOLOD),
+    gsDPSetPrimColor(0, 0, 0xFF, 0x00, 0x00, 0x40),
     gsSP2Triangles(0, 1, 2, 0, 2, 1, 3, 0),
     gsDPPipeSync(),
-    gsDPLoadTextureTile(tex_02, G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                        32, 32, 0, 0, 31, 31, 0,
-                        G_TX_NOMIRROR | G_TX_WRAP,
-                        G_TX_NOMIRROR | G_TX_WRAP,
-                        G_TX_NOMASK, G_TX_NOMASK,
-                        G_TX_NOLOD, G_TX_NOLOD),
+    gsDPSetPrimColor(0, 0, 0x00, 0xFF, 0x00, 0x40),
     gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0),
   );
 }

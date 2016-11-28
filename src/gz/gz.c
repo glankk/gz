@@ -43,7 +43,7 @@ struct byte_option
 };
 
 
-struct gfx_font  *menu_font;
+gfx_font_t       *menu_font;
 uint8_t           menu_alpha        = 0x80;
 int               menu_cell_width   = 8;
 int               menu_cell_height  = 8;
@@ -1346,3 +1346,4 @@ ENTRY void _start()
 #include <startup.c>
 #include <vector/vector.c>
 #include <list/list.c>
+#include <grc.c>
