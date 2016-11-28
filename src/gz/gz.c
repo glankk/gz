@@ -705,6 +705,8 @@ void main_hook()
   if (cheats_time)
     z64_file.day_time += 0x0100;
 
+
+
   if (menu_active) {
     if (pad_pressed & BUTTON_D_UP)
       menu_navigate(&menu_main, MENU_NAVIGATE_UP);
@@ -1230,12 +1232,20 @@ ENTRY void _start()
     menu_add_static(&menu_misc, 2, 11, "language", 0xFFFFFF);
     menu_add_option(&menu_misc, 11, 11, "japanese\0""english\0",
                     byte_option_proc, &language_option_data,  0);
-    menu_add_button(&menu_misc, 2, 12, "pause / unpause", pause_proc,
+    static int8_t target_options[] = {0x00, 0x01};
+    static struct byte_option target_option_data =
+    {
+      &z64_file.z_targeting, target_options, 2,
+    };
+    menu_add_static(&menu_misc, 2, 12, "z targeting", 0xFFFFFF);
+    menu_add_option(&menu_misc, 14, 12, "switch\0""hold\0",
+                    byte_option_proc, &target_option_data,  0);
+    menu_add_button(&menu_misc, 2, 13, "pause / unpause", pause_proc,
                     NULL, 0);
-    menu_add_button(&menu_misc, 2, 13, "frame advance", advance_proc,
+    menu_add_button(&menu_misc, 2, 14, "frame advance", advance_proc,
                     NULL, 0);
 #if 0
-    menu_add_button(&menu_misc, 2, 14, "suppress exceptions", sup_exc_proc,
+    menu_add_button(&menu_misc, 2, 15, "suppress exceptions", sup_exc_proc,
                     NULL, 0);
 #endif
 

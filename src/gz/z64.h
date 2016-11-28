@@ -389,7 +389,9 @@ typedef struct
   uint16_t      timer;              /* 0x13D2 */
   char          unk_11_[0x0035];    /* 0x13D4 */
   uint8_t       language;           /* 0x1409 */
-  char          unk_12_[0x0046];    /* 0x140A */
+  char          unk_12_[0x0002];    /* 0x140A */
+  uint8_t       z_targeting;        /* 0x140C */
+  char          unk_13_[0x0043];    /* 0x140D */
                                     /* 0x1450 */
 } z64_file_t;
 
