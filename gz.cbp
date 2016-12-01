@@ -57,10 +57,6 @@
 				</Environment>
 			</Target>
 		</Build>
-		<Unit filename="src/gz/console.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/gz/console.h" />
 		<Unit filename="src/gz/explorer.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -76,7 +72,6 @@
 		<Unit filename="src/gz/gz.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/gz/gz.h" />
 		<Unit filename="src/gz/menu.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -109,10 +104,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/resource.h" />
-		<Unit filename="src/gz/sys.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/gz/sys.h" />
 		<Unit filename="src/gz/z64.h" />
 		<Unit filename="src/gz/zu.c">
 			<Option compilerVar="CC" />

@@ -20,12 +20,12 @@ char     *gfx_data_w;
 char     *gfx_data_p;
 char     *gfx_data_e;
 
-const gfx_colormatrix_t gfx_cm_desaturate =
+const struct gfx_colormatrix gfx_cm_desaturate =
 {
   0.3086, 0.6094, 0.0820, 0.,
   0.3086, 0.6094, 0.0820, 0.,
   0.3086, 0.6094, 0.0820, 0.,
-  0.,    0.,    0.,    1.,
+  0.,     0.,     0.,     1.,
 };
 
 void gfx_mode_init(int filter, _Bool blend)
@@ -36,13 +36,13 @@ void gfx_mode_init(int filter, _Bool blend)
     gfx_disp = malloc(GFX_DISP_SIZE);
     gfx_disp_w = malloc(GFX_DISP_SIZE);
     gfx_disp_p = gfx_disp;
-    gfx_disp_e = (void*)((char*)gfx_disp + GFX_DISP_SIZE);
+    gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
+                 sizeof(*gfx_disp);
     gfx_data = malloc(GFX_DATA_SIZE);
     gfx_data_w = malloc(GFX_DATA_SIZE);
     gfx_data_p = gfx_data;
     gfx_data_e = (void*)((char*)gfx_data + GFX_DATA_SIZE);
   }
-
   Gfx g_blend[] =
   {
     gsDPSetCombineMode(G_CC_DECALRGBA,
@@ -110,7 +110,7 @@ Gfx *gfx_disp_append(Gfx *disp, size_t size)
 {
   Gfx *p = gfx_disp_p;
   memcpy(gfx_disp_p, disp, size);
-  gfx_disp_p += (size + sizeof(Gfx) - 1) / sizeof(Gfx);
+  gfx_disp_p += (size + sizeof(*gfx_disp_p) - 1) / sizeof(*gfx_disp_p);
   return p;
 }
 
@@ -130,7 +130,8 @@ void gfx_flush()
   gfx_disp_w = gfx_disp;
   gfx_disp = disp_w;
   gfx_disp_p = gfx_disp;
-  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(Gfx) - 1) / sizeof(Gfx);
+  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
+               sizeof(*gfx_disp);
   char *data_w = gfx_data_w;
   gfx_data_w = gfx_data;
   gfx_data = data_w;
@@ -138,17 +139,17 @@ void gfx_flush()
   gfx_data_e = gfx_data + GFX_DATA_SIZE;
 }
 
-void gfx_texldr_init(gfx_texldr_t *texldr)
+void gfx_texldr_init(struct gfx_texldr *texldr)
 {
   texldr->file_vaddr = GFX_FILE_DRAM;
   texldr->file_data = NULL;
 }
 
-gfx_texture_t *gfx_texldr_load(gfx_texldr_t *texldr,
-                               const gfx_texdesc_t *texdesc,
-                               gfx_texture_t *texture)
+struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
+                                    const struct gfx_texdesc *texdesc,
+                                    struct gfx_texture *texture)
 {
-  gfx_texture_t *new_texture = NULL;
+  struct gfx_texture *new_texture = NULL;
   if (!texture) {
     new_texture = malloc(sizeof(*new_texture));
     if (!new_texture)
@@ -202,42 +203,43 @@ gfx_texture_t *gfx_texldr_load(gfx_texldr_t *texldr,
   return texture;
 }
 
-void gfx_texldr_destroy(gfx_texldr_t *texldr)
+void gfx_texldr_destroy(struct gfx_texldr *texldr)
 {
   if (texldr->file_data)
     free(texldr->file_data);
 }
 
-gfx_texture_t *gfx_texture_load(const gfx_texdesc_t *texdesc,
-                                gfx_texture_t *texture)
+struct gfx_texture *gfx_texture_load(const struct gfx_texdesc *texdesc,
+                                     struct gfx_texture *texture)
 {
-  gfx_texldr_t texldr;
+  struct gfx_texldr texldr;
   gfx_texldr_init(&texldr);
   texture = gfx_texldr_load(&texldr, texdesc, texture);
   gfx_texldr_destroy(&texldr);
   return texture;
 }
 
-void gfx_texture_destroy(gfx_texture_t *texture)
+void gfx_texture_destroy(struct gfx_texture *texture)
 {
   if (texture->data)
     free(texture->data);
 }
 
-void gfx_texture_free(gfx_texture_t *texture)
+void gfx_texture_free(struct gfx_texture *texture)
 {
   gfx_texture_destroy(texture);
   free(texture);
 }
 
-void *gfx_texture_data(const gfx_texture_t *texture, int16_t tile)
+void *gfx_texture_data(const struct gfx_texture *texture, int16_t tile)
 {
   return (char*)texture->data + texture->tile_size * tile;
 }
 
-gfx_texture_t *gfx_texture_copy(const gfx_texture_t *src, gfx_texture_t *dest)
+struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
+                                     struct gfx_texture *dest)
 {
-  gfx_texture_t *new_texture = NULL;
+  struct gfx_texture *new_texture = NULL;
   if (!dest) {
     new_texture = malloc(sizeof(*new_texture));
     if (!new_texture)
@@ -257,8 +259,8 @@ gfx_texture_t *gfx_texture_copy(const gfx_texture_t *src, gfx_texture_t *dest)
   return dest;
 }
 
-void gfx_texture_colortransform(gfx_texture_t *texture,
-                                const gfx_colormatrix_t *matrix)
+void gfx_texture_colortransform(struct gfx_texture *texture,
+                                const struct gfx_colormatrix *matrix)
 {
   if (texture->im_fmt != G_IM_FMT_RGBA || texture->im_siz != G_IM_SIZ_32b)
     return;
@@ -272,7 +274,7 @@ void gfx_texture_colortransform(gfx_texture_t *texture,
   size_t texture_pixels = texture->tile_width * texture->tile_height *
                           texture->tiles_x * texture->tiles_y;
   struct rgba32 *pixel_data = texture->data;
-  gfx_colormatrix_t m = *matrix;
+  struct gfx_colormatrix m = *matrix;
   for (size_t i = 0; i < texture_pixels; ++i)
   {
     struct rgba32 p = pixel_data[i];
@@ -291,7 +293,7 @@ void gfx_texture_colortransform(gfx_texture_t *texture,
   }
 }
 
-void gfx_rdp_load_tile(const gfx_texture_t *texture, int16_t texture_tile)
+void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
 {
   if (texture->im_siz == G_IM_SIZ_4b) {
     gfx_disp
@@ -325,9 +327,9 @@ void gfx_rdp_load_tile(const gfx_texture_t *texture, int16_t texture_tile)
   }
 }
 
-void gfx_sprite_draw(const gfx_sprite_t *sprite)
+void gfx_sprite_draw(const struct gfx_sprite *sprite)
 {
-  gfx_texture_t *texture = sprite->texture;
+  struct gfx_texture *texture = sprite->texture;
   gfx_rdp_load_tile(texture, sprite->texture_tile);
   gfx_disp
   (
@@ -344,10 +346,11 @@ void gfx_sprite_draw(const gfx_sprite_t *sprite)
   );
 }
 
-void gfx_printf(const gfx_font_t *font, int x, int y, const char *format, ...)
+void gfx_printf(const struct gfx_font *font, int x, int y,
+                const char *format, ...)
 {
   const size_t bufsize = 1024;
-  gfx_texture_t *texture = font->texture;
+  struct gfx_texture *texture = font->texture;
   int chars_per_tile = font->chars_xtile * font->chars_ytile;
   int no_tiles = texture->tiles_x * texture->tiles_y;
   int no_chars = chars_per_tile * no_tiles;

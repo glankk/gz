@@ -1,6 +1,5 @@
 #ifndef GU_H
 #define GU_H
-
 #include <stdint.h>
 #include <n64.h>
 

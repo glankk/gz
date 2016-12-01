@@ -3,8 +3,8 @@
 #include <n64.h>
 #include <vector/vector.h>
 #include "gu.h"
-#include "zu.h"
 #include "z64.h"
+#include "zu.h"
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr)
 {

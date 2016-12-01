@@ -16,7 +16,7 @@ extern char  *gfx_data_p;
 extern char  *gfx_data_e;
 extern char  *gfx_data_w;
 
-typedef struct
+struct gfx_texdesc
 {
   g_ifmt_t  im_fmt;
   g_isiz_t  im_siz;
@@ -27,15 +27,15 @@ typedef struct
   int16_t   tiles_y;
   uint32_t  file_vaddr;
   size_t    file_vsize;
-} gfx_texdesc_t;
+};
 
-typedef struct
+struct gfx_texldr
 {
   uint32_t  file_vaddr;
   void     *file_data;
-} gfx_texldr_t;
+};
 
-typedef struct
+struct gfx_texture
 {
   g_ifmt_t  im_fmt;
   g_isiz_t  im_siz;
@@ -45,36 +45,36 @@ typedef struct
   int16_t   tiles_x;
   int16_t   tiles_y;
   size_t    tile_size;
-} gfx_texture_t;
+};
 
-typedef struct
+struct gfx_colormatrix
 {
   float rr, rg, rb, ra;
   float gr, gg, gb, ga;
   float br, bg, bb, ba;
   float ar, ag, ab, aa;
-} gfx_colormatrix_t;
+};
 
-typedef struct
+struct gfx_sprite
 {
-  gfx_texture_t  *texture;
-  int16_t         texture_tile;
-  float           x;
-  float           y;
-  float           xscale;
-  float           yscale;
-} gfx_sprite_t;
+  struct gfx_texture *texture;
+  int16_t             texture_tile;
+  float               x;
+  float               y;
+  float               xscale;
+  float               yscale;
+};
 
-typedef struct
+struct gfx_font
 {
-  gfx_texture_t  *texture;
-  int16_t         char_width;
-  int16_t         char_height;
-  int16_t         chars_xtile;
-  int16_t         chars_ytile;
-  uint8_t         code_start;
-  int16_t         spacing;
-} gfx_font_t;
+  struct gfx_texture *texture;
+  int16_t             char_width;
+  int16_t             char_height;
+  int16_t             chars_xtile;
+  int16_t             chars_ytile;
+  uint8_t             code_start;
+  int16_t             spacing;
+};
 
 void gfx_mode_init(int filter, _Bool blend);
 void gfx_mode_default();
@@ -86,29 +86,32 @@ Gfx  *gfx_disp_append(Gfx *disp, size_t size);
 void *gfx_data_append(void *data, size_t size);
 void  gfx_flush();
 
-void            gfx_texldr_init(gfx_texldr_t *texldr);
-gfx_texture_t  *gfx_texldr_load(gfx_texldr_t *texldr,
-                                const gfx_texdesc_t *texdesc,
-                                gfx_texture_t *texture);
-void            gfx_texldr_destroy(gfx_texldr_t *texldr);
+void                gfx_texldr_init(struct gfx_texldr *texldr);
+struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
+                                    const struct gfx_texdesc *texdesc,
+                                    struct gfx_texture *texture);
+void                gfx_texldr_destroy(struct gfx_texldr *texldr);
 
-gfx_texture_t  *gfx_texture_load(const gfx_texdesc_t *texdesc,
-                                 gfx_texture_t *texture);
-void            gfx_texture_destroy(gfx_texture_t *texture);
-void            gfx_texture_free(gfx_texture_t *texture);
-void           *gfx_texture_data(const gfx_texture_t *texture,
-                                 int16_t image);
-gfx_texture_t  *gfx_texture_copy(const gfx_texture_t *src,
-                                 gfx_texture_t *dest);
-void            gfx_texture_colortransform(gfx_texture_t *texture,
-                                           const gfx_colormatrix_t *matrix);
+struct gfx_texture *gfx_texture_load(const struct gfx_texdesc *texdesc,
+                                     struct gfx_texture *texture);
+void                gfx_texture_destroy(struct gfx_texture *texture);
+void                gfx_texture_free(struct gfx_texture *texture);
+void               *gfx_texture_data(const struct gfx_texture *texture,
+                                     int16_t image);
+struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
+                                     struct gfx_texture *dest);
+void                gfx_texture_colortransform(struct gfx_texture *texture,
+                                               const struct gfx_colormatrix
+                                               *matrix);
 
-void gfx_rdp_load_tile(const gfx_texture_t *texture, int16_t texture_tile);
+void gfx_rdp_load_tile(const struct gfx_texture *texture,
+                       int16_t texture_tile);
 
-void gfx_sprite_draw(const gfx_sprite_t *sprite);
+void gfx_sprite_draw(const struct gfx_sprite *sprite);
 
-void gfx_printf(const gfx_font_t *font, int x, int y, const char *format, ...);
+void gfx_printf(const struct gfx_font *font, int x, int y,
+                const char *format, ...);
 
-extern const gfx_colormatrix_t gfx_cm_desaturate;
+extern const struct gfx_colormatrix gfx_cm_desaturate;
 
 #endif

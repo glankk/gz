@@ -6,6 +6,13 @@
     "format":       "ia4",
     "tile_height":  240
   },
+  "pixelintv.png":
+  {
+    "type":         "texture",
+    "name":         "pixelintv",
+    "format":       "i4",
+    "tile_height":  192
+  },
   "crosshair.png":
   {
     "type":         "texture",

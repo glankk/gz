@@ -3,12 +3,12 @@
 #include <malloc.h>
 #include <mips.h>
 #include <n64.h>
-#include "menu.h"
 #include "gfx.h"
-#include "resource.h"
-#include "zu.h"
 #include "gu.h"
+#include "menu.h"
+#include "resource.h"
 #include "z64.h"
+#include "zu.h"
 
 enum state
 {
@@ -77,7 +77,7 @@ static void execute_scene_config(int config_index, Gfx **p_opa, Gfx **p_xlu)
 static void draw_crosshair(struct menu_item *item)
 {
   struct item_data *data = item->data;
-  gfx_texture_t *texture = resource_get(RES_TEXTURE_CROSSHAIR);
+  struct gfx_texture *texture = resource_get(RES_TEXTURE_CROSSHAIR);
   /* define meshes */
   static Vtx lat_mesh[] =
   {
@@ -186,7 +186,7 @@ static void draw_crosshair(struct menu_item *item)
   );
 }
 
-static int think_proc(struct menu *menu, struct menu_item *item)
+static int think_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   /* handle input */
@@ -196,7 +196,7 @@ static int think_proc(struct menu *menu, struct menu_item *item)
   pad_prev = pad;
   if (pad_pressed & BUTTON_L) {
     if (pad & BUTTON_Z) {
-      menu_return(menu);
+      menu_return_top(item->owner);
       return 1;
     }
     if (data->room_index != z64_game.room_index) {
@@ -209,7 +209,7 @@ static int think_proc(struct menu *menu, struct menu_item *item)
                                                     0x8000 / M_PI;
     z64_link.drop_y = pos.y;
     z64_link.drop_distance = 0;
-    menu_return(menu);
+    menu_return_top(item->owner);
     return 1;
   }
   if (pad & BUTTON_R) {
@@ -222,40 +222,51 @@ static int think_proc(struct menu *menu, struct menu_item *item)
     else if (data->room_next < 0)
       data->room_next = data->no_rooms - 1;
   }
-  else if (pad & BUTTON_Z) {
-    if (pad & BUTTON_D_UP)
-      data->y += 50.f;
-    if (pad & BUTTON_D_DOWN)
-      data->y += -50.f;
-    if (pad & BUTTON_D_LEFT) {
-      data->x -= cos(data->yaw) * 50.f;
-      data->z += sin(data->yaw) * 50.f;
-    }
-    if (pad & BUTTON_D_RIGHT) {
-      data->x -= cos(data->yaw) * -50.f;
-      data->z += sin(data->yaw) * -50.f;
-    }
-  }
-  else {
-    if (pad & BUTTON_D_UP) {
-      data->x -= sin(data->yaw) * 50.f;
-      data->z -= cos(data->yaw) * 50.f;
-    }
-    if (pad & BUTTON_D_DOWN) {
-      data->x -= sin(data->yaw) * -50.f;
-      data->z -= cos(data->yaw) * -50.f;
-    }
-    if (pad & BUTTON_D_LEFT)
-      data->yaw += .2f;
-    if (pad & BUTTON_D_RIGHT)
-      data->yaw -= .2f;
-  }
   /* handle scene changes */
   data->scene_next = z64_game.scene_index;
   if ((data->scene_index != data->scene_next ||
       data->room_index != data->room_next) &&
       data->state == STATE_RENDER)
     data->state = STATE_UNLOAD;
+  return 0;
+}
+
+static int draw_proc(struct menu_item *item)
+{
+  static Gfx null_dl = gsSPEndDisplayList();
+  struct item_data *data = item->data;
+  /* handle input */
+  uint16_t pad = z64_input_direct.pad;
+  if (!(pad & BUTTON_R)) {
+    if (pad & BUTTON_Z) {
+      if (pad & BUTTON_D_UP)
+        data->y += 50.f;
+      if (pad & BUTTON_D_DOWN)
+        data->y += -50.f;
+      if (pad & BUTTON_D_LEFT) {
+        data->x -= cos(data->yaw) * 50.f;
+        data->z += sin(data->yaw) * 50.f;
+      }
+      if (pad & BUTTON_D_RIGHT) {
+        data->x -= cos(data->yaw) * -50.f;
+        data->z += sin(data->yaw) * -50.f;
+      }
+    }
+    else {
+      if (pad & BUTTON_D_UP) {
+        data->x -= sin(data->yaw) * 50.f;
+        data->z -= cos(data->yaw) * 50.f;
+      }
+      if (pad & BUTTON_D_DOWN) {
+        data->x -= sin(data->yaw) * -50.f;
+        data->z -= cos(data->yaw) * -50.f;
+      }
+      if (pad & BUTTON_D_LEFT)
+        data->yaw += .2f;
+      if (pad & BUTTON_D_RIGHT)
+        data->yaw -= .2f;
+    }
+  }
   /* load resources */
   if (data->state == STATE_LOAD) {
     /* initialize segment table */
@@ -303,7 +314,6 @@ static int think_proc(struct menu *menu, struct menu_item *item)
       /* populate vertex list */
       struct zu_vlist vlist;
       zu_vlist_init(&vlist);
-      Gfx null_dl = gsSPEndDisplayList();
       stab.seg[0x08] = MIPS_KSEG0_TO_PHYS(&null_dl);
       stab.seg[0x09] = MIPS_KSEG0_TO_PHYS(&null_dl);
       stab.seg[0x0A] = MIPS_KSEG0_TO_PHYS(&null_dl);
@@ -355,6 +365,12 @@ static int think_proc(struct menu *menu, struct menu_item *item)
       gsSPSegment(Z64_SEG_ROOM, data->room_file),
       gsSPGeometryMode(~0,
                        G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
+      gsSPSegment(0x08, &null_dl),
+      gsSPSegment(0x09, &null_dl),
+      gsSPSegment(0x0A, &null_dl),
+      gsSPSegment(0x0B, &null_dl),
+      gsSPSegment(0x0C, &null_dl),
+      gsSPSegment(0x0D, &null_dl),
       /* rdp settings */
       gsDPSetAlphaCompare(G_AC_NONE),
       gsDPSetDepthSource(G_ZS_PIXEL),
@@ -437,20 +453,20 @@ static int think_proc(struct menu *menu, struct menu_item *item)
 
 void explorer_create(struct menu *menu)
 {
-  menu_init(menu);
-  struct menu_item *item = menu_add_item(menu, NULL);
-  menu_item_init(item, 0, 0, NULL, 0);
-  struct item_data *data = malloc(sizeof(struct item_data));
+  menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  struct menu_item *item = menu_item_add(menu, 0, 0, NULL, 0);
+  struct item_data *data = malloc(sizeof(*data));
   data->state = STATE_LOAD;
   data->scene_index = -1;
   data->scene_file = NULL;
   data->room_file = NULL;
   data->scale = .5f;
   item->data = data;
-  item->priority = -1;
+  item->selectable = 0;
   item->think_proc = think_proc;
-  menu_add_static(menu, 4, 4, "scene", 0xFFFFFF);
-  menu_add_watch(menu, 10, 4, (uint32_t)&data->scene_index, WATCH_TYPE_S32);
-  menu_add_static(menu, 4, 5, "room", 0xFFFFFF);
-  menu_add_watch(menu, 10, 5, (uint32_t)&data->room_index, WATCH_TYPE_S32);
+  item->draw_proc = draw_proc;
+  menu_add_static(menu, 0, 0, "scene", 0xFFFFFF);
+  menu_add_watch(menu, 6, 0, (uint32_t)&data->scene_index, WATCH_TYPE_S32);
+  menu_add_static(menu, 0, 1, "room", 0xFFFFFF);
+  menu_add_watch(menu, 6, 1, (uint32_t)&data->room_index, WATCH_TYPE_S32);
 }

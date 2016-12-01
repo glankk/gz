@@ -5,35 +5,36 @@
 
 struct item_data
 {
-  struct vector         options;
-  menu_generic_callback callback_proc;
-  void                 *callback_data;
-  int                   value;
-  int                   active;
+  struct vector           options;
+  menu_generic_callback   callback_proc;
+  void                   *callback_data;
+  int                     value;
+  _Bool                   active;
 };
 
-
-static int think_proc(struct menu *menu, struct menu_item *item)
+static int think_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->callback_proc) {
-    data->callback_proc(item, MENU_CALLBACK_THINK, data->callback_data);
+    int r = data->callback_proc(item, MENU_CALLBACK_THINK, data->callback_data);
+    if (r)
+      return r;
     if (data->active)
-      data->callback_proc(item, MENU_CALLBACK_THINK_ACTIVE,
-                          data->callback_data);
+      r = data->callback_proc(item, MENU_CALLBACK_THINK_ACTIVE,
+                              data->callback_data);
     else
-      data->callback_proc(item, MENU_CALLBACK_THINK_INACTIVE,
-                          data->callback_data);
+      r = data->callback_proc(item, MENU_CALLBACK_THINK_INACTIVE,
+                              data->callback_data);
+    return r;
   }
   return 0;
 }
 
-static int navigate_proc(struct menu *menu, struct menu_item *item,
+static int navigate_proc(struct menu_item *item,
                          enum menu_navigation nav)
 {
   struct item_data *data = item->data;
-  if (data->callback_proc && data->callback_proc(item,
-                                                 MENU_CALLBACK_NAV_UP + nav,
+  if (data->callback_proc && data->callback_proc(item, nav,
                                                  data->callback_data))
     return 1;
   int value = data->value;
@@ -54,7 +55,7 @@ static int navigate_proc(struct menu *menu, struct menu_item *item,
   return 1;
 };
 
-static int activate_proc(struct menu *menu, struct menu_item *item)
+static int activate_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->active) {
@@ -63,7 +64,7 @@ static int activate_proc(struct menu *menu, struct menu_item *item)
                                                    data->callback_data))
       return 1;
     item->navigate_proc = NULL;
-    menu->animate_highlight = 0;
+    item->animate_highlight = 0;
   }
   else {
     if (data->callback_proc && data->callback_proc(item,
@@ -71,13 +72,13 @@ static int activate_proc(struct menu *menu, struct menu_item *item)
                                                    data->callback_data))
       return 1;
     item->navigate_proc = navigate_proc;
-    menu->animate_highlight = 1;
+    item->animate_highlight = 1;
   }
   data->active = !data->active;
   return 1;
 }
 
-static int remove_proc(struct menu *menu, struct menu_item *item)
+static int destroy_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   item->text = NULL;
@@ -92,9 +93,9 @@ static int remove_proc(struct menu *menu, struct menu_item *item)
 struct menu_item *menu_add_option(struct menu *menu, int x, int y,
                                   const char *options,
                                   menu_generic_callback callback_proc,
-                                  void *callback_data, int priority)
+                                  void *callback_data)
 {
-  struct item_data *data = malloc(sizeof(struct item_data));
+  struct item_data *data = malloc(sizeof(*data));
   vector_init(&data->options, sizeof(char*));
   for (const char *option = options; *option;) {
     size_t option_length = strlen(option);
@@ -107,15 +108,13 @@ struct menu_item *menu_add_option(struct menu *menu, int x, int y,
   data->callback_data = callback_data;
   data->value = 0;
   data->active = 0;
-  struct menu_item *item = menu_add_item(menu, NULL);
-  menu_item_init(item, x, y, NULL, 0xFFFFFF);
+  struct menu_item *item = menu_item_add(menu, x, y, NULL, 0xFFFFFF);
   char **option = vector_at(&data->options, data->value);
   item->text = *option;
-  item->priority = priority;
   item->data = data;
   item->think_proc = think_proc;
   item->activate_proc = activate_proc;
-  item->remove_proc = remove_proc;
+  item->destroy_proc = destroy_proc;
   return item;
 }
 
