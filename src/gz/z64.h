@@ -12,6 +12,9 @@
 #define Z64_VERSION           Z64_OOT10
 #endif
 
+#define Z64_SCREEN_WIDTH      320
+#define Z64_SCREEN_HEIGHT     240
+
 #define Z64_SEG_PHYS          0x00
 #define Z64_SEG_TITLE         0x01
 #define Z64_SEG_SCENE         0x02

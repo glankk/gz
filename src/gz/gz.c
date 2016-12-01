@@ -636,8 +636,8 @@ void main_hook()
       --splash_time;
       gfx_mode_color(0xA0, 0x00, 0x00, menu_get_alpha_i(&menu_main, 1));
       gfx_printf(menu_get_font(&menu_main, 1),
-                 menu_cell_screen_x(&menu_main, 2),
-                 menu_cell_screen_y(&menu_main, 27),
+                 menu_get_cell_width(&menu_main, 1) * 2,
+                 Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 3,
                  "gz-0.2.0 github.com/glankk/gz");
     }
   }
@@ -760,8 +760,8 @@ void main_hook()
 
   gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
   gfx_printf(menu_get_font(&menu_main, 1),
-             menu_cell_screen_x(&menu_main, 2),
-             menu_cell_screen_y(&menu_main, 28),
+             menu_get_cell_width(&menu_main, 1) * 2,
+             Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
              "%4i %4i", input_ptr->x, input_ptr->y);
   static struct
   {
@@ -794,8 +794,8 @@ void main_hook()
                    (buttons[i].color >> 0)  & 0xFF,
                    menu_get_alpha_i(&menu_main, 1));
     gfx_printf(menu_get_font(&menu_main, 1),
-               menu_cell_screen_x(&menu_main, 12 + i),
-               menu_cell_screen_y(&menu_main, 28),
+               menu_get_cell_width(&menu_main, 1) * (12 + i),
+               Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
                "%s", buttons[i].name);
   }
 
