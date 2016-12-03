@@ -194,24 +194,6 @@ static int think_proc(struct menu_item *item)
   uint16_t pad = z64_input_direct.pad;
   uint16_t pad_pressed = (pad_prev ^ pad) & pad;
   pad_prev = pad;
-  if (pad_pressed & BUTTON_L) {
-    if (pad & BUTTON_Z) {
-      menu_return_top(item->owner);
-      return 1;
-    }
-    if (data->room_index != z64_game.room_index) {
-      z64_LoadRoom(&z64_ctxt, &z64_game.room_index, data->room_index);
-      z64_UnloadRoom(&z64_ctxt, &z64_game.room_index);
-    }
-    z64_xyz_t pos = {data->x, data->y, data->z};
-    z64_link.common.pos_1 = z64_link.common.pos_2 = pos;
-    z64_link.common.rot_2.y = z64_link.target_yaw = 0x8000 + data->yaw *
-                                                    0x8000 / M_PI;
-    z64_link.drop_y = pos.y;
-    z64_link.drop_distance = 0;
-    menu_return_top(item->owner);
-    return 1;
-  }
   if (pad & BUTTON_R) {
     if (pad_pressed & BUTTON_D_UP)
       ++data->room_next;
@@ -456,10 +438,28 @@ static int draw_proc(struct menu_item *item)
   return 1;
 }
 
+static int activate_proc(struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  if (data->room_index != z64_game.room_index) {
+    z64_LoadRoom(&z64_ctxt, &z64_game.room_index, data->room_index);
+    z64_UnloadRoom(&z64_ctxt, &z64_game.room_index);
+  }
+  z64_xyz_t pos = {data->x, data->y, data->z};
+  z64_link.common.pos_1 = z64_link.common.pos_2 = pos;
+  z64_link.common.rot_2.y = z64_link.target_yaw = 0x8000 + data->yaw *
+                                                  0x8000 / M_PI;
+  z64_link.drop_y = pos.y;
+  z64_link.drop_distance = 0;
+  menu_return_top(item->owner);
+  return 1;
+}
+
 void explorer_create(struct menu *menu)
 {
   menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   struct menu_item *item = menu_item_add(menu, 0, 0, NULL, 0);
+  menu->selector = item;
   struct item_data *data = malloc(sizeof(*data));
   data->state = STATE_LOAD;
   data->scene_index = -1;
@@ -467,9 +467,9 @@ void explorer_create(struct menu *menu)
   data->room_file = NULL;
   data->scale = .5f;
   item->data = data;
-  item->selectable = 0;
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
+  item->activate_proc = activate_proc;
   menu_add_static(menu, 0, 0, "scene", 0xFFFFFF);
   menu_add_watch(menu, 6, 0, (uint32_t)&data->scene_index, WATCH_TYPE_S32);
   menu_add_static(menu, 0, 1, "room", 0xFFFFFF);

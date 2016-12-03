@@ -70,8 +70,6 @@ static int cheats_rupees    = 0;
 static int cheats_nayru     = 0;
 static int cheats_time      = 0;
 
-static z64_controller_t *input_ptr = &z64_input_direct;
-
 static struct switch_info equipment_list[] =
 {
   {"kokiri sword",          (char*)&z64_file.equipment + 1, 0b00000001},
@@ -631,10 +629,10 @@ static void sup_exc_proc(struct menu_item *item, void *data)
 void main_hook()
 {
   static uint16_t pad = 0;
-  uint16_t pad_pressed = (pad ^ input_ptr->pad) &
-                         input_ptr->pad;
+  uint16_t pad_pressed = (pad ^ z64_input_direct.pad) &
+                         z64_input_direct.pad;
   uint16_t pad_pressed_raw = pad_pressed;
-  pad = input_ptr->pad;
+  pad = z64_input_direct.pad;
   static int button_time[16] = {0};
   for (int i = 0; i < 16; ++i) {
     int button_state = (pad >> i) & 0x0001;
@@ -781,7 +779,7 @@ void main_hook()
   gfx_printf(menu_get_font(&menu_main, 1),
              menu_get_cell_width(&menu_main, 1) * 2,
              Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
-             "%4i %4i", input_ptr->x, input_ptr->y);
+             "%4i %4i", z64_input_direct.x, z64_input_direct.y);
   static struct
   {
     uint16_t    mask;
@@ -806,7 +804,7 @@ void main_hook()
     {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
   };
   for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
-    if (!(input_ptr->pad & buttons[i].mask))
+    if (!(pad & buttons[i].mask))
       continue;
     gfx_mode_color((buttons[i].color >> 16) & 0xFF,
                    (buttons[i].color >> 8)  & 0xFF,
