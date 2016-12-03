@@ -265,3 +265,13 @@ void zu_vlist_destroy(struct zu_vlist *vlist)
 {
   vector_destroy(&vlist->v);
 }
+
+void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size)
+{
+  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
+}
+
+void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
+{
+  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
+}

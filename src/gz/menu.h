@@ -167,7 +167,6 @@ struct menu_item   *menu_add_userwatch(struct menu *menu, int x, int y,
 struct menu_item   *menu_userwatch_address(struct menu_item *item);
 struct menu_item   *menu_userwatch_type(struct menu_item *item);
 struct menu_item   *menu_userwatch_watch(struct menu_item *item);
-struct menu_item   *menu_add_watchlist(struct menu *menu, int x, int y);
 struct menu_item   *menu_add_submenu(struct menu *menu, int x, int y,
                                      struct menu *submenu, const char *name);
 struct menu_item   *menu_add_switch(struct menu *menu, int x, int y,

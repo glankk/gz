@@ -213,10 +213,10 @@ static int think_proc(struct menu_item *item)
     return 1;
   }
   if (pad & BUTTON_R) {
-    if (pad_pressed & BUTTON_D_LEFT)
-      --data->room_next;
-    if (pad_pressed & BUTTON_D_RIGHT)
+    if (pad_pressed & BUTTON_D_UP)
       ++data->room_next;
+    if (pad_pressed & BUTTON_D_DOWN)
+      --data->room_next;
     if (data->room_next >= data->no_rooms)
       data->room_next = 0;
     else if (data->room_next < 0)

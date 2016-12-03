@@ -97,13 +97,18 @@
 		<Unit filename="src/gz/menu_watch.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/gz/menu_watchlist.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="src/gz/resource.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/resource.h" />
+		<Unit filename="src/gz/settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/settings.h" />
+		<Unit filename="src/gz/watchlist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/watchlist.h" />
 		<Unit filename="src/gz/z64.h" />
 		<Unit filename="src/gz/zu.c">
 			<Option compilerVar="CC" />

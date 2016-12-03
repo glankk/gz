@@ -670,7 +670,6 @@ typedef struct
 #if Z64_VERSION == Z64_OOT10
 
 /* dram addresses */
-#define z64_GetFile_addr                        0x80000B0C
 #define z64_osSendMesg_addr                     0x80001E20
 #define z64_osRecvMesg_addr                     0x80002030
 #define z64_osCreateMesgQueue_addr              0x80004220
@@ -679,6 +678,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
+#define z64_Io_addr                             0x80091474
 #define z64_entrance_offset_hook_addr           0x8009AA44
 #define z64_frame_update_func_addr              0x8009AF1C
 #define z64_frame_update_call_addr              0x8009CAE8
@@ -702,7 +702,6 @@ typedef struct
 #elif Z64_VERSION == Z64_OOT11
 
 /* dram ddresses */
-#define z64_GetFile_addr                        0x80000B0C
 #define z64_osSendMesg_addr                     0x80001E20
 #define z64_osRecvMesg_addr                     0x80002030
 #define z64_osCreateMesgQueue_addr              0x80004220
@@ -711,6 +710,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
+#define z64_Io_addr                             0x80091484
 #define z64_entrance_offset_hook_addr           0x8009AA54
 #define z64_frame_update_func_addr              0x8009AF2C
 #define z64_frame_update_call_addr              0x8009CAF8
@@ -734,7 +734,6 @@ typedef struct
 #elif Z64_VERSION == Z64_OOT12
 
 /* dram ddresses */
-#define z64_GetFile_addr                        0x80000C9C
 #define z64_osSendMesg_addr                     0x80001FD0
 #define z64_osRecvMesg_addr                     0x800021F0
 #define z64_osCreateMesgQueue_addr              0x800043E0
@@ -743,6 +742,7 @@ typedef struct
 #define z64_minimap_disable_2_addr              0x8006DB40
 #define z64_LoadRoom_addr                       0x80081064
 #define z64_UnloadRoom_addr                     0x800812C0
+#define z64_Io_addr                             0x80091AB4
 #define z64_entrance_offset_hook_addr           0x8009B134
 #define z64_frame_update_func_addr              0x8009B60C
 #define z64_frame_update_call_addr              0x8009D1D8
@@ -766,10 +766,12 @@ typedef struct
 #endif
 
 /* function prototypes */
-typedef void (*z64_GetFile_proc)(z64_getfile_t *file);
-typedef void (*z64_LoadRoom_proc)(z64_ctxt_t *ctxt, void *p_ctxt_room_index,
-                                  uint8_t room_index);
-typedef void (*z64_UnloadRoom_proc)(z64_ctxt_t *ctxt, void *p_ctxt_room_index);
+typedef void (*z64_GetFile_proc)    (z64_getfile_t *file);
+typedef void (*z64_LoadRoom_proc)   (z64_ctxt_t *ctxt, void *p_ctxt_room_index,
+                                     uint8_t room_index);
+typedef void (*z64_UnloadRoom_proc) (z64_ctxt_t *ctxt, void *p_ctxt_room_index);
+typedef void (*z64_Io_proc)         (uint32_t dev_addr, void *dram_addr,
+                                     size_t size, int32_t direction);
 typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
 
 /* data */
@@ -786,12 +788,12 @@ typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
 #define z64_link                (*(z64_link_t*)       z64_link_addr)
 
 /* functions */
-#define z64_GetFile             ((z64_GetFile_proc)     z64_GetFile_addr)
-#define z64_LoadRoom            ((z64_LoadRoom_proc)    z64_LoadRoom_addr)
-#define z64_UnloadRoom          ((z64_UnloadRoom_proc)  z64_UnloadRoom_addr)
 #define z64_osSendMesg          ((osSendMesg_t)         z64_osSendMesg_addr)
 #define z64_osRecvMesg          ((osRecvMesg_t)         z64_osRecvMesg_addr)
 #define z64_osCreateMesgQueue   ((osCreateMesgQueue_t)                        \
                                  z64_osCreateMesgQueue_addr)
+#define z64_LoadRoom            ((z64_LoadRoom_proc)    z64_LoadRoom_addr)
+#define z64_UnloadRoom          ((z64_UnloadRoom_proc)  z64_UnloadRoom_addr)
+#define z64_Io                  ((z64_Io_proc)          z64_Io_addr)
 
 #endif

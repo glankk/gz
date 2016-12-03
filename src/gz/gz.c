@@ -9,6 +9,8 @@
 #include "gfx.h"
 #include "menu.h"
 #include "resource.h"
+#include "settings.h"
+#include "watchlist.h"
 #include "z64.h"
 #include "zu.h"
 
@@ -48,10 +50,11 @@ static struct
   _Bool             override_offset;
 } warp_info;
 
-static struct menu  menu_main;
-static _Bool        menu_active   = 0;
-static int          tp_slot       = 0;
-static int          frames_queued = -1;
+static struct menu        menu_main;
+static struct menu_item  *menu_watchlist;
+static _Bool              menu_active   = 0;
+static int                tp_slot       = 0;
+static int                frames_queued = -1;
 
 static int cheats_energy    = 0;
 static int cheats_magic     = 0;
@@ -521,6 +524,18 @@ static void places_proc(struct menu_item *item, void *data)
   }
 }
 
+static void save_settings_proc(struct menu_item *item, void *data)
+{
+  watchlist_store(menu_watchlist);
+  settings_save();
+}
+
+static void restore_settings_proc(struct menu_item *item, void *data)
+{
+  settings_load_default();
+  watchlist_fetch(menu_watchlist);
+}
+
 static void clear_csp_proc(struct menu_item *item, void *data)
 {
   static uint32_t null_cs[] = {0, 0};
@@ -689,8 +704,12 @@ void main_hook()
       menu_navigate(&menu_main, MENU_NAVIGATE_UP);
     if (pad_pressed & BUTTON_D_DOWN)
       menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
-    if (pad_pressed & BUTTON_D_LEFT)
-      menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
+    if (pad_pressed & BUTTON_D_LEFT) {
+      if (pad & BUTTON_R)
+        menu_return(&menu_main);
+      else
+        menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
+    }
     if (pad_pressed & BUTTON_D_RIGHT)
       menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
     if (pad_pressed & BUTTON_L) {
@@ -827,6 +846,10 @@ ENTRY void _start()
     do_global_ctors();
   }
 
+  /* load settings */
+  if ((z64_input_direct.pad & BUTTON_START) || !settings_load())
+    settings_load_default();
+
   /* install entrance offset hook */
   *(uint32_t*)z64_entrance_offset_hook_addr = MIPS_JAL(&entrance_offset_hook);
 
@@ -853,6 +876,8 @@ ENTRY void _start()
     menu_add_submenu(&menu_main, 0, 5, &menu_warps, "warps");
     static struct menu menu_watches;
     menu_add_submenu(&menu_main, 0, 6, &menu_watches, "watches");
+    static struct menu menu_settings;
+    menu_add_submenu(&menu_main, 0, 7, &menu_settings, "settings");
 
     menu_init(&menu_inventory, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_inventory.selector = menu_add_submenu(&menu_inventory, 0, 0, NULL,
@@ -1300,11 +1325,20 @@ ENTRY void _start()
     explorer_create(&explorer);
     menu_add_submenu(&menu_warps, 0, 8, &explorer, "scene explorer");
 
-
     menu_init(&menu_watches, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_watches.selector = menu_add_submenu(&menu_watches, 0, 0, NULL,
                                              "return");
-    menu_add_watchlist(&menu_watches, 0, 1);  }
+    menu_watchlist = watchlist_create(&menu_watches, 0, 1);
+    watchlist_fetch(menu_watchlist);
+
+    menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
+                                              "return");
+    menu_add_button(&menu_settings, 0, 1, "save settings",
+                    save_settings_proc, NULL);
+    menu_add_button(&menu_settings, 0, 2, "restore defaults",
+                    restore_settings_proc, NULL);
+  }
 
   /* replace start routine with a jump to main hook */
   {

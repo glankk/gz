@@ -85,6 +85,9 @@ void zu_vlist_bbox(const struct zu_vlist *vlist, struct zu_bbox *bbox);
 void zu_vlist_transform(const struct zu_vlist *vlist, const MtxF *mf);
 void zu_vlist_destroy(struct zu_vlist *vlist);
 
+void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size);
+void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif
