@@ -51,6 +51,7 @@ static struct
 } warp_info;
 
 static struct menu        menu_main;
+static struct menu_item  *menu_font_option;
 static struct menu_item  *menu_watchlist;
 static _Bool              menu_active   = 0;
 static int                tp_slot       = 0;
@@ -69,6 +70,18 @@ static int cheats_keys      = 0;
 static int cheats_rupees    = 0;
 static int cheats_nayru     = 0;
 static int cheats_time      = 0;
+
+static uint16_t menu_font_options[] =
+{
+  RES_FONT_FIPPS,
+  RES_FONT_NOTALOT35,
+  RES_FONT_ORIGAMIMOMMY,
+  RES_FONT_PCSENIOR,
+  RES_FONT_PIXELINTV,
+  RES_FONT_PRESSSTART2P,
+  RES_FONT_SMWTEXTNC,
+  RES_FONT_WERDNASRETURN,
+};
 
 static struct switch_info equipment_list[] =
 {
@@ -522,6 +535,20 @@ static void places_proc(struct menu_item *item, void *data)
   }
 }
 
+static int menu_font_option_proc(struct menu_item *item,
+                                 enum menu_callback_reason reason,
+                                 void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED) {
+    settings->font_resource_id = menu_font_options[menu_option_get(item)];
+    struct gfx_font *font = resource_get(settings->font_resource_id);
+    menu_set_font(&menu_main, font);
+    menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
+    menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+  }
+  return 0;
+}
+
 static void save_settings_proc(struct menu_item *item, void *data)
 {
   watchlist_store(menu_watchlist);
@@ -531,6 +558,16 @@ static void save_settings_proc(struct menu_item *item, void *data)
 static void restore_settings_proc(struct menu_item *item, void *data)
 {
   settings_load_default();
+  int no_font_options = sizeof(menu_font_options) / sizeof(*menu_font_options);
+  for (int i = 0; i < no_font_options; ++i)
+    if (menu_font_options[i] == settings->font_resource_id) {
+      menu_option_set(menu_font_option, i);
+      break;
+    }
+  struct gfx_font *font = resource_get(settings->font_resource_id);
+  menu_set_font(&menu_main, font);
+  menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
+  menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
   watchlist_fetch(menu_watchlist);
 }
 
@@ -655,6 +692,49 @@ void main_hook()
     }
   }
 
+  {
+    gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
+    gfx_printf(menu_get_font(&menu_main, 1),
+               menu_get_cell_width(&menu_main, 1) * 2,
+               Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
+               "%4i %4i", z64_input_direct.x, z64_input_direct.y);
+    static struct
+    {
+      uint16_t    mask;
+      const char *name;
+      uint32_t    color;
+    }
+    buttons[] =
+    {
+      {BUTTON_A,        "A", 0x0000FF},
+      {BUTTON_B,        "B", 0x00FF00},
+      {BUTTON_START,    "S", 0xFF0000},
+      {BUTTON_L,        "L", 0xC8C8C8},
+      {BUTTON_R,        "R", 0xC8C8C8},
+      {BUTTON_Z,        "Z", 0xC8C8C8},
+      {BUTTON_C_UP,     "u", 0xFFFF00},
+      {BUTTON_C_DOWN,   "d", 0xFFFF00},
+      {BUTTON_C_LEFT,   "l", 0xFFFF00},
+      {BUTTON_C_RIGHT,  "r", 0xFFFF00},
+      {BUTTON_D_UP,     "u", 0xC8C8C8},
+      {BUTTON_D_DOWN,   "d", 0xC8C8C8},
+      {BUTTON_D_LEFT,   "l", 0xC8C8C8},
+      {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
+    };
+    for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
+      if (!(pad & buttons[i].mask))
+        continue;
+      gfx_mode_color((buttons[i].color >> 16) & 0xFF,
+                     (buttons[i].color >> 8)  & 0xFF,
+                     (buttons[i].color >> 0)  & 0xFF,
+                     menu_get_alpha_i(&menu_main, 1));
+      gfx_printf(menu_get_font(&menu_main, 1),
+                 menu_get_cell_width(&menu_main, 1) * (12 + i),
+                 Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
+                 "%s", buttons[i].name);
+    }
+  }
+
   if (cheats_energy)
     z64_file.energy = z64_file.energy_capacity;
   if (cheats_magic)
@@ -775,47 +855,6 @@ void main_hook()
       advance_proc(NULL, NULL);
   }
 
-  gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
-  gfx_printf(menu_get_font(&menu_main, 1),
-             menu_get_cell_width(&menu_main, 1) * 2,
-             Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
-             "%4i %4i", z64_input_direct.x, z64_input_direct.y);
-  static struct
-  {
-    uint16_t    mask;
-    const char *name;
-    uint32_t    color;
-  }
-  buttons[] =
-  {
-    {BUTTON_A,        "A", 0x0000FF},
-    {BUTTON_B,        "B", 0x00FF00},
-    {BUTTON_START,    "S", 0xFF0000},
-    {BUTTON_L,        "L", 0xC8C8C8},
-    {BUTTON_R,        "R", 0xC8C8C8},
-    {BUTTON_Z,        "Z", 0xC8C8C8},
-    {BUTTON_C_UP,     "u", 0xFFFF00},
-    {BUTTON_C_DOWN,   "d", 0xFFFF00},
-    {BUTTON_C_LEFT,   "l", 0xFFFF00},
-    {BUTTON_C_RIGHT,  "r", 0xFFFF00},
-    {BUTTON_D_UP,     "u", 0xC8C8C8},
-    {BUTTON_D_DOWN,   "d", 0xC8C8C8},
-    {BUTTON_D_LEFT,   "l", 0xC8C8C8},
-    {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
-  };
-  for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
-    if (!(pad & buttons[i].mask))
-      continue;
-    gfx_mode_color((buttons[i].color >> 16) & 0xFF,
-                   (buttons[i].color >> 8)  & 0xFF,
-                   (buttons[i].color >> 0)  & 0xFF,
-                   menu_get_alpha_i(&menu_main, 1));
-    gfx_printf(menu_get_font(&menu_main, 1),
-               menu_get_cell_width(&menu_main, 1) * (12 + i),
-               Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
-               "%s", buttons[i].name);
-  }
-
   gfx_flush();
 }
 
@@ -857,9 +896,13 @@ ENTRY void _start()
 
   /* initialize menus */
   {
-    menu_init(&menu_main, 8, 8, resource_get(RES_FONT_PIXELINTV));
-    menu_set_cxoffset(&menu_main, 2);
-    menu_set_cyoffset(&menu_main, 6);
+    struct gfx_font *font = resource_get(settings->font_resource_id);
+    menu_init(&menu_main,
+              font->char_width + font->letter_spacing,
+              font->char_height + font->line_spacing,
+              font);
+    menu_set_pxoffset(&menu_main, 16);
+    menu_set_pyoffset(&menu_main, 56);
     menu_main.selector = menu_add_button(&menu_main, 0, 0, "return",
                                          main_return_proc, NULL);
     static struct menu menu_inventory;
@@ -1117,13 +1160,13 @@ ENTRY void _start()
     };
     menu_add_static(&menu_dungeon_items, 0, 1, "dungeon", 0xFFFFFF);
     menu_add_option(&menu_dungeon_items, 12, 1,
-                    "great deku tree\0""dodongo's cavern\0"
-                    "inside jabu-jabu's belly\0""forest temple\0"
+                    "inside the deku tree\0""dodongo's cavern\0"
+                    "inside jabu jabu's belly\0""forest temple\0"
                     "fire temple\0""water temple\0""spirit temple\0"
                     "shadow temple\0""bottom of the well\0""ice cavern\0"
                     "ganon's tower\0""gerudo training ground\0"
-                    "thieves' hideout\0""ganon's castle\0"
-                    "ganon's tower collapse\0""ganon's castle collapse\0"
+                    "thieves' hideout\0""inside ganon's castle\0"
+                    "ganon's tower collapse\0""inside ganon's castle collapse\0"
                     "treasure box shop\0", dungeon_option_proc,
                     &dungeon_menu_data);
     menu_add_static(&menu_dungeon_items, 0, 2, "small keys", 0xFFFFFF);
@@ -1332,9 +1375,23 @@ ENTRY void _start()
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
                                               "return");
-    menu_add_button(&menu_settings, 0, 1, "save settings",
+    menu_add_static(&menu_settings, 0, 1, "menu font", 0xFFFFFF);
+    menu_font_option = menu_add_option(&menu_settings, 12, 1,
+                                       "fipps\0""notalot35\0"
+                                       "origami mommy\0""pc senior\0"
+                                       "pixel intv\0""press start 2p\0"
+                                       "smw text nc\0""werdna's return\0",
+                                       menu_font_option_proc, NULL);
+    int no_font_options = sizeof(menu_font_options) /
+                          sizeof(*menu_font_options);
+    for (int i = 0; i < no_font_options; ++i)
+      if (menu_font_options[i] == settings->font_resource_id) {
+        menu_option_set(menu_font_option, i);
+        break;
+      }
+    menu_add_button(&menu_settings, 0, 2, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 2, "restore defaults",
+    menu_add_button(&menu_settings, 0, 3, "restore defaults",
                     restore_settings_proc, NULL);
   }
 

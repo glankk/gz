@@ -1,15 +1,57 @@
 {
-  "origamimommy10.png":
+  "fipps.png":
   {
     "type":         "texture",
-    "name":         "origamimommy10",
+    "name":         "fipps",
+    "format":       "ia4",
+    "tile_height":  168
+  },
+  "notalot35.png":
+  {
+    "type":         "texture",
+    "name":         "notalot35",
+    "format":       "i4",
+    "tile_height":  189
+  },
+  "origamimommy.png":
+  {
+    "type":         "texture",
+    "name":         "origamimommy",
     "format":       "ia4",
     "tile_height":  240
+  },
+  "pcsenior.png":
+  {
+    "type":         "texture",
+    "name":         "pcsenior",
+    "format":       "i4",
+    "tile_height":  192
   },
   "pixelintv.png":
   {
     "type":         "texture",
     "name":         "pixelintv",
+    "format":       "i4",
+    "tile_height":  192
+  },
+  "pressstart2p.png":
+  {
+    "type":         "texture",
+    "name":         "pressstart2p",
+    "format":       "i4",
+    "tile_height":  128
+  },
+  "smwtextnc.png":
+  {
+    "type":         "texture",
+    "name":         "smwtextnc",
+    "format":       "i4",
+    "tile_height":  128
+  },
+  "werdnasreturn.png":
+  {
+    "type":         "texture",
+    "name":         "werdnasreturn",
     "format":       "i4",
     "tile_height":  192
   },

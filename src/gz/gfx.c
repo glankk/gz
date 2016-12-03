@@ -367,7 +367,7 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
     _Bool tile_loaded = 0;
     int cx = 0;
     int cy = 0;
-    for (int j = 0; j < l; ++j, cx += font->char_width + font->spacing) {
+    for (int j = 0; j < l; ++j, cx += font->char_width + font->letter_spacing) {
       uint8_t c = buf[j];
       if (c < font->code_start || c >= font->code_start + no_chars)
         continue;

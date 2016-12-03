@@ -6,6 +6,7 @@
 
 struct settings_data
 {
+  uint16_t  font_resource_id;
   uint16_t  no_watches;
   uint8_t   watch_type[SETTINGS_WATCHES_MAX];
   uint32_t  watch_address[SETTINGS_WATCHES_MAX];

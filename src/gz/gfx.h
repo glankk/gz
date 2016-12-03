@@ -73,7 +73,8 @@ struct gfx_font
   int16_t             chars_xtile;
   int16_t             chars_ytile;
   uint8_t             code_start;
-  int16_t             spacing;
+  int16_t             letter_spacing;
+  int16_t             line_spacing;
 };
 
 void gfx_mode_init(int filter, _Bool blend);

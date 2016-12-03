@@ -1,3 +1,4 @@
+#include "resource.h"
 #include "settings.h"
 #include "zu.h"
 
@@ -34,6 +35,7 @@ void settings_load_default()
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
+  d->font_resource_id = RES_FONT_PRESSSTART2P;
   d->no_watches = 0;
 }
 
