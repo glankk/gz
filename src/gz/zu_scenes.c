@@ -23,7 +23,7 @@ struct zu_scene_info zu_scene_info[] =
     2, (const char*[])
     {
       "from zora's fountain",
-      "water switch room, from barinade's lair",
+      "from barinade's lair",
     },
   },
   {
@@ -1009,7 +1009,7 @@ struct zu_scene_info zu_scene_info[] =
     },
   },
   {
-    "ganondorf test room",
+    "ganondorf test",
     1, (const char*[])
     {
       "default",

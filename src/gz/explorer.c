@@ -346,14 +346,15 @@ static int draw_proc(struct menu_item *item)
       /* rsp settings */
       gsSPSegment(Z64_SEG_SCENE, data->scene_file),
       gsSPSegment(Z64_SEG_ROOM, data->room_file),
-      gsSPGeometryMode(~0,
-                       G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
       gsSPSegment(0x08, &null_dl),
       gsSPSegment(0x09, &null_dl),
       gsSPSegment(0x0A, &null_dl),
       gsSPSegment(0x0B, &null_dl),
       gsSPSegment(0x0C, &null_dl),
       gsSPSegment(0x0D, &null_dl),
+      gsSPGeometryMode(~0,
+                       G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
+      gsSPNumLights(NUMLIGHTS_0),
       /* rdp settings */
       gsDPSetAlphaCompare(G_AC_NONE),
       gsDPSetDepthSource(G_ZS_PIXEL),

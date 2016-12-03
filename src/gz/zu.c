@@ -183,6 +183,11 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
         }
         break;
       }
+      case G_MTX: {
+        /* don't grab transformed vertices */
+        eof = 1;
+        break;
+      }
       case G_VTX: {
         uint8_t vn = (dl->hi & 0x000FF000) >> 12;
         Vtx *v = zu_seg_locate(&t_stab, dl->lo);
