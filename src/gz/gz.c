@@ -743,9 +743,9 @@ void main_hook()
         frame_counter = 0;
         z64_vi_counter = 0;
       }
-      struct gfx_font *font = menu_get_font(&menu_main, 1);
       int cw = menu_get_cell_width(&menu_main, 1);
-      gfx_printf(font, Z64_SCREEN_WIDTH - cw * 6, 12,
+      gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
+      gfx_printf(menu_get_font(&menu_main, 1), Z64_SCREEN_WIDTH - cw * 6, 12,
                  "%4d", z64_vi_counter - frame_counter);
     }
     frame_counter += z64_update_rate;
