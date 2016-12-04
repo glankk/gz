@@ -693,7 +693,7 @@ void main_hook()
     }
   }
 
-  {
+  if (settings->input_display_active) {
     gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
     gfx_printf(menu_get_font(&menu_main, 1),
                menu_get_cell_width(&menu_main, 1) * 2,
@@ -734,6 +734,21 @@ void main_hook()
                  Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
                  "%s", buttons[i].name);
     }
+  }
+
+  {
+    static int32_t frame_counter = 0;
+    if (settings->lag_counter_active) {
+      if ((pad_pressed & BUTTON_A) && (pad & BUTTON_R)) {
+        frame_counter = 0;
+        z64_vi_counter = 0;
+      }
+      struct gfx_font *font = menu_get_font(&menu_main, 1);
+      int cw = menu_get_cell_width(&menu_main, 1);
+      gfx_printf(font, Z64_SCREEN_WIDTH - cw * 6, 12,
+                 "%4d", z64_vi_counter - frame_counter);
+    }
+    frame_counter += z64_update_rate;
   }
 
   if (cheats_energy)
@@ -1393,9 +1408,13 @@ ENTRY void _start()
         menu_option_set(menu_font_option, i);
         break;
       }
-    menu_add_button(&menu_settings, 0, 2, "save settings",
+    menu_add_switch(&menu_settings, 0, 2, "lag counter",
+                    generic_switch_proc, &settings->lag_counter_active);
+    menu_add_switch(&menu_settings, 0, 3, "input display",
+                    generic_switch_proc, &settings->input_display_active);
+    menu_add_button(&menu_settings, 0, 4, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 3, "restore defaults",
+    menu_add_button(&menu_settings, 0, 5, "restore defaults",
                     restore_settings_proc, NULL);
   }
 

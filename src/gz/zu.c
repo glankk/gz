@@ -23,7 +23,6 @@ void *zu_zseg_locate(uint32_t seg_addr)
 
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
 {
-  OSMesgQueue  *file_mq = (void*)z64_file_mq_addr;
   OSMesgQueue   notify_mq;
   OSMesg        notify_m;
   z64_osCreateMesgQueue(&notify_mq, &notify_m, 1);
@@ -35,7 +34,7 @@ void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
     NULL, 0, 0,
     &notify_mq, 0,
   };
-  z64_osSendMesg(file_mq, &f, OS_MESG_NOBLOCK);
+  z64_osSendMesg(&z64_file_mq, &f, OS_MESG_NOBLOCK);
   z64_osRecvMesg(&notify_mq, NULL, OS_MESG_BLOCK);
 }
 

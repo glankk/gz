@@ -674,6 +674,7 @@ typedef struct
 #define z64_osRecvMesg_addr                     0x80002030
 #define z64_osCreateMesgQueue_addr              0x80004220
 #define z64_file_mq_addr                        0x80007D40
+#define z64_vi_counter_addr                     0x80009E8C
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
@@ -690,6 +691,7 @@ typedef struct
 #define z64_file_addr                           0x8011A5D0
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
+#define z64_update_rate_addr                    0x801C6FA0
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
 
@@ -706,6 +708,7 @@ typedef struct
 #define z64_osRecvMesg_addr                     0x80002030
 #define z64_osCreateMesgQueue_addr              0x80004220
 #define z64_file_mq_addr                        0x80007D40
+#define z64_vi_counter_addr                     0x80009E8C
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_LoadRoom_addr                       0x80080A3C
@@ -722,6 +725,7 @@ typedef struct
 #define z64_file_addr                           0x8011A790
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
+#define z64_update_rate_addr                    0x801C7160
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
 
@@ -738,6 +742,7 @@ typedef struct
 #define z64_osRecvMesg_addr                     0x800021F0
 #define z64_osCreateMesgQueue_addr              0x800043E0
 #define z64_file_mq_addr                        0x80008A30
+#define z64_vi_counter_addr                     0x8000A4CC
 #define z64_minimap_disable_1_addr              0x8006D3B0
 #define z64_minimap_disable_2_addr              0x8006DB40
 #define z64_LoadRoom_addr                       0x80081064
@@ -754,6 +759,7 @@ typedef struct
 #define z64_file_addr                           0x8011AC80
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
+#define z64_update_rate_addr                    0x801C7860
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0
 
@@ -775,6 +781,8 @@ typedef void (*z64_Io_proc)         (uint32_t dev_addr, void *dram_addr,
 typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
 
 /* data */
+#define z64_file_mq             (*(OSMesgQueue*)      z64_file_mq_addr)
+#define z64_vi_counter          (*(uint32_t*)         z64_vi_counter_addr)
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)
 #define z64_entrance_table      ( (z64_entrance_table_t*)                     \
@@ -783,6 +791,7 @@ typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
                                    z64_scene_config_table_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)
 #define z64_input_direct        (*(z64_controller_t*) z64_input_direct_addr)
+#define z64_update_rate         (*(uint16_t*)         z64_update_rate_addr)
 #define z64_ctxt                (*(z64_ctxt_t*)       z64_ctxt_addr)
 #define z64_game                (*(z64_game_t*)      &z64_ctxt)
 #define z64_link                (*(z64_link_t*)       z64_link_addr)

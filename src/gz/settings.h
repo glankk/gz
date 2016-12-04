@@ -6,6 +6,8 @@
 
 struct settings_data
 {
+  int       lag_counter_active;
+  int       input_display_active;
   uint16_t  font_resource_id;
   uint16_t  no_watches;
   uint8_t   watch_type[SETTINGS_WATCHES_MAX];
