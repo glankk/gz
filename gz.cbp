@@ -79,10 +79,16 @@
 		<Unit filename="src/gz/menu_button.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/menu_checkbox.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/menu_intinput.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/menu_option.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/menu_positioning.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/menu_submenu.c">
