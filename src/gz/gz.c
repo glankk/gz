@@ -1346,7 +1346,7 @@ ENTRY void _start()
     menu_add_static(&menu_misc, 0, 4, "teleport slot", 0xC0C0C0);
     struct menu_item *tp_slot_display = menu_add_static(&menu_misc,
                                                         16, 4, "0",
-                                                        0xA0A0A0);
+                                                        0xC0C0C0);
     menu_add_button(&menu_misc, 14, 4, "-", tp_slot_dec_proc,
                     tp_slot_display);
     menu_add_button(&menu_misc, 18, 4, "+", tp_slot_inc_proc,
