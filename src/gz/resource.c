@@ -229,3 +229,19 @@ void resource_free(enum resource_id res)
     res_data[res] = NULL;
   }
 }
+
+struct gfx_texture *resource_load_grc_texture(const char *grc_resource_name)
+{
+  void *p_t;
+  grc_resource_get(grc_resource_name, &p_t, NULL);
+  if (!p_t)
+    return p_t;
+  struct grc_texture *t = p_t;
+  struct gfx_texdesc td =
+  {
+    t->im_fmt, t->im_siz, (uint32_t)&t->texture_data,
+    t->tile_width, t->tile_height, t->tiles_x, t->tiles_y,
+    GFX_FILE_DRAM, 0,
+  };
+  return gfx_texture_load(&td, NULL);
+}

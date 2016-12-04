@@ -18,7 +18,8 @@ static int watch_type_size[] =
   4,
 };
 
-static int draw_proc(struct menu_item *item)
+static int draw_proc(struct menu_item *item,
+                     struct menu_draw_params *draw_params)
 {
   struct item_data *data = item->data;
   uint32_t address = data->address;

@@ -33,6 +33,15 @@ enum menu_callback_reason
   MENU_CALLBACK_CHANGED,
 };
 
+struct menu_draw_params
+{
+  int         x;
+  int         y;
+  const char *text;
+  uint32_t    color;
+  uint8_t     alpha;
+};
+
 typedef int  (*menu_generic_callback)(struct menu_item *item,
                                       enum menu_callback_reason reason,
                                       void *data);
@@ -49,8 +58,11 @@ struct menu_item
   void             *data;
   _Bool             selectable;
   struct menu      *imenu;
+  int             (*enter_proc)   (struct menu_item *item);
+  int             (*leave_proc)   (struct menu_item *item);
   int             (*think_proc)   (struct menu_item *item);
-  int             (*draw_proc)    (struct menu_item *item);
+  int             (*draw_proc)    (struct menu_item *item,
+                                   struct menu_draw_params *draw_params);
   int             (*navigate_proc)(struct menu_item *item,
                                    enum menu_navigation nav);
   int             (*activate_proc)(struct menu_item *item);
@@ -125,6 +137,8 @@ void                menu_navigate(struct menu *menu, enum menu_navigation nav);
 void                menu_activate(struct menu *menu);
 void                menu_enter(struct menu *menu, struct menu *submenu);
 struct menu        *menu_return(struct menu *menu);
+void                menu_signal_enter(struct menu *menu);
+void                menu_signal_leave(struct menu *menu);
 void                menu_navigate_top(struct menu *menu,
                                       enum menu_navigation nav);
 void                menu_activate_top(struct menu *menu);

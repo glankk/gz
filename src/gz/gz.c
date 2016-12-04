@@ -280,6 +280,7 @@ static int generic_switch_proc(struct menu_item *item,
 
 static void main_return_proc(struct menu_item *item, void *data)
 {
+  menu_signal_leave(&menu_main);
   menu_active = 0;
 }
 
@@ -791,8 +792,10 @@ void main_hook()
     if (pad_pressed & BUTTON_D_RIGHT)
       menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
     if (pad_pressed & BUTTON_L) {
-      if (pad & BUTTON_R)
+      if (pad & BUTTON_R) {
+        menu_signal_leave(&menu_main);
         menu_active = 0;
+      }
       else
         menu_activate(&menu_main);
     }
@@ -809,6 +812,7 @@ void main_hook()
       l_pad = 0;
     if (l_pad & BUTTON_R) {
       /* show menu */
+      menu_signal_enter(&menu_main);
       menu_active = 1;
       l_pad = 0;
     }

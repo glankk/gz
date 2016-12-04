@@ -22,7 +22,7 @@ void menu_init(struct menu *menu, int cell_width, int cell_height,
   menu->parent = NULL;
   menu->child = NULL;
   menu->highlight_color_animated = 0x000000;
-  menu->highlight_color_static = 0x5050FF;
+  menu->highlight_color_static = 0x2020FF;
   menu->highlight_state[0] = 17;
   menu->highlight_state[1] = 19;
   menu->highlight_state[2] = 23;
@@ -195,23 +195,28 @@ void menu_draw(struct menu *menu)
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
-    if (item->draw_proc && item->draw_proc(item))
+    struct menu_draw_params draw_params =
+    {
+      menu_item_screen_x(item),
+      menu_item_screen_y(item),
+      item->text,
+      (item == menu->selector ? (item->animate_highlight ?
+                                 menu->highlight_color_animated :
+                                 menu->highlight_color_static) :
+       item->color),
+      alpha,
+    };
+    if (item->draw_proc && item->draw_proc(item, &draw_params))
       continue;
     if (item->imenu)
       menu_draw(item->imenu);
-    if (!item->text)
+    if (!draw_params.text)
       continue;
-    uint32_t color = (item == menu->selector ?
-                      (item->animate_highlight ?
-                       menu->highlight_color_animated :
-                       menu->highlight_color_static) :
-                      item->color);
-    gfx_mode_color((color >> 16) & 0xFF,
-                   (color >> 8)  & 0xFF,
-                   (color >> 0)  & 0xFF,
-                   alpha);
-    gfx_printf(font,  menu_item_screen_x(item), menu_item_screen_y(item),
-               "%s", item->text);
+    gfx_mode_color((draw_params.color >> 16) & 0xFF,
+                   (draw_params.color >> 8)  & 0xFF,
+                   (draw_params.color >> 0)  & 0xFF,
+                   draw_params.alpha);
+    gfx_printf(font,  draw_params.x, draw_params.y, "%s", draw_params.text);
   }
 }
 
@@ -305,8 +310,10 @@ void menu_enter(struct menu *menu, struct menu *submenu)
 {
   if (menu->child)
     return menu_enter(menu->child, submenu);
+  menu_signal_leave(menu);
   menu->child = submenu;
   submenu->parent = menu;
+  menu_signal_enter(submenu);
 }
 
 struct menu *menu_return(struct menu *menu)
@@ -316,9 +323,39 @@ struct menu *menu_return(struct menu *menu)
   struct menu *parent = menu->parent;
   if (!parent || parent->child != menu)
     return NULL;
+  menu_signal_leave(menu);
   menu->parent = NULL;
   parent->child = NULL;
+  menu_signal_enter(parent);
   return parent;
+}
+
+void menu_signal_enter(struct menu *menu)
+{
+  if (menu->child)
+    return menu_signal_enter(menu->child);
+  for (struct menu_item *item = menu->items.first;
+       item; item = list_next(item))
+  {
+    if (item->enter_proc && item->enter_proc(item))
+      continue;
+    if (item->imenu)
+      menu_signal_enter(item->imenu);
+  }
+}
+
+void menu_signal_leave(struct menu *menu)
+{
+  if (menu->child)
+    return menu_signal_leave(menu->child);
+  for (struct menu_item *item = menu->items.first;
+       item; item = list_next(item))
+  {
+    if (item->leave_proc && item->leave_proc(item))
+      continue;
+    if (item->imenu)
+      menu_signal_leave(item->imenu);
+  }
 }
 
 void menu_navigate_top(struct menu *menu, enum menu_navigation nav)
@@ -368,6 +405,8 @@ struct menu_item *menu_item_add(struct menu *menu, int x, int y,
     item->data = NULL;
     item->selectable = 1;
     item->imenu = NULL;
+    item->enter_proc = NULL;
+    item->leave_proc = NULL;
     item->think_proc = NULL;
     item->draw_proc = NULL;
     item->navigate_proc = NULL;

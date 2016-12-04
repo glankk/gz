@@ -213,7 +213,8 @@ static int think_proc(struct menu_item *item)
   return 0;
 }
 
-static int draw_proc(struct menu_item *item)
+static int draw_proc(struct menu_item *item,
+                     struct menu_draw_params *draw_params)
 {
   static Gfx null_dl = gsSPEndDisplayList();
   struct item_data *data = item->data;
