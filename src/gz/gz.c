@@ -54,9 +54,16 @@ static struct menu        menu_main;
 static struct menu_item  *menu_font_option;
 static struct menu_item  *menu_lag_unit_option;
 static struct menu_item  *menu_watchlist;
-static _Bool              menu_active   = 0;
-static int                tp_slot       = 0;
-static int                frames_queued = -1;
+static _Bool              menu_active           = 0;
+static z64_xyz_t          teleport_pos[10];
+static z64_rot_t          teleport_rot[10];
+static int                teleport_slot         = 0;
+static int                frames_queued         = -1;
+static int32_t            frame_counter         = 0;
+__attribute__((section(".data")))
+static z64_file_t         memory_file[10];
+static _Bool              memory_file_saved[10] = {0};
+static int                memory_file_slot      = 0;
 
 static int cheats_energy    = 0;
 static int cheats_magic     = 0;
@@ -504,20 +511,18 @@ static void set_flags_proc(struct menu_item *item, void *data)
   memset(&z64_game.switch_flags, 0xFF, 0x24);
 }
 
-static void tp_slot_dec_proc(struct menu_item *item, void *data)
+static void slot_dec_proc(struct menu_item *item, void *data)
 {
-  struct menu_item *tp_slot_display = data;
-  tp_slot = (tp_slot - 1) % 10;
-  if (tp_slot < 0)
-    tp_slot += 10;
-  tp_slot_display->text[0] = '0' + tp_slot;
+  int *slot = data;
+  *slot = (*slot - 1) % 10;
+  if (*slot < 0)
+    *slot += 10;
 }
 
-static void tp_slot_inc_proc(struct menu_item *item, void *data)
+static void slot_inc_proc(struct menu_item *item, void *data)
 {
-  struct menu_item *tp_slot_display = data;
-  tp_slot = (tp_slot + 1) % 10;
-  tp_slot_display->text[0] = '0' + tp_slot;
+  int *slot = data;
+  *slot = (*slot + 1) % 10;
 }
 
 static void warp_proc(struct menu_item *item, void *data)
@@ -837,7 +842,7 @@ void main_hook()
       /* reload zone */
       z64_game.scene_load_flags = 0x0014;
     else if (l_pad & BUTTON_B) {
-      /* go to title screen */
+      /* go to file select */
       z64_file.interface_flags  = 0x02;
       z64_game.scene_load_flags = 0x0014;
     }
@@ -852,18 +857,39 @@ void main_hook()
     else if (!(pad & (BUTTON_D_UP | BUTTON_D_DOWN |
                       BUTTON_D_LEFT | BUTTON_D_RIGHT)))
       d_pad = 0;
-    static z64_xyz_t stored_pos[10];
-    static z64_rot_t stored_rot[10];
     if (d_pad & BUTTON_D_LEFT) {
-      /* save position and orientation */
-      stored_pos[tp_slot] = z64_link.common.pos_2;
-      stored_rot[tp_slot] = z64_link.common.rot_2;
+      if (d_pad & BUTTON_R) {
+        if (pad_pressed_raw & BUTTON_D_LEFT) {
+          /* save memory file */
+          memcpy(&memory_file[memory_file_slot], &z64_file, sizeof(z64_file));
+          memory_file_saved[memory_file_slot] = 1;
+        }
+      }
+      else {
+        /* save position and orientation */
+        teleport_pos[teleport_slot] = z64_link.common.pos_2;
+        teleport_rot[teleport_slot] = z64_link.common.rot_2;
+      }
     }
     else if (d_pad & BUTTON_D_RIGHT) {
+      if (d_pad & BUTTON_R) {
+        if (d_pad & BUTTON_A) {
+          /* reset lag counter */
+          frame_counter = 0;
+          z64_vi_counter = 0;
+        }
+        else if ((pad_pressed_raw & BUTTON_D_RIGHT) &&
+                 memory_file_saved[memory_file_slot])
+          /* load memory file */
+          memcpy(&z64_file, &memory_file[memory_file_slot], sizeof(z64_file));
+      }
       /* teleport */
-      z64_link.common.pos_1 = z64_link.common.pos_2 = stored_pos[tp_slot];
-      z64_link.common.rot_2 = stored_rot[tp_slot];
-      z64_link.target_yaw = stored_rot[tp_slot].y;
+      else {
+        z64_link.common.pos_1 = teleport_pos[teleport_slot];
+        z64_link.common.pos_2 = teleport_pos[teleport_slot];
+        z64_link.common.rot_2 = teleport_rot[teleport_slot];
+        z64_link.target_yaw = teleport_rot[teleport_slot].y;
+      }
     }
     else if (d_pad & pad_pressed & BUTTON_D_DOWN)
       pause_proc(NULL, NULL);
@@ -913,12 +939,7 @@ void main_hook()
   }
 
   {
-    static int32_t frame_counter = 0;
     if (settings->lag_counter_enabled) {
-      if ((pad_pressed & BUTTON_A) && (pad & BUTTON_R)) {
-        frame_counter = 0;
-        z64_vi_counter = 0;
-      }
       int cw = menu_get_cell_width(&menu_main, 1);
       gfx_mode_color(0xC0, 0xC0, 0xC0, menu_get_alpha_i(&menu_main, 1));
       if (settings->lag_unit == SETTINGS_LAG_FRAMES)
@@ -1344,31 +1365,33 @@ ENTRY void _start()
     menu_add_button(&menu_misc, 0, 3, "set scene flags",
                     set_flags_proc, NULL);
     menu_add_static(&menu_misc, 0, 4, "teleport slot", 0xC0C0C0);
-    struct menu_item *tp_slot_display = menu_add_static(&menu_misc,
-                                                        16, 4, "0",
-                                                        0xC0C0C0);
-    menu_add_button(&menu_misc, 14, 4, "-", tp_slot_dec_proc,
-                    tp_slot_display);
-    menu_add_button(&menu_misc, 18, 4, "+", tp_slot_inc_proc,
-                    tp_slot_display);
+    menu_add_watch(&menu_misc, 16, 4,
+                   (uint32_t)&teleport_slot, WATCH_TYPE_S32);
+    menu_add_button(&menu_misc, 14, 4, "-", slot_dec_proc, &teleport_slot);
+    menu_add_button(&menu_misc, 18, 4, "+", slot_inc_proc, &teleport_slot);
+    menu_add_static(&menu_misc, 0, 5, "memory file", 0xC0C0C0);
+    menu_add_watch(&menu_misc, 16, 5,
+                   (uint32_t)&memory_file_slot, WATCH_TYPE_S32);
+    menu_add_button(&menu_misc, 14, 5, "-", slot_dec_proc, &memory_file_slot);
+    menu_add_button(&menu_misc, 18, 5, "+", slot_inc_proc, &memory_file_slot);
     static int8_t language_options[] = {0x00, 0x01};
     static struct byte_option language_option_data =
     {
       &z64_file.language, language_options, 2,
     };
-    menu_add_static(&menu_misc, 0, 5, "language", 0xC0C0C0);
-    menu_add_option(&menu_misc, 14, 5, "japanese\0""english\0",
+    menu_add_static(&menu_misc, 0, 6, "language", 0xC0C0C0);
+    menu_add_option(&menu_misc, 14, 6, "japanese\0""english\0",
                     byte_option_proc, &language_option_data);
     static int8_t target_options[] = {0x00, 0x01};
     static struct byte_option target_option_data =
     {
       &z64_file.z_targeting, target_options, 2,
     };
-    menu_add_static(&menu_misc, 0, 6, "z targeting", 0xC0C0C0);
-    menu_add_option(&menu_misc, 14, 6, "switch\0""hold\0",
+    menu_add_static(&menu_misc, 0, 7, "z targeting", 0xC0C0C0);
+    menu_add_option(&menu_misc, 14, 7, "switch\0""hold\0",
                     byte_option_proc, &target_option_data);
 #if 0
-    menu_add_button(&menu_misc, 0, 7, "suppress exceptions", sup_exc_proc,
+    menu_add_button(&menu_misc, 0, 8, "suppress exceptions", sup_exc_proc,
                     NULL);
 #endif
 
