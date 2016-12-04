@@ -36,6 +36,7 @@ void settings_load_default()
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
   d->menu_font_resource_id = RES_FONT_PRESSSTART2P;
+  d->menu_drop_shadow = 1;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_enabled = 0;

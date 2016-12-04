@@ -14,11 +14,11 @@ static void update(struct menu_item *item)
   struct item_data *data = item->data;
   if (data->state) {
     data->state_item->text[0] = '-';
-    data->state_item->color = 0xFFA0A0;
+    data->state_item->color = 0xFF8080;
   }
   else {
     data->state_item->text[0] = '+';
-    data->state_item->color = 0xA0FFA0;
+    data->state_item->color = 0x80FF80;
   }
 }
 
@@ -53,8 +53,8 @@ struct menu_item *menu_add_switch(struct menu *menu, int x, int y,
   struct menu *imenu;
   struct menu_item *item = menu_add_imenu(menu, x, y, &imenu);
   struct item_data *data = malloc(sizeof(*data));
-  menu_add_static(imenu, 2, 0, name, 0xFFFFFF);
-  data->state_item = menu_item_add(imenu, 0, 0, "+", 0xA0FFA0);
+  menu_add_static(imenu, 2, 0, name, 0xC0C0C0);
+  data->state_item = menu_item_add(imenu, 0, 0, "+", 0x80FF80);
   data->state_item->data = data;
   data->state_item->think_proc = think_proc;
   data->state_item->activate_proc = activate_proc;

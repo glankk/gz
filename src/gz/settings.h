@@ -9,6 +9,7 @@
 struct settings_data
 {
   uint16_t  menu_font_resource_id;
+  int       menu_drop_shadow;
   int16_t   menu_x;
   int16_t   menu_y;
   int       input_display_enabled;

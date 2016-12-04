@@ -11,10 +11,6 @@ extern Gfx   *gfx_disp;
 extern Gfx   *gfx_disp_p;
 extern Gfx   *gfx_disp_e;
 extern Gfx   *gfx_disp_w;
-extern char  *gfx_data;
-extern char  *gfx_data_p;
-extern char  *gfx_data_e;
-extern char  *gfx_data_w;
 
 struct gfx_texdesc
 {
@@ -84,6 +80,7 @@ void gfx_mode_init(int filter, _Bool blend);
 void gfx_mode_default();
 void gfx_mode_filter(int filter);
 void gfx_mode_blend(_Bool blend);
+void gfx_mode_drop_shadow(_Bool enable);
 void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 /* all sizes are specified in number of bytes */
 Gfx  *gfx_disp_append(Gfx *disp, size_t size);

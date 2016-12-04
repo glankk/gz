@@ -9,16 +9,17 @@
 #include "zu.h"
 #include "z64.h"
 
-#define   GFX_DISP_SIZE 0x8000
-#define   GFX_DATA_SIZE 0x0800
-Gfx      *gfx_disp;
-Gfx      *gfx_disp_w;
-Gfx      *gfx_disp_p;
-Gfx      *gfx_disp_e;
-char     *gfx_data;
-char     *gfx_data_w;
-char     *gfx_data_p;
-char     *gfx_data_e;
+#define         GFX_DISP_SIZE 0xC000
+Gfx            *gfx_disp;
+Gfx            *gfx_disp_w;
+Gfx            *gfx_disp_p;
+Gfx            *gfx_disp_e;
+
+static _Bool    gfx_drop_shadow = 0;
+static uint8_t  gfx_r = 0xFF;
+static uint8_t  gfx_g = 0xFF;
+static uint8_t  gfx_b = 0xFF;
+static uint8_t  gfx_a = 0xFF;
 
 const struct gfx_colormatrix gfx_cm_desaturate =
 {
@@ -38,10 +39,6 @@ void gfx_mode_init(int filter, _Bool blend)
     gfx_disp_p = gfx_disp;
     gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
                  sizeof(*gfx_disp);
-    gfx_data = malloc(GFX_DATA_SIZE);
-    gfx_data_w = malloc(GFX_DATA_SIZE);
-    gfx_data_p = gfx_data;
-    gfx_data_e = (void*)((char*)gfx_data + GFX_DATA_SIZE);
   }
   Gfx g_blend[] =
   {
@@ -97,8 +94,17 @@ void gfx_mode_blend(_Bool blend)
   );
 }
 
+void gfx_mode_drop_shadow(_Bool enable)
+{
+  gfx_drop_shadow = enable;
+}
+
 void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+  gfx_r = r;
+  gfx_g = g;
+  gfx_b = b;
+  gfx_a = a;
   gfx_disp
   (
     gsDPPipeSync(),
@@ -116,10 +122,9 @@ Gfx *gfx_disp_append(Gfx *disp, size_t size)
 
 void *gfx_data_append(void *data, size_t size)
 {
-  void *p = gfx_data_p;
-  memcpy(gfx_data_p, data, size);
-  gfx_data_p += (size + 7) / 8 * 8;
-  return p;
+  gfx_disp_e -= (size + sizeof(*gfx_disp_e) - 1) / sizeof(*gfx_disp_e);
+  memcpy(gfx_disp_e, data, size);
+  return gfx_disp_e;
 }
 
 void gfx_flush()
@@ -132,11 +137,6 @@ void gfx_flush()
   gfx_disp_p = gfx_disp;
   gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
                sizeof(*gfx_disp);
-  char *data_w = gfx_data_w;
-  gfx_data_w = gfx_data;
-  gfx_data = data_w;
-  gfx_data_p = gfx_data;
-  gfx_data_e = gfx_data + GFX_DATA_SIZE;
 }
 
 void gfx_texldr_init(struct gfx_texldr *texldr)
@@ -331,6 +331,25 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
 {
   struct gfx_texture *texture = sprite->texture;
   gfx_rdp_load_tile(texture, sprite->texture_tile);
+  if (gfx_drop_shadow) {
+    gfx_disp
+    (
+      gsDPPipeSync(),
+      gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
+      gsSPScisTextureRectangle(qs102(sprite->x + 1) & ~3,
+                               qs102(sprite->y + 1) & ~3,
+                               qs102(sprite->x + texture->tile_width *
+                                     sprite->xscale + 1) & ~3,
+                               qs102(sprite->y + texture->tile_height *
+                                     sprite->yscale + 1) & ~3,
+                               G_TX_RENDERTILE,
+                               qu105(0), qu105(0),
+                               qu510(1.f / sprite->xscale),
+                               qu510(1.f / sprite->yscale)),
+      gsDPPipeSync(),
+      gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
+    );
+  }
   gfx_disp
   (
     gsSPScisTextureRectangle(qs102(sprite->x) & ~3,
@@ -380,6 +399,25 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       if (!tile_loaded) {
         tile_loaded = 1;
         gfx_rdp_load_tile(texture, i);
+      }
+      if (gfx_drop_shadow) {
+        gfx_disp
+        (
+          gsDPPipeSync(),
+          gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
+          gsSPScisTextureRectangle(qs102(x + cx + 1),
+                                   qs102(y + cy + 1),
+                                   qs102(x + cx + font->char_width + 1),
+                                   qs102(y + cy + font->char_height + 1),
+                                   G_TX_RENDERTILE,
+                                   qu105(c % font->chars_xtile *
+                                         font->char_width),
+                                   qu105(c / font->chars_xtile *
+                                         font->char_height),
+                                   qu510(1), qu510(1)),
+          gsDPPipeSync(),
+          gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
+        );
       }
       gfx_disp
       (

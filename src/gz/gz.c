@@ -565,16 +565,29 @@ static int menu_font_option_proc(struct menu_item *item,
   return 0;
 }
 
+static int menu_drop_shadow_proc(struct menu_item *item,
+                                 enum menu_callback_reason reason,
+                                 void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED) {
+    settings->menu_drop_shadow = menu_checkbox_get(item);
+    gfx_mode_drop_shadow(settings->menu_drop_shadow);
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_drop_shadow);
+  return 0;
+}
+
 static int menu_position_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
 {
   switch (reason) {
-    case MENU_CALLBACK_NAV_UP:    --settings->menu_y; break;
-    case MENU_CALLBACK_NAV_DOWN:  ++settings->menu_y; break;
-    case MENU_CALLBACK_NAV_LEFT:  --settings->menu_x; break;
-    case MENU_CALLBACK_NAV_RIGHT: ++settings->menu_x; break;
-    default:                                          return 0;
+    case MENU_CALLBACK_NAV_UP:    settings->menu_y -= 2; break;
+    case MENU_CALLBACK_NAV_DOWN:  settings->menu_y += 2; break;
+    case MENU_CALLBACK_NAV_LEFT:  settings->menu_x -= 2; break;
+    case MENU_CALLBACK_NAV_RIGHT: settings->menu_x += 2; break;
+    default:                                             return 0;
   }
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
@@ -588,11 +601,11 @@ static int generic_position_proc(struct menu_item *item,
   int16_t *x = data;
   int16_t *y = x + 1;
   switch (reason) {
-    case MENU_CALLBACK_NAV_UP:    --*y; break;
-    case MENU_CALLBACK_NAV_DOWN:  ++*y; break;
-    case MENU_CALLBACK_NAV_LEFT:  --*x; break;
-    case MENU_CALLBACK_NAV_RIGHT: ++*x; break;
-    default:                            break;
+    case MENU_CALLBACK_NAV_UP:    *y -= 2; break;
+    case MENU_CALLBACK_NAV_DOWN:  *y += 2; break;
+    case MENU_CALLBACK_NAV_LEFT:  *x -= 2; break;
+    case MENU_CALLBACK_NAV_RIGHT: *x += 2; break;
+    default:                               break;
   }
   return 0;
 }
@@ -616,6 +629,7 @@ static void restore_settings_proc(struct menu_item *item, void *data)
   menu_set_font(&menu_main, font);
   menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
   menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+  gfx_mode_drop_shadow(settings->menu_drop_shadow);
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
   watchlist_fetch(menu_watchlist);
@@ -858,7 +872,7 @@ void main_hook()
   }
 
   if (settings->input_display_enabled) {
-    gfx_mode_color(0xC8, 0xC8, 0xC8, alpha);
+    gfx_mode_color(0xC0, 0xC0, 0xC0, alpha);
     gfx_printf(font, settings->input_display_x, settings->input_display_y,
                "%4i %4i", z64_input_direct.x, z64_input_direct.y);
     static struct
@@ -872,17 +886,17 @@ void main_hook()
       {BUTTON_A,        "A", 0x0000FF},
       {BUTTON_B,        "B", 0x00FF00},
       {BUTTON_START,    "S", 0xFF0000},
-      {BUTTON_L,        "L", 0xC8C8C8},
-      {BUTTON_R,        "R", 0xC8C8C8},
-      {BUTTON_Z,        "Z", 0xC8C8C8},
+      {BUTTON_L,        "L", 0xC0C0C0},
+      {BUTTON_R,        "R", 0xC0C0C0},
+      {BUTTON_Z,        "Z", 0xC0C0C0},
       {BUTTON_C_UP,     "u", 0xFFFF00},
       {BUTTON_C_DOWN,   "d", 0xFFFF00},
       {BUTTON_C_LEFT,   "l", 0xFFFF00},
       {BUTTON_C_RIGHT,  "r", 0xFFFF00},
-      {BUTTON_D_UP,     "u", 0xC8C8C8},
-      {BUTTON_D_DOWN,   "d", 0xC8C8C8},
-      {BUTTON_D_LEFT,   "l", 0xC8C8C8},
-      {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
+      {BUTTON_D_UP,     "u", 0xC0C0C0},
+      {BUTTON_D_DOWN,   "d", 0xC0C0C0},
+      {BUTTON_D_LEFT,   "l", 0xC0C0C0},
+      {BUTTON_D_RIGHT,  "r", 0xC0C0C0},
     };
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
       if (!(pad & buttons[i].mask))
@@ -906,7 +920,7 @@ void main_hook()
         z64_vi_counter = 0;
       }
       int cw = menu_get_cell_width(&menu_main, 1);
-      gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
+      gfx_mode_color(0xC0, 0xC0, 0xC0, menu_get_alpha_i(&menu_main, 1));
       if (settings->lag_unit == SETTINGS_LAG_FRAMES)
         gfx_printf(menu_get_font(&menu_main, 1),
                    settings->lag_counter_x - cw * 8, settings->lag_counter_y,
@@ -926,7 +940,7 @@ void main_hook()
     static int splash_time = 230;
     if (splash_time > 0) {
       --splash_time;
-      gfx_mode_color(0xA0, 0x00, 0x00, alpha);
+      gfx_mode_color(0xC0, 0x00, 0x00, alpha);
       gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
                  "gz-0.2.0 github.com/glankk/gz");
     }
@@ -973,6 +987,7 @@ ENTRY void _start()
 
   /* initialize menus */
   {
+    gfx_mode_drop_shadow(settings->menu_drop_shadow);
     struct gfx_font *font = resource_get(settings->menu_font_resource_id);
     menu_init(&menu_main,
               font->char_width + font->letter_spacing,
@@ -1060,7 +1075,7 @@ ENTRY void _start()
     for (int i = 0; i < 4; ++i) {
       char s[41];
       sprintf(s, "bottle %i", i + 1);
-      menu_add_static(&menu_variable_items, 0, 1 + i, s, 0xFFFFFF);
+      menu_add_static(&menu_variable_items, 0, 1 + i, s, 0xC0C0C0);
       menu_add_option(&menu_variable_items, 18, 1 + i,
                       "nothing\0""bottle\0""red potion\0""green potion\0"
                       "blue potion\0""fairy\0""fish\0""milk\0""ruto's letter\0"
@@ -1081,7 +1096,7 @@ ENTRY void _start()
       &z64_file.items[Z64_SLOT_ADULT_TRADE], adult_trade_options, 12,
     };
     menu_add_static(&menu_variable_items, 0, 5, "adult trade item",
-                    0xFFFFFF);
+                    0xC0C0C0);
     menu_add_option(&menu_variable_items, 18, 5,
                     "nothing\0""pocket egg\0""pocket cucco\0""cojiro\0"
                     "odd mushroom\0""odd potion\0""poacher's saw\0"
@@ -1101,7 +1116,7 @@ ENTRY void _start()
       &z64_file.items[Z64_SLOT_CHILD_TRADE], child_trade_options, 13,
     };
     menu_add_static(&menu_variable_items, 0, 6, "child trade item",
-                    0xFFFFFF);
+                    0xC0C0C0);
     menu_add_option(&menu_variable_items, 18, 6,
                     "nothing\0""weird egg\0""chicken\0""zelda's letter\0"
                     "keaton mask\0""skull mask\0""spooky mask\0""bunny hood\0"
@@ -1132,26 +1147,26 @@ ENTRY void _start()
     };
     menu_add_switch(&menu_quest_items, 0, 4, gs_switch.name,
                     equipment_switch_proc, &gs_switch);
-    menu_add_static(&menu_quest_items, 0, 5, "energy capacity", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 5, "energy capacity", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 16, 5, 16, 4,
                       halfword_mod_proc, &z64_file.energy_capacity);
-    menu_add_static(&menu_quest_items, 0, 6, "defense hearts", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 6, "defense hearts", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 16, 6, 16, 2,
                       byte_mod_proc, &z64_file.defense_hearts);
-    menu_add_static(&menu_quest_items, 0, 7, "magic capacity", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 7, "magic capacity", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 16, 7, 16, 2,
                       magic_capacity_proc, NULL);
-    menu_add_static(&menu_quest_items, 0, 8, "gs tokens", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 8, "gs tokens", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 16, 8, 10, 3,
                       halfword_mod_proc, &z64_file.gs_tokens);
-    menu_add_static(&menu_quest_items, 0, 9, "heart pieces", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 9, "heart pieces", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 16, 9, 16, 2,
                       byte_mod_proc, (char*)&z64_file.quest_items + 0);
     static struct option_info bulletbag_option =
     {
       &z64_file.equipment_items, 14, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 10, "bullet bag", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 10, "bullet bag", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 10,
                     "none\0""bullet bag 30\0""bullet bag 40\0""bullet bag 50\0"
                     "* quiver 30\0""* quiver 40\0""* quiver 50\0"
@@ -1161,7 +1176,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 0, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 11, "quiver", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 11, "quiver", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 11,
                     "none\0""quiver 30\0""quiver 40\0""quiver 50\0"
                     "* bomb bag 20\0""* bomb bag 30\0""* bomb bag 40\0"
@@ -1171,7 +1186,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 3, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 12, "bomb bag", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 12, "bomb bag", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 12,
                     "none\0""bomb bag 20\0""bomb bag 30\0""bomb bag 40\0"
                     "* goron's bracelet\0""* silver gaunlets\0"
@@ -1181,7 +1196,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 6, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 13, "strength", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 13, "strength", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 13,
                     "none\0""goron's bracelet\0""silver gaunlets\0"
                     "golden gaunlets\0""* silver scale\0""* gold scale\0"
@@ -1191,7 +1206,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 9, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 14, "diving", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 14, "diving", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 14,
                     "none\0""silver scale\0""gold scale\0"
                     "* goron's sword\0""* adult's wallet\0"
@@ -1201,7 +1216,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 12, 0b11,
     };
-    menu_add_static(&menu_quest_items, 0, 15, "wallet", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 15, "wallet", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 15,
                     "none\0""adult's wallet\0""giant's wallet\0"
                     "* deku seeds\0",
@@ -1210,7 +1225,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 17, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 16, "stick capacity", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 16, "stick capacity", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 16,
                     "0 (1)\0""10\0""20 (1)\0""30 (1)\0""* 0 (2)\0""* 20 (2)\0"
                     "* 30 (2)\0""* 40\0",
@@ -1219,7 +1234,7 @@ ENTRY void _start()
     {
       &z64_file.equipment_items, 20, 0b111,
     };
-    menu_add_static(&menu_quest_items, 0, 17, "nut capacity", 0xFFFFFF);
+    menu_add_static(&menu_quest_items, 0, 17, "nut capacity", 0xC0C0C0);
     menu_add_option(&menu_quest_items, 16, 17,
                     "0 (1)\0""20\0""30\0""40\0""* 0 (2)\0""* many (1)\0"
                     "* 0 (3)\0""* many (2)\0",
@@ -1235,7 +1250,7 @@ ENTRY void _start()
       {"map",       &z64_file.dungeon_items[0], 0b100},
       &z64_file.dungeon_keys[0],
     };
-    menu_add_static(&menu_dungeon_items, 0, 1, "dungeon", 0xFFFFFF);
+    menu_add_static(&menu_dungeon_items, 0, 1, "dungeon", 0xC0C0C0);
     menu_add_option(&menu_dungeon_items, 12, 1,
                     "inside the deku tree\0""dodongo's cavern\0"
                     "inside jabu jabu's belly\0""forest temple\0"
@@ -1246,7 +1261,7 @@ ENTRY void _start()
                     "ganon's tower collapse\0""inside ganon's castle collapse\0"
                     "treasure box shop\0", dungeon_option_proc,
                     &dungeon_menu_data);
-    menu_add_static(&menu_dungeon_items, 0, 2, "small keys", 0xFFFFFF);
+    menu_add_static(&menu_dungeon_items, 0, 2, "small keys", 0xC0C0C0);
     menu_add_intinput(&menu_dungeon_items, 12, 2, 16, 2,
                       dungeon_keys_proc, &dungeon_menu_data);
     menu_add_switch(&menu_dungeon_items, 0, 3,
@@ -1287,35 +1302,35 @@ ENTRY void _start()
     menu_init(&menu_equips, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_equips.selector = menu_add_submenu(&menu_equips, 0, 0, NULL,
                                             "return");
-    menu_add_static(&menu_equips, 0, 1, "sword", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 1, "sword", 0xC0C0C0);
     menu_add_option(&menu_equips, 10, 1,
                     "none\0""kokiri\0""master\0""biggoron\0",
                     equip_option_proc, (void*)0);
-    menu_add_static(&menu_equips, 0, 2, "shield", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 2, "shield", 0xC0C0C0);
     menu_add_option(&menu_equips, 10, 2,
                     "none\0""deku\0""hylian\0""mirror\0",
                     equip_option_proc, (void*)1);
-    menu_add_static(&menu_equips, 0, 3, "tunic", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 3, "tunic", 0xC0C0C0);
     menu_add_option(&menu_equips, 10, 3,
                     "none\0""kokiri\0""goron\0""zora\0",
                     equip_option_proc, (void*)2);
-    menu_add_static(&menu_equips, 0, 4, "boots", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 4, "boots", 0xC0C0C0);
     menu_add_option(&menu_equips, 10, 4,
                     "none\0""kokiri\0""iron\0""hover\0",
                     equip_option_proc, (void*)3);
-    menu_add_static(&menu_equips, 0, 5, "b button", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 5, "b button", 0xC0C0C0);
     menu_add_intinput(&menu_equips, 10, 5, 16, 2, byte_mod_proc,
                       &z64_file.button_items[0]);
-    menu_add_static(&menu_equips, 0, 6, "c left", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 6, "c left", 0xC0C0C0);
     menu_add_intinput(&menu_equips, 10, 6, 16, 2, byte_mod_proc,
                       &z64_file.button_items[1]);
-    menu_add_static(&menu_equips, 0, 7, "c down", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 7, "c down", 0xC0C0C0);
     menu_add_intinput(&menu_equips, 10, 7, 16, 2, byte_mod_proc,
                       &z64_file.button_items[2]);
-    menu_add_static(&menu_equips, 0, 8, "c right", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 8, "c right", 0xC0C0C0);
     menu_add_intinput(&menu_equips, 10, 8, 16, 2, byte_mod_proc,
                       &z64_file.button_items[3]);
-    menu_add_static(&menu_equips, 0, 9, "swordless", 0xFFFFFF);
+    menu_add_static(&menu_equips, 0, 9, "swordless", 0xC0C0C0);
     menu_add_option(&menu_equips, 10, 9, "no\0""yes\0",
                     swordless_proc, NULL);
 
@@ -1328,7 +1343,7 @@ ENTRY void _start()
                     clear_flags_proc, NULL);
     menu_add_button(&menu_misc, 0, 3, "set scene flags",
                     set_flags_proc, NULL);
-    menu_add_static(&menu_misc, 0, 4, "teleport slot", 0xFFFFFF);
+    menu_add_static(&menu_misc, 0, 4, "teleport slot", 0xC0C0C0);
     struct menu_item *tp_slot_display = menu_add_static(&menu_misc,
                                                         16, 4, "0",
                                                         0xA0A0A0);
@@ -1341,23 +1356,19 @@ ENTRY void _start()
     {
       &z64_file.language, language_options, 2,
     };
-    menu_add_static(&menu_misc, 0, 5, "language", 0xFFFFFF);
-    menu_add_option(&menu_misc, 9, 5, "japanese\0""english\0",
+    menu_add_static(&menu_misc, 0, 5, "language", 0xC0C0C0);
+    menu_add_option(&menu_misc, 14, 5, "japanese\0""english\0",
                     byte_option_proc, &language_option_data);
     static int8_t target_options[] = {0x00, 0x01};
     static struct byte_option target_option_data =
     {
       &z64_file.z_targeting, target_options, 2,
     };
-    menu_add_static(&menu_misc, 0, 6, "z targeting", 0xFFFFFF);
-    menu_add_option(&menu_misc, 12, 6, "switch\0""hold\0",
+    menu_add_static(&menu_misc, 0, 6, "z targeting", 0xC0C0C0);
+    menu_add_option(&menu_misc, 14, 6, "switch\0""hold\0",
                     byte_option_proc, &target_option_data);
-    menu_add_button(&menu_misc, 0, 7, "pause / unpause", pause_proc,
-                    NULL);
-    menu_add_button(&menu_misc, 0, 8, "frame advance", advance_proc,
-                    NULL);
 #if 0
-    menu_add_button(&menu_misc, 0, 9, "suppress exceptions", sup_exc_proc,
+    menu_add_button(&menu_misc, 0, 7, "suppress exceptions", sup_exc_proc,
                     NULL);
 #endif
 
@@ -1394,17 +1405,17 @@ ENTRY void _start()
     menu_init(&menu_warps, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_warps.selector = menu_add_submenu(&menu_warps, 0, 0, NULL,
                                            "return");
-    menu_add_static(&menu_warps, 0, 1, "entrance", 0xFFFFFF);
+    menu_add_static(&menu_warps, 0, 1, "entrance", 0xC0C0C0);
     warp_info.entrance = menu_add_intinput(&menu_warps, 10, 1, 16, 4,
                                            NULL, NULL);
-    menu_add_static(&menu_warps, 0, 2, "age", 0xFFFFFF);
+    menu_add_static(&menu_warps, 0, 2, "age", 0xC0C0C0);
     warp_info.age = menu_add_option(&menu_warps, 10, 2,
                                     "adult\0""child\0", NULL, NULL);
     warp_info.override_offset = 0;
     menu_add_button(&menu_warps, 0, 3, "clear cutscene pointer",
                     clear_csp_proc, NULL);
     menu_add_button(&menu_warps, 0, 4, "warp", warp_proc, NULL);
-    menu_add_static(&menu_warps, 0, 5, "room", 0xFFFFFF);
+    menu_add_static(&menu_warps, 0, 5, "room", 0xC0C0C0);
     struct menu_item *room_index_input = menu_add_intinput(&menu_warps, 10, 5,
                                                            16, 2, NULL, NULL);
     menu_add_button(&menu_warps, 0, 6, "load room", load_room_proc,
@@ -1467,20 +1478,23 @@ ENTRY void _start()
         menu_option_set(menu_font_option, i);
         break;
       }
-    menu_add_static(&menu_settings, 2, 3, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 3, menu_position_proc, NULL);
-    menu_add_static(&menu_settings, 0, 4, "input display", 0xFFFFFF);
-    menu_add_static(&menu_settings, 2, 5, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 5,
+    menu_add_static(&menu_settings, 2, 3, "drop shadow", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 3,
+                      menu_drop_shadow_proc, NULL);
+    menu_add_static(&menu_settings, 2, 4, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 4, menu_position_proc, NULL);
+    menu_add_static(&menu_settings, 0, 5, "input display", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 6, "enabled", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 6,
                       generic_checkbox_proc, &settings->input_display_enabled);
-    menu_add_static(&menu_settings, 2, 6, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 6,
+    menu_add_static(&menu_settings, 2, 7, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 7,
                          generic_position_proc, &settings->input_display_x);
-    menu_add_static(&menu_settings, 0, 7, "lag counter", 0xFFFFFF);
-    menu_add_static(&menu_settings, 2, 8, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 8,
+    menu_add_static(&menu_settings, 0, 8, "lag counter", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 9, "enabled", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 9,
                       generic_checkbox_proc, &settings->lag_counter_enabled);
-    menu_add_static(&menu_settings, 2, 9, "unit", 0xC0C0C0);
+    menu_add_static(&menu_settings, 2, 10, "unit", 0xC0C0C0);
     static int8_t lag_unit_options[] =
     {
       SETTINGS_LAG_FRAMES,
@@ -1491,15 +1505,15 @@ ENTRY void _start()
       NULL, lag_unit_options, 2,
     };
     lag_unit_data.data = &settings->lag_unit;
-    menu_lag_unit_option = menu_add_option(&menu_settings, 14, 9,
+    menu_lag_unit_option = menu_add_option(&menu_settings, 14, 10,
                                            "frames\0""seconds\0",
                                            byte_option_proc, &lag_unit_data);
-    menu_add_static(&menu_settings, 2, 10, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 10,
+    menu_add_static(&menu_settings, 2, 11, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 11,
                          generic_position_proc, &settings->lag_counter_x);
-    menu_add_button(&menu_settings, 0, 11, "save settings",
+    menu_add_button(&menu_settings, 0, 12, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 12, "restore defaults",
+    menu_add_button(&menu_settings, 0, 13, "restore defaults",
                     restore_settings_proc, NULL);
   }
 
