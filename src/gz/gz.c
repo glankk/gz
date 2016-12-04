@@ -745,8 +745,14 @@ void main_hook()
       }
       int cw = menu_get_cell_width(&menu_main, 1);
       gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
-      gfx_printf(menu_get_font(&menu_main, 1), Z64_SCREEN_WIDTH - cw * 6, 12,
-                 "%4d", z64_vi_counter - frame_counter);
+      if (settings->lag_unit == SETTINGS_LAG_FRAMES)
+        gfx_printf(menu_get_font(&menu_main, 1),
+                   Z64_SCREEN_WIDTH - cw * 10, 12,
+                   "%8d", z64_vi_counter - frame_counter);
+      else if (settings->lag_unit == SETTINGS_LAG_SECONDS)
+        gfx_printf(menu_get_font(&menu_main, 1),
+                   Z64_SCREEN_WIDTH - cw * 10, 12,
+                   "%8.2f", ((int32_t)z64_vi_counter - frame_counter) / 60.f);
     }
     frame_counter += z64_update_rate;
   }
@@ -1412,9 +1418,22 @@ ENTRY void _start()
                     generic_switch_proc, &settings->lag_counter_active);
     menu_add_switch(&menu_settings, 0, 3, "input display",
                     generic_switch_proc, &settings->input_display_active);
-    menu_add_button(&menu_settings, 0, 4, "save settings",
+    menu_add_static(&menu_settings, 0, 4, "lag unit", 0xFFFFFF);
+    static int8_t lag_unit_options[] =
+    {
+      SETTINGS_LAG_FRAMES,
+      SETTINGS_LAG_SECONDS,
+    };
+    static struct byte_option lag_unit_data =
+    {
+      NULL, lag_unit_options, 2,
+    };
+    lag_unit_data.data = &settings->lag_unit;
+    menu_add_option(&menu_settings, 12, 4, "frames\0""seconds\0",
+                    byte_option_proc, &lag_unit_data);
+    menu_add_button(&menu_settings, 0, 5, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 5, "restore defaults",
+    menu_add_button(&menu_settings, 0, 6, "restore defaults",
                     restore_settings_proc, NULL);
   }
 

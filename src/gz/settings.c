@@ -37,6 +37,7 @@ void settings_load_default()
   struct settings_data *d = &settings_store.data;
   d->lag_counter_active = 0;
   d->input_display_active = 0;
+  d->lag_unit = SETTINGS_LAG_FRAMES;
   d->font_resource_id = RES_FONT_PRESSSTART2P;
   d->no_watches = 0;
 }

@@ -2,12 +2,15 @@
 #define SETTINGS_H
 #include <stdint.h>
 
-#define SETTINGS_WATCHES_MAX 20
+#define SETTINGS_WATCHES_MAX  20
+#define SETTINGS_LAG_FRAMES   0
+#define SETTINGS_LAG_SECONDS  1
 
 struct settings_data
 {
   int       lag_counter_active;
   int       input_display_active;
+  int8_t    lag_unit;
   uint16_t  font_resource_id;
   uint16_t  no_watches;
   uint8_t   watch_type[SETTINGS_WATCHES_MAX];
