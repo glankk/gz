@@ -55,6 +55,19 @@
     "format":       "i4",
     "tile_height":  192
   },
+  "move_icon.png":
+  {
+    "type":         "texture",
+    "name":         "move_icon",
+    "format":       "i4"
+  },
+  "checkbox.png":
+  {
+    "type":         "texture",
+    "name":         "checkbox",
+    "format":       "rgba32",
+    "tile_height":  10
+  },
   "crosshair.png":
   {
     "type":         "texture",

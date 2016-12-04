@@ -190,8 +190,6 @@ void menu_draw(struct menu *menu)
   }
   struct gfx_font *font = menu_get_font(menu, 1);
   uint8_t alpha = menu_get_alpha_i(menu, 1);
-  if (!font)
-    return;
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
@@ -200,6 +198,7 @@ void menu_draw(struct menu *menu)
       menu_item_screen_x(item),
       menu_item_screen_y(item),
       item->text,
+      font,
       (item == menu->selector ? (item->animate_highlight ?
                                  menu->highlight_color_animated :
                                  menu->highlight_color_static) :
@@ -210,13 +209,14 @@ void menu_draw(struct menu *menu)
       continue;
     if (item->imenu)
       menu_draw(item->imenu);
-    if (!draw_params.text)
+    if (!draw_params.text || !draw_params.font)
       continue;
     gfx_mode_color((draw_params.color >> 16) & 0xFF,
                    (draw_params.color >> 8)  & 0xFF,
                    (draw_params.color >> 0)  & 0xFF,
                    draw_params.alpha);
-    gfx_printf(font,  draw_params.x, draw_params.y, "%s", draw_params.text);
+    gfx_printf(draw_params.font, draw_params.x, draw_params.y,
+               "%s", draw_params.text);
   }
 }
 

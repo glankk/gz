@@ -437,6 +437,11 @@ static int draw_proc(struct menu_item *item,
   /* wait for rendering to finish before unloading */
   if (data->state == STATE_UNLOAD)
     data->state = STATE_LOAD;
+  /* draw info */
+  gfx_mode_color(0xC0, 0xC0, 0xC0, draw_params->alpha);
+  gfx_printf(draw_params->font, 36, 44, "scene %i", data->scene_index);
+  gfx_printf(draw_params->font, 36, 44 + menu_get_cell_height(item->owner, 1),
+             "room  %i", data->room_index);
   return 1;
 }
 
@@ -472,8 +477,4 @@ void explorer_create(struct menu *menu)
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
   item->activate_proc = activate_proc;
-  menu_add_static(menu, 0, 0, "scene", 0xFFFFFF);
-  menu_add_watch(menu, 6, 0, (uint32_t)&data->scene_index, WATCH_TYPE_S32);
-  menu_add_static(menu, 0, 1, "room", 0xFFFFFF);
-  menu_add_watch(menu, 6, 1, (uint32_t)&data->room_index, WATCH_TYPE_S32);
 }

@@ -35,10 +35,16 @@ void settings_load_default()
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
-  d->lag_counter_active = 0;
-  d->input_display_active = 0;
+  d->menu_font_resource_id = RES_FONT_PRESSSTART2P;
+  d->menu_x = 16;
+  d->menu_y = 64;
+  d->input_display_enabled = 0;
+  d->input_display_x = 16;
+  d->input_display_y = Z64_SCREEN_HEIGHT - 6;
+  d->lag_counter_enabled = 0;
   d->lag_unit = SETTINGS_LAG_FRAMES;
-  d->font_resource_id = RES_FONT_PRESSSTART2P;
+  d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
+  d->lag_counter_y = 20;
   d->no_watches = 0;
 }
 

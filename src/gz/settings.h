@@ -8,10 +8,16 @@
 
 struct settings_data
 {
-  int       lag_counter_active;
-  int       input_display_active;
+  uint16_t  menu_font_resource_id;
+  int16_t   menu_x;
+  int16_t   menu_y;
+  int       input_display_enabled;
+  int16_t   input_display_x;
+  int16_t   input_display_y;
+  int       lag_counter_enabled;
   int8_t    lag_unit;
-  uint16_t  font_resource_id;
+  int16_t   lag_counter_x;
+  int16_t   lag_counter_y;
   uint16_t  no_watches;
   uint8_t   watch_type[SETTINGS_WATCHES_MAX];
   uint32_t  watch_address[SETTINGS_WATCHES_MAX];

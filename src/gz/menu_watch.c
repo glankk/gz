@@ -61,7 +61,7 @@ struct menu_item *menu_add_watch(struct menu *menu, int x, int y,
   struct item_data *data = malloc(sizeof(*data));
   data->address = address;
   data->type = type;
-  struct menu_item *item = menu_item_add(menu, x, y, NULL, 0xA0A0A0);
+  struct menu_item *item = menu_item_add(menu, x, y, NULL, 0xC0C0C0);
   item->text = malloc(17);
   item->selectable = 0;
   item->data = data;

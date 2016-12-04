@@ -11,7 +11,8 @@ static void *res_data[RES_MAX] = {NULL};
 static void *rc_font_generic(struct gfx_texdesc *texdesc,
                              int char_width, int char_height,
                              int code_start,
-                             int letter_spacing, int line_spacing)
+                             int letter_spacing, int line_spacing,
+                             int baseline, int median, int x)
 {
   struct gfx_font *font = malloc(sizeof(*font));
   if (!font)
@@ -29,13 +30,17 @@ static void *rc_font_generic(struct gfx_texdesc *texdesc,
   font->code_start = code_start;
   font->letter_spacing = letter_spacing;
   font->line_spacing = line_spacing;
+  font->baseline = baseline;
+  font->median = median;
+  font->x = x;
   return font;
 }
 
 static void *rc_grc_font_generic(const char *grc_resource_name,
                                  int char_width, int char_height,
                                  int code_start,
-                                 int letter_spacing, int line_spacing)
+                                 int letter_spacing, int line_spacing,
+                                 int baseline, int median, int x)
 {
   void *p_t;
   grc_resource_get(grc_resource_name, &p_t, NULL);
@@ -49,7 +54,7 @@ static void *rc_grc_font_generic(const char *grc_resource_name,
     GFX_FILE_DRAM, 0,
   };
   return rc_font_generic(&td, char_width, char_height, code_start,
-                         letter_spacing, line_spacing);
+                         letter_spacing, line_spacing, baseline, median, x);
 }
 
 static void *rc_zicon_item()
@@ -73,47 +78,47 @@ static void *rc_zfont_nes()
     z64_nes_font_static_vaddr,
     z64_nes_font_static_vsize,
   };
-  return rc_font_generic(&td_nes_font_static, 16, 16, 32, -6, -6);
+  return rc_font_generic(&td_nes_font_static, 16, 16, 32, -6, -5, 12, 4, 0);
 }
 
 static void *rc_font_fipps()
 {
-  return rc_grc_font_generic("fipps", 10, 14, 33, -2, -5);
+  return rc_grc_font_generic("fipps", 10, 14, 33, -2, -5, 10, 3, 2);
 }
 
 static void *rc_font_notalot35()
 {
-  return rc_grc_font_generic("notalot35", 8, 9, 33, -1, -1);
+  return rc_grc_font_generic("notalot35", 8, 9, 33, -1, -1, 7, 2, 2);
 }
 
 static void *rc_font_origamimommy()
 {
-  return rc_grc_font_generic("origamimommy", 8, 10, 33, -2, -2);
+  return rc_grc_font_generic("origamimommy", 8, 10, 33, -2, -2, 8, 1, 0);
 }
 
 static void *rc_font_pcsenior()
 {
-  return rc_grc_font_generic("pcsenior", 8, 8, 33, 0, 0);
+  return rc_grc_font_generic("pcsenior", 8, 8, 33, 0, 0, 7, 2, 0);
 }
 
 static void *rc_font_pixelintv()
 {
-  return rc_grc_font_generic("pixelintv", 8, 12, 33, 0, -4);
+  return rc_grc_font_generic("pixelintv", 8, 12, 33, 0, -4, 10, 5, 1);
 }
 
 static void *rc_font_pressstart2p()
 {
-  return rc_grc_font_generic("pressstart2p", 8, 8, 33, 0, 0);
+  return rc_grc_font_generic("pressstart2p", 8, 8, 33, 0, 0, 7, 2, 0);
 }
 
 static void *rc_font_smwtextnc()
 {
-  return rc_grc_font_generic("smwtextnc", 12, 8, 33, -4, 0);
+  return rc_grc_font_generic("smwtextnc", 12, 8, 33, -4, 0, 7, 2, 3);
 }
 
 static void *rc_font_werdnasreturn()
 {
-  return rc_grc_font_generic("werdnasreturn", 8, 12, 33, 0, -4);
+  return rc_grc_font_generic("werdnasreturn", 8, 12, 33, 0, -4, 11, 6, 1);
 }
 
 static void *rc_texture_crosshair()

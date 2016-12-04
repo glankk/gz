@@ -52,6 +52,7 @@ static struct
 
 static struct menu        menu_main;
 static struct menu_item  *menu_font_option;
+static struct menu_item  *menu_lag_unit_option;
 static struct menu_item  *menu_watchlist;
 static _Bool              menu_active   = 0;
 static int                tp_slot       = 0;
@@ -275,6 +276,20 @@ static int generic_switch_proc(struct menu_item *item,
     *state = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_switch_set(item, *state);
+  return 0;
+}
+
+static int generic_checkbox_proc(struct menu_item *item,
+                                 enum menu_callback_reason reason,
+                                 void *data)
+{
+  int *state = data;
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    *state = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    *state = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, *state);
   return 0;
 }
 
@@ -541,11 +556,43 @@ static int menu_font_option_proc(struct menu_item *item,
                                  void *data)
 {
   if (reason == MENU_CALLBACK_CHANGED) {
-    settings->font_resource_id = menu_font_options[menu_option_get(item)];
-    struct gfx_font *font = resource_get(settings->font_resource_id);
+    settings->menu_font_resource_id = menu_font_options[menu_option_get(item)];
+    struct gfx_font *font = resource_get(settings->menu_font_resource_id);
     menu_set_font(&menu_main, font);
     menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
     menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+  }
+  return 0;
+}
+
+static int menu_position_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  switch (reason) {
+    case MENU_CALLBACK_NAV_UP:    --settings->menu_y; break;
+    case MENU_CALLBACK_NAV_DOWN:  ++settings->menu_y; break;
+    case MENU_CALLBACK_NAV_LEFT:  --settings->menu_x; break;
+    case MENU_CALLBACK_NAV_RIGHT: ++settings->menu_x; break;
+    default:                                          return 0;
+  }
+  menu_set_pxoffset(&menu_main, settings->menu_x);
+  menu_set_pyoffset(&menu_main, settings->menu_y);
+  return 0;
+}
+
+static int generic_position_proc(struct menu_item *item,
+                                 enum menu_callback_reason reason,
+                                 void *data)
+{
+  int16_t *x = data;
+  int16_t *y = x + 1;
+  switch (reason) {
+    case MENU_CALLBACK_NAV_UP:    --*y; break;
+    case MENU_CALLBACK_NAV_DOWN:  ++*y; break;
+    case MENU_CALLBACK_NAV_LEFT:  --*x; break;
+    case MENU_CALLBACK_NAV_RIGHT: ++*x; break;
+    default:                            break;
   }
   return 0;
 }
@@ -561,14 +608,16 @@ static void restore_settings_proc(struct menu_item *item, void *data)
   settings_load_default();
   int no_font_options = sizeof(menu_font_options) / sizeof(*menu_font_options);
   for (int i = 0; i < no_font_options; ++i)
-    if (menu_font_options[i] == settings->font_resource_id) {
+    if (menu_font_options[i] == settings->menu_font_resource_id) {
       menu_option_set(menu_font_option, i);
       break;
     }
-  struct gfx_font *font = resource_get(settings->font_resource_id);
+  struct gfx_font *font = resource_get(settings->menu_font_resource_id);
   menu_set_font(&menu_main, font);
   menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
   menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+  menu_set_pxoffset(&menu_main, settings->menu_x);
+  menu_set_pyoffset(&menu_main, settings->menu_y);
   watchlist_fetch(menu_watchlist);
 }
 
@@ -681,81 +730,10 @@ void main_hook()
 
   gfx_mode_init(G_TF_POINT, G_ON);
 
-  {
-    static int splash_time = 230;
-    if (splash_time > 0) {
-      --splash_time;
-      gfx_mode_color(0xA0, 0x00, 0x00, menu_get_alpha_i(&menu_main, 1));
-      gfx_printf(menu_get_font(&menu_main, 1),
-                 menu_get_cell_width(&menu_main, 1) * 2,
-                 Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 3,
-                 "gz-0.2.0 github.com/glankk/gz");
-    }
-  }
-
-  if (settings->input_display_active) {
-    gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
-    gfx_printf(menu_get_font(&menu_main, 1),
-               menu_get_cell_width(&menu_main, 1) * 2,
-               Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
-               "%4i %4i", z64_input_direct.x, z64_input_direct.y);
-    static struct
-    {
-      uint16_t    mask;
-      const char *name;
-      uint32_t    color;
-    }
-    buttons[] =
-    {
-      {BUTTON_A,        "A", 0x0000FF},
-      {BUTTON_B,        "B", 0x00FF00},
-      {BUTTON_START,    "S", 0xFF0000},
-      {BUTTON_L,        "L", 0xC8C8C8},
-      {BUTTON_R,        "R", 0xC8C8C8},
-      {BUTTON_Z,        "Z", 0xC8C8C8},
-      {BUTTON_C_UP,     "u", 0xFFFF00},
-      {BUTTON_C_DOWN,   "d", 0xFFFF00},
-      {BUTTON_C_LEFT,   "l", 0xFFFF00},
-      {BUTTON_C_RIGHT,  "r", 0xFFFF00},
-      {BUTTON_D_UP,     "u", 0xC8C8C8},
-      {BUTTON_D_DOWN,   "d", 0xC8C8C8},
-      {BUTTON_D_LEFT,   "l", 0xC8C8C8},
-      {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
-    };
-    for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
-      if (!(pad & buttons[i].mask))
-        continue;
-      gfx_mode_color((buttons[i].color >> 16) & 0xFF,
-                     (buttons[i].color >> 8)  & 0xFF,
-                     (buttons[i].color >> 0)  & 0xFF,
-                     menu_get_alpha_i(&menu_main, 1));
-      gfx_printf(menu_get_font(&menu_main, 1),
-                 menu_get_cell_width(&menu_main, 1) * (12 + i),
-                 Z64_SCREEN_HEIGHT - menu_get_cell_height(&menu_main, 1) * 2,
-                 "%s", buttons[i].name);
-    }
-  }
-
-  {
-    static int32_t frame_counter = 0;
-    if (settings->lag_counter_active) {
-      if ((pad_pressed & BUTTON_A) && (pad & BUTTON_R)) {
-        frame_counter = 0;
-        z64_vi_counter = 0;
-      }
-      int cw = menu_get_cell_width(&menu_main, 1);
-      gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
-      if (settings->lag_unit == SETTINGS_LAG_FRAMES)
-        gfx_printf(menu_get_font(&menu_main, 1),
-                   Z64_SCREEN_WIDTH - cw * 10, 12,
-                   "%8d", z64_vi_counter - frame_counter);
-      else if (settings->lag_unit == SETTINGS_LAG_SECONDS)
-        gfx_printf(menu_get_font(&menu_main, 1),
-                   Z64_SCREEN_WIDTH - cw * 10, 12,
-                   "%8.2f", ((int32_t)z64_vi_counter - frame_counter) / 60.f);
-    }
-    frame_counter += z64_update_rate;
-  }
+  struct gfx_font *font = menu_get_font(&menu_main, 1);
+  uint8_t alpha = menu_get_alpha_i(&menu_main, 1);
+  int cw = menu_get_cell_width(&menu_main, 1);
+  int ch = menu_get_cell_height(&menu_main, 1);
 
   if (cheats_energy)
     z64_file.energy = z64_file.energy_capacity;
@@ -822,7 +800,6 @@ void main_hook()
     }
     while (menu_think(&menu_main))
       ;
-    menu_draw(&menu_main);
   }
   else {
     /* l-activated commands */
@@ -872,12 +849,87 @@ void main_hook()
       /* teleport */
       z64_link.common.pos_1 = z64_link.common.pos_2 = stored_pos[tp_slot];
       z64_link.common.rot_2 = stored_rot[tp_slot];
-      z64_link.target_yaw   = stored_rot[tp_slot].y;
+      z64_link.target_yaw = stored_rot[tp_slot].y;
     }
     else if (d_pad & pad_pressed & BUTTON_D_DOWN)
       pause_proc(NULL, NULL);
     else if (d_pad & pad_pressed & BUTTON_D_UP)
       advance_proc(NULL, NULL);
+  }
+
+  if (settings->input_display_enabled) {
+    gfx_mode_color(0xC8, 0xC8, 0xC8, alpha);
+    gfx_printf(font, settings->input_display_x, settings->input_display_y,
+               "%4i %4i", z64_input_direct.x, z64_input_direct.y);
+    static struct
+    {
+      uint16_t    mask;
+      const char *name;
+      uint32_t    color;
+    }
+    buttons[] =
+    {
+      {BUTTON_A,        "A", 0x0000FF},
+      {BUTTON_B,        "B", 0x00FF00},
+      {BUTTON_START,    "S", 0xFF0000},
+      {BUTTON_L,        "L", 0xC8C8C8},
+      {BUTTON_R,        "R", 0xC8C8C8},
+      {BUTTON_Z,        "Z", 0xC8C8C8},
+      {BUTTON_C_UP,     "u", 0xFFFF00},
+      {BUTTON_C_DOWN,   "d", 0xFFFF00},
+      {BUTTON_C_LEFT,   "l", 0xFFFF00},
+      {BUTTON_C_RIGHT,  "r", 0xFFFF00},
+      {BUTTON_D_UP,     "u", 0xC8C8C8},
+      {BUTTON_D_DOWN,   "d", 0xC8C8C8},
+      {BUTTON_D_LEFT,   "l", 0xC8C8C8},
+      {BUTTON_D_RIGHT,  "r", 0xC8C8C8},
+    };
+    for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
+      if (!(pad & buttons[i].mask))
+        continue;
+      gfx_mode_color((buttons[i].color >> 16) & 0xFF,
+                     (buttons[i].color >> 8)  & 0xFF,
+                     (buttons[i].color >> 0)  & 0xFF,
+                     alpha);
+      gfx_printf(font,
+                 settings->input_display_x + cw * (12 + i),
+                 settings->input_display_y,
+                 "%s", buttons[i].name);
+    }
+  }
+
+  {
+    static int32_t frame_counter = 0;
+    if (settings->lag_counter_enabled) {
+      if ((pad_pressed & BUTTON_A) && (pad & BUTTON_R)) {
+        frame_counter = 0;
+        z64_vi_counter = 0;
+      }
+      int cw = menu_get_cell_width(&menu_main, 1);
+      gfx_mode_color(0xC8, 0xC8, 0xC8, menu_get_alpha_i(&menu_main, 1));
+      if (settings->lag_unit == SETTINGS_LAG_FRAMES)
+        gfx_printf(menu_get_font(&menu_main, 1),
+                   settings->lag_counter_x - cw * 8, settings->lag_counter_y,
+                   "%8d", z64_vi_counter - frame_counter);
+      else if (settings->lag_unit == SETTINGS_LAG_SECONDS)
+        gfx_printf(menu_get_font(&menu_main, 1),
+                   settings->lag_counter_x - cw * 8, settings->lag_counter_y,
+                   "%8.2f", ((int32_t)z64_vi_counter - frame_counter) / 60.f);
+    }
+    frame_counter += z64_update_rate;
+  }
+
+  if (menu_active)
+    menu_draw(&menu_main);
+
+  {
+    static int splash_time = 230;
+    if (splash_time > 0) {
+      --splash_time;
+      gfx_mode_color(0xA0, 0x00, 0x00, alpha);
+      gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
+                 "gz-0.2.0 github.com/glankk/gz");
+    }
   }
 
   gfx_flush();
@@ -921,13 +973,13 @@ ENTRY void _start()
 
   /* initialize menus */
   {
-    struct gfx_font *font = resource_get(settings->font_resource_id);
+    struct gfx_font *font = resource_get(settings->menu_font_resource_id);
     menu_init(&menu_main,
               font->char_width + font->letter_spacing,
               font->char_height + font->line_spacing,
               font);
-    menu_set_pxoffset(&menu_main, 16);
-    menu_set_pyoffset(&menu_main, 56);
+    menu_set_pxoffset(&menu_main, settings->menu_x);
+    menu_set_pyoffset(&menu_main, settings->menu_y);
     menu_main.selector = menu_add_button(&menu_main, 0, 0, "return",
                                          main_return_proc, NULL);
     static struct menu menu_inventory;
@@ -1400,8 +1452,9 @@ ENTRY void _start()
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
                                               "return");
-    menu_add_static(&menu_settings, 0, 1, "menu font", 0xFFFFFF);
-    menu_font_option = menu_add_option(&menu_settings, 12, 1,
+    menu_add_static(&menu_settings, 0, 1, "menu", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 2, "font", 0xC0C0C0);
+    menu_font_option = menu_add_option(&menu_settings, 14, 2,
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
@@ -1410,15 +1463,24 @@ ENTRY void _start()
     int no_font_options = sizeof(menu_font_options) /
                           sizeof(*menu_font_options);
     for (int i = 0; i < no_font_options; ++i)
-      if (menu_font_options[i] == settings->font_resource_id) {
+      if (menu_font_options[i] == settings->menu_font_resource_id) {
         menu_option_set(menu_font_option, i);
         break;
       }
-    menu_add_switch(&menu_settings, 0, 2, "lag counter",
-                    generic_switch_proc, &settings->lag_counter_active);
-    menu_add_switch(&menu_settings, 0, 3, "input display",
-                    generic_switch_proc, &settings->input_display_active);
-    menu_add_static(&menu_settings, 0, 4, "lag unit", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 3, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 3, menu_position_proc, NULL);
+    menu_add_static(&menu_settings, 0, 4, "input display", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 5, "enabled", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 5,
+                      generic_checkbox_proc, &settings->input_display_enabled);
+    menu_add_static(&menu_settings, 2, 6, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 6,
+                         generic_position_proc, &settings->input_display_x);
+    menu_add_static(&menu_settings, 0, 7, "lag counter", 0xFFFFFF);
+    menu_add_static(&menu_settings, 2, 8, "enabled", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 8,
+                      generic_checkbox_proc, &settings->lag_counter_enabled);
+    menu_add_static(&menu_settings, 2, 9, "unit", 0xC0C0C0);
     static int8_t lag_unit_options[] =
     {
       SETTINGS_LAG_FRAMES,
@@ -1429,11 +1491,15 @@ ENTRY void _start()
       NULL, lag_unit_options, 2,
     };
     lag_unit_data.data = &settings->lag_unit;
-    menu_add_option(&menu_settings, 12, 4, "frames\0""seconds\0",
-                    byte_option_proc, &lag_unit_data);
-    menu_add_button(&menu_settings, 0, 5, "save settings",
+    menu_lag_unit_option = menu_add_option(&menu_settings, 14, 9,
+                                           "frames\0""seconds\0",
+                                           byte_option_proc, &lag_unit_data);
+    menu_add_static(&menu_settings, 2, 10, "position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 10,
+                         generic_position_proc, &settings->lag_counter_x);
+    menu_add_button(&menu_settings, 0, 11, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 6, "restore defaults",
+    menu_add_button(&menu_settings, 0, 12, "restore defaults",
                     restore_settings_proc, NULL);
   }
 

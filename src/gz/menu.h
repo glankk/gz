@@ -35,11 +35,12 @@ enum menu_callback_reason
 
 struct menu_draw_params
 {
-  int         x;
-  int         y;
-  const char *text;
-  uint32_t    color;
-  uint8_t     alpha;
+  int               x;
+  int               y;
+  const char       *text;
+  struct gfx_font  *font;
+  uint32_t          color;
+  uint8_t           alpha;
 };
 
 typedef int  (*menu_generic_callback)(struct menu_item *item,
@@ -195,6 +196,15 @@ struct menu_item   *menu_add_button(struct menu *menu, int x, int y,
                                     menu_action_callback callback_proc,
                                     void *callback_data);
 void               *menu_button_callback_data(struct menu_item *item);
+struct menu_item   *menu_add_positioning(struct menu *menu, int x, int y,
+                                         menu_generic_callback callback_proc,
+                                         void *callback_data);
+struct menu_item   *menu_add_checkbox(struct menu *menu, int x, int y,
+                                      menu_generic_callback callback_proc,
+                                      void *callback_data);
+_Bool               menu_checkbox_get(struct menu_item *item);
+void                menu_checkbox_set(struct menu_item *item, _Bool state);
+
 
 #ifdef __cplusplus
 }

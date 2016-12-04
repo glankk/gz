@@ -15,14 +15,6 @@ static int enter_proc(struct menu_item *item)
   return 0;
 }
 
-static int activate_proc(struct menu_item *item)
-{
-  struct item_data *data = item->data;
-  data->callback_proc(item, data->callback_data);
-  data->anim_state = 1;
-  return 1;
-}
-
 static int draw_proc(struct menu_item *item,
                      struct menu_draw_params *draw_params)
 {
@@ -33,6 +25,14 @@ static int draw_proc(struct menu_item *item,
     data->anim_state = (data->anim_state + 1) % 3;
   }
   return 0;
+}
+
+static int activate_proc(struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  data->callback_proc(item, data->callback_data);
+  data->anim_state = 1;
+  return 1;
 }
 
 struct menu_item *menu_add_button(struct menu *menu, int x, int y,

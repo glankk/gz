@@ -39,6 +39,8 @@ static int activate_proc(struct menu_item *item)
   {
     data->state = !data->state;
     update(item);
+    if (data->callback_proc)
+      data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
   }
   return 1;
 }

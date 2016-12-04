@@ -350,6 +350,8 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
                 const char *format, ...)
 {
   const size_t bufsize = 1024;
+  x -= font->x;
+  y -= font->baseline;
   struct gfx_texture *texture = font->texture;
   int chars_per_tile = font->chars_xtile * font->chars_ytile;
   int no_tiles = texture->tiles_x * texture->tiles_y;
