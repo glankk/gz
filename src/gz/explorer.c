@@ -81,17 +81,17 @@ static void draw_crosshair(struct menu_item *item)
   /* define meshes */
   static Vtx lat_mesh[] =
   {
-    {{{-16, 0, 16},  0, {qs105(0),  qs105(0)}}},
-    {{{16,  0, 16},  0, {qs105(62), qs105(0)}}},
-    {{{-16, 0, -16}, 0, {qs105(0),  qs105(62)}}},
-    {{{16,  0, -16}, 0, {qs105(62), qs105(62)}}},
+    gdSPDefVtx(-16, 0, 16,  0,  0),
+    gdSPDefVtx(16,  0, 16,  62, 0),
+    gdSPDefVtx(-16, 0, -16, 0,  62),
+    gdSPDefVtx(16,  0, -16, 62, 62),
   };
   static Vtx vert_mesh[] =
   {
-    {{{-16, 16,  0}, 0, {qs105(0),  qs105(0)}}},
-    {{{16,  16,  0}, 0, {qs105(62), qs105(0)}}},
-    {{{-16, -16, 0}, 0, {qs105(0),  qs105(62)}}},
-    {{{16,  -16, 0}, 0, {qs105(62), qs105(62)}}},
+    gdSPDefVtx(-16, 16,  0, 0,  0),
+    gdSPDefVtx(16,  16,  0, 62, 0),
+    gdSPDefVtx(-16, -16, 0, 0,  62),
+    gdSPDefVtx(16,  -16, 0, 62, 62),
   };
   /* create modelview matrices */
   float xscale = 1.5f;
@@ -354,8 +354,8 @@ static int draw_proc(struct menu_item *item,
       gsSPSegment(0x0C, &null_dl),
       gsSPSegment(0x0D, &null_dl),
       gsSPGeometryMode(~0,
-                       G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
-      gsSPNumLights(NUMLIGHTS_0),
+                       G_ZBUFFER | G_SHADE | G_CULL_BACK | G_LIGHTING |
+                       G_SHADING_SMOOTH),
       /* rdp settings */
       gsDPSetAlphaCompare(G_AC_NONE),
       gsDPSetDepthSource(G_ZS_PIXEL),
@@ -412,6 +412,11 @@ static int draw_proc(struct menu_item *item,
       gfx_disp(gsSPMatrix(gfx_data_append(&m, sizeof(m)),
                           G_MTX_MODELVIEW | G_MTX_LOAD));
     }
+    /* configure lights */
+    static Lights2 lights = gdSPDefLights2(0x80, 0x80, 0x80,
+                                           0xC0, 0xC0, 0xC0, 127,  0, 0,
+                                           0xA0, 0xA0, 0xA0, -127, 0, 0);
+    gfx_disp(gsSPSetLights2(lights));
     /* create scene config dlists */
     Gfx *opa;
     Gfx *xlu;

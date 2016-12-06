@@ -3,7 +3,14 @@
 #include <stdint.h>
 #include <n64.h>
 
-#define M_PI 3.14159265358979323846
+#define                           M_PI 3.14159265358979323846
+#define guDefMtxF(xx,xy,xz,xw,  \
+                  yx,yy,yz,yw,  \
+                  zx,zy,zz,zw,  \
+                  wx,wy,wz,ww)    {.f={xx,xy,xz,xw,                           \
+                                       yx,yy,yz,yw,                           \
+                                       zx,zy,zz,zw,                           \
+                                       wx,wy,wz,ww}}
 
 typedef float MtxF_t[4][4];
 typedef union

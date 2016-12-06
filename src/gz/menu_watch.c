@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <float.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include "menu.h"
@@ -23,7 +26,8 @@ static int draw_proc(struct menu_item *item,
 {
   struct item_data *data = item->data;
   uint32_t address = data->address;
-  if (address == 0 || data->type < 0 || data->type >= WATCH_TYPE_MAX)
+  if (address < 0x80000000 || address >= 0x80800000 ||
+      data->type < 0 || data->type >= WATCH_TYPE_MAX)
     return 1;
   address -= address % watch_type_size[data->type];
   switch (data->type) {
@@ -45,8 +49,23 @@ static int draw_proc(struct menu_item *item,
     snprintf(item->text, 17, "%"   PRIi32, *(int32_t*) address); break;
   case WATCH_TYPE_X32:
     snprintf(item->text, 17, "0x%" PRIx32, *(uint32_t*)address); break;
-  case WATCH_TYPE_F32:
-    snprintf(item->text, 17, "%f",         *(float*)   address); break;
+  case WATCH_TYPE_F32: {
+    float v = *(float*)address;
+    if (v == INFINITY)
+      strcpy(item->text, "inf");
+    else if (v == -INFINITY)
+      strcpy(item->text, "-inf");
+    else if (v == NAN)
+      strcpy(item->text, "nan");
+    else {
+      float i;
+      float f = modff(v, &i);
+      if (fabsf(f) < FLT_MIN)
+        f = 0.f;
+      snprintf(item->text, 17, "%g", i + f);
+    }
+    break;
+  }
   default:
     break;
   }

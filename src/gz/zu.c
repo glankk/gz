@@ -8,8 +8,8 @@
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr)
 {
-  uint8_t   seg   = (seg_addr & 0x0F000000) >> 24;
-  uint32_t  off   = (seg_addr & 0x00FFFFFF) >> 0;
+  uint8_t   seg   = (seg_addr >> 24) & 0x0000000F;
+  uint32_t  off   = (seg_addr >> 0)  & 0x00FFFFFF;
   uint32_t  phys  = stab->seg[seg] + off;
   if (!phys)
     return NULL;
@@ -47,7 +47,7 @@ void *zu_sr_header(void *sr, int header_index, const z64_stab_t *stab)
     while (!eof) {
       uint32_t c_hi = *sr_command++;
       uint32_t c_lo = *sr_command++;
-      switch ((c_hi & 0xFF000000) >> 24) {
+      switch ((c_hi >> 24) & 0x000000FF) {
         case 0x14: {
           eof = 1;
           break;
@@ -76,13 +76,13 @@ void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,
   while (!eof) {
     uint32_t c_hi = *scene_command++;
     uint32_t c_lo = *scene_command++;
-    switch ((c_hi & 0xFF000000) >> 24) {
+    switch ((c_hi >> 24) & 0x000000FF) {
       case 0x14: {
         eof = 1;
         break;
       }
       case 0x04: {
-        int room_list_size = (c_hi & 0x00FF0000) >> 16;
+        int room_list_size = (c_hi >> 16) & 0x000000FF;
         if (no_rooms)
           *no_rooms = room_list_size;
         uint32_t *room_list = zu_seg_locate(stab, c_lo);
@@ -108,7 +108,7 @@ void zu_room_mesh(const void *room, struct zu_mesh *mesh,
   while (!eof) {
     uint32_t c_hi = *room_command++;
     uint32_t c_lo = *room_command++;
-    switch ((c_hi & 0xFF000000) >> 24) {
+    switch ((c_hi >> 24) & 0x000000FF) {
       case 0x14: {
         eof = 1;
         break;
@@ -173,11 +173,11 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
     t_stab = *stab;
   _Bool eof = 0;
   while (!eof) {
-    switch ((dl->hi & 0xFF000000) >> 24) {
+    switch ((dl->hi >> 24) & 0x000000FF) {
       case G_MOVEWORD: {
-        uint8_t index = (dl->hi & 0x00FF0000) >> 16;
+        uint8_t index = (dl->hi >> 16) & 0x000000FF;
         if (index == G_MW_SEGMENT) {
-          uint16_t seg = ((dl->hi & 0x000000FF) >> 0) / 4;
+          uint16_t seg = ((dl->hi >> 0) & 0x000000FF) / 4;
           t_stab.seg[seg] = MIPS_KSEG0_TO_PHYS(dl->lo);
         }
         break;
@@ -188,7 +188,7 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
         break;
       }
       case G_VTX: {
-        uint8_t vn = (dl->hi & 0x000FF000) >> 12;
+        uint8_t vn = (dl->hi >> 12) & 0x000000FF;
         Vtx *v = zu_seg_locate(&t_stab, dl->lo);
         while (vn--) {
           _Bool found = 0;

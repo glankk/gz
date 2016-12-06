@@ -26,7 +26,7 @@ static int type_proc(struct menu_item *item,
                      void *data)
 {
   struct item_data *item_data = data;
-  if (reason == MENU_CALLBACK_DEACTIVATE)
+  if (reason == MENU_CALLBACK_CHANGED)
     menu_watch_set_type(item_data->watch, menu_option_get(item));
   return 0;
 }

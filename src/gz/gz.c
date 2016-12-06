@@ -43,6 +43,13 @@ struct byte_option
   int      num_options;
 };
 
+struct memory_file
+{
+  z64_file_t  z_file;
+  uint16_t    scene_index;
+  uint32_t    scene_flags[9];
+};
+
 static struct
 {
   struct menu_item *entrance;
@@ -61,8 +68,9 @@ static z64_rot_t          teleport_rot[10];
 static int                teleport_slot         = 0;
 static int                frames_queued         = -1;
 static int32_t            frame_counter         = 0;
+static int32_t            vi_offset             = 0;
 __attribute__((section(".data")))
-static z64_file_t         memory_file[10];
+static struct memory_file memory_file[10];
 static _Bool              memory_file_saved[10] = {0};
 static int                memory_file_slot      = 0;
 
@@ -272,6 +280,27 @@ scene_categories[] =
 };
 static int no_scene_categories = sizeof(scene_categories) /
                                  sizeof(*scene_categories);
+
+static void save_memory_file()
+{
+  struct memory_file *file = &memory_file[memory_file_slot];
+  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
+  file->scene_index = z64_game.scene_index;
+  memcpy(&file->scene_flags, &z64_game.switch_flags,
+         sizeof(file->scene_flags));
+  memory_file_saved[memory_file_slot] = 1;
+}
+
+static void load_memory_file()
+{
+  if (!memory_file_saved[memory_file_slot])
+    return;
+  struct memory_file *file = &memory_file[memory_file_slot];
+  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
+  if (file->scene_index == z64_game.scene_index)
+    memcpy(&z64_game.switch_flags, &file->scene_flags,
+           sizeof(file->scene_flags));
+}
 
 static int generic_switch_proc(struct menu_item *item,
                                enum menu_callback_reason reason,
@@ -538,8 +567,8 @@ static void warp_proc(struct menu_item *item, void *data)
 static void places_proc(struct menu_item *item, void *data)
 {
   uintptr_t d = (uintptr_t)data;
-  int scene_index = (d & 0xFF00) >> 8;
-  int entrance_index = (d & 0x00FF) >> 0;
+  int scene_index = (d >> 8) & 0x00FF;
+  int entrance_index = (d >> 0) & 0x00FF;
   for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
@@ -872,11 +901,9 @@ void main_hook()
       d_pad = 0;
     if (d_pad & BUTTON_D_LEFT) {
       if (d_pad & BUTTON_R) {
-        if (pad_pressed_raw & BUTTON_D_LEFT) {
+        if (pad_pressed_raw & BUTTON_D_LEFT)
           /* save memory file */
-          memcpy(&memory_file[memory_file_slot], &z64_file, sizeof(z64_file));
-          memory_file_saved[memory_file_slot] = 1;
-        }
+          save_memory_file();
       }
       else {
         /* save position and orientation */
@@ -889,12 +916,11 @@ void main_hook()
         if (d_pad & BUTTON_A) {
           /* reset lag counter */
           frame_counter = 0;
-          z64_vi_counter = 0;
+          vi_offset = -(int32_t)z64_vi_counter;
         }
-        else if ((pad_pressed_raw & BUTTON_D_RIGHT) &&
-                 memory_file_saved[memory_file_slot])
+        else if (pad_pressed_raw & BUTTON_D_RIGHT)
           /* load memory file */
-          memcpy(&z64_file, &memory_file[memory_file_slot], sizeof(z64_file));
+          load_memory_file();
       }
       /* teleport */
       else {
@@ -955,14 +981,15 @@ void main_hook()
     if (settings->lag_counter_enabled) {
       int cw = menu_get_cell_width(&menu_main, 1);
       gfx_mode_color(0xC0, 0xC0, 0xC0, menu_get_alpha_i(&menu_main, 1));
+      int32_t lag_frames = (int32_t)z64_vi_counter + vi_offset - frame_counter;
       if (settings->lag_unit == SETTINGS_LAG_FRAMES)
         gfx_printf(menu_get_font(&menu_main, 1),
                    settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                   "%8d", z64_vi_counter - frame_counter);
+                   "%8d", lag_frames);
       else if (settings->lag_unit == SETTINGS_LAG_SECONDS)
         gfx_printf(menu_get_font(&menu_main, 1),
                    settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                   "%8.2f", ((int32_t)z64_vi_counter - frame_counter) / 60.f);
+                   "%8.2f", lag_frames / 60.f);
     }
     frame_counter += z64_update_rate;
   }

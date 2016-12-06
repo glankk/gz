@@ -5,42 +5,18 @@
 
 void guMtxIdent(Mtx *m)
 {
-  m->i[0]   = 1; m->f[0]  = 0;
-  m->i[1]   = 0; m->f[1]  = 0;
-  m->i[2]   = 0; m->f[2]  = 0;
-  m->i[3]   = 0; m->f[3]  = 0;
-  m->i[4]   = 0; m->f[4]  = 0;
-  m->i[5]   = 1; m->f[5]  = 0;
-  m->i[6]   = 0; m->f[6]  = 0;
-  m->i[7]   = 0; m->f[7]  = 0;
-  m->i[8]   = 0; m->f[8]  = 0;
-  m->i[9]   = 0; m->f[9]  = 0;
-  m->i[10]  = 1; m->f[10] = 0;
-  m->i[11]  = 0; m->f[11] = 0;
-  m->i[12]  = 0; m->f[12] = 0;
-  m->i[13]  = 0; m->f[13] = 0;
-  m->i[14]  = 0; m->f[14] = 0;
-  m->i[15]  = 1; m->f[15] = 0;
+  *m = (Mtx)gdSPDefMtx(1, 0, 0, 0,
+                       0, 1, 0, 0,
+                       0, 0, 1, 0,
+                       0, 0, 0, 1);
 }
 
 void guMtxIdentF(MtxF *mf)
 {
-  mf->xx = 1;
-  mf->xy = 0;
-  mf->xz = 0;
-  mf->xw = 0;
-  mf->yx = 0;
-  mf->yy = 1;
-  mf->yz = 0;
-  mf->yw = 0;
-  mf->zx = 0;
-  mf->zy = 0;
-  mf->zz = 1;
-  mf->zw = 0;
-  mf->wx = 0;
-  mf->wy = 0;
-  mf->wz = 0;
-  mf->ww = 1;
+  *mf = (MtxF)guDefMtxF(1.f, 0.f, 0.f, 0.f,
+                        0.f, 1.f, 0.f, 0.f,
+                        0.f, 0.f, 1.f, 0.f,
+                        0.f, 0.f, 0.f, 1.f);
 }
 
 void guPerspectiveF(MtxF *mf, uint16_t *perspNorm, float fovy, float aspect,
@@ -91,69 +67,45 @@ void guRotateF(MtxF *mf, float a, float x, float y, float z)
 {
   float s = sin(a);
   float c = cos(a);
-  mf->xx = x*x+c*(1-x*x);
-  mf->xy = x*y*(1-c)+z*s;
-  mf->xz = x*z*(1-c)-y*s;
-  mf->xw = 0;
-  mf->yx = y*x*(1-c)-z*s;
-  mf->yy = y*y+c*(1-y*y);
-  mf->yz = y*z*(1-c)+x*s;
-  mf->yw = 0;
-  mf->zx = z*x*(1-c)+y*s;
-  mf->zy = z*y*(1-c)-x*s;
-  mf->zz = z*z+c*(1-z*z);
-  mf->zw = 0;
-  mf->wx = 0;
-  mf->wy = 0;
-  mf->wz = 0;
-  mf->ww = 1;
+  mf->xx = x*x+c*(1.f-x*x);
+  mf->xy = x*y*(1.f-c)+z*s;
+  mf->xz = x*z*(1.f-c)-y*s;
+  mf->xw = 0.f;
+  mf->yx = y*x*(1.f-c)-z*s;
+  mf->yy = y*y+c*(1.f-y*y);
+  mf->yz = y*z*(1.f-c)+x*s;
+  mf->yw = 0.f;
+  mf->zx = z*x*(1.f-c)+y*s;
+  mf->zy = z*y*(1.f-c)-x*s;
+  mf->zz = z*z+c*(1.f-z*z);
+  mf->zw = 0.f;
+  mf->wx = 0.f;
+  mf->wy = 0.f;
+  mf->wz = 0.f;
+  mf->ww = 1.f;
 }
 
 void guScaleF(MtxF *mf, float x, float y, float z)
 {
-  mf->xx = x;
-  mf->xy = 0;
-  mf->xz = 0;
-  mf->xw = 0;
-  mf->yx = 0;
-  mf->yy = y;
-  mf->yz = 0;
-  mf->yw = 0;
-  mf->zx = 0;
-  mf->zy = 0;
-  mf->zz = z;
-  mf->zw = 0;
-  mf->wx = 0;
-  mf->wy = 0;
-  mf->wz = 0;
-  mf->ww = 1;
+  *mf = (MtxF)guDefMtxF(x,   0.f, 0.f, 0.f,
+                        0.f, y,   0.f, 0.f,
+                        0.f, 0.f, z,   0.f,
+                        0.f, 0.f, 0.f, 1.f);
 }
 
 void guTranslateF(MtxF *mf, float x, float y, float z)
 {
-  mf->xx = 1;
-  mf->xy = 0;
-  mf->xz = 0;
-  mf->xw = 0;
-  mf->yx = 0;
-  mf->yy = 1;
-  mf->yz = 0;
-  mf->yw = 0;
-  mf->zx = 0;
-  mf->zy = 0;
-  mf->zz = 1;
-  mf->zw = 0;
-  mf->wx = x;
-  mf->wy = y;
-  mf->wz = z;
-  mf->ww = 1;
+  *mf = (MtxF)guDefMtxF(1.f, 0.f, 0.f, 0.f,
+                        0.f, 1.f, 0.f, 0.f,
+                        0.f, 0.f, 1.f, 0.f,
+                        x,   y,   z,   1.f);
 }
 
 void guMtxF2L(const MtxF *mf, Mtx *m)
 {
   for (int i = 0; i < 16; ++i) {
     qs1616_t n = qs1616(mf->f[i]);
-    m->i[i] = (n >> 16) & 0xFFFF;
-    m->f[i] = (n >> 0)  & 0xFFFF;
+    m->i[i] = (n >> 16) & 0x0000FFFF;
+    m->f[i] = (n >> 0)  & 0x0000FFFF;
   }
 }
