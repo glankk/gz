@@ -68,6 +68,20 @@
     "format":       "rgba32",
     "tile_height":  10
   },
+  "anchor.png":
+  {
+    "type":         "texture",
+    "name":         "anchor",
+    "format":       "i8",
+    "tile_height":  10
+  },
+  "list_icons.png":
+  {
+    "type":         "texture",
+    "name":         "list_icons",
+    "format":       "ia16",
+    "tile_height":  8
+  },
   "crosshair.png":
   {
     "type":         "texture",

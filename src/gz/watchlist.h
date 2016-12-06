@@ -2,7 +2,9 @@
 #define WATCHLIST_H
 #include "menu.h"
 
-struct menu_item *watchlist_create(struct menu *menu, int x, int y);
+struct menu_item *watchlist_create(struct menu *menu,
+                                   struct menu *menu_global_watches,
+                                   int x, int y);
 void              watchlist_store(struct menu_item *item);
 void              watchlist_fetch(struct menu_item *item);
 

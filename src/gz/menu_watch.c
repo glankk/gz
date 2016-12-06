@@ -23,10 +23,8 @@ static int draw_proc(struct menu_item *item,
 {
   struct item_data *data = item->data;
   uint32_t address = data->address;
-  if (address == 0 || data->type < 0 || data->type >= WATCH_TYPE_MAX) {
-    item->text[0] = 0;
-    return 0;
-  }
+  if (address == 0 || data->type < 0 || data->type >= WATCH_TYPE_MAX)
+    return 1;
   address -= address % watch_type_size[data->type];
   switch (data->type) {
   case WATCH_TYPE_U8:

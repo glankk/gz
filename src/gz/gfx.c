@@ -105,11 +105,6 @@ void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
   gfx_g = g;
   gfx_b = b;
   gfx_a = a;
-  gfx_disp
-  (
-    gsDPPipeSync(),
-    gsDPSetPrimColor(0, 0, r, g, b, a),
-  );
 }
 
 Gfx *gfx_disp_append(Gfx *disp, size_t size)
@@ -334,7 +329,6 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
   if (gfx_drop_shadow) {
     gfx_disp
     (
-      gsDPPipeSync(),
       gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
       gsSPScisTextureRectangle(qs102(sprite->x + 1) & ~3,
                                qs102(sprite->y + 1) & ~3,
@@ -347,11 +341,11 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
                                qu510(1.f / sprite->xscale),
                                qu510(1.f / sprite->yscale)),
       gsDPPipeSync(),
-      gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
     );
   }
   gfx_disp
   (
+    gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
     gsSPScisTextureRectangle(qs102(sprite->x) & ~3,
                              qs102(sprite->y) & ~3,
                              qs102(sprite->x + texture->tile_width *
@@ -365,31 +359,26 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite)
   );
 }
 
-void gfx_printf(const struct gfx_font *font, int x, int y,
-                const char *format, ...)
+static void draw_chars(const struct gfx_font *font,
+                       int x, int y,
+                       const char *string, size_t length)
 {
-  const size_t bufsize = 1024;
   x -= font->x;
   y -= font->baseline;
   struct gfx_texture *texture = font->texture;
   int chars_per_tile = font->chars_xtile * font->chars_ytile;
   int no_tiles = texture->tiles_x * texture->tiles_y;
   int no_chars = chars_per_tile * no_tiles;
-  char buf[bufsize];
-  va_list args;
-  va_start(args, format);
-  int l = vsnprintf(buf, bufsize, format, args);
-  if (l > bufsize - 1)
-    l = bufsize - 1;
-  va_end(args);
   for (int i = 0; i < no_tiles; ++i) {
     int tile_begin = chars_per_tile * i;
     int tile_end = tile_begin + chars_per_tile;
     _Bool tile_loaded = 0;
     int cx = 0;
     int cy = 0;
-    for (int j = 0; j < l; ++j, cx += font->char_width + font->letter_spacing) {
-      uint8_t c = buf[j];
+    for (int j = 0; j < length;
+         ++j, cx += font->char_width + font->letter_spacing)
+    {
+      uint8_t c = string[j];
       if (c < font->code_start || c >= font->code_start + no_chars)
         continue;
       c -= font->code_start;
@@ -399,25 +388,6 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       if (!tile_loaded) {
         tile_loaded = 1;
         gfx_rdp_load_tile(texture, i);
-      }
-      if (gfx_drop_shadow) {
-        gfx_disp
-        (
-          gsDPPipeSync(),
-          gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
-          gsSPScisTextureRectangle(qs102(x + cx + 1),
-                                   qs102(y + cy + 1),
-                                   qs102(x + cx + font->char_width + 1),
-                                   qs102(y + cy + font->char_height + 1),
-                                   G_TX_RENDERTILE,
-                                   qu105(c % font->chars_xtile *
-                                         font->char_width),
-                                   qu105(c / font->chars_xtile *
-                                         font->char_height),
-                                   qu510(1), qu510(1)),
-          gsDPPipeSync(),
-          gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
-        );
       }
       gfx_disp
       (
@@ -434,4 +404,31 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
       );
     }
   }
+}
+
+void gfx_printf(const struct gfx_font *font, int x, int y,
+                const char *format, ...)
+{
+  const size_t bufsize = 1024;
+  char buf[bufsize];
+  va_list args;
+  va_start(args, format);
+  int l = vsnprintf(buf, bufsize, format, args);
+  if (l > bufsize - 1)
+    l = bufsize - 1;
+  va_end(args);
+  if (gfx_drop_shadow) {
+    gfx_disp
+    (
+      gsDPPipeSync(),
+      gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
+    );
+    draw_chars(font, x + 1, y + 1, buf, l);
+  }
+  gfx_disp
+  (
+    gsDPPipeSync(),
+    gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
+  );
+  draw_chars(font, x , y , buf, l);
 }

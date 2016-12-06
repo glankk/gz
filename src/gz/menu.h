@@ -51,8 +51,11 @@ typedef void (*menu_action_callback) (struct menu_item *item, void *data);
 struct menu_item
 {
   struct menu      *owner;
+  _Bool             enabled;
   int               x;
   int               y;
+  int               pxoffset;
+  int               pyoffset;
   char             *text;
   uint32_t          color;
   _Bool             animate_highlight;
@@ -112,6 +115,7 @@ extern "C"
 void                menu_init(struct menu *menu,
                               int cell_width, int cell_height,
                               struct gfx_font *font);
+void                menu_imitate(struct menu *dest, struct menu *src);
 void                menu_destroy(struct menu *menu);
 int                 menu_get_cxoffset(struct menu *menu, _Bool inherit);
 void                menu_set_cxoffset(struct menu *menu, int cxoffset);
@@ -148,6 +152,10 @@ struct menu        *menu_return_top(struct menu *menu);
 
 struct menu_item   *menu_item_add(struct menu *menu, int x, int y,
                                   const char *text, uint32_t color);
+void                menu_item_enable(struct menu_item *item);
+void                menu_item_disable(struct menu_item *item);
+void                menu_item_transfer(struct menu_item *item,
+                                       struct menu *menu);
 void                menu_item_remove(struct menu_item *item);
 int                 menu_item_screen_x(struct menu_item *item);
 int                 menu_item_screen_y(struct menu_item *item);
@@ -195,7 +203,11 @@ struct menu_item   *menu_add_button(struct menu *menu, int x, int y,
                                     const char *name,
                                     menu_action_callback callback_proc,
                                     void *callback_data);
-void               *menu_button_callback_data(struct menu_item *item);
+struct menu_item   *menu_add_button_icon(struct menu *menu, int x, int y,
+                                         struct gfx_texture *texture,
+                                         int texture_tile, uint32_t color,
+                                         menu_action_callback callback_proc,
+                                         void *callback_data);
 struct menu_item   *menu_add_positioning(struct menu *menu, int x, int y,
                                          menu_generic_callback callback_proc,
                                          void *callback_data);

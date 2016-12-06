@@ -57,6 +57,7 @@
 				</Environment>
 			</Target>
 		</Build>
+		<Unit filename="res/resources.json" />
 		<Unit filename="src/gz/explorer.c">
 			<Option compilerVar="CC" />
 		</Unit>

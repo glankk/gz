@@ -37,7 +37,6 @@ static int draw_proc(struct menu_item *item,
   static struct gfx_texture *texture = NULL;
   if (!texture)
     texture = resource_load_grc_texture("checkbox");
-  struct gfx_font *font = menu_get_font(item->owner, 1);
   int cw = menu_get_cell_width(item->owner, 1);
   struct gfx_sprite sprite =
   {
@@ -46,9 +45,9 @@ static int draw_proc(struct menu_item *item,
     draw_params->x + 1 +
     (cw - texture->tile_width) / 2,
     draw_params->y - 1 +
-    (font->median - font->baseline - texture->tile_height) / 2,
-    1.f,
-    1.f,
+    (draw_params->font->median - draw_params->font->baseline -
+     texture->tile_height) / 2,
+    1.f, 1.f,
   };
   gfx_sprite_draw(&sprite);
   if ((data->anim_state > 0) != data->state) {

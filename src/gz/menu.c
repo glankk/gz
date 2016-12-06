@@ -28,6 +28,15 @@ void menu_init(struct menu *menu, int cell_width, int cell_height,
   menu->highlight_state[2] = 23;
 }
 
+void menu_imitate(struct menu *dest, struct menu *src)
+{
+  dest->cell_width = src->cell_width;
+  dest->cell_height = src->cell_height;
+  dest->font = src->font;
+  dest->alpha = src->alpha;
+  dest->highlight_color_static = src->highlight_color_static;
+}
+
 void menu_destroy(struct menu *menu)
 {
   while (menu->items.first)
@@ -164,6 +173,8 @@ int menu_think(struct menu *menu)
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
+    if (!item->enabled)
+      continue;
     if (item->think_proc && item->think_proc(item))
       return 1;
     if (item->imenu && menu_think(item->imenu))
@@ -193,6 +204,8 @@ void menu_draw(struct menu *menu)
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
+    if (!item->enabled)
+      continue;
     struct menu_draw_params draw_params =
     {
       menu_item_screen_x(item),
@@ -235,6 +248,8 @@ static void menu_nav_compare(struct menu *menu,
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
+    if (!item->enabled)
+      continue;
     if (item->imenu)
       menu_nav_compare(item->imenu, selector, nav_x, nav_y,
                        near_item, far_item, npa, fpa, npe, fpe);
@@ -392,8 +407,11 @@ struct menu_item *menu_item_add(struct menu *menu, int x, int y,
   struct menu_item *item = list_push_back(&menu->items, NULL);
   if (item) {
     item->owner = menu;
+    item->enabled = 1;
     item->x = x;
     item->y = y;
+    item->pxoffset = 0;
+    item->pyoffset = 0;
     if (text) {
       item->text = malloc(strlen(text) + 1);
       strcpy(item->text, text);
@@ -424,6 +442,26 @@ static void menu_deselect(struct menu *menu, struct menu_item *item)
     menu_deselect(menu->parent, item);
 }
 
+void menu_item_enable(struct menu_item *item)
+{
+  item->enabled = 1;
+}
+
+void menu_item_disable(struct menu_item *item)
+{
+  item->enabled = 0;
+  menu_deselect(item->owner, item);
+}
+
+void menu_item_transfer(struct menu_item *item, struct menu *menu)
+{
+  if (menu == item->owner)
+    return;
+  menu_deselect(item->owner, item);
+  list_transfer(&menu->items, NULL, &item->owner->items, item);
+  item->owner = menu;
+}
+
 void menu_item_remove(struct menu_item *item)
 {
   if (!item->destroy_proc || !item->destroy_proc(item)) {
@@ -442,12 +480,12 @@ void menu_item_remove(struct menu_item *item)
 
 int menu_item_screen_x(struct menu_item *item)
 {
-  return menu_cell_screen_x(item->owner, item->x);
+  return menu_cell_screen_x(item->owner, item->x) + item->pxoffset;
 }
 
 int menu_item_screen_y(struct menu_item *item)
 {
-  return menu_cell_screen_y(item->owner, item->y);
+  return menu_cell_screen_y(item->owner, item->y) + item->pyoffset;
 }
 
 struct menu_item *menu_add_static(struct menu *menu, int x, int y,
@@ -463,6 +501,8 @@ static int imenu_think_proc(struct menu_item *item)
   if (item->imenu) {
     item->imenu->cxoffset = item->x;
     item->imenu->cyoffset = item->y;
+    item->imenu->pxoffset = item->pxoffset;
+    item->imenu->pyoffset = item->pyoffset;
   }
   return 0;
 }

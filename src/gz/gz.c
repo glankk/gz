@@ -51,6 +51,7 @@ static struct
 } warp_info;
 
 static struct menu        menu_main;
+static struct menu        menu_global_watches;
 static struct menu_item  *menu_font_option;
 static struct menu_item  *menu_lag_unit_option;
 static struct menu_item  *menu_watchlist;
@@ -566,6 +567,7 @@ static int menu_font_option_proc(struct menu_item *item,
     menu_set_font(&menu_main, font);
     menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
     menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+    menu_imitate(&menu_global_watches, &menu_main);
   }
   return 0;
 }
@@ -587,12 +589,16 @@ static int menu_position_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
 {
+  int dist = 2;
+  if (z64_input_direct.pad & BUTTON_Z)
+    dist *= 2;
   switch (reason) {
-    case MENU_CALLBACK_NAV_UP:    settings->menu_y -= 2; break;
-    case MENU_CALLBACK_NAV_DOWN:  settings->menu_y += 2; break;
-    case MENU_CALLBACK_NAV_LEFT:  settings->menu_x -= 2; break;
-    case MENU_CALLBACK_NAV_RIGHT: settings->menu_x += 2; break;
-    default:                                             return 0;
+    case MENU_CALLBACK_NAV_UP:    settings->menu_y -= dist; break;
+    case MENU_CALLBACK_NAV_DOWN:  settings->menu_y += dist; break;
+    case MENU_CALLBACK_NAV_LEFT:  settings->menu_x -= dist; break;
+    case MENU_CALLBACK_NAV_RIGHT: settings->menu_x += dist; break;
+    default:
+      break;
   }
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
@@ -605,12 +611,16 @@ static int generic_position_proc(struct menu_item *item,
 {
   int16_t *x = data;
   int16_t *y = x + 1;
+  int dist = 2;
+  if (z64_input_direct.pad & BUTTON_Z)
+    dist *= 2;
   switch (reason) {
-    case MENU_CALLBACK_NAV_UP:    *y -= 2; break;
-    case MENU_CALLBACK_NAV_DOWN:  *y += 2; break;
-    case MENU_CALLBACK_NAV_LEFT:  *x -= 2; break;
-    case MENU_CALLBACK_NAV_RIGHT: *x += 2; break;
-    default:                               break;
+    case MENU_CALLBACK_NAV_UP:    *y -= dist; break;
+    case MENU_CALLBACK_NAV_DOWN:  *y += dist; break;
+    case MENU_CALLBACK_NAV_LEFT:  *x -= dist; break;
+    case MENU_CALLBACK_NAV_RIGHT: *x += dist; break;
+    default:
+      break;
   }
   return 0;
 }
@@ -634,6 +644,7 @@ static void restore_settings_proc(struct menu_item *item, void *data)
   menu_set_font(&menu_main, font);
   menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
   menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
+  menu_imitate(&menu_global_watches, &menu_main);
   gfx_mode_drop_shadow(settings->menu_drop_shadow);
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
@@ -796,6 +807,8 @@ void main_hook()
   if (cheats_time)
     z64_file.day_time += 0x0100;
 
+  while (menu_think(&menu_global_watches))
+    ;
   if (menu_active) {
     if (pad_pressed & BUTTON_D_UP)
       menu_navigate(&menu_main, MENU_NAVIGATE_UP);
@@ -956,6 +969,7 @@ void main_hook()
 
   if (menu_active)
     menu_draw(&menu_main);
+  menu_draw(&menu_global_watches);
 
   {
     static int splash_time = 230;
@@ -1480,7 +1494,10 @@ ENTRY void _start()
     menu_init(&menu_watches, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_watches.selector = menu_add_submenu(&menu_watches, 0, 0, NULL,
                                              "return");
-    menu_watchlist = watchlist_create(&menu_watches, 0, 1);
+    menu_init(&menu_global_watches, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_imitate(&menu_global_watches, &menu_main);
+    menu_watchlist = watchlist_create(&menu_watches, &menu_global_watches,
+                                      0, 1);
     watchlist_fetch(menu_watchlist);
 
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);

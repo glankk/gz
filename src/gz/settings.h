@@ -22,6 +22,10 @@ struct settings_data
   uint16_t  no_watches;
   uint8_t   watch_type[SETTINGS_WATCHES_MAX];
   uint32_t  watch_address[SETTINGS_WATCHES_MAX];
+  uint8_t   watch_anchored[SETTINGS_WATCHES_MAX];
+  int16_t   watch_x[SETTINGS_WATCHES_MAX];
+  int16_t   watch_y[SETTINGS_WATCHES_MAX];
+  uint8_t   watch_position_set[SETTINGS_WATCHES_MAX];
 };
 
 struct settings_header
