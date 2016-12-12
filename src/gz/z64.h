@@ -225,177 +225,260 @@ typedef enum
   Z64_SLOT_CHILD_TRADE,
 } z64_slot_t;
 
+typedef enum
+{
+  Z64_ITEMBTN_B,
+  Z64_ITEMBTN_CL,
+  Z64_ITEMBTN_CD,
+  Z64_ITEMBTN_CR,
+} z64_itembtn_t;
+
 typedef struct
 {
-  int32_t       entrance_index;     /* 0x0000 */
-  int32_t       link_age;           /* 0x0004 */
-  char          unk_00_[0x0002];    /* 0x0008 */
-  int16_t       cutscene_index;     /* 0x000A */
-  int16_t       day_time;           /* 0x000C */
-  char          unk_01_[0x0002];    /* 0x000E */
-  int32_t       night_flag;         /* 0x0010 */
-  char          unk_02_[0x0008];    /* 0x0014 */
-  char          id[6];              /* 0x001C */
-  int16_t       deaths;             /* 0x0022 */
-  char          file_name[0x08];    /* 0x0024 */
-  int16_t       n64dd_flag;         /* 0x002C */
-  int16_t       energy_capacity;    /* 0x002E */
-  int16_t       energy;             /* 0x0030 */
-  uint8_t       magic_capacity_set; /* 0x0032 */
-  uint8_t       magic;              /* 0x0033 */
-  uint16_t      rupees;             /* 0x0034 */
-  uint16_t      bgs_hits_left;      /* 0x0036 */
-  uint16_t      navi_timer;         /* 0x0038 */
-  uint8_t       magic_acquired;     /* 0x003A */
-  char          unk_03_;            /* 0x003B */
-  uint8_t       magic_capacity;     /* 0x003C */
-  char          unk_04_;            /* 0x003D */
-  int8_t        bgs_flag;           /* 0x003E */
-  char          unk_05_[0x0027];    /* 0x003F */
-  int16_t       scene_index;        /* 0x0066 */
-  int8_t        button_items[4];    /* 0x0068 */
-  int8_t        c_button_slots[3];  /* 0x006C */
-  char          unk_06_;            /* 0x006F */
+  char      unk_00_[0x006E];        /* 0x0000 */
+  int16_t   run_speed_limit;        /* 0x006E */
+  char      unk_01_[0x0004];        /* 0x0070 */
+  int16_t   run_speed_max_anim;     /* 0x0074 */
+  char      unk_02_[0x0026];        /* 0x0076 */
+  int16_t   gravity;                /* 0x009C */
+  char      unk_03_[0x0072];        /* 0x009E */
+  uint16_t  update_rate;            /* 0x0110 */
+  char      unk_04_[0x0022];        /* 0x0112 */
+  int16_t   override_aspect;        /* 0x0134 */
+  uint16_t  aspect_width;           /* 0x0136 */
+  uint16_t  aspect_height;          /* 0x0138 */
+  char      unk_05_[0x0050];        /* 0x013A */
+  int16_t   game_playing;           /* 0x018A */
+  char      unk_06_[0x03B8];        /* 0x018C */
+  uint16_t  c_up_icon_x;            /* 0x0544 */
+  uint16_t  c_up_icon_y;            /* 0x0546 */
+  char      unk_07_[0x021C];        /* 0x0548 */
+  uint16_t  game_freeze;            /* 0x0764 */
+  char      unk_08_[0x002E];        /* 0x0766 */
+  uint16_t  magic_fill_r;           /* 0x0794 */
+  uint16_t  magic_fill_g;           /* 0x0796 */
+  uint16_t  magic_fill_b;           /* 0x0798 */
+  char      unk_09_[0x004A];        /* 0x079A */
+  uint16_t  c_button_r;             /* 0x07E4 */
+  uint16_t  c_button_g;             /* 0x07E6 */
+  uint16_t  c_button_b;             /* 0x07E8 */
+  uint16_t  b_button_r;             /* 0x07EA */
+  uint16_t  b_button_g;             /* 0x07EC */
+  uint16_t  b_button_b;             /* 0x07EE */
+  char      unk_0A_[0x000E];        /* 0x07F0 */
+  uint16_t  start_icon_y;           /* 0x07FE */
+  char      unk_0B_[0x0002];        /* 0x0800 */
+  uint16_t  start_icon_x;           /* 0x0802 */
+  char      unk_0C_[0x000C];        /* 0x0804 */
+  uint16_t  c_up_button_x;          /* 0x0810 */
+  uint16_t  c_up_button_y;          /* 0x0812 */
+  char      unk_0D_[0x0008];        /* 0x0814 */
+  uint16_t  start_button_x;         /* 0x081C */
+  uint16_t  start_button_y;         /* 0x081E */
+  uint16_t  item_button_x[4];       /* 0x0820 */
+  uint16_t  item_button_y[4];       /* 0x0828 */
+  qs510_t   item_button_dd[4];      /* 0x0830 */
+  uint16_t  item_icon_x[4];         /* 0x0838 */
+  uint16_t  item_icon_y[4];         /* 0x0840 */
+  qs510_t   item_icon_dd[4];        /* 0x0848 */
+  char      unk_0E_[0x0264];        /* 0x0850 */
+  uint16_t  a_button_y;             /* 0x0AB4 */
+  uint16_t  a_button_x;             /* 0x0AB6 */
+  char      unk_0F_[0x0002];        /* 0x0AB8 */
+  uint16_t  a_button_icon_y;        /* 0x0ABA */
+  uint16_t  a_button_icon_x;        /* 0x0ABC */
+  char      unk_10_[0x0002];        /* 0x0ABE */
+  uint16_t  a_button_r;             /* 0x0AC0 */
+  uint16_t  a_button_g;             /* 0x0AC2 */
+  uint16_t  a_button_b;             /* 0x0AC4 */
+  char      unk_11_[0x0030];        /* 0x0AC6 */
+  uint16_t  magic_bar_x;            /* 0x0AF6 */
+  uint16_t  magic_bar_y;            /* 0x0AF8 */
+  uint16_t  magic_fill_x;           /* 0x0AFA */
+  char      unk_12_[0x0498];        /* 0x0AFC */
+  uint16_t  item_ammo_x[4];         /* 0x0F94 */
+  uint16_t  item_ammo_y[4];         /* 0x0F9C */
+  char      unk_13_[0x0008];        /* 0x0FA4 */
+  uint16_t  item_icon_space[4];     /* 0x0FAC */
+  uint16_t  item_button_space[4];   /* 0x0FB4 */
+                                    /* 0x0FBC */
+} z64_gameinfo_t;
+
+typedef struct
+{
+  int32_t         entrance_index;     /* 0x0000 */
+  int32_t         link_age;           /* 0x0004 */
+  char            unk_00_[0x0002];    /* 0x0008 */
+  int16_t         cutscene_index;     /* 0x000A */
+  int16_t         day_time;           /* 0x000C */
+  char            unk_01_[0x0002];    /* 0x000E */
+  int32_t         night_flag;         /* 0x0010 */
+  char            unk_02_[0x0008];    /* 0x0014 */
+  char            id[6];              /* 0x001C */
+  int16_t         deaths;             /* 0x0022 */
+  char            file_name[0x08];    /* 0x0024 */
+  int16_t         n64dd_flag;         /* 0x002C */
+  int16_t         energy_capacity;    /* 0x002E */
+  int16_t         energy;             /* 0x0030 */
+  uint8_t         magic_capacity_set; /* 0x0032 */
+  uint8_t         magic;              /* 0x0033 */
+  uint16_t        rupees;             /* 0x0034 */
+  uint16_t        bgs_hits_left;      /* 0x0036 */
+  uint16_t        navi_timer;         /* 0x0038 */
+  uint8_t         magic_acquired;     /* 0x003A */
+  char            unk_03_;            /* 0x003B */
+  uint8_t         magic_capacity;     /* 0x003C */
+  char            unk_04_;            /* 0x003D */
+  int8_t          bgs_flag;           /* 0x003E */
+  char            unk_05_[0x0027];    /* 0x003F */
+  int16_t         scene_index;        /* 0x0066 */
+  int8_t          button_items[4];    /* 0x0068 */
+  int8_t          c_button_slots[3];  /* 0x006C */
+  char            unk_06_;            /* 0x006F */
   union
   {
-    uint16_t    equips;             /* 0x0070 */
+    uint16_t      equips;             /* 0x0070 */
     struct
     {
-      uint16_t  equip_boots         : 4;
-      uint16_t  equip_tunic         : 4;
-      uint16_t  equip_shield        : 4;
-      uint16_t  equip_sword         : 4;
+      uint16_t    equip_boots         : 4;
+      uint16_t    equip_tunic         : 4;
+      uint16_t    equip_shield        : 4;
+      uint16_t    equip_sword         : 4;
     };
   };
-  char          unk_07_[0x0002];    /* 0x0072 */
-  int8_t        items[24];          /* 0x0074 */
-  int8_t        ammo[15];           /* 0x008C */
-  uint8_t       magic_beans_sold;   /* 0x009B */
+  char            unk_07_[0x0002];    /* 0x0072 */
+  int8_t          items[24];          /* 0x0074 */
+  int8_t          ammo[15];           /* 0x008C */
+  uint8_t         magic_beans_sold;   /* 0x009B */
   union
   {
-    uint16_t    equipment;          /* 0x009C */
+    uint16_t      equipment;          /* 0x009C */
     struct
     {
-      uint16_t                      : 1;
-      uint16_t  hover_boots         : 1;
-      uint16_t  iron_boots          : 1;
-      uint16_t  kokiri_boots        : 1;
-      uint16_t                      : 1;
-      uint16_t  zora_tunic          : 1;
-      uint16_t  goron_tunic         : 1;
-      uint16_t  kokiri_tunic        : 1;
-      uint16_t                      : 1;
-      uint16_t  mirror_shield       : 1;
-      uint16_t  hylian_shield       : 1;
-      uint16_t  deku_shield         : 1;
-      uint16_t  broken_giants_knife : 1;
-      uint16_t  giants_knife        : 1;
-      uint16_t  master_sword        : 1;
-      uint16_t  kokiri_sword        : 1;
+      uint16_t                        : 1;
+      uint16_t    hover_boots         : 1;
+      uint16_t    iron_boots          : 1;
+      uint16_t    kokiri_boots        : 1;
+      uint16_t                        : 1;
+      uint16_t    zora_tunic          : 1;
+      uint16_t    goron_tunic         : 1;
+      uint16_t    kokiri_tunic        : 1;
+      uint16_t                        : 1;
+      uint16_t    mirror_shield       : 1;
+      uint16_t    hylian_shield       : 1;
+      uint16_t    deku_shield         : 1;
+      uint16_t    broken_giants_knife : 1;
+      uint16_t    giants_knife        : 1;
+      uint16_t    master_sword        : 1;
+      uint16_t    kokiri_sword        : 1;
     };
   };
-  char          unk_08_[0x0002];    /* 0x009E */
+  char            unk_08_[0x0002];    /* 0x009E */
   union
   {
-    uint32_t    equipment_items;    /* 0x00A0 */
+    uint32_t      equipment_items;    /* 0x00A0 */
     struct
     {
-      uint32_t                      : 9;
-      uint32_t  nut_upgrade         : 3;
-      uint32_t  stick_upgrade       : 3;
-      uint32_t  bullet_bag          : 3;
-      uint32_t  wallet              : 2;
-      uint32_t  diving_upgrade      : 3;
-      uint32_t  strength_upgrade    : 3;
-      uint32_t  bomb_bag            : 3;
-      uint32_t  quiver              : 3;
-    };
-  };
-  union
-  {
-    uint32_t    quest_items;        /* 0x00A4 */
-    struct
-    {
-      uint32_t  heart_pieces        : 8;
-      uint32_t  gold_skulltula      : 1;
-      uint32_t  gerudos_card        : 1;
-      uint32_t  stone_of_agony      : 1;
-      uint32_t  zoras_sapphire      : 1;
-      uint32_t  gorons_ruby         : 1;
-      uint32_t  kokiris_emerald     : 1;
-      uint32_t  song_of_storms      : 1;
-      uint32_t  song_of_time        : 1;
-      uint32_t  suns_song           : 1;
-      uint32_t  sarias_song         : 1;
-      uint32_t  eponas_song         : 1;
-      uint32_t  zeldas_lullaby      : 1;
-      uint32_t  prelude_of_light    : 1;
-      uint32_t  nocturne_of_shadow  : 1;
-      uint32_t  requiem_of_spirit   : 1;
-      uint32_t  serenade_of_water   : 1;
-      uint32_t  bolero_of_fire      : 1;
-      uint32_t  minuet_of_forest    : 1;
-      uint32_t  light_medallion     : 1;
-      uint32_t  shadow_medallion    : 1;
-      uint32_t  spirit_medallion    : 1;
-      uint32_t  water_medallion     : 1;
-      uint32_t  fire_medallion      : 1;
-      uint32_t  forest_medallion    : 1;
+      uint32_t                        : 9;
+      uint32_t    nut_upgrade         : 3;
+      uint32_t    stick_upgrade       : 3;
+      uint32_t    bullet_bag          : 3;
+      uint32_t    wallet              : 2;
+      uint32_t    diving_upgrade      : 3;
+      uint32_t    strength_upgrade    : 3;
+      uint32_t    bomb_bag            : 3;
+      uint32_t    quiver              : 3;
     };
   };
   union
   {
-    uint8_t     items;
+    uint32_t      quest_items;        /* 0x00A4 */
     struct
     {
-      uint8_t                       : 5;
-      uint8_t   map                 : 1;
-      uint8_t   compass             : 1;
-      uint8_t   boss_key            : 1;
+      uint32_t    heart_pieces        : 8;
+      uint32_t    gold_skulltula      : 1;
+      uint32_t    gerudos_card        : 1;
+      uint32_t    stone_of_agony      : 1;
+      uint32_t    zoras_sapphire      : 1;
+      uint32_t    gorons_ruby         : 1;
+      uint32_t    kokiris_emerald     : 1;
+      uint32_t    song_of_storms      : 1;
+      uint32_t    song_of_time        : 1;
+      uint32_t    suns_song           : 1;
+      uint32_t    sarias_song         : 1;
+      uint32_t    eponas_song         : 1;
+      uint32_t    zeldas_lullaby      : 1;
+      uint32_t    prelude_of_light    : 1;
+      uint32_t    nocturne_of_shadow  : 1;
+      uint32_t    requiem_of_spirit   : 1;
+      uint32_t    serenade_of_water   : 1;
+      uint32_t    bolero_of_fire      : 1;
+      uint32_t    minuet_of_forest    : 1;
+      uint32_t    light_medallion     : 1;
+      uint32_t    shadow_medallion    : 1;
+      uint32_t    spirit_medallion    : 1;
+      uint32_t    water_medallion     : 1;
+      uint32_t    fire_medallion      : 1;
+      uint32_t    forest_medallion    : 1;
     };
-  }             dungeon_items[20];  /* 0x00A8 */
-  int8_t        dungeon_keys[19];   /* 0x00BC */
-  uint8_t       defense_hearts;     /* 0x00CF */
-  int16_t       gs_tokens;          /* 0x00D0 */
-  char          unk_09_[0x0002];    /* 0x00D2 */
+  };
+  union
+  {
+    uint8_t       items;
+    struct
+    {
+      uint8_t                         : 5;
+      uint8_t     map                 : 1;
+      uint8_t     compass             : 1;
+      uint8_t     boss_key            : 1;
+    };
+  }               dungeon_items[20];  /* 0x00A8 */
+  int8_t          dungeon_keys[19];   /* 0x00BC */
+  uint8_t         defense_hearts;     /* 0x00CF */
+  int16_t         gs_tokens;          /* 0x00D0 */
+  char            unk_09_[0x0002];    /* 0x00D2 */
   struct
   {
-    uint32_t    chests;
-    uint32_t    switches;
-    uint32_t    rooms_cleared;
-    uint32_t    collectibles;
-    uint32_t    unk_00_;
-    uint32_t    unk_01_;
-    uint32_t    rooms_visited;
-  }             scene_flags[101];   /* 0x00D4 */
-  char          unk_0A_[0x0284];    /* 0x0BE0 */
-  z64_xyz_t     fw_pos;             /* 0x0E64 */
-  z64_angle_t   fw_yaw;             /* 0x0E70 */
-  char          unk_0B_[0x0008];    /* 0x0E72 */
-  uint16_t      fw_scene_index;     /* 0x0E7A */
-  uint32_t      fw_room_index;      /* 0x0E7C */
-  int32_t       fw_set;             /* 0x0E80 */
-  char          unk_0C_[0x0018];    /* 0x0E84 */
-  uint8_t       gs_flags[56];       /* 0x0E9C */
-  uint16_t      event_chk_inf[14];  /* 0x0ED4 */
-  uint16_t      item_get_inf[4];    /* 0x0EF0 */
-  uint16_t      inf_table[30];      /* 0x0EF8 */
-  char          unk_0D_[0x041E];    /* 0x0F34 */
-  uint16_t      checksum;           /* 0x1352 */
-  int32_t       file_index;         /* 0x1354 */
-  char          unk_0E_[0x0007];    /* 0x1358 */
-  uint8_t       interface_flags;    /* 0x135F */
-  uint32_t      scene_setup_index;  /* 0x1360 */
-  char          unk_0F_[0x0064];    /* 0x1364 */
-  uint16_t      nayrus_love_timer;  /* 0x13C8 */
-  char          unk_10_[0x0008];    /* 0x13CA */
-  uint16_t      timer;              /* 0x13D2 */
-  char          unk_11_[0x0035];    /* 0x13D4 */
-  uint8_t       language;           /* 0x1409 */
-  char          unk_12_[0x0002];    /* 0x140A */
-  uint8_t       z_targeting;        /* 0x140C */
-  char          unk_13_[0x0043];    /* 0x140D */
-                                    /* 0x1450 */
+    uint32_t      chests;
+    uint32_t      switches;
+    uint32_t      rooms_cleared;
+    uint32_t      collectibles;
+    uint32_t      unk_00_;
+    uint32_t      unk_01_;
+    uint32_t      rooms_visited;
+  }               scene_flags[101];   /* 0x00D4 */
+  char            unk_0A_[0x0284];    /* 0x0BE0 */
+  z64_xyz_t       fw_pos;             /* 0x0E64 */
+  z64_angle_t     fw_yaw;             /* 0x0E70 */
+  char            unk_0B_[0x0008];    /* 0x0E72 */
+  uint16_t        fw_scene_index;     /* 0x0E7A */
+  uint32_t        fw_room_index;      /* 0x0E7C */
+  int32_t         fw_set;             /* 0x0E80 */
+  char            unk_0C_[0x0018];    /* 0x0E84 */
+  uint8_t         gs_flags[56];       /* 0x0E9C */
+  uint16_t        event_chk_inf[14];  /* 0x0ED4 */
+  uint16_t        item_get_inf[4];    /* 0x0EF0 */
+  uint16_t        inf_table[30];      /* 0x0EF8 */
+  char            unk_0D_[0x041E];    /* 0x0F34 */
+  uint16_t        checksum;           /* 0x1352 */
+  int32_t         file_index;         /* 0x1354 */
+  char            unk_0E_[0x0007];    /* 0x1358 */
+  uint8_t         interface_flags;    /* 0x135F */
+  uint32_t        scene_setup_index;  /* 0x1360 */
+  char            unk_0F_[0x0064];    /* 0x1364 */
+  uint16_t        nayrus_love_timer;  /* 0x13C8 */
+  char            unk_10_[0x0008];    /* 0x13CA */
+  uint16_t        timer;              /* 0x13D2 */
+  char            unk_11_[0x0035];    /* 0x13D4 */
+  uint8_t         language;           /* 0x1409 */
+  char            unk_12_[0x0002];    /* 0x140A */
+  uint8_t         z_targeting;        /* 0x140C */
+  char            unk_13_[0x0001];    /* 0x140D */
+  uint16_t        disable_music_flag; /* 0x140E */
+  char            unk_14_[0x0020];    /* 0x1410 */
+  z64_gameinfo_t *gameinfo;           /* 0x1430 */
+  char            unk_15_[0x001C];    /* 0x1434 */
+                                      /* 0x1450 */
 } z64_file_t;
 
 typedef struct
@@ -630,24 +713,40 @@ typedef struct
   uint8_t         title_card_delay;       /* 0x01D57 */
   char            unk_0D_[0x0010];        /* 0x01D58 */
   void           *cutscene_ptr;           /* 0x01D68 */
-  char            unk_0E_[0xFF50];        /* 0x01D6C */
+  char            unk_0E_[0xE9E6];        /* 0x01D6C */
+  struct
+  {
+    uint8_t       unk_00_;
+    uint8_t       b_button;
+    uint8_t       unk_01_;
+    uint8_t       bottles;
+    uint8_t       trade_items;
+    uint8_t       hookshot;
+    uint8_t       ocarina;
+    uint8_t       warp_songs;
+    uint8_t       suns_song;
+    uint8_t       farores_wind;
+    uint8_t       dfnl;
+    uint8_t       all;
+  }               restriction_flags;      /* 0x10752 */
+  char            unk_0F_[0x155E];        /* 0x1075E */
   int8_t          room_index;             /* 0x11CBC */
-  char            unk_0F_[0x000B];        /* 0x11CBD */
+  char            unk_10_[0x000B];        /* 0x11CBD */
   void           *room_ptr;               /* 0x11CC8 */
-  char            unk_10_[0x0118];        /* 0x11CCC */
+  char            unk_11_[0x0118];        /* 0x11CCC */
   uint32_t        gameplay_frames;        /* 0x11DE4 */
   uint8_t         link_age;               /* 0x11DE8 */
-  char            unk_11_;                /* 0x11DE9 */
+  char            unk_12_;                /* 0x11DE9 */
   uint8_t         spawn_index;            /* 0x11DEA */
   uint8_t         no_map_actors;          /* 0x11DEB */
   uint8_t         no_rooms;               /* 0x11DEC */
-  char            unk_12_[0x000B];        /* 0x11DED */
+  char            unk_13_[0x000B];        /* 0x11DED */
   void           *map_actor_list;         /* 0x11DF8 */
-  char            unk_13_[0x0008];        /* 0x11DFC */
+  char            unk_14_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_14_[0x000C];        /* 0x11E08 */
+  char            unk_15_[0x000C];        /* 0x11E08 */
   uint16_t        scene_load_flags;       /* 0x11E14 */
-  char            unk_15_[0x0004];        /* 0x11E16 */
+  char            unk_16_[0x0004];        /* 0x11E16 */
   uint16_t        entrance_index;         /* 0x11E1A */
                                           /* 0x11E1C */
 } z64_game_t;
@@ -677,6 +776,8 @@ typedef struct
 #define z64_vi_counter_addr                     0x80009E8C
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
+#define z64_UpdateItemButton_addr               0x8006FB50
+#define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091474
@@ -691,15 +792,18 @@ typedef struct
 #define z64_file_addr                           0x8011A5D0
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
-#define z64_update_rate_addr                    0x801C6FA0
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
 #define z64_icon_item_static_vsize              0x000888A0
+#define z64_icon_item_24_static_vaddr           0x00846000
+#define z64_icon_item_24_static_vsize           0x0000B400
 #define z64_nes_font_static_vaddr               0x00928000
 #define z64_nes_font_static_vsize               0x00004580
+#define z64_parameter_static_vaddr              0x01A3C000
+#define z64_parameter_static_vsize              0x00003B00
 
 #elif Z64_VERSION == Z64_OOT11
 
@@ -711,6 +815,8 @@ typedef struct
 #define z64_vi_counter_addr                     0x80009E8C
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
+#define z64_UpdateItemButton_addr               0x8006FB50
+#define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091484
@@ -725,15 +831,18 @@ typedef struct
 #define z64_file_addr                           0x8011A790
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
-#define z64_update_rate_addr                    0x801C7160
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
 #define z64_icon_item_static_vsize              0x000888A0
+#define z64_icon_item_24_static_vaddr           0x00846000
+#define z64_icon_item_24_static_vsize           0x0000B400
 #define z64_nes_font_static_vaddr               0x008ED000
 #define z64_nes_font_static_vsize               0x00004580
+#define z64_parameter_static_vaddr              0x01A3C000
+#define z64_parameter_static_vsize              0x00003B00
 
 #elif Z64_VERSION == Z64_OOT12
 
@@ -744,7 +853,9 @@ typedef struct
 #define z64_file_mq_addr                        0x80008A30
 #define z64_vi_counter_addr                     0x8000A4CC
 #define z64_minimap_disable_1_addr              0x8006D3B0
-#define z64_minimap_disable_2_addr              0x8006DB40
+#define z64_minimap_disable_2_addr              0x8006DB44
+#define z64_UpdateItemButton_addr               0x800701B0
+#define z64_UpdateEquipment_addr                0x80079DF4
 #define z64_LoadRoom_addr                       0x80081064
 #define z64_UnloadRoom_addr                     0x800812C0
 #define z64_Io_addr                             0x80091AB4
@@ -759,26 +870,32 @@ typedef struct
 #define z64_file_addr                           0x8011AC80
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
-#define z64_update_rate_addr                    0x801C7860
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
 #define z64_icon_item_static_vsize              0x000888A0
+#define z64_icon_item_24_static_vaddr           0x00846000
+#define z64_icon_item_24_static_vsize           0x0000B400
 #define z64_nes_font_static_vaddr               0x008ED000
 #define z64_nes_font_static_vsize               0x00004580
+#define z64_parameter_static_vaddr              0x01A3C000
+#define z64_parameter_static_vsize              0x00003B00
 
 #endif
 
 /* function prototypes */
-typedef void (*z64_GetFile_proc)    (z64_getfile_t *file);
-typedef void (*z64_LoadRoom_proc)   (z64_ctxt_t *ctxt, void *p_ctxt_room_index,
-                                     uint8_t room_index);
-typedef void (*z64_UnloadRoom_proc) (z64_ctxt_t *ctxt, void *p_ctxt_room_index);
-typedef void (*z64_Io_proc)         (uint32_t dev_addr, void *dram_addr,
-                                     size_t size, int32_t direction);
-typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
+typedef void (*z64_UpdateItemButton_proc) (z64_game_t *ctxt, int button_index);
+typedef void (*z64_UpdateEquipment_proc)  (z64_game_t *ctxt, z64_link_t *link);
+typedef void (*z64_LoadRoom_proc)         (z64_game_t *ctxt,
+                                           void *p_ctxt_room_index,
+                                           uint8_t room_index);
+typedef void (*z64_UnloadRoom_proc)       (z64_game_t *ctxt,
+                                           void *p_ctxt_room_index);
+typedef void (*z64_Io_proc)               (uint32_t dev_addr, void *dram_addr,
+                                           size_t size, int32_t direction);
+typedef void (*z64_SceneConfig_proc)      (z64_game_t *ctxt);
 
 /* data */
 #define z64_file_mq             (*(OSMesgQueue*)      z64_file_mq_addr)
@@ -791,18 +908,23 @@ typedef void (*z64_SceneConfig_proc)(z64_ctxt_t *ctxt);
                                    z64_scene_config_table_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)
 #define z64_input_direct        (*(z64_controller_t*) z64_input_direct_addr)
-#define z64_update_rate         (*(uint16_t*)         z64_update_rate_addr)
+#define z64_gameinfo            (*                    z64_file.gameinfo)
 #define z64_ctxt                (*(z64_ctxt_t*)       z64_ctxt_addr)
 #define z64_game                (*(z64_game_t*)      &z64_ctxt)
 #define z64_link                (*(z64_link_t*)       z64_link_addr)
 
 /* functions */
-#define z64_osSendMesg          ((osSendMesg_t)         z64_osSendMesg_addr)
-#define z64_osRecvMesg          ((osRecvMesg_t)         z64_osRecvMesg_addr)
+#define z64_osSendMesg          ((osSendMesg_t)       z64_osSendMesg_addr)
+#define z64_osRecvMesg          ((osRecvMesg_t)       z64_osRecvMesg_addr)
 #define z64_osCreateMesgQueue   ((osCreateMesgQueue_t)                        \
                                  z64_osCreateMesgQueue_addr)
-#define z64_LoadRoom            ((z64_LoadRoom_proc)    z64_LoadRoom_addr)
-#define z64_UnloadRoom          ((z64_UnloadRoom_proc)  z64_UnloadRoom_addr)
-#define z64_Io                  ((z64_Io_proc)          z64_Io_addr)
+#define z64_UpdateItemButton    ((z64_UpdateItemButton_proc)                  \
+                                                      z64_UpdateItemButton_addr)
+#define z64_UpdateEquipment     ((z64_UpdateEquipment_proc)                   \
+                                                      z64_UpdateEquipment_addr)
+#define z64_LoadRoom            ((z64_LoadRoom_proc)  z64_LoadRoom_addr)
+#define z64_UnloadRoom          ((z64_UnloadRoom_proc)                        \
+                                                      z64_UnloadRoom_addr)
+#define z64_Io                  ((z64_Io_proc)        z64_Io_addr)
 
 #endif

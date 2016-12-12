@@ -142,6 +142,7 @@ void                menu_navigate(struct menu *menu, enum menu_navigation nav);
 void                menu_activate(struct menu *menu);
 void                menu_enter(struct menu *menu, struct menu *submenu);
 struct menu        *menu_return(struct menu *menu);
+void                menu_select(struct menu *menu, struct menu_item *item);
 void                menu_signal_enter(struct menu *menu);
 void                menu_signal_leave(struct menu *menu);
 void                menu_navigate_top(struct menu *menu,
@@ -149,6 +150,7 @@ void                menu_navigate_top(struct menu *menu,
 void                menu_activate_top(struct menu *menu);
 void                menu_enter_top(struct menu *menu, struct menu *submenu);
 struct menu        *menu_return_top(struct menu *menu);
+void                menu_select_top(struct menu *menu, struct menu_item *item);
 
 struct menu_item   *menu_item_add(struct menu *menu, int x, int y,
                                   const char *text, uint32_t color);
@@ -193,7 +195,13 @@ struct menu_item   *menu_userwatch_watch(struct menu_item *item);
 struct menu_item   *menu_add_submenu(struct menu *menu, int x, int y,
                                      struct menu *submenu, const char *name);
 struct menu_item   *menu_add_switch(struct menu *menu, int x, int y,
-                                    const char *name,
+                                    struct gfx_texture *texture_on,
+                                    int texture_tile_on,
+                                    uint32_t color_on,
+                                    struct gfx_texture *texture_off,
+                                    int texture_tile_off,
+                                    uint32_t color_off,
+                                    float scale,
                                     menu_generic_callback callback_proc,
                                     void *callback_data);
 void                menu_switch_set(struct menu_item *item, _Bool state);

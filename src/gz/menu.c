@@ -224,10 +224,7 @@ void menu_draw(struct menu *menu)
       menu_draw(item->imenu);
     if (!draw_params.text || !draw_params.font)
       continue;
-    gfx_mode_color((draw_params.color >> 16) & 0xFF,
-                   (draw_params.color >> 8)  & 0xFF,
-                   (draw_params.color >> 0)  & 0xFF,
-                   draw_params.alpha);
+    gfx_mode_set(GFX_MODE_COLOR, (draw_params.color << 8) | draw_params.alpha);
     gfx_printf(draw_params.font, draw_params.x, draw_params.y,
                "%s", draw_params.text);
   }
@@ -261,8 +258,8 @@ static void menu_nav_compare(struct menu *menu,
     int distance_pe = (nav_y ? distance_x : distance_y);
     if (distance_pe < 0)
       distance_pe = -distance_pe;
-    if (distance_pa > 0 && (*near_item == NULL || distance_pa < *npa ||
-                            (distance_pa == *npa && distance_pe < *npe)))
+    if (distance_pa > 0 && (*near_item == NULL || distance_pe < *npe ||
+                            (distance_pe == *npe && distance_pa < *npa)))
     {
       *npa = distance_pa;
       *npe = distance_pe;
@@ -299,18 +296,10 @@ void menu_navigate(struct menu *menu, enum menu_navigation nav)
   struct menu_item *far_item = NULL;
   menu_nav_compare(menu, menu->selector, nav_x, nav_y,
                    &near_item, &far_item, &npa, &fpa, &npe, &fpe);
-  if (near_item) {
-    if (menu->selector)
-      menu->selector->owner->selector = NULL;
-    menu->selector = near_item;
-    near_item->owner->selector = near_item;
-  }
-  else if (far_item) {
-    if (menu->selector)
-      menu->selector->owner->selector = NULL;
-    menu->selector = far_item;
-    far_item->owner->selector = far_item;
-  }
+  if (near_item)
+    menu_select(menu, near_item);
+  else if (far_item)
+    menu_select(menu, far_item);
 }
 
 void menu_activate(struct menu *menu)
@@ -343,6 +332,16 @@ struct menu *menu_return(struct menu *menu)
   parent->child = NULL;
   menu_signal_enter(parent);
   return parent;
+}
+
+void menu_select(struct menu *menu, struct menu_item *item)
+{
+  if (menu->child)
+    return menu_select(menu->child, item);
+  if (menu->selector)
+    menu->selector->owner->selector = NULL;
+  menu->selector = item;
+  item->owner->selector = item;
 }
 
 void menu_signal_enter(struct menu *menu)
@@ -399,6 +398,13 @@ struct menu *menu_return_top(struct menu *menu)
   if (menu->parent)
     return menu_return_top(menu->parent);
   return menu_return(menu);
+}
+
+void menu_select_top(struct menu *menu, struct menu_item *item)
+{
+  if (menu->parent)
+    return menu_select_top(menu->parent, item);
+  return menu_select(menu, item);
 }
 
 struct menu_item *menu_item_add(struct menu *menu, int x, int y,

@@ -62,9 +62,9 @@ struct zu_bbox
 
 struct zu_scene_info
 {
-  const char     *scene_name;
-  int             no_entrances;
-  const char    **entrance_names;
+  const char   *scene_name;
+  int           no_entrances;
+  const char  **entrance_names;
 };
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);

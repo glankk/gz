@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <grc.h>
 #include "gfx.h"
+#include "gu.h"
 #include "resource.h"
 #include "z64.h"
 
@@ -57,141 +58,151 @@ static void *rc_grc_font_generic(const char *grc_resource_name,
                          letter_spacing, line_spacing, baseline, median, x);
 }
 
-static void *rc_zicon_item()
+static void *rc_zicon_item(void)
 {
-  static struct gfx_texdesc td_icon_item_static =
+  static struct gfx_texdesc td =
   {
     G_IM_FMT_RGBA, G_IM_SIZ_32b, 0x0,
     32, 32, 1, 90,
     z64_icon_item_static_vaddr,
     z64_icon_item_static_vsize,
   };
-  return gfx_texture_load(&td_icon_item_static, NULL);
+  return gfx_texture_load(&td, NULL);
 }
 
-static void *rc_zfont_nes()
+static void *rc_zicon_item_gray(void)
 {
-  static struct gfx_texdesc td_nes_font_static =
+  static struct gfx_texdesc td =
+  {
+    G_IM_FMT_RGBA, G_IM_SIZ_32b, 0x0,
+    32, 32, 1, 90,
+    z64_icon_item_static_vaddr,
+    z64_icon_item_static_vsize,
+  };
+  struct gfx_texture *texture = gfx_texture_load(&td, NULL);
+  MtxF cm = guDefMtxF(.75f, 0.f,  0.f,  0.f,
+                      0.f,  .75f, 0.f,  0.f,
+                      0.f,  0.f,  .75f, 0.f,
+                      0.f,  0.f,  0.f,  1.f);
+  guMtxCatF(&cm, &gfx_cm_desaturate, &cm);
+  gfx_texture_colortransform(texture, &cm);
+  return texture;
+}
+
+static void *rc_zicon_item_24(void)
+{
+  static struct gfx_texdesc td =
+  {
+    G_IM_FMT_RGBA, G_IM_SIZ_32b, 0x0,
+    24, 24, 1, 20,
+    z64_icon_item_24_static_vaddr,
+    z64_icon_item_24_static_vsize,
+  };
+  return gfx_texture_load(&td, NULL);
+}
+
+static void *rc_zicon_note(void)
+{
+  static struct gfx_texdesc td =
+  {
+    G_IM_FMT_IA, G_IM_SIZ_8b, 0x00088040,
+    16, 24, 1, 1,
+    z64_icon_item_static_vaddr,
+    z64_icon_item_static_vsize,
+  };
+  return gfx_texture_load(&td, NULL);
+}
+
+static void *rc_zicon_action_buttons(void)
+{
+  static struct gfx_texdesc td =
+  {
+    G_IM_FMT_IA, G_IM_SIZ_8b, 0x00000A00,
+    32, 32, 1, 5,
+    z64_parameter_static_vaddr,
+    z64_parameter_static_vsize,
+  };
+  return gfx_texture_load(&td, NULL);
+}
+
+static void *rc_zfont_nes(void)
+{
+  static struct gfx_texdesc td =
   {
     G_IM_FMT_I, G_IM_SIZ_4b, 0x0,
     16, 224, 1, 10,
     z64_nes_font_static_vaddr,
     z64_nes_font_static_vsize,
   };
-  return rc_font_generic(&td_nes_font_static, 16, 16, 32, -6, -5, 12, 4, 0);
+  return rc_font_generic(&td, 16, 16, 32, -6, -5, 12, 4, 0);
 }
 
-static void *rc_font_fipps()
+static void *rc_font_fipps(void)
 {
   return rc_grc_font_generic("fipps", 10, 14, 33, -2, -5, 10, 3, 2);
 }
 
-static void *rc_font_notalot35()
+static void *rc_font_notalot35(void)
 {
   return rc_grc_font_generic("notalot35", 8, 9, 33, -1, -1, 7, 2, 2);
 }
 
-static void *rc_font_origamimommy()
+static void *rc_font_origamimommy(void)
 {
   return rc_grc_font_generic("origamimommy", 8, 10, 33, -2, -2, 8, 1, 0);
 }
 
-static void *rc_font_pcsenior()
+static void *rc_font_pcsenior(void)
 {
   return rc_grc_font_generic("pcsenior", 8, 8, 33, 0, 0, 7, 2, 0);
 }
 
-static void *rc_font_pixelintv()
+static void *rc_font_pixelintv(void)
 {
   return rc_grc_font_generic("pixelintv", 8, 12, 33, 0, -4, 10, 5, 1);
 }
 
-static void *rc_font_pressstart2p()
+static void *rc_font_pressstart2p(void)
 {
   return rc_grc_font_generic("pressstart2p", 8, 8, 33, 0, 0, 7, 2, 0);
 }
 
-static void *rc_font_smwtextnc()
+static void *rc_font_smwtextnc(void)
 {
   return rc_grc_font_generic("smwtextnc", 12, 8, 33, -4, 0, 7, 2, 3);
 }
 
-static void *rc_font_werdnasreturn()
+static void *rc_font_werdnasreturn(void)
 {
   return rc_grc_font_generic("werdnasreturn", 8, 12, 33, 0, -4, 11, 6, 1);
 }
 
-static void *rc_texture_crosshair()
+static void *rc_icon_amount(void)
 {
-  void *p_t;
-  grc_resource_get("crosshair", &p_t, NULL);
-  struct grc_texture *t = p_t;
-  struct gfx_texdesc td_crosshair =
-  {
-    t->im_fmt, t->im_siz, (uint32_t)&t->texture_data,
-    t->tile_width, t->tile_height, t->tiles_x, t->tiles_y,
-    GFX_FILE_DRAM, 0,
-  };
-  return gfx_texture_load(&td_crosshair, NULL);
+  return resource_load_grc_texture("amount_icons");
+}
+
+static void *rc_texture_crosshair(void)
+{
+  return resource_load_grc_texture("crosshair");
 }
 
 /* resource destructors */
-static void rd_font_generic(enum resource_id resource)
+static void rd_font_generic(void *data)
 {
-  struct gfx_font *font = res_data[resource];
+  struct gfx_font *font = data;
   gfx_texture_free(font->texture);
   free(font);
 }
 
-static void rd_zfont_nes()
-{
-  rd_font_generic(RES_ZFONT_NES);
-}
-
-static void rd_font_fipps()
-{
-  rd_font_generic(RES_FONT_FIPPS);
-}
-
-static void rd_font_notalot35()
-{
-  rd_font_generic(RES_FONT_NOTALOT35);
-}
-
-static void rd_font_origamimommy()
-{
-  rd_font_generic(RES_FONT_ORIGAMIMOMMY);
-}
-
-static void rd_font_pcsenior()
-{
-  rd_font_generic(RES_FONT_PCSENIOR);
-}
-
-static void rd_font_pixelintv()
-{
-  rd_font_generic(RES_FONT_PIXELINTV);
-}
-
-static void rd_font_pressstart2p()
-{
-  rd_font_generic(RES_FONT_PRESSSTART2P);
-}
-
-static void rd_font_smwtextnc()
-{
-  rd_font_generic(RES_FONT_SMWTEXTNC);
-}
-
-static void rd_font_werdnasreturn()
-{
-  rd_font_generic(RES_FONT_WERDNASRETURN);
-}
-
 /* resource management tables */
-static void *(*res_ctor[RES_MAX])() =
+static void *(*res_ctor[RES_MAX])(void) =
 {
   rc_zicon_item,
+  rc_zicon_item_gray,
+  rc_zicon_item_24,
+  rc_zicon_note,
+  rc_zicon_action_buttons,
   rc_zfont_nes,
   rc_font_fipps,
   rc_font_notalot35,
@@ -201,21 +212,27 @@ static void *(*res_ctor[RES_MAX])() =
   rc_font_pressstart2p,
   rc_font_smwtextnc,
   rc_font_werdnasreturn,
+  rc_icon_amount,
   rc_texture_crosshair,
 };
 
 static void (*res_dtor[RES_MAX])() =
 {
   gfx_texture_free,
-  rd_zfont_nes,
-  rd_font_fipps,
-  rd_font_notalot35,
-  rd_font_origamimommy,
-  rd_font_pcsenior,
-  rd_font_pixelintv,
-  rd_font_pressstart2p,
-  rd_font_smwtextnc,
-  rd_font_werdnasreturn,
+  gfx_texture_free,
+  gfx_texture_free,
+  gfx_texture_free,
+  gfx_texture_free,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  rd_font_generic,
+  gfx_texture_free,
   gfx_texture_free,
 };
 
@@ -230,7 +247,7 @@ void *resource_get(enum resource_id res)
 void resource_free(enum resource_id res)
 {
   if (res_data[res]) {
-    res_dtor[res]();
+    res_dtor[res](res_data[res]);
     res_data[res] = NULL;
   }
 }

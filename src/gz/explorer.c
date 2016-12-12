@@ -42,10 +42,10 @@ static void execute_scene_config(int config_index, Gfx **p_opa, Gfx **p_xlu)
   static Gfx xlu_buf[2][128];
   Gfx *opa = opa_buf[buf];
   Gfx *opa_p = opa;
-  Gfx *opa_e = opa + 32;
+  Gfx *opa_e = opa + 128;
   Gfx *xlu = xlu_buf[buf];
   Gfx *xlu_p = xlu;
-  Gfx *xlu_e = xlu + 32;
+  Gfx *xlu_e = xlu + 128;
   buf = (buf + 1) % 2;
   /* save graphics context */
   Gfx *z_opa_p = z64_ctxt.gfx->poly_opa_disp_p;
@@ -58,7 +58,7 @@ static void execute_scene_config(int config_index, Gfx **p_opa, Gfx **p_xlu)
   z64_ctxt.gfx->poly_xlu_disp_p = xlu_p;
   z64_ctxt.gfx->poly_xlu_disp_e = xlu_e;
   /* execute config */
-  z64_scene_config_table[config_index](&z64_ctxt);
+  z64_scene_config_table[config_index](&z64_game);
   /* retrieve updated pointers */
   opa_p = z64_ctxt.gfx->poly_opa_disp_p;
   xlu_p = z64_ctxt.gfx->poly_xlu_disp_p;
@@ -110,7 +110,7 @@ static void draw_crosshair(struct menu_item *item)
   guMtxF2L(&mf, &m);
   Mtx *p_latz_mtx = gfx_data_append(&m, sizeof(m));
   {
-    guRotateF(&mt, -M_PI / 2, 0.f, 1.f, 0.f);
+    guRotateF(&mt, -M_PI / 2.f, 0.f, 1.f, 0.f);
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
@@ -189,25 +189,13 @@ static void draw_crosshair(struct menu_item *item)
 static int think_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
-  /* handle input */
-  static uint16_t pad_prev = BUTTON_L;
-  uint16_t pad = z64_input_direct.pad;
-  uint16_t pad_pressed = (pad_prev ^ pad) & pad;
-  pad_prev = pad;
-  if (pad & BUTTON_R) {
-    if (pad_pressed & BUTTON_D_UP)
-      ++data->room_next;
-    if (pad_pressed & BUTTON_D_DOWN)
-      --data->room_next;
-    if (data->room_next >= data->no_rooms)
-      data->room_next = 0;
-    else if (data->room_next < 0)
-      data->room_next = data->no_rooms - 1;
-  }
   /* handle scene changes */
-  data->scene_next = z64_game.scene_index;
+  if (data->scene_index != z64_game.scene_index) {
+    data->scene_next = z64_game.scene_index;
+    data->room_next = z64_game.room_index;
+  }
   if ((data->scene_index != data->scene_next ||
-      data->room_index != data->room_next) &&
+       data->room_index != data->room_next) &&
       data->state == STATE_RENDER)
     data->state = STATE_UNLOAD;
   return 0;
@@ -259,7 +247,7 @@ static int draw_proc(struct menu_item *item,
       if (data->scene_file)
         free(data->scene_file);
       data->scene_index = data->scene_next;
-      data->room_index = 0xFF;
+      data->room_index = -1;
       z64_scene_table_t *scene_entry = &z64_scene_table[data->scene_index];
       uint32_t scene_vrom_start = scene_entry->scene_vrom_start;
       uint32_t scene_vrom_end = scene_entry->scene_vrom_end;
@@ -279,10 +267,6 @@ static int draw_proc(struct menu_item *item,
         free(data->room_file);
         zu_mesh_destroy(&data->room_mesh);
       }
-      if (data->room_next >= data->no_rooms)
-        data->room_next = 0;
-      else if (data->room_next < 0)
-        data->room_next = data->no_rooms - 1;
       data->room_index = data->room_next;
       uint32_t room_vrom_start = room_files[data->room_index].vrom_start;
       uint32_t room_vrom_end = room_files[data->room_index].vrom_end;
@@ -328,8 +312,7 @@ static int draw_proc(struct menu_item *item,
     /* initialize rcp for rendering rooms */
     static void *zbuf = NULL;
     if (!zbuf)
-      zbuf = memalign(64, sizeof(int16_t) *
-                      Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
+      zbuf = memalign(64, 2 * Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
     gfx_disp
     (
       /* clear z buffer */
@@ -378,7 +361,7 @@ static int draw_proc(struct menu_item *item,
       Mtx m;
       MtxF mf;
       MtxF mt;
-      guPerspectiveF(&mf, NULL, 45,
+      guPerspectiveF(&mf, NULL, atanf(2.f),
                      (float)Z64_SCREEN_WIDTH / (float)Z64_SCREEN_HEIGHT,
                      50.f, 5000.f, 1.f);
       {
@@ -386,7 +369,7 @@ static int draw_proc(struct menu_item *item,
         guMtxCatF(&mt, &mf, &mf);
       }
       {
-        guRotateF(&mt, M_PI / 6, 1.f, 0.f, 0.f);
+        guRotateF(&mt, M_PI / 6.f, 1.f, 0.f, 0.f);
         guMtxCatF(&mt, &mf, &mf);
       }
       {
@@ -413,10 +396,11 @@ static int draw_proc(struct menu_item *item,
                           G_MTX_MODELVIEW | G_MTX_LOAD));
     }
     /* configure lights */
-    static Lights2 lights = gdSPDefLights2(0x80, 0x80, 0x80,
-                                           0xC0, 0xC0, 0xC0, 127,  0, 0,
-                                           0xA0, 0xA0, 0xA0, -127, 0, 0);
-    gfx_disp(gsSPSetLights2(lights));
+    static Lights3 lights = gdSPDefLights3(0x40, 0x40, 0x40,
+                                           0xD0, 0xD0, 0xD0, 127, 0, 0,
+                                           0xA0, 0xA0, 0xA0, 0, 127, 0,
+                                           0x70, 0x70, 0x70, -127, 0, 0);
+    gfx_disp(gsSPSetLights3(lights));
     /* create scene config dlists */
     Gfx *opa;
     Gfx *xlu;
@@ -435,18 +419,29 @@ static int draw_proc(struct menu_item *item,
     }
     draw_crosshair(item);
     /* restore rcp modes */
-    gfx_mode_init(G_TF_POINT, G_ON);
-    gfx_disp(gsDPSetScissor(G_SC_NON_INTERLACE, 0, 0,
-                            Z64_SCREEN_WIDTH, Z64_SCREEN_HEIGHT));
+    gfx_mode_init();
+    /* draw info */
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0,
+                                                draw_params->alpha));
+    gfx_printf(draw_params->font, 36, 44, "scene %i", data->scene_index);
+    gfx_printf(draw_params->font, 36, 44 + menu_get_cell_height(item->owner, 1),
+               "room  %i", data->room_index);
   }
   /* wait for rendering to finish before unloading */
   if (data->state == STATE_UNLOAD)
     data->state = STATE_LOAD;
-  /* draw info */
-  gfx_mode_color(0xC0, 0xC0, 0xC0, draw_params->alpha);
-  gfx_printf(draw_params->font, 36, 44, "scene %i", data->scene_index);
-  gfx_printf(draw_params->font, 36, 44 + menu_get_cell_height(item->owner, 1),
-             "room  %i", data->room_index);
+  return 1;
+}
+
+static int navigate_proc(struct menu_item *item, enum menu_navigation nav)
+{
+  struct item_data *data = item->data;
+  if (data->state == STATE_RENDER && (z64_input_direct.pad & BUTTON_R)) {
+    if (nav == MENU_NAVIGATE_UP)
+      data->room_next = (data->room_next + 1) % data->no_rooms;
+    else if (nav == MENU_NAVIGATE_DOWN)
+      data->room_next = (data->room_next + data->no_rooms - 1) % data->no_rooms;
+  }
   return 1;
 }
 
@@ -454,8 +449,8 @@ static int activate_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->room_index != z64_game.room_index) {
-    z64_LoadRoom(&z64_ctxt, &z64_game.room_index, data->room_index);
-    z64_UnloadRoom(&z64_ctxt, &z64_game.room_index);
+    z64_LoadRoom(&z64_game, &z64_game.room_index, data->room_index);
+    z64_UnloadRoom(&z64_game, &z64_game.room_index);
   }
   z64_xyz_t pos = {data->x, data->y, data->z};
   z64_link.common.pos_1 = z64_link.common.pos_2 = pos;
@@ -476,10 +471,12 @@ void explorer_create(struct menu *menu)
   data->state = STATE_LOAD;
   data->scene_index = -1;
   data->scene_file = NULL;
+  data->room_index = -1;
   data->room_file = NULL;
   data->scale = .5f;
   item->data = data;
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
+  item->navigate_proc = navigate_proc;
   item->activate_proc = activate_proc;
 }

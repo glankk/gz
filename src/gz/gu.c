@@ -22,44 +22,44 @@ void guMtxIdentF(MtxF *mf)
 void guPerspectiveF(MtxF *mf, uint16_t *perspNorm, float fovy, float aspect,
                     float near, float far, float scale)
 {
-  float cot = cos(fovy/2)/sin(fovy/2);
-  mf->xx = cot/aspect*scale;
-  mf->xy = 0;
-  mf->xz = 0;
-  mf->xw = 0;
-  mf->yx = 0;
-  mf->yy = cot*scale;
-  mf->yz = 0;
-  mf->yw = 0;
-  mf->zx = 0;
-  mf->zy = 0;
-  mf->zz = (near+far)/(near-far)*scale;
-  mf->zw = -1*scale;
-  mf->wx = 0;
-  mf->wy = 0;
-  mf->wz = 2*near*far/(near-far)*scale;
-  mf->ww = 0;
+  float cot = cos(fovy / 2.f) / sin(fovy / 2.f);
+  mf->xx = cot / aspect * scale;
+  mf->xy = 0.f;
+  mf->xz = 0.f;
+  mf->xw = 0.f;
+  mf->yx = 0.f;
+  mf->yy = cot * scale;
+  mf->yz = 0.f;
+  mf->yw = 0.f;
+  mf->zx = 0.f;
+  mf->zy = 0.f;
+  mf->zz = (near + far) / (near - far) * scale;
+  mf->zw = -1.f * scale;
+  mf->wx = 0.f;
+  mf->wy = 0.f;
+  mf->wz = 2.f * near * far / (near - far) * scale;
+  mf->ww = 0.f;
 }
 
 void guMtxCatF(const MtxF *m, const MtxF *n, MtxF *r)
 {
   MtxF t;
-  t.xx = m->xx*n->xx+m->xy*n->yx+m->xz*n->zx+m->xw*n->wx;
-  t.xy = m->xx*n->xy+m->xy*n->yy+m->xz*n->zy+m->xw*n->wy;
-  t.xz = m->xx*n->xz+m->xy*n->yz+m->xz*n->zz+m->xw*n->wz;
-  t.xw = m->xx*n->xw+m->xy*n->yw+m->xz*n->zw+m->xw*n->ww;
-  t.yx = m->yx*n->xx+m->yy*n->yx+m->yz*n->zx+m->yw*n->wx;
-  t.yy = m->yx*n->xy+m->yy*n->yy+m->yz*n->zy+m->yw*n->wy;
-  t.yz = m->yx*n->xz+m->yy*n->yz+m->yz*n->zz+m->yw*n->wz;
-  t.yw = m->yx*n->xw+m->yy*n->yw+m->yz*n->zw+m->yw*n->ww;
-  t.zx = m->zx*n->xx+m->zy*n->yx+m->zz*n->zx+m->zw*n->wx;
-  t.zy = m->zx*n->xy+m->zy*n->yy+m->zz*n->zy+m->zw*n->wy;
-  t.zz = m->zx*n->xz+m->zy*n->yz+m->zz*n->zz+m->zw*n->wz;
-  t.zw = m->zx*n->xw+m->zy*n->yw+m->zz*n->zw+m->zw*n->ww;
-  t.wx = m->wx*n->xx+m->wy*n->yx+m->wz*n->zx+m->ww*n->wx;
-  t.wy = m->wx*n->xy+m->wy*n->yy+m->wz*n->zy+m->ww*n->wy;
-  t.wz = m->wx*n->xz+m->wy*n->yz+m->wz*n->zz+m->ww*n->wz;
-  t.ww = m->wx*n->xw+m->wy*n->yw+m->wz*n->zw+m->ww*n->ww;
+  t.xx = m->xx * n->xx + m->xy * n->yx + m->xz * n->zx + m->xw * n->wx;
+  t.xy = m->xx * n->xy + m->xy * n->yy + m->xz * n->zy + m->xw * n->wy;
+  t.xz = m->xx * n->xz + m->xy * n->yz + m->xz * n->zz + m->xw * n->wz;
+  t.xw = m->xx * n->xw + m->xy * n->yw + m->xz * n->zw + m->xw * n->ww;
+  t.yx = m->yx * n->xx + m->yy * n->yx + m->yz * n->zx + m->yw * n->wx;
+  t.yy = m->yx * n->xy + m->yy * n->yy + m->yz * n->zy + m->yw * n->wy;
+  t.yz = m->yx * n->xz + m->yy * n->yz + m->yz * n->zz + m->yw * n->wz;
+  t.yw = m->yx * n->xw + m->yy * n->yw + m->yz * n->zw + m->yw * n->ww;
+  t.zx = m->zx * n->xx + m->zy * n->yx + m->zz * n->zx + m->zw * n->wx;
+  t.zy = m->zx * n->xy + m->zy * n->yy + m->zz * n->zy + m->zw * n->wy;
+  t.zz = m->zx * n->xz + m->zy * n->yz + m->zz * n->zz + m->zw * n->wz;
+  t.zw = m->zx * n->xw + m->zy * n->yw + m->zz * n->zw + m->zw * n->ww;
+  t.wx = m->wx * n->xx + m->wy * n->yx + m->wz * n->zx + m->ww * n->wx;
+  t.wy = m->wx * n->xy + m->wy * n->yy + m->wz * n->zy + m->ww * n->wy;
+  t.wz = m->wx * n->xz + m->wy * n->yz + m->wz * n->zz + m->ww * n->wz;
+  t.ww = m->wx * n->xw + m->wy * n->yw + m->wz * n->zw + m->ww * n->ww;
   *r = t;
 }
 
@@ -67,17 +67,17 @@ void guRotateF(MtxF *mf, float a, float x, float y, float z)
 {
   float s = sin(a);
   float c = cos(a);
-  mf->xx = x*x+c*(1.f-x*x);
-  mf->xy = x*y*(1.f-c)+z*s;
-  mf->xz = x*z*(1.f-c)-y*s;
+  mf->xx = x * x + c * (1.f - x * x);
+  mf->xy = x * y * (1.f - c) + z * s;
+  mf->xz = x * z * (1.f - c) - y * s;
   mf->xw = 0.f;
-  mf->yx = y*x*(1.f-c)-z*s;
-  mf->yy = y*y+c*(1.f-y*y);
-  mf->yz = y*z*(1.f-c)+x*s;
+  mf->yx = y * x * (1.f - c) - z * s;
+  mf->yy = y * y + c * (1.f - y * y);
+  mf->yz = y * z * (1.f - c) + x * s;
   mf->yw = 0.f;
-  mf->zx = z*x*(1.f-c)+y*s;
-  mf->zy = z*y*(1.f-c)-x*s;
-  mf->zz = z*z+c*(1.f-z*z);
+  mf->zx = z * x * (1.f - c) + y * s;
+  mf->zy = z * y * (1.f - c) - x * s;
+  mf->zz = z * z + c * (1.f - z * z);
   mf->zw = 0.f;
   mf->wx = 0.f;
   mf->wy = 0.f;

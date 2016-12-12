@@ -10,7 +10,7 @@ override CPPFLAGS  += -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-
 override INCLUDE   += -I $(N64ROOT)/include
 LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
 override LDFLAGS   += -T $(LDSCRIPT) -nostdlib -O3 -flto -Wl,--gc-sections
-override LDLIBS    += -lstdc++ -lsupc++ -lc -lg -lm -lgcc -lnosys
+override LDLIBS    += -lstdc++ -lsupc++ -lg -lm -lgcc -lc -lnosys
 CPPFLAGS_DEBUG      = -fno-lto -g
 LDSCRIPT_DEBUG      = $(N64ROOT)/ldscripts/gl-n64-debug.ld
 LDFLAGS_DEBUG       =
@@ -18,7 +18,7 @@ LDLIBS_DEBUG        =
 LUAFILE             = $(EMUDIR)/Lua/patch-data.lua
 RESDESC             = $(RESDIR)/resources.json
 GZ_VERSIONS         = oot-1.0 oot-1.1 oot-1.2
-GZ_ADDRESS          = 80600000
+GZ_ADDRESS          = 80400060
 LDR_ADDRESS         = 80000400
 SRCDIR              = src
 RESDIR              = res
@@ -66,7 +66,7 @@ define bin_template =
  $(1)-debug         : CPPFLAGS += $$(CPPFLAGS_DEBUG)
  $(1)-debug         : LDSCRIPT  = $$(LDSCRIPT_DEBUG)
  $(1)-debug         : LDFLAGS  += $$(LDFLAGS_DEBUG)
- $(1)-debug         : LDLIBS    = $$(LDLIBS_DEBUG) $$(LDLIBS)
+ $(1)-debug         : LDLIBS   += $$(LDLIBS_DEBUG)
  $$(BUILD-$(1))     : $$(BIN-$(1))
  $$(CLEAN-$(1))     :
 	rm -rf $$(OBJDIR-$(1)) $$(BINDIR-$(1))

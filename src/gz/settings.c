@@ -1,36 +1,34 @@
+#include <stdint.h>
+#include <string.h>
 #include "resource.h"
 #include "settings.h"
 #include "zu.h"
 
-#define SETTINGS_ADDRESS 0x7A00
-#define SETTINGS_MAXSIZE 0x0600
-#define SETTINGS_VERSION 0x0000
-
-_Static_assert(sizeof(struct settings) < SETTINGS_MAXSIZE,
+_Static_assert(SETTINGS_PROFILE_MAX != 0,
                "settings data size exceeds sram capacity");
 
 static _Alignas(16)
 struct settings       settings_store;
 struct settings_data *settings = &settings_store.data;
 
-static uint16_t settings_checksum_compute()
+static uint16_t settings_checksum_compute(struct settings *settings)
 {
   uint16_t checksum = 0;
-  uint16_t *p = (void*)&settings_store.data;
-  uint16_t *e = p + sizeof(settings_store.data) / sizeof(*p);
+  uint16_t *p = (void*)&settings->data;
+  uint16_t *e = p + sizeof(settings->data) / sizeof(*p);
   while (p < e)
     checksum += *p++;
   return checksum;
 }
 
-static int settings_validate()
+static _Bool settings_validate(struct settings *settings)
 {
-  return settings_store.header.version == SETTINGS_VERSION &&
-         settings_store.header.data_size == sizeof(settings_store.data) &&
-         settings_store.header.data_checksum == settings_checksum_compute();
+  return settings->header.version == SETTINGS_VERSION &&
+         settings->header.data_size == sizeof(settings->data) &&
+         settings->header.data_checksum == settings_checksum_compute(settings);
 }
 
-void settings_load_default()
+void settings_load_default(void)
 {
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
@@ -47,16 +45,37 @@ void settings_load_default()
   d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
   d->lag_counter_y = 20;
   d->no_watches = 0;
+  for (int i = 0; i < CHEAT_MAX; ++i)
+    d->cheats[i] = 0;
+  for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
+    d->teleport_pos[i].x = 0.f;
+    d->teleport_pos[i].y = 0.f;
+    d->teleport_pos[i].z = 0.f;
+    d->teleport_rot[i] = 0;
+  }
+  d->teleport_slot = 0;
+  d->warp_entrance = 0;
+  d->warp_age = 0;
 }
 
-void settings_save()
+void settings_save(int profile)
 {
-  settings_store.header.data_checksum = settings_checksum_compute();
-  zu_sram_write(&settings_store, SETTINGS_ADDRESS, sizeof(settings_store));
+  uint16_t *checksum = &settings_store.header.data_checksum;
+  *checksum = settings_checksum_compute(&settings_store);
+  zu_sram_write(&settings_store, SETTINGS_ADDRESS + SETTINGS_PADSIZE * profile,
+                sizeof(settings_store));
 }
 
-int settings_load()
+_Bool settings_load(int profile)
 {
-  zu_sram_read(&settings_store, SETTINGS_ADDRESS, sizeof(settings_store));
-  return settings_validate();
+  _Alignas(16)
+  struct settings settings_temp;
+  zu_sram_read(&settings_temp, SETTINGS_ADDRESS + SETTINGS_PADSIZE * profile,
+               sizeof(settings_temp));
+  if (settings_validate(&settings_temp)) {
+    memcpy(&settings_store, &settings_temp, sizeof(settings_temp));
+    return 1;
+  }
+  else
+    return 0;
 }

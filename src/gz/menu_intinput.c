@@ -128,9 +128,7 @@ static int digit_navigate_proc(struct menu_item *item,
     --value;
   else
     return 0;
-  value = value % data->base;
-  if (value < 0)
-    value += data->base;
+  value = (value + data->base) % data->base;
   item->text[0] = int_to_char(value);
   return 1;
 }

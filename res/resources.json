@@ -82,6 +82,13 @@
     "format":       "ia16",
     "tile_height":  8
   },
+  "amount_icons.png":
+  {
+    "type":         "texture",
+    "name":         "amount_icons",
+    "format":       "rgba32",
+    "tile_height":  32
+  },
   "crosshair.png":
   {
     "type":         "texture",

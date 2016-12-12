@@ -21,7 +21,7 @@ if make_result ~= 0 then
 end
 local gz = gru.blob_load("bin/gz/" .. rom_id .. "/gz.bin")
 local payload_rom = fs:prom_tail()
-local payload_ram = 0x80600000 - 0x60
+local payload_ram = 0x80400060 - 0x60
 local payload_size = gz:size() + 0x60
 local _,_,make_result = os.execute(string.format("make cleanldr && make ldr " .. 
                                                  "CPPFLAGS='-DDMA_ROM=0x%08X -DDMA_RAM=0x%08X -DDMA_SIZE=0x%08X'",
@@ -30,7 +30,7 @@ if make_result ~= 0 then
   error("failed to build ldr", 0)
 end
 print("inserting payload")
-gru.gsc_load(rom_id .. "/patch/bss_patch.gsc"):apply_be(patched_rom)
+gru.gsc_load(rom_id .. "/patch/mem_patch.gsc"):apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)
 patched_rom:write(0x1000, ldr)

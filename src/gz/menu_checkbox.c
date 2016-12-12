@@ -30,10 +30,7 @@ static int draw_proc(struct menu_item *item,
                      struct menu_draw_params *draw_params)
 {
   struct item_data *data = item->data;
-  gfx_mode_color((draw_params->color >> 16) & 0xFF,
-                 (draw_params->color >> 8)  & 0xFF,
-                 (draw_params->color >> 0)  & 0xFF,
-                 draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
   static struct gfx_texture *texture = NULL;
   if (!texture)
     texture = resource_load_grc_texture("checkbox");
@@ -42,16 +39,16 @@ static int draw_proc(struct menu_item *item,
   {
     texture,
     data->anim_state == 0 ? 0 : 1,
-    draw_params->x + 1 +
+    draw_params->x +
     (cw - texture->tile_width) / 2,
-    draw_params->y - 1 +
-    (draw_params->font->median - draw_params->font->baseline -
-     texture->tile_height) / 2,
+    draw_params->y -
+    (gfx_font_xheight(draw_params->font) + texture->tile_height + 1) / 2,
     1.f, 1.f,
   };
   gfx_sprite_draw(&sprite);
   if ((data->anim_state > 0) != data->state) {
-    gfx_mode_color(0xFF, 0xFF, 0xFF, draw_params->alpha);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF,
+                                                draw_params->alpha));
     sprite.texture_tile = 2;
     gfx_sprite_draw(&sprite);
   }

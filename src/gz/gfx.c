@@ -6,105 +6,142 @@
 #include <mips.h>
 #include <n64.h>
 #include "gfx.h"
-#include "zu.h"
 #include "z64.h"
+#include "zu.h"
 
-#define         GFX_DISP_SIZE 0xC000
-Gfx            *gfx_disp;
-Gfx            *gfx_disp_w;
-Gfx            *gfx_disp_p;
-Gfx            *gfx_disp_e;
+#define           GFX_DISP_SIZE     0xC000
+static Gfx       *gfx_disp;
+static Gfx       *gfx_disp_w;
+static Gfx       *gfx_disp_p;
+static Gfx       *gfx_disp_e;
 
-static _Bool    gfx_drop_shadow = 0;
-static uint8_t  gfx_r = 0xFF;
-static uint8_t  gfx_g = 0xFF;
-static uint8_t  gfx_b = 0xFF;
-static uint8_t  gfx_a = 0xFF;
+#define           GFX_STACK_LENGTH  8
+static uint64_t   gfx_modes[GFX_MODE_ALL];
+static uint64_t   gfx_mode_stack[GFX_MODE_ALL][GFX_STACK_LENGTH];
+static int        gfx_mode_stack_pos[GFX_MODE_ALL] = {0};
+static _Bool      gfx_synced = 0;
 
-const struct gfx_colormatrix gfx_cm_desaturate =
+static inline void gfx_sync(void)
 {
-  0.3086, 0.6094, 0.0820, 0.,
-  0.3086, 0.6094, 0.0820, 0.,
-  0.3086, 0.6094, 0.0820, 0.,
-  0.,     0.,     0.,     1.,
-};
-
-void gfx_mode_init(int filter, _Bool blend)
-{
-  static _Bool alloc = 1;
-  if (alloc) {
-    alloc = 0;
-    gfx_disp = malloc(GFX_DISP_SIZE);
-    gfx_disp_w = malloc(GFX_DISP_SIZE);
-    gfx_disp_p = gfx_disp;
-    gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
-                 sizeof(*gfx_disp);
+  if (!gfx_synced) {
+    gDPPipeSync(gfx_disp_p++);
+    gfx_synced = 1;
   }
-  Gfx g_blend[] =
-  {
-    gsDPSetCombineMode(G_CC_DECALRGBA,
-                       G_CC_DECALRGBA),
-    gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
-                       G_CC_MODULATERGBA_PRIM),
-  };
-  gfx_disp
-  (
-    gsDPPipeSync(),
-    gsSPClearGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
-                          G_CULL_BOTH | G_FOG | G_LIGHTING),
-    gsDPSetColorDither(G_CD_DISABLE),
-    gsDPSetCycleType(G_CYC_1CYCLE),
-    gsDPSetTextureFilter(filter),
-    gsDPSetTextureConvert(G_TC_FILT),
-    gsDPSetTexturePersp(G_TP_NONE),
-    gsDPSetTextureLOD(G_TL_TILE),
-    gsDPSetTextureLUT(G_TT_NONE),
-    gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
-    g_blend[blend],
-  );
 }
 
-void gfx_mode_default()
+const MtxF gfx_cm_desaturate = guDefMtxF(0.3086f, 0.6094f, 0.0820f, 0.f,
+                                         0.3086f, 0.6094f, 0.0820f, 0.f,
+                                         0.3086f, 0.6094f, 0.0820f, 0.f,
+                                         0.f,     0.f,     0.f,     1.f);
+
+void gfx_start(void)
 {
-  gfx_mode_init(G_TF_BILERP, 0);
+  gfx_disp = malloc(GFX_DISP_SIZE);
+  gfx_disp_w = malloc(GFX_DISP_SIZE);
+  gfx_disp_p = gfx_disp;
+  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
+               sizeof(*gfx_disp);
 }
 
-void gfx_mode_filter(int filter)
+void gfx_mode_init(void)
 {
-  gfx_disp
-  (
-    gsDPPipeSync(),
-    gsDPSetTextureFilter(filter),
-  );
+  gfx_sync();
+  gSPClearGeometryMode(gfx_disp_p++, G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
+                       G_CULL_BOTH | G_FOG | G_LIGHTING);
+  gDPSetScissor(gfx_disp_p++, G_SC_NON_INTERLACE,
+                0, 0, Z64_SCREEN_WIDTH, Z64_SCREEN_HEIGHT);
+  gDPSetColorDither(gfx_disp_p++, G_CD_DISABLE);
+  gDPSetCycleType(gfx_disp_p++, G_CYC_1CYCLE);
+  gDPSetTextureConvert(gfx_disp_p++, G_TC_FILT);
+  gDPSetTexturePersp(gfx_disp_p++, G_TP_NONE);
+  gDPSetTextureLOD(gfx_disp_p++, G_TL_TILE);
+  gDPSetTextureLUT(gfx_disp_p++, G_TT_NONE);
+  gDPSetRenderMode(gfx_disp_p++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+  gfx_mode_apply(GFX_MODE_ALL);
 }
 
-void gfx_mode_blend(_Bool blend)
+void gfx_mode_configure(enum gfx_mode mode, uint64_t value)
 {
-  Gfx g_blend[] =
-  {
-    gsDPSetCombineMode(G_CC_DECALRGBA,
-                       G_CC_DECALRGBA),
-    gsDPSetCombineMode(G_CC_MODULATERGBA_PRIM,
-                       G_CC_MODULATERGBA_PRIM),
-  };
-  gfx_disp
-  (
-    gsDPPipeSync(),
-    g_blend[blend],
-  );
+  gfx_modes[mode] = value;
 }
 
-void gfx_mode_drop_shadow(_Bool enable)
+void gfx_mode_apply(enum gfx_mode mode)
 {
-  gfx_drop_shadow = enable;
+  Gfx dl[GFX_MODE_ALL];
+  Gfx *pdl = dl;
+  switch (mode) {
+    case GFX_MODE_ALL:
+    case GFX_MODE_FILTER: {
+      gDPSetTextureFilter(pdl++, gfx_modes[GFX_MODE_FILTER]);
+      if (mode != GFX_MODE_ALL)
+        break;
+    }
+    case GFX_MODE_COMBINE: {
+      gDPSetCombine(pdl++, gfx_modes[GFX_MODE_COMBINE]);
+      if (mode != GFX_MODE_ALL)
+        break;
+    }
+    case GFX_MODE_COLOR: {
+      uint32_t c = gfx_modes[GFX_MODE_COLOR];
+      gDPSetPrimColor(pdl++, 0, 0, (c >> 24) & 0xFF, (c >> 16) & 0xFF,
+                                   (c >> 8)  & 0xFF, (c >> 0)  & 0xFF);
+      if (mode != GFX_MODE_ALL)
+        break;
+    }
+    default:
+      break;
+  }
+  size_t s = pdl - dl;
+  if (s > 0) {
+    gfx_sync();
+    memcpy(gfx_disp_p, dl, s * sizeof(*dl));
+    gfx_disp_p += s;
+  }
 }
 
-void gfx_mode_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void gfx_mode_set(enum gfx_mode mode, uint64_t value)
 {
-  gfx_r = r;
-  gfx_g = g;
-  gfx_b = b;
-  gfx_a = a;
+  gfx_mode_configure(mode, value);
+  gfx_mode_apply(mode);
+}
+
+void gfx_mode_push(enum gfx_mode mode)
+{
+  if (mode == GFX_MODE_ALL) {
+    for (int i = 0; i < GFX_MODE_ALL; ++i) {
+      int *p = &gfx_mode_stack_pos[i];
+      gfx_mode_stack[i][*p] = gfx_modes[i];
+      *p = (*p + 1) % GFX_STACK_LENGTH;
+    }
+  }
+  else {
+    int *p = &gfx_mode_stack_pos[mode];
+    gfx_mode_stack[mode][*p] = gfx_modes[mode];
+    *p = (*p + 1) % GFX_STACK_LENGTH;
+  }
+}
+
+void gfx_mode_pop(enum gfx_mode mode)
+{
+  if (mode == GFX_MODE_ALL) {
+    for (int i = 0; i < GFX_MODE_ALL; ++i) {
+      int *p = &gfx_mode_stack_pos[mode];
+      *p = (*p + GFX_STACK_LENGTH - 1) % GFX_STACK_LENGTH;
+      gfx_mode_set(i, gfx_mode_stack[i][*p]);
+    }
+  }
+  else {
+    int *p = &gfx_mode_stack_pos[mode];
+    *p = (*p + GFX_STACK_LENGTH - 1) % GFX_STACK_LENGTH;
+    gfx_mode_set(mode, gfx_mode_stack[mode][*p]);
+  }
+}
+
+void gfx_mode_replace(enum gfx_mode mode, uint64_t value)
+{
+  gfx_mode_push(mode);
+  gfx_mode_configure(mode, value);
+  gfx_mode_apply(mode);
 }
 
 Gfx *gfx_disp_append(Gfx *disp, size_t size)
@@ -112,6 +149,7 @@ Gfx *gfx_disp_append(Gfx *disp, size_t size)
   Gfx *p = gfx_disp_p;
   memcpy(gfx_disp_p, disp, size);
   gfx_disp_p += (size + sizeof(*gfx_disp_p) - 1) / sizeof(*gfx_disp_p);
+  gfx_synced = 0;
   return p;
 }
 
@@ -122,7 +160,7 @@ void *gfx_data_append(void *data, size_t size)
   return gfx_disp_e;
 }
 
-void gfx_flush()
+void gfx_flush(void)
 {
   gSPEndDisplayList(gfx_disp_p++);
   gSPDisplayList(z64_ctxt.gfx->overlay_disp_p++, gfx_disp);
@@ -132,6 +170,7 @@ void gfx_flush()
   gfx_disp_p = gfx_disp;
   gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
                sizeof(*gfx_disp);
+  gfx_synced = 0;
 }
 
 void gfx_texldr_init(struct gfx_texldr *texldr)
@@ -158,7 +197,7 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
   texture->tiles_x = texdesc->tiles_x;
   texture->tiles_y = texdesc->tiles_y;
   texture->tile_size = ((texture->tile_width * texture->tile_height *
-                        G_SIZ_BITS(texture->im_siz) + 7) / 8 + 63) / 64 * 64;
+                         G_SIZ_BITS(texture->im_siz) + 7) / 8 + 63) / 64 * 64;
   size_t texture_size = texture->tile_size *
                         texture->tiles_x * texture->tiles_y;
   void *texture_data = NULL;
@@ -202,6 +241,29 @@ void gfx_texldr_destroy(struct gfx_texldr *texldr)
 {
   if (texldr->file_data)
     free(texldr->file_data);
+}
+
+struct gfx_texture *gfx_texture_create(g_ifmt_t im_fmt, g_isiz_t im_siz,
+                                       int tile_width, int tile_height,
+                                       int tiles_x, int tiles_y)
+{
+  struct gfx_texture *texture = malloc(sizeof(*texture));
+  if (!texture)
+    return texture;
+  texture->tile_size = ((tile_width * tile_height *
+                         G_SIZ_BITS(im_siz) + 7) / 8 + 63) / 64 * 64;
+  texture->data = malloc(tiles_x * tiles_y * texture->tile_size);
+  if (!texture->data) {
+    free(texture);
+    return NULL;
+  }
+  texture->im_fmt = im_fmt;
+  texture->im_siz = im_siz;
+  texture->tile_width = tile_width;
+  texture->tile_height = tile_height;
+  texture->tiles_x = tiles_x;
+  texture->tiles_y = tiles_y;
+  return texture;
 }
 
 struct gfx_texture *gfx_texture_load(const struct gfx_texdesc *texdesc,
@@ -254,8 +316,41 @@ struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
   return dest;
 }
 
+void gfx_texture_copy_tile(struct gfx_texture *dest, int dest_tile,
+                           const struct gfx_texture *src, int src_tile,
+                           _Bool blend)
+{
+  if (src->im_fmt != G_IM_FMT_RGBA || src->im_siz != G_IM_SIZ_32b ||
+      dest->im_fmt != src->im_fmt || dest->im_siz != src->im_siz ||
+      dest->tile_width != src->tile_width ||
+      dest->tile_height != src->tile_height)
+    return;
+  struct rgba32
+  {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+  };
+  size_t tile_pixels = src->tile_width * src->tile_height;
+  struct rgba32 *p_dest = gfx_texture_data(dest, dest_tile);
+  struct rgba32 *p_src = gfx_texture_data(src, src_tile);
+  for (size_t i = 0; i < tile_pixels; ++i) {
+    if (blend) {
+      p_dest->r = p_dest->r + (p_src->r - p_dest->r) * p_src->a / 0xFF;
+      p_dest->g = p_dest->g + (p_src->g - p_dest->g) * p_src->a / 0xFF;
+      p_dest->b = p_dest->b + (p_src->b - p_dest->b) * p_src->a / 0xFF;
+      p_dest->a = p_src->a + (0xFF - p_src->a) * p_dest->a / 0xFF;
+    }
+    else
+      *p_dest = *p_src;
+    ++p_dest;
+    ++p_src;
+  }
+}
+
 void gfx_texture_colortransform(struct gfx_texture *texture,
-                                const struct gfx_colormatrix *matrix)
+                                const MtxF *matrix)
 {
   if (texture->im_fmt != G_IM_FMT_RGBA || texture->im_siz != G_IM_SIZ_32b)
     return;
@@ -269,14 +364,14 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
   size_t texture_pixels = texture->tile_width * texture->tile_height *
                           texture->tiles_x * texture->tiles_y;
   struct rgba32 *pixel_data = texture->data;
-  struct gfx_colormatrix m = *matrix;
+  MtxF m = *matrix;
   for (size_t i = 0; i < texture_pixels; ++i)
   {
     struct rgba32 p = pixel_data[i];
-    float r = p.r * m.rr + p.g * m.rg + p.b * m.rb + p.a * m.ra;
-    float g = p.r * m.gr + p.g * m.gg + p.b * m.gb + p.a * m.ga;
-    float b = p.r * m.br + p.g * m.bg + p.b * m.bb + p.a * m.ba;
-    float a = p.r * m.ar + p.g * m.ag + p.b * m.ab + p.a * m.aa;
+    float r = p.r * m.xx + p.g * m.xy + p.b * m.xz + p.a * m.xw;
+    float g = p.r * m.yx + p.g * m.yy + p.b * m.yz + p.a * m.yw;
+    float b = p.r * m.zx + p.g * m.zy + p.b * m.zz + p.a * m.zw;
+    float a = p.r * m.wx + p.g * m.wy + p.b * m.wz + p.a * m.ww;
     struct rgba32 n =
     {
       r < 0x00 ? 0x00 : r > 0xFF ? 0xFF : r,
@@ -291,25 +386,9 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
 void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
 {
   if (texture->im_siz == G_IM_SIZ_4b) {
-    gfx_disp
-    (
-      gsDPLoadTextureTile_4b(gfx_texture_data(texture, texture_tile),
-                             texture->im_fmt,
-                             texture->tile_width, texture->tile_height,
-                             0, 0,
-                             texture->tile_width - 1, texture->tile_height - 1,
-                             0,
-                             G_TX_NOMIRROR | G_TX_WRAP,
-                             G_TX_NOMIRROR | G_TX_WRAP,
-                             G_TX_NOMASK, G_TX_NOMASK,
-                             G_TX_NOLOD, G_TX_NOLOD),
-    );
-  }
-  else {
-    gfx_disp
-    (
-      gsDPLoadTextureTile(gfx_texture_data(texture, texture_tile),
-                          texture->im_fmt, texture->im_siz,
+    gDPLoadTextureTile_4b(gfx_disp_p++,
+                          gfx_texture_data(texture, texture_tile),
+                          texture->im_fmt,
                           texture->tile_width, texture->tile_height,
                           0, 0,
                           texture->tile_width - 1, texture->tile_height - 1,
@@ -317,50 +396,66 @@ void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
                           G_TX_NOMIRROR | G_TX_WRAP,
                           G_TX_NOMIRROR | G_TX_WRAP,
                           G_TX_NOMASK, G_TX_NOMASK,
-                          G_TX_NOLOD, G_TX_NOLOD),
-    );
+                          G_TX_NOLOD, G_TX_NOLOD);
   }
+  else {
+    gDPLoadTextureTile(gfx_disp_p++,
+                       gfx_texture_data(texture, texture_tile),
+                       texture->im_fmt, texture->im_siz,
+                       texture->tile_width, texture->tile_height,
+                       0, 0,
+                       texture->tile_width - 1, texture->tile_height - 1,
+                       0,
+                       G_TX_NOMIRROR | G_TX_WRAP,
+                       G_TX_NOMIRROR | G_TX_WRAP,
+                       G_TX_NOMASK, G_TX_NOMASK,
+                       G_TX_NOLOD, G_TX_NOLOD);
+  }
+  gfx_synced = 1;
 }
 
 void gfx_sprite_draw(const struct gfx_sprite *sprite)
 {
   struct gfx_texture *texture = sprite->texture;
   gfx_rdp_load_tile(texture, sprite->texture_tile);
-  if (gfx_drop_shadow) {
-    gfx_disp
-    (
-      gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
-      gsSPScisTextureRectangle(qs102(sprite->x + 1) & ~3,
-                               qs102(sprite->y + 1) & ~3,
-                               qs102(sprite->x + texture->tile_width *
-                                     sprite->xscale + 1) & ~3,
-                               qs102(sprite->y + texture->tile_height *
-                                     sprite->yscale + 1) & ~3,
-                               G_TX_RENDERTILE,
-                               qu105(0), qu105(0),
-                               qu510(1.f / sprite->xscale),
-                               qu510(1.f / sprite->yscale)),
-      gsDPPipeSync(),
-    );
+  if (gfx_modes[GFX_MODE_DROPSHADOW]) {
+    uint8_t a = gfx_modes[GFX_MODE_COLOR] & 0xFF;
+    a = a * a / 0xFF;
+    gfx_mode_replace(GFX_MODE_COLOR, GPACK_RGBA8888(0x00, 0x00, 0x00, a));
+    gSPScisTextureRectangle(gfx_disp_p++,
+                            qs102(sprite->x + 1) & ~3,
+                            qs102(sprite->y + 1) & ~3,
+                            qs102(sprite->x + texture->tile_width *
+                                  sprite->xscale + 1) & ~3,
+                            qs102(sprite->y + texture->tile_height *
+                                  sprite->yscale + 1) & ~3,
+                            G_TX_RENDERTILE,
+                            qu105(0), qu105(0),
+                            qu510(1.f / sprite->xscale),
+                            qu510(1.f / sprite->yscale));
+    gfx_mode_pop(GFX_MODE_COLOR);
   }
-  gfx_disp
-  (
-    gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
-    gsSPScisTextureRectangle(qs102(sprite->x) & ~3,
-                             qs102(sprite->y) & ~3,
-                             qs102(sprite->x + texture->tile_width *
-                                   sprite->xscale) & ~3,
-                             qs102(sprite->y + texture->tile_height *
-                                   sprite->yscale) & ~3,
-                             G_TX_RENDERTILE,
-                             qu105(0), qu105(0),
-                             qu510(1.f / sprite->xscale),
-                             qu510(1.f / sprite->yscale)),
-  );
+  gfx_sync();
+  gSPScisTextureRectangle(gfx_disp_p++,
+                          qs102(sprite->x) & ~3,
+                          qs102(sprite->y) & ~3,
+                          qs102(sprite->x + texture->tile_width *
+                                sprite->xscale) & ~3,
+                          qs102(sprite->y + texture->tile_height *
+                                sprite->yscale) & ~3,
+                          G_TX_RENDERTILE,
+                          qu105(0), qu105(0),
+                          qu510(1.f / sprite->xscale),
+                          qu510(1.f / sprite->yscale));
+  gfx_synced = 0;
 }
 
-static void draw_chars(const struct gfx_font *font,
-                       int x, int y,
+int gfx_font_xheight(const struct gfx_font *font)
+{
+  return font->baseline - font->median;
+}
+
+static void draw_chars(const struct gfx_font *font, int x, int y,
                        const char *string, size_t length)
 {
   x -= font->x;
@@ -389,21 +484,20 @@ static void draw_chars(const struct gfx_font *font,
         tile_loaded = 1;
         gfx_rdp_load_tile(texture, i);
       }
-      gfx_disp
-      (
-        gsSPScisTextureRectangle(qs102(x + cx),
-                                 qs102(y + cy),
-                                 qs102(x + cx + font->char_width),
-                                 qs102(y + cy + font->char_height),
-                                 G_TX_RENDERTILE,
-                                 qu105(c % font->chars_xtile *
-                                       font->char_width),
-                                 qu105(c / font->chars_xtile *
-                                       font->char_height),
-                                 qu510(1), qu510(1)),
-      );
+      gSPScisTextureRectangle(gfx_disp_p++,
+                              qs102(x + cx),
+                              qs102(y + cy),
+                              qs102(x + cx + font->char_width),
+                              qs102(y + cy + font->char_height),
+                              G_TX_RENDERTILE,
+                              qu105(c % font->chars_xtile *
+                                    font->char_width),
+                              qu105(c / font->chars_xtile *
+                                    font->char_height),
+                              qu510(1), qu510(1));
     }
   }
+  gfx_synced = 0;
 }
 
 void gfx_printf(const struct gfx_font *font, int x, int y,
@@ -417,18 +511,13 @@ void gfx_printf(const struct gfx_font *font, int x, int y,
   if (l > bufsize - 1)
     l = bufsize - 1;
   va_end(args);
-  if (gfx_drop_shadow) {
-    gfx_disp
-    (
-      gsDPPipeSync(),
-      gsDPSetPrimColor(0, 0, 0x00, 0x00, 0x00, gfx_a * gfx_a / 0x100),
-    );
+  if (gfx_modes[GFX_MODE_DROPSHADOW]) {
+    uint8_t a = gfx_modes[GFX_MODE_COLOR] & 0xFF;
+    a = a * a / 0xFF;
+    gfx_mode_replace(GFX_MODE_COLOR, GPACK_RGBA8888(0x00, 0x00, 0x00, a));
     draw_chars(font, x + 1, y + 1, buf, l);
+    gfx_mode_pop(GFX_MODE_COLOR);
   }
-  gfx_disp
-  (
-    gsDPPipeSync(),
-    gsDPSetPrimColor(0, 0, gfx_r, gfx_g, gfx_b, gfx_a),
-  );
-  draw_chars(font, x , y , buf, l);
+  gfx_sync();
+  draw_chars(font, x, y, buf, l);
 }

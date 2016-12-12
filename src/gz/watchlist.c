@@ -45,12 +45,14 @@ static void release_member(struct member_data *member_data)
   member_data->anchored = 0;
   menu_item_enable(member_data->positioning);
   struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-  watch->pxoffset = member_data->position_set ?
-                    member_data->x : menu_item_screen_x(watch);
-  watch->pyoffset = member_data->position_set ?
-                    member_data->y : menu_item_screen_y(watch);
+  if (!member_data->position_set) {
+    member_data->x = menu_item_screen_x(watch);
+    member_data->y = menu_item_screen_y(watch);
+  }
   watch->x = 0;
   watch->y = 0;
+  watch->pxoffset = member_data->x;
+  watch->pyoffset = member_data->y;
   menu_item_transfer(watch, member_data->data->menu_global_watches);
 }
 
@@ -61,10 +63,10 @@ static void anchor_member(struct member_data *member_data)
   member_data->anchored = 1;
   menu_item_disable(member_data->positioning);
   struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-  watch->pxoffset = 0;
-  watch->pyoffset = 0;
   watch->x = 13;
   watch->y = 0;
+  watch->pxoffset = 0;
+  watch->pyoffset = 0;
   menu_item_transfer(watch, member_data->userwatch->imenu);
 }
 
@@ -79,10 +81,7 @@ static int anchor_button_draw_proc(struct menu_item *item,
                                    struct menu_draw_params *draw_params)
 {
   struct member_data *member_data = item->data;
-  gfx_mode_color((draw_params->color >> 16) & 0xFF,
-                 (draw_params->color >> 8)  & 0xFF,
-                 (draw_params->color >> 0)  & 0xFF,
-                 draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
   static struct gfx_texture *texture = NULL;
   if (!texture)
     texture = resource_load_grc_texture("anchor");
@@ -97,9 +96,8 @@ static int anchor_button_draw_proc(struct menu_item *item,
     (member_data->anchor_anim_state > 0) != member_data->anchored ? 0 : 1,
     draw_params->x +
     (cw - texture->tile_width) / 2,
-    draw_params->y +
-    (draw_params->font->median - draw_params->font->baseline -
-     texture->tile_height) / 2,
+    draw_params->y -
+    (gfx_font_xheight(draw_params->font) + texture->tile_height + 1) / 2,
     1.f, 1.f,
   };
   gfx_sprite_draw(&sprite);
@@ -177,13 +175,14 @@ static int add_member(struct item_data *data,
   member_data->anchor_anim_state = 0;
   member_data->x = x;
   member_data->y = y;
-  member_data->position_set = position_set;
+  member_data->position_set = 1;
   menu_add_button_icon(imenu, 0, 0, list_icons, 1, 0xFF0000,
                        remove_button_proc, member_data);
   if (anchored)
     menu_item_disable(member_data->positioning);
   else
     release_member(member_data);
+  member_data->position_set = position_set;
   vector_insert(&data->members, position, 1, &member_data);
   return 1;
 }

@@ -73,6 +73,10 @@
 		<Unit filename="src/gz/gz.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/item_option.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/item_option.h" />
 		<Unit filename="src/gz/menu.c">
 			<Option compilerVar="CC" />
 		</Unit>

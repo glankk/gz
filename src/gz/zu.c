@@ -259,9 +259,9 @@ void zu_vlist_transform(const struct zu_vlist *vlist, const MtxF *mf)
     float x = v->v.ob[0];
     float y = v->v.ob[1];
     float z = v->v.ob[2];
-    v->v.ob[0] = x*mf->xx+y*mf->yx+z*mf->zx+mf->wx;
-    v->v.ob[1] = x*mf->xy+y*mf->yy+z*mf->zy+mf->wy;
-    v->v.ob[2] = x*mf->xz+y*mf->yz+z*mf->zz+mf->wz;
+    v->v.ob[0] = x * mf->xx + y * mf->yx + z * mf->zx + mf->wx;
+    v->v.ob[1] = x * mf->xy + y * mf->yy + z * mf->zy + mf->wy;
+    v->v.ob[2] = x * mf->xz + y * mf->yz + z * mf->zz + mf->wz;
   }
 }
 

@@ -35,15 +35,12 @@ static int draw_proc(struct menu_item *item,
       data->texture_tile,
       draw_params->x +
       (cw - data->texture->tile_width) / 2,
-      draw_params->y +
-      (draw_params->font->median - draw_params->font->baseline -
-       data->texture->tile_height) / 2,
+      draw_params->y - (gfx_font_xheight(draw_params->font) +
+                        data->texture->tile_height + 1) / 2,
       1.f, 1.f,
     };
-    gfx_mode_color((draw_params->color >> 16) & 0xFF,
-                   (draw_params->color >> 8)  & 0xFF,
-                   (draw_params->color >> 0)  & 0xFF,
-                   draw_params->alpha);
+    gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
+                 draw_params->alpha);
     gfx_sprite_draw(&sprite);
     return 1;
   }
