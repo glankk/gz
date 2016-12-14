@@ -697,18 +697,20 @@ typedef struct
   float           unk_01_;                /* 0x000DC */
   char            unk_02_[0x0190];        /* 0x000E0 */
   z64_actor_t    *camera_focus;           /* 0x00270 */
-  char            unk_03_[0x19B8];        /* 0x00274 */
+  char            unk_03_[0x0238];        /* 0x00274 */
+  int16_t         event_flag;             /* 0x004AC */
+  char            unk_04_[0x177E];        /* 0x004AE */
   uint8_t         no_actors_loaded;       /* 0x01C2C */
-  char            unk_04_[0x0003];        /* 0x01C2D */
+  char            unk_05_[0x0003];        /* 0x01C2D */
   struct
   {
     uint32_t      length;
     z64_actor_t  *first;
   }               actor_list[12];         /* 0x01C30 */
-  char            unk_05_[0x0038];        /* 0x01C90 */
+  char            unk_06_[0x0038];        /* 0x01C90 */
   z64_actor_t    *arrow_actor;            /* 0x01CC8 */
   z64_actor_t    *target_actor;           /* 0x01CCC */
-  char            unk_06_[0x0058];        /* 0x01CD0 */
+  char            unk_07_[0x0058];        /* 0x01CD0 */
   uint32_t        switch_flags;           /* 0x01D28 */
   uint32_t        temp_switch_flags;      /* 0x01D2C */
   uint32_t        unk_flags_0;            /* 0x01D30 */
@@ -719,11 +721,12 @@ typedef struct
   uint32_t        unk_flags_3;            /* 0x01D44 */
   uint32_t        unk_flags_4;            /* 0x01D48 */
   void           *title_card_texture;     /* 0x01D4C */
-  char            unk_0C_[0x0007];        /* 0x01D50 */
+  char            unk_08_[0x0007];        /* 0x01D50 */
   uint8_t         title_card_delay;       /* 0x01D57 */
-  char            unk_0D_[0x0010];        /* 0x01D58 */
+  char            unk_09_[0x0010];        /* 0x01D58 */
   void           *cutscene_ptr;           /* 0x01D68 */
-  char            unk_0E_[0xE9E6];        /* 0x01D6C */
+  int8_t          cutscene_state;         /* 0x01D6C */
+  char            unk_0A_[0xE9E5];        /* 0x01D6D */
   struct
   {
     uint8_t       unk_00_;
@@ -739,26 +742,26 @@ typedef struct
     uint8_t       dfnl;
     uint8_t       all;
   }               restriction_flags;      /* 0x10752 */
-  char            unk_0F_[0x155E];        /* 0x1075E */
+  char            unk_0B_[0x155E];        /* 0x1075E */
   int8_t          room_index;             /* 0x11CBC */
-  char            unk_10_[0x000B];        /* 0x11CBD */
+  char            unk_0C_[0x000B];        /* 0x11CBD */
   void           *room_ptr;               /* 0x11CC8 */
-  char            unk_11_[0x0118];        /* 0x11CCC */
+  char            unk_0D_[0x0118];        /* 0x11CCC */
   uint32_t        gameplay_frames;        /* 0x11DE4 */
   uint8_t         link_age;               /* 0x11DE8 */
-  char            unk_12_;                /* 0x11DE9 */
+  char            unk_0E_;                /* 0x11DE9 */
   uint8_t         spawn_index;            /* 0x11DEA */
   uint8_t         no_map_actors;          /* 0x11DEB */
   uint8_t         no_rooms;               /* 0x11DEC */
-  char            unk_13_[0x000B];        /* 0x11DED */
+  char            unk_0F_[0x000B];        /* 0x11DED */
   void           *map_actor_list;         /* 0x11DF8 */
-  char            unk_14_[0x0008];        /* 0x11DFC */
+  char            unk_10_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_15_[0x000D];        /* 0x11E08 */
+  char            unk_11_[0x000D];        /* 0x11E08 */
   int8_t          scene_load_flag;        /* 0x11E15 */
-  char            unk_16_[0x0004];        /* 0x11E16 */
+  char            unk_12_[0x0004];        /* 0x11E16 */
   int16_t         entrance_index;         /* 0x11E1A */
-  char            unk_17_[0x0042];        /* 0x11E1C */
+  char            unk_13_[0x0042];        /* 0x11E1C */
   uint8_t         fadeout_transition;     /* 0x11E5E */
                                           /* 0x11E5F */
 } z64_game_t;
@@ -801,9 +804,11 @@ typedef struct
 #define z64_entrance_table_addr                 0x800F9C90
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
+#define z64_seq_pos_addr                        0x801043B0
 #define z64_file_addr                           0x8011A5D0
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
+#define z64_seq_buf_addr                        0x80124800
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
 
@@ -846,9 +851,11 @@ typedef struct
 #define z64_entrance_table_addr                 0x800F9E50
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
+#define z64_seq_pos_addr                        0x80104570
 #define z64_file_addr                           0x8011A790
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
+#define z64_seq_buf_addr                        0x801249C0
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
 
@@ -891,9 +898,11 @@ typedef struct
 #define z64_entrance_table_addr                 0x800FA2E0
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
+#define z64_seq_pos_addr                        0x801049F0
 #define z64_file_addr                           0x8011AC80
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
+#define z64_seq_buf_addr                        0x801250D0
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0
 

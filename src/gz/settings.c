@@ -58,7 +58,7 @@ void settings_load_default(void)
   d->warp_age = 0;
   d->command_binds[COMMAND_MENU] = BUTTON_R | BUTTON_L;
   d->command_binds[COMMAND_RETURN] = BUTTON_R | BUTTON_D_LEFT;
-  d->command_binds[COMMAND_CLEARCSP] = BUTTON_L | BUTTON_C_UP;
+  d->command_binds[COMMAND_BREAK] = BUTTON_L | BUTTON_C_UP;
   d->command_binds[COMMAND_VOID] = BUTTON_A | BUTTON_B | BUTTON_L;
   d->command_binds[COMMAND_RELOAD] = BUTTON_A | BUTTON_L;
   d->command_binds[COMMAND_FILESELECT] = BUTTON_B | BUTTON_L;

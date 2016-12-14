@@ -163,6 +163,10 @@ int                 menu_item_screen_x(struct menu_item *item);
 int                 menu_item_screen_y(struct menu_item *item);
 struct menu_item   *menu_add_static(struct menu *menu, int x, int y,
                                     const char *text, uint32_t color);
+struct menu_item   *menu_add_static_icon(struct menu *menu, int x, int y,
+                                         struct gfx_texture *texture,
+                                         int texture_tile,
+                                         uint32_t color, float scale);
 struct menu_item   *menu_add_imenu(struct menu *menu, int x, int y,
                                    struct menu **p_imenu);
 

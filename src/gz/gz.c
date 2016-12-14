@@ -320,9 +320,9 @@ static const char *command_names[] =
 {
   "show/hide menu",
   "return from menu",
-  "clear cutscene pointer",
+  "break cutscene",
   "void out",
-  "reload last entrance",
+  "reload scene",
   "file select",
   "levitate",
   "turbo",
@@ -950,7 +950,7 @@ void main_hook()
   if (settings->cheats[CHEAT_FFTIME])
     z64_file.day_time += 0x0100;
   if (settings->cheats[CHEAT_NOMUSIC])
-    z64_file.disable_music_flag = 0x0001;
+    zu_setmusic(0x01);
   if (settings->cheats[CHEAT_USEITEMS])
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
 
@@ -1031,8 +1031,10 @@ void main_hook()
       menu_signal_enter(&menu_main);
       menu_active = 1;
     }
-    if (command_state[COMMAND_CLEARCSP])
-      clear_csp_proc(NULL, NULL);
+    if (command_state[COMMAND_BREAK]) {
+      z64_game.cutscene_state = 0x03;
+      z64_game.event_flag = 0x0000;
+    }
     if (command_state[COMMAND_VOID])
       zu_void();
     if (command_state[COMMAND_RELOAD])
@@ -1326,6 +1328,9 @@ ENTRY void _start()
     static struct menu menu_quest_items;
     menu_add_submenu(&menu_inventory, 0, 2, &menu_quest_items,
                      "quest items");
+    static struct menu menu_amounts;
+    menu_add_submenu(&menu_inventory, 0, 3, &menu_amounts,
+                     "amounts");
 
     menu_init(&menu_equipment_items, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_equipment_items.selector = menu_add_submenu(&menu_equipment_items,
@@ -1578,6 +1583,49 @@ ENTRY void _start()
         item->pyoffset = 2 * 18 + i / 6 * 18;
       }
     }
+    menu_init(&menu_amounts, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_amounts.selector = menu_add_submenu(&menu_amounts, 0, 0, NULL,
+                                             "return");
+    {
+      struct gfx_texture *t_item = resource_get(RES_ZICON_ITEM);
+      struct gfx_texture *t_item_24 = resource_get(RES_ZICON_ITEM_24);
+      menu_add_static_icon(&menu_amounts, 0, 2, t_item, Z64_ITEM_STICK,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 2, 2, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_STICK]);
+      menu_add_static_icon(&menu_amounts, 5, 2, t_item, Z64_ITEM_NUT,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 7, 2, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_NUT]);
+      menu_add_static_icon(&menu_amounts, 10, 2, t_item, Z64_ITEM_BOMB,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 12, 2, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_BOMB]);
+      menu_add_static_icon(&menu_amounts, 0, 4, t_item, Z64_ITEM_BOW,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 2, 4, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_BOW]);
+      menu_add_static_icon(&menu_amounts, 5, 4, t_item, Z64_ITEM_SLINGSHOT,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 7, 4, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_SLINGSHOT]);
+      menu_add_static_icon(&menu_amounts, 10, 4, t_item, Z64_ITEM_BOMBCHU,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 12, 4, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_BOMBCHU]);
+      menu_add_static_icon(&menu_amounts, 0, 6, t_item, Z64_ITEM_BEANS,
+                           0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 2, 6, 10, 2,
+                        byte_mod_proc, &z64_file.ammo[Z64_SLOT_BEANS]);
+      menu_add_static_icon(&menu_amounts, 5, 6, t_item_24, 19,
+                           0xFFFFFF, 2.f / 3.f);
+      menu_add_intinput(&menu_amounts, 7, 6, 16, 2,
+                        byte_mod_proc, &z64_file.magic);
+      menu_add_static_icon(&menu_amounts, 10, 6, t_item_24, 12,
+                           0xFFFFFF, 2.f / 3.f);
+      menu_add_intinput(&menu_amounts, 12, 6, 16, 4,
+                        halfword_mod_proc, &z64_file.energy);
+    }
 
     /* equips */
     menu_init(&menu_equips, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -1746,7 +1794,7 @@ ENTRY void _start()
     menu_binds.selector = menu_add_submenu(&menu_binds, 0, 0, NULL, "return");
     for (int i = 0; i < COMMAND_MAX; ++i) {
       menu_add_static(&menu_binds, 0, 1 + i, command_names[i], 0xC0C0C0);
-      binder_create(&menu_binds, 23, 1 + i, i, &override_input);
+      binder_create(&menu_binds, 18, 1 + i, i, &override_input);
     }
   }
 
@@ -1766,8 +1814,7 @@ ENTRY void _start()
   }
 }
 
-
-/* custom support library */
+/* support libraries */
 #include <startup.c>
 #include <vector/vector.c>
 #include <list/list.c>

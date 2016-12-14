@@ -285,9 +285,7 @@ void zu_void(void)
   z64_file.temp_switch_flags = z64_game.temp_switch_flags;
   z64_file.unk_flags_4 = z64_game.unk_flags_4;
   z64_file.void_flag = 1;
-  z64_game.entrance_index = z64_file.void_entrance;
-  z64_game.fadeout_transition = 0x04;
-  z64_game.scene_load_flag = 0x14;
+  zu_execute_game(z64_file.void_entrance, 0x0000);
 }
 
 void zu_execute_game(int16_t entrance_index, int16_t cutscene_index)
@@ -308,4 +306,11 @@ void zu_execute_filemenu(void)
   z64_ctxt.state_continue = 0;
   z64_ctxt.next_ctor = (void*)z64_ctxt_filemenu_ctor;
   z64_ctxt.next_size = z64_ctxt_filemenu_size;
+}
+
+void zu_setmusic(uint32_t index)
+{
+  uint32_t *buf = (void*)z64_seq_buf_addr;
+  uint8_t *pos = (void*)z64_seq_pos_addr;
+  buf[(*pos)++] = index;
 }

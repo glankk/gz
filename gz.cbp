@@ -91,6 +91,9 @@
 		<Unit filename="src/gz/menu_checkbox.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/menu_def.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/menu_intinput.c">
 			<Option compilerVar="CC" />
 		</Unit>

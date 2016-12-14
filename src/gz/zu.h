@@ -93,6 +93,8 @@ void zu_void(void);
 void zu_execute_game(int16_t entrance_index, int16_t cutscene_index);
 void zu_execute_filemenu(void);
 
+void zu_setmusic(uint32_t index);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif

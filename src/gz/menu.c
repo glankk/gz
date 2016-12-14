@@ -4,7 +4,6 @@
 #include <list/list.h>
 #include "gfx.h"
 #include "menu.h"
-#include "z64.h"
 
 void menu_init(struct menu *menu, int cell_width, int cell_height,
                struct gfx_font *font)
@@ -492,59 +491,4 @@ int menu_item_screen_x(struct menu_item *item)
 int menu_item_screen_y(struct menu_item *item)
 {
   return menu_cell_screen_y(item->owner, item->y) + item->pyoffset;
-}
-
-struct menu_item *menu_add_static(struct menu *menu, int x, int y,
-                                  const char *text, uint32_t color)
-{
-  struct menu_item *item = menu_item_add(menu, x, y, text, color);
-  item->selectable = 0;
-  return item;
-}
-
-static int imenu_think_proc(struct menu_item *item)
-{
-  if (item->imenu) {
-    item->imenu->cxoffset = item->x;
-    item->imenu->cyoffset = item->y;
-    item->imenu->pxoffset = item->pxoffset;
-    item->imenu->pyoffset = item->pyoffset;
-  }
-  return 0;
-}
-
-static int imenu_navigate_proc(struct menu_item *item,
-                               enum menu_navigation nav)
-{
-  if (item->imenu) {
-    menu_navigate(item->imenu, nav);
-    return 1;
-  }
-  return 0;
-}
-
-static int imenu_activate_proc(struct menu_item *item)
-{
-  if (item->imenu) {
-    menu_activate(item->imenu);
-    return 1;
-  }
-  return 0;
-}
-
-struct menu_item *menu_add_imenu(struct menu *menu, int x, int y,
-                                 struct menu **p_imenu)
-{
-  struct menu_item *item = menu_item_add(menu, x, y, NULL, 0);
-  item->selectable = 0;
-  item->think_proc = imenu_think_proc;
-  item->navigate_proc = imenu_navigate_proc;
-  item->activate_proc = imenu_activate_proc;
-  struct menu *imenu = malloc(sizeof(*imenu));
-  menu_init(imenu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  imenu->parent = menu;
-  item->imenu = imenu;
-  if (p_imenu)
-    *p_imenu = imenu;
-  return item;
 }
