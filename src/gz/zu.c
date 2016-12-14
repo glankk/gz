@@ -279,3 +279,33 @@ void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
 {
   z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
 }
+
+void zu_void(void)
+{
+  z64_file.temp_switch_flags = z64_game.temp_switch_flags;
+  z64_file.unk_flags_4 = z64_game.unk_flags_4;
+  z64_file.void_flag = 1;
+  z64_game.entrance_index = z64_file.void_entrance;
+  z64_game.fadeout_transition = 0x04;
+  z64_game.scene_load_flag = 0x14;
+}
+
+void zu_execute_game(int16_t entrance_index, int16_t cutscene_index)
+{
+  z64_file.entrance_index = entrance_index;
+  z64_file.cutscene_index = cutscene_index;
+  z64_file.interface_flag = 0;
+  if (z64_file.minigame_state == 1)
+    z64_file.minigame_state = 3;
+  z64_ctxt.state_continue = 0;
+  z64_ctxt.next_ctor = (void*)z64_ctxt_game_ctor;
+  z64_ctxt.next_size = z64_ctxt_game_size;
+}
+
+void zu_execute_filemenu(void)
+{
+  z64_file.interface_flag = 0;
+  z64_ctxt.state_continue = 0;
+  z64_ctxt.next_ctor = (void*)z64_ctxt_filemenu_ctor;
+  z64_ctxt.next_size = z64_ctxt_filemenu_size;
+}

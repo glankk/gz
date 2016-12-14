@@ -56,6 +56,21 @@ void settings_load_default(void)
   d->teleport_slot = 0;
   d->warp_entrance = 0;
   d->warp_age = 0;
+  d->command_binds[COMMAND_MENU] = BUTTON_R | BUTTON_L;
+  d->command_binds[COMMAND_RETURN] = BUTTON_R | BUTTON_D_LEFT;
+  d->command_binds[COMMAND_CLEARCSP] = BUTTON_L | BUTTON_C_UP;
+  d->command_binds[COMMAND_VOID] = BUTTON_A | BUTTON_B | BUTTON_L;
+  d->command_binds[COMMAND_RELOAD] = BUTTON_A | BUTTON_L;
+  d->command_binds[COMMAND_FILESELECT] = BUTTON_B | BUTTON_L;
+  d->command_binds[COMMAND_LEVITATE] = BUTTON_L;
+  d->command_binds[COMMAND_TURBO] = 0;
+  d->command_binds[COMMAND_SAVEPOS] = BUTTON_D_LEFT;
+  d->command_binds[COMMAND_LOADPOS] = BUTTON_D_RIGHT;
+  d->command_binds[COMMAND_SAVEMEMFILE] = BUTTON_R | BUTTON_D_LEFT;
+  d->command_binds[COMMAND_LOADMEMFILE] = BUTTON_R | BUTTON_D_RIGHT;
+  d->command_binds[COMMAND_RESETLAG] = BUTTON_R | BUTTON_A | BUTTON_D_RIGHT;
+  d->command_binds[COMMAND_PAUSE] = BUTTON_D_DOWN;
+  d->command_binds[COMMAND_ADVANCE] = BUTTON_D_UP;
 }
 
 void settings_save(int profile)

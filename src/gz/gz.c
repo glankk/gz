@@ -5,6 +5,7 @@
 #include <startup.h>
 #include <mips.h>
 #include <n64.h>
+#include "binder.h"
 #include "explorer.h"
 #include "gfx.h"
 #include "item_option.h"
@@ -116,7 +117,8 @@ static int32_t              vi_offset = 0;
 static struct memory_file  *memfile;
 static _Bool                memfile_saved[SETTINGS_MEMFILE_MAX] = {0};
 static uint8_t              memfile_slot = 0;
-static _Bool                override_offset;
+static _Bool                override_offset = 0;
+static _Bool                override_input = 0;
 
 static uint16_t menu_font_options[] =
 {
@@ -312,6 +314,25 @@ static const char *cheat_names[] =
   "advance time",
   "no music",
   "items usable",
+};
+
+static const char *command_names[] =
+{
+  "show/hide menu",
+  "return from menu",
+  "clear cutscene pointer",
+  "void out",
+  "reload last entrance",
+  "file select",
+  "levitate",
+  "turbo",
+  "save position",
+  "load position",
+  "save memfile",
+  "load memfile",
+  "reset lag counter",
+  "pause/unpause",
+  "frame advance",
 };
 
 static int8_t bottle_options[] =
@@ -676,13 +697,16 @@ static void slot_inc_proc(struct menu_item *item, void *data)
   *info->data = (*info->data + 1) % info->max;
 }
 
+static void do_warp(int16_t entrance_index, int16_t cutscene_index)
+{
+  override_offset = 1;
+  zu_execute_game(entrance_index, cutscene_index);
+}
+
 static void warp_proc(struct menu_item *item, void *data)
 {
-  z64_game.entrance_index = settings->warp_entrance;
-  z64_file.cutscene_index = 0;
   z64_game.link_age = settings->warp_age;
-  z64_game.scene_load_flags = 0x0014;
-  override_offset = 1;
+  do_warp(settings->warp_entrance, 0x0000);
 }
 
 static void places_proc(struct menu_item *item, void *data)
@@ -693,11 +717,8 @@ static void places_proc(struct menu_item *item, void *data)
   for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
-      z64_game.entrance_index = i;
-      z64_file.cutscene_index = 0;
       z64_game.link_age = settings->warp_age;
-      z64_game.scene_load_flags = 0x0014;
-      override_offset = 1;
+      do_warp(i, 0x0000);
       if (zu_scene_info[scene_index].no_entrances > 1)
         menu_return(&menu_main);
       menu_return(&menu_main);
@@ -933,107 +954,118 @@ void main_hook()
   if (settings->cheats[CHEAT_USEITEMS])
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
 
+  /* command held */
+  static int command_state[COMMAND_MAX] = {0};
+  /* command pressed, with repetitions */
+  static int command_pressed[COMMAND_MAX] = {0};
+  /* command pressed, without repetitions */
+  static int command_pressed_raw[COMMAND_MAX] = {0};
+  {
+    /* check state of each command */
+    int temp_state[COMMAND_MAX];
+    for (int i = 0; i < COMMAND_MAX; ++i) {
+      uint16_t cp = settings->command_binds[i];
+      temp_state[i] = (cp && ((pad & cp) == cp));
+      /* require that at least one button was pressed to activate a command */
+      if (!command_state[i])
+        temp_state[i] = (temp_state[i] && (pad_pressed_raw & cp));
+    }
+    /* resolve conflicts */
+    for (int i = 0; i < COMMAND_MAX; ++i) {
+      if (!temp_state[i])
+        continue;
+      uint16_t cpi = settings->command_binds[i];
+      for (int j = 0; j < COMMAND_MAX; ++j) {
+        if (!temp_state[j])
+          continue;
+        uint16_t cpj = settings->command_binds[j];
+        if (cpi != cpj && (cpi & cpj) == cpi) {
+          if (!command_state[j] && command_state[i])
+            temp_state[j] = 0;
+          else
+            temp_state[i] = 0;
+        }
+      }
+    }
+    /* set command states */
+    static int command_time[COMMAND_MAX] = {0};
+    for (int i = 0; i < COMMAND_MAX; ++i) {
+      command_pressed_raw[i] = (!command_state[i] && temp_state[i]);
+      command_state[i] = temp_state[i];
+      if (command_state[i])
+        ++command_time[i];
+      else
+        command_time[i] = 0;
+      command_pressed[i] = (command_pressed_raw[i] || command_time[i] >= 8);
+    }
+  }
+
   while (menu_think(&menu_global_watches))
     ;
   if (menu_active) {
-    if (pad_pressed & BUTTON_D_UP)
-      menu_navigate(&menu_main, MENU_NAVIGATE_UP);
-    if (pad_pressed & BUTTON_D_DOWN)
-      menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
-    if (pad_pressed & BUTTON_D_LEFT) {
-      if (pad & BUTTON_R)
-        menu_return(&menu_main);
-      else
-        menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
-    }
-    if (pad_pressed & BUTTON_D_RIGHT)
-      menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
-    if (pad_pressed & BUTTON_L) {
-      if (pad & BUTTON_R) {
+    if (!override_input) {
+      if (command_pressed_raw[COMMAND_MENU]) {
         menu_signal_leave(&menu_main);
         menu_active = 0;
       }
-      else
-        menu_activate(&menu_main);
+      else if (command_pressed[COMMAND_RETURN])
+        menu_return(&menu_main);
+      else {
+        if (pad_pressed & BUTTON_D_UP)
+          menu_navigate(&menu_main, MENU_NAVIGATE_UP);
+        if (pad_pressed & BUTTON_D_DOWN)
+          menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
+        if (pad_pressed & BUTTON_D_LEFT)
+          menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
+        if (pad_pressed & BUTTON_D_RIGHT)
+          menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
+        if (pad_pressed & BUTTON_L)
+          menu_activate(&menu_main);
+      }
     }
     while (menu_think(&menu_main))
       ;
   }
-  else {
-    /* l-activated commands */
-    static uint16_t l_pad = 0;
-    if (pad_pressed_raw & BUTTON_L)
-      l_pad = pad;
-    else if (!(pad & BUTTON_L))
-      l_pad = 0;
-    if (l_pad & BUTTON_R) {
-      /* show menu */
+  else if (!override_input) {
+    if (command_pressed_raw[COMMAND_MENU]) {
       menu_signal_enter(&menu_main);
       menu_active = 1;
-      l_pad = 0;
     }
-    else if (l_pad & BUTTON_C_UP) {
-      static uint32_t null_cs[] = {0, 0};
-      z64_game.cutscene_ptr = &null_cs;
+    if (command_state[COMMAND_CLEARCSP])
+      clear_csp_proc(NULL, NULL);
+    if (command_state[COMMAND_VOID])
+      zu_void();
+    if (command_state[COMMAND_RELOAD])
+      do_warp(z64_file.entrance_index, 0x0000);
+    if (command_state[COMMAND_FILESELECT])
+      zu_execute_filemenu();
+    if (command_state[COMMAND_LEVITATE])
+      z64_link.common.vel_1.y = 6.34375f;
+    if (command_state[COMMAND_TURBO])
+      z64_link.linear_vel = 40.f;
+    if (command_state[COMMAND_SAVEPOS]) {
+      uint8_t slot = settings->teleport_slot;
+      settings->teleport_pos[slot] = z64_link.common.pos_2;
+      settings->teleport_rot[slot] = z64_link.common.rot_2.y;
     }
-    else if ((l_pad & BUTTON_A) && (l_pad & BUTTON_B))
-      /* void out */
-      z64_link.common.pos_1.y = z64_link.common.pos_2.y = -0x8000;
-    else if (l_pad & BUTTON_A)
-      /* reload zone */
-      z64_game.scene_load_flags = 0x0014;
-    else if (l_pad & BUTTON_B) {
-      /* go to file select */
-      z64_file.interface_flags  = 0x02;
-      z64_game.scene_load_flags = 0x0014;
+    if (command_state[COMMAND_LOADPOS]) {
+      uint8_t slot = settings->teleport_slot;
+      z64_link.common.pos_1 = settings->teleport_pos[slot];
+      z64_link.common.pos_2 = settings->teleport_pos[slot];
+      z64_link.common.rot_2.y = settings->teleport_rot[slot];
+      z64_link.target_yaw = settings->teleport_rot[slot];
     }
-    else if (l_pad)
-      /* levitate */
-      z64_link.common.vel_1.y = 6.34375;
-    /* dpad-activated commands */
-    static uint16_t d_pad = 0;
-    if (!d_pad && (pad_pressed_raw & (BUTTON_D_UP | BUTTON_D_DOWN |
-                                      BUTTON_D_LEFT | BUTTON_D_RIGHT)))
-      d_pad = pad;
-    else if (!(pad & (BUTTON_D_UP | BUTTON_D_DOWN |
-                      BUTTON_D_LEFT | BUTTON_D_RIGHT)))
-      d_pad = 0;
-    if (d_pad & BUTTON_D_LEFT) {
-      if (d_pad & BUTTON_R) {
-        if (pad_pressed_raw & BUTTON_D_LEFT)
-          /* save memory file */
-          save_memory_file();
-      }
-      else {
-        /* save position and orientation */
-        uint8_t slot = settings->teleport_slot;
-        settings->teleport_pos[slot] = z64_link.common.pos_2;
-        settings->teleport_rot[slot] = z64_link.common.rot_2.y;
-      }
+    if (command_pressed_raw[COMMAND_SAVEMEMFILE])
+      save_memory_file();
+    if (command_pressed_raw[COMMAND_LOADMEMFILE])
+      load_memory_file();
+    if (command_state[COMMAND_RESETLAG]) {
+      frame_counter = 0;
+      vi_offset = -(int32_t)z64_vi_counter;
     }
-    else if (d_pad & BUTTON_D_RIGHT) {
-      if (d_pad & BUTTON_R) {
-        if (d_pad & BUTTON_A) {
-          /* reset lag counter */
-          frame_counter = 0;
-          vi_offset = -(int32_t)z64_vi_counter;
-        }
-        else if (pad_pressed_raw & BUTTON_D_RIGHT)
-          /* load memory file */
-          load_memory_file();
-      }
-      else {
-        /* teleport */
-        uint8_t slot = settings->teleport_slot;
-        z64_link.common.pos_1 = settings->teleport_pos[slot];
-        z64_link.common.pos_2 = settings->teleport_pos[slot];
-        z64_link.common.rot_2.y = settings->teleport_rot[slot];
-        z64_link.target_yaw = settings->teleport_rot[slot];
-      }
-    }
-    else if (d_pad & pad_pressed & BUTTON_D_DOWN)
+    if (command_pressed_raw[COMMAND_PAUSE])
       pause_proc(NULL, NULL);
-    else if (d_pad & pad_pressed & BUTTON_D_UP)
+    if (command_pressed[COMMAND_ADVANCE])
       advance_proc(NULL, NULL);
   }
 
@@ -1447,7 +1479,7 @@ ENTRY void _start()
     menu_init(&menu_quest_items, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_quest_items.selector = menu_add_submenu(&menu_quest_items, 0, 0, NULL,
                                                  "return");
-    menu_add_static(&menu_quest_items, 0, 1, "max energy", 0xC0C0C0);
+    menu_add_static(&menu_quest_items, 0, 1, "energy cap.", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 14, 1, 16, 4,
                       halfword_mod_proc, &z64_file.energy_capacity);
     menu_add_static(&menu_quest_items, 0, 2, "defense", 0xC0C0C0);
@@ -1455,7 +1487,7 @@ ENTRY void _start()
                       byte_mod_proc, &z64_file.defense_hearts);
     menu_add_static(&menu_quest_items, 0, 3, "magic", 0xC0C0C0);
     menu_add_checkbox(&menu_quest_items, 14, 3, magic_acquired_proc, NULL);
-    menu_add_static(&menu_quest_items, 0, 4, "max magic", 0xC0C0C0);
+    menu_add_static(&menu_quest_items, 0, 4, "magic cap.", 0xC0C0C0);
     menu_add_intinput(&menu_quest_items, 14, 4, 16, 2,
                       magic_capacity_proc, NULL);
     menu_add_static(&menu_quest_items, 0, 5, "gs tokens", 0xC0C0C0);
@@ -1702,12 +1734,20 @@ ENTRY void _start()
     menu_add_static(&menu_settings, 2, 12, "position", 0xC0C0C0);
     menu_add_positioning(&menu_settings, 14, 12,
                          generic_position_proc, &settings->lag_counter_x);
-    menu_add_button(&menu_settings, 0, 13, "save settings",
+    static struct menu menu_binds;
+    menu_add_submenu(&menu_settings, 0, 13, &menu_binds, "button maps");
+    menu_add_button(&menu_settings, 0, 14, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 14, "load settings",
+    menu_add_button(&menu_settings, 0, 15, "load settings",
                     load_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 15, "restore defaults",
+    menu_add_button(&menu_settings, 0, 16, "restore defaults",
                     restore_settings_proc, NULL);
+    menu_init(&menu_binds, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_binds.selector = menu_add_submenu(&menu_binds, 0, 0, NULL, "return");
+    for (int i = 0; i < COMMAND_MAX; ++i) {
+      menu_add_static(&menu_binds, 0, 1 + i, command_names[i], 0xC0C0C0);
+      binder_create(&menu_binds, 23, 1 + i, i, &override_input);
+    }
   }
 
   /* reflect loaded settings */

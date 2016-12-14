@@ -252,7 +252,7 @@ struct gfx_texture *gfx_texture_create(g_ifmt_t im_fmt, g_isiz_t im_siz,
     return texture;
   texture->tile_size = ((tile_width * tile_height *
                          G_SIZ_BITS(im_siz) + 7) / 8 + 63) / 64 * 64;
-  texture->data = malloc(tiles_x * tiles_y * texture->tile_size);
+  texture->data = memalign(64, tiles_x * tiles_y * texture->tile_size);
   if (!texture->data) {
     free(texture);
     return NULL;

@@ -88,6 +88,11 @@ void zu_vlist_destroy(struct zu_vlist *vlist);
 void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size);
 void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size);
 
+void zu_void(void);
+
+void zu_execute_game(int16_t entrance_index, int16_t cutscene_index);
+void zu_execute_filemenu(void);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif

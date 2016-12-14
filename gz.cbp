@@ -58,6 +58,10 @@
 			</Target>
 		</Build>
 		<Unit filename="res/resources.json" />
+		<Unit filename="src/gz/binder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/binder.h" />
 		<Unit filename="src/gz/explorer.c">
 			<Option compilerVar="CC" />
 		</Unit>

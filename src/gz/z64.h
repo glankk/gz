@@ -462,22 +462,30 @@ typedef struct
   char            unk_0D_[0x041E];    /* 0x0F34 */
   uint16_t        checksum;           /* 0x1352 */
   int32_t         file_index;         /* 0x1354 */
-  char            unk_0E_[0x0007];    /* 0x1358 */
-  uint8_t         interface_flags;    /* 0x135F */
+  char            unk_0E_[0x0004];    /* 0x1358 */
+  int32_t         interface_flag;     /* 0x135C */
   uint32_t        scene_setup_index;  /* 0x1360 */
-  char            unk_0F_[0x0064];    /* 0x1364 */
+  int32_t         void_flag;          /* 0x1364 */
+  char            unk_0F_[0x0010];    /* 0x1368 */
+  int16_t         void_entrance;      /* 0x1378 */
+  char            unk_10_[0x0002];    /* 0x137A */
+  uint32_t        temp_switch_flags;  /* 0x137C */
+  uint32_t        unk_flags_4;        /* 0x1380 */
+  char            unk_11_[0x0044];    /* 0x1384 */
   uint16_t        nayrus_love_timer;  /* 0x13C8 */
-  char            unk_10_[0x0008];    /* 0x13CA */
+  char            unk_12_[0x0008];    /* 0x13CA */
   uint16_t        timer;              /* 0x13D2 */
-  char            unk_11_[0x0035];    /* 0x13D4 */
+  char            unk_13_[0x0030];    /* 0x13D4 */
+  int16_t         minigame_state;     /* 0x1404 */
+  char            unk_14_[0x0003];    /* 0x1406 */
   uint8_t         language;           /* 0x1409 */
-  char            unk_12_[0x0002];    /* 0x140A */
+  char            unk_15_[0x0002];    /* 0x140A */
   uint8_t         z_targeting;        /* 0x140C */
-  char            unk_13_[0x0001];    /* 0x140D */
+  char            unk_16_[0x0001];    /* 0x140D */
   uint16_t        disable_music_flag; /* 0x140E */
-  char            unk_14_[0x0020];    /* 0x1410 */
+  char            unk_17_[0x0020];    /* 0x1410 */
   z64_gameinfo_t *gameinfo;           /* 0x1430 */
-  char            unk_15_[0x001C];    /* 0x1434 */
+  char            unk_18_[0x001C];    /* 0x1434 */
                                       /* 0x1450 */
 } z64_file_t;
 
@@ -638,9 +646,11 @@ struct z64_actor_s
 typedef struct
 {
   z64_actor_t common;             /* 0x0000 */
-  char        unk_00_[0x06F2];    /* 0x013C */
+  char        unk_00_[0x06EC];    /* 0x013C */
+  float       linear_vel;         /* 0x0828 */
+  char        unk_01_[0x0002];    /* 0x082C */
   uint16_t    target_yaw;         /* 0x082E */
-  char        unk_01_[0x0054];    /* 0x0830 */
+  char        unk_02_[0x0054];    /* 0x0830 */
   int16_t     drop_y;             /* 0x0884 */
   int16_t     drop_distance;      /* 0x0886 */
                                   /* 0x0888 */
@@ -655,10 +665,10 @@ typedef struct
 typedef struct
 {
   z64_gfx_t      *gfx;                    /* 0x0000 */
-  void           *state_main_proc;        /* 0x0004 */
-  void           *state_dtor_proc;        /* 0x0008 */
-  void           *state_next_ctor_proc;   /* 0x000C */
-  uint32_t        ctxt_size;              /* 0x0010 */
+  void           *state_main;             /* 0x0004 */
+  void           *state_dtor;             /* 0x0008 */
+  void           *next_ctor;              /* 0x000C */
+  uint32_t        next_size;              /* 0x0010 */
   z64_input_t     input[4];               /* 0x0014 */
   size_t          state_heap_size;        /* 0x0074 */
   void           *state_heap;             /* 0x0078 */
@@ -701,13 +711,13 @@ typedef struct
   char            unk_06_[0x0058];        /* 0x01CD0 */
   uint32_t        switch_flags;           /* 0x01D28 */
   uint32_t        temp_switch_flags;      /* 0x01D2C */
-  uint32_t        unk_07_;                /* 0x01D30 */
-  uint32_t        unk_08_;                /* 0x01D34 */
+  uint32_t        unk_flags_0;            /* 0x01D30 */
+  uint32_t        unk_flags_1;            /* 0x01D34 */
   uint32_t        chest_flags;            /* 0x01D38 */
   uint32_t        room_clear_flags;       /* 0x01D3C */
-  uint32_t        unk_09_;                /* 0x01D40 */
-  uint32_t        unk_0A_;                /* 0x01D44 */
-  uint32_t        unk_0B_;                /* 0x01D48 */
+  uint32_t        unk_flags_2;            /* 0x01D40 */
+  uint32_t        unk_flags_3;            /* 0x01D44 */
+  uint32_t        unk_flags_4;            /* 0x01D48 */
   void           *title_card_texture;     /* 0x01D4C */
   char            unk_0C_[0x0007];        /* 0x01D50 */
   uint8_t         title_card_delay;       /* 0x01D57 */
@@ -744,11 +754,13 @@ typedef struct
   void           *map_actor_list;         /* 0x11DF8 */
   char            unk_14_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_15_[0x000C];        /* 0x11E08 */
-  uint16_t        scene_load_flags;       /* 0x11E14 */
+  char            unk_15_[0x000D];        /* 0x11E08 */
+  int8_t          scene_load_flag;        /* 0x11E15 */
   char            unk_16_[0x0004];        /* 0x11E16 */
-  uint16_t        entrance_index;         /* 0x11E1A */
-                                          /* 0x11E1C */
+  int16_t         entrance_index;         /* 0x11E1A */
+  char            unk_17_[0x0042];        /* 0x11E1C */
+  uint8_t         fadeout_transition;     /* 0x11E5E */
+                                          /* 0x11E5F */
 } z64_game_t;
 
 typedef struct
@@ -805,6 +817,12 @@ typedef struct
 #define z64_parameter_static_vaddr              0x01A3C000
 #define z64_parameter_static_vsize              0x00003B00
 
+/* context info */
+#define z64_ctxt_filemenu_ctor                  0x80812394
+#define z64_ctxt_filemenu_size                  0x0001CAD0
+#define z64_ctxt_game_ctor                      0x8009A750
+#define z64_ctxt_game_size                      0x00012518
+
 #elif Z64_VERSION == Z64_OOT11
 
 /* dram ddresses */
@@ -844,6 +862,12 @@ typedef struct
 #define z64_parameter_static_vaddr              0x01A3C000
 #define z64_parameter_static_vsize              0x00003B00
 
+/* context info */
+#define z64_ctxt_filemenu_ctor                  0x80812394
+#define z64_ctxt_filemenu_size                  0x0001CAD0
+#define z64_ctxt_game_ctor                      0x8009A760
+#define z64_ctxt_game_size                      0x00012518
+
 #elif Z64_VERSION == Z64_OOT12
 
 /* dram ddresses */
@@ -882,6 +906,12 @@ typedef struct
 #define z64_nes_font_static_vsize               0x00004580
 #define z64_parameter_static_vaddr              0x01A3C000
 #define z64_parameter_static_vsize              0x00003B00
+
+/* context info */
+#define z64_ctxt_filemenu_ctor                  0x80812394
+#define z64_ctxt_filemenu_size                  0x0001CAD0
+#define z64_ctxt_game_ctor                      0x8009AE40
+#define z64_ctxt_game_size                      0x00012518
 
 #endif
 

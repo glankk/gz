@@ -9,7 +9,7 @@
 #define SETTINGS_PROFILE_MAX  ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
 #define SETTINGS_VERSION      0x0000
 
-#define SETTINGS_WATCHES_MAX  17
+#define SETTINGS_WATCHES_MAX  14
 #define SETTINGS_TELEPORT_MAX 5
 #define SETTINGS_MEMFILE_MAX  10
 
@@ -36,6 +36,26 @@ enum cheats
   CHEAT_MAX,
 };
 
+enum commands
+{
+  COMMAND_MENU,
+  COMMAND_RETURN,
+  COMMAND_CLEARCSP,
+  COMMAND_VOID,
+  COMMAND_RELOAD,
+  COMMAND_FILESELECT,
+  COMMAND_LEVITATE,
+  COMMAND_TURBO,
+  COMMAND_SAVEPOS,
+  COMMAND_LOADPOS,
+  COMMAND_SAVEMEMFILE,
+  COMMAND_LOADMEMFILE,
+  COMMAND_RESETLAG,
+  COMMAND_PAUSE,
+  COMMAND_ADVANCE,
+  COMMAND_MAX,
+};
+
 struct settings_data
 {
   /* order elements by size for space-efficient packing */
@@ -51,6 +71,7 @@ struct settings_data
   int16_t     watch_x[SETTINGS_WATCHES_MAX];
   int16_t     watch_y[SETTINGS_WATCHES_MAX];
   uint16_t    warp_entrance;
+  uint16_t    command_binds[COMMAND_MAX];
   uint8_t     menu_font_resource_id;
   int8_t      menu_drop_shadow;
   int8_t      input_display_enabled;

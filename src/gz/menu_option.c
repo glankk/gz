@@ -44,9 +44,9 @@ static int navigate_proc(struct menu_item *item,
     case MENU_NAVIGATE_LEFT:  value -= 3; break;
     case MENU_NAVIGATE_RIGHT: value += 3; break;
   }
-  value %= data->options.size;
+  value %= (int)data->options.size;
   if (value < 0)
-    value += data->options.size;
+    value += (int)data->options.size;
   data->value = value;
   char **option = vector_at(&data->options, data->value);
   item->text = *option;
