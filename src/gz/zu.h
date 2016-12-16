@@ -95,6 +95,9 @@ void zu_execute_filemenu(void);
 
 void zu_setmusic(uint32_t index);
 
+void zu_set_event_flag(int flag_index);
+void zu_clear_event_flag(int flag_index);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif

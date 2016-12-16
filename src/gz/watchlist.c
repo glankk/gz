@@ -3,7 +3,6 @@
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
-#include "z64.h"
 
 struct item_data
 {
@@ -129,13 +128,15 @@ static int position_proc(struct menu_item *item,
     member_data->y = watch->pyoffset;
   }
   int dist = 2;
-  if (z64_input_direct.pad & BUTTON_Z)
+  if (input_pad() & BUTTON_Z)
     dist *= 2;
   switch (reason) {
-    case MENU_CALLBACK_NAV_UP:    member_data->y -= dist; break;
-    case MENU_CALLBACK_NAV_DOWN:  member_data->y += dist; break;
-    case MENU_CALLBACK_NAV_LEFT:  member_data->x -= dist; break;
-    case MENU_CALLBACK_NAV_RIGHT: member_data->x += dist; break;
+    case MENU_CALLBACK_ACTIVATE:    input_reserve(BUTTON_Z);  break;
+    case MENU_CALLBACK_DEACTIVATE:  input_free(BUTTON_Z);     break;
+    case MENU_CALLBACK_NAV_UP:      member_data->y -= dist;   break;
+    case MENU_CALLBACK_NAV_DOWN:    member_data->y += dist;   break;
+    case MENU_CALLBACK_NAV_LEFT:    member_data->x -= dist;   break;
+    case MENU_CALLBACK_NAV_RIGHT:   member_data->x += dist;   break;
     default:
       break;
   }

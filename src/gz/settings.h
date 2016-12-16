@@ -1,6 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 #include <stdint.h>
+#include "input.h"
 #include "z64.h"
 
 #define SETTINGS_ADDRESS      0x7A00
@@ -12,6 +13,7 @@
 #define SETTINGS_WATCHES_MAX  14
 #define SETTINGS_TELEPORT_MAX 5
 #define SETTINGS_MEMFILE_MAX  10
+#define SETTINGS_BIND_MAX     COMMAND_MAX
 
 #define SETTINGS_LAG_FRAMES   0
 #define SETTINGS_LAG_SECONDS  1
@@ -30,7 +32,7 @@ enum cheats
   CHEAT_KEYS,
   CHEAT_RUPEES,
   CHEAT_NL,
-  CHEAT_FFTIME,
+  CHEAT_FREEZETIME,
   CHEAT_NOMUSIC,
   CHEAT_USEITEMS,
   CHEAT_MAX,
@@ -71,7 +73,7 @@ struct settings_data
   int16_t     watch_x[SETTINGS_WATCHES_MAX];
   int16_t     watch_y[SETTINGS_WATCHES_MAX];
   uint16_t    warp_entrance;
-  uint16_t    command_binds[COMMAND_MAX];
+  uint16_t    binds[SETTINGS_BIND_MAX];
   uint8_t     menu_font_resource_id;
   int8_t      menu_drop_shadow;
   int8_t      input_display_enabled;

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <string.h>
+#include "input.h"
 #include "resource.h"
 #include "settings.h"
 #include "zu.h"
@@ -56,21 +57,24 @@ void settings_load_default(void)
   d->teleport_slot = 0;
   d->warp_entrance = 0;
   d->warp_age = 0;
-  d->command_binds[COMMAND_MENU] = BUTTON_R | BUTTON_L;
-  d->command_binds[COMMAND_RETURN] = BUTTON_R | BUTTON_D_LEFT;
-  d->command_binds[COMMAND_BREAK] = BUTTON_L | BUTTON_C_UP;
-  d->command_binds[COMMAND_VOID] = BUTTON_A | BUTTON_B | BUTTON_L;
-  d->command_binds[COMMAND_RELOAD] = BUTTON_A | BUTTON_L;
-  d->command_binds[COMMAND_FILESELECT] = BUTTON_B | BUTTON_L;
-  d->command_binds[COMMAND_LEVITATE] = BUTTON_L;
-  d->command_binds[COMMAND_TURBO] = 0;
-  d->command_binds[COMMAND_SAVEPOS] = BUTTON_D_LEFT;
-  d->command_binds[COMMAND_LOADPOS] = BUTTON_D_RIGHT;
-  d->command_binds[COMMAND_SAVEMEMFILE] = BUTTON_R | BUTTON_D_LEFT;
-  d->command_binds[COMMAND_LOADMEMFILE] = BUTTON_R | BUTTON_D_RIGHT;
-  d->command_binds[COMMAND_RESETLAG] = BUTTON_R | BUTTON_A | BUTTON_D_RIGHT;
-  d->command_binds[COMMAND_PAUSE] = BUTTON_D_DOWN;
-  d->command_binds[COMMAND_ADVANCE] = BUTTON_D_UP;
+  d->binds[COMMAND_MENU] = input_bind_make(2, BUTTON_R, BUTTON_L);
+  d->binds[COMMAND_RETURN] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
+  d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_C_UP, BUTTON_L);
+  d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
+  d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
+  d->binds[COMMAND_TURBO] = input_bind_make(0);
+  d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
+  d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);
+  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R,
+                                                    BUTTON_D_LEFT);
+  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R,
+                                                    BUTTON_D_RIGHT);
+  d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_A,
+                                                 BUTTON_D_RIGHT);
+  d->binds[COMMAND_PAUSE] = input_bind_make(1, BUTTON_D_DOWN);
+  d->binds[COMMAND_ADVANCE] = input_bind_make(1, BUTTON_D_UP);
 }
 
 void settings_save(int profile)

@@ -314,3 +314,13 @@ void zu_setmusic(uint32_t index)
   uint8_t *pos = (void*)z64_seq_pos_addr;
   buf[(*pos)++] = index;
 }
+
+void zu_set_event_flag(int flag_index)
+{
+  z64_file.event_chk_inf[flag_index / 0x10] |= (1 << (flag_index % 0x10));
+}
+
+void zu_clear_event_flag(int flag_index)
+{
+  z64_file.event_chk_inf[flag_index / 0x10] &= ~(1 << (flag_index % 0x10));
+}

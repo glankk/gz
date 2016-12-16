@@ -27,36 +27,6 @@
 
 #define Z64_ETAB_LENGTH       0x0614
 
-#define BUTTON_C_RIGHT        0x0001
-#define BUTTON_C_LEFT         0x0002
-#define BUTTON_C_DOWN         0x0004
-#define BUTTON_C_UP           0x0008
-#define BUTTON_R              0x0010
-#define BUTTON_L              0x0020
-#define BUTTON_D_RIGHT        0x0100
-#define BUTTON_D_LEFT         0x0200
-#define BUTTON_D_DOWN         0x0400
-#define BUTTON_D_UP           0x0800
-#define BUTTON_START          0x1000
-#define BUTTON_Z              0x2000
-#define BUTTON_B              0x4000
-#define BUTTON_A              0x8000
-
-#define BUTTON_INDEX_C_RIGHT  0
-#define BUTTON_INDEX_C_LEFT   1
-#define BUTTON_INDEX_C_DOWN   2
-#define BUTTON_INDEX_C_UP     3
-#define BUTTON_INDEX_R        4
-#define BUTTON_INDEX_L        5
-#define BUTTON_INDEX_D_RIGHT  8
-#define BUTTON_INDEX_D_LEFT   9
-#define BUTTON_INDEX_D_DOWN   10
-#define BUTTON_INDEX_D_UP     11
-#define BUTTON_INDEX_START    12
-#define BUTTON_INDEX_Z        13
-#define BUTTON_INDEX_B        14
-#define BUTTON_INDEX_A        15
-
 typedef struct
 {
   float x;
@@ -310,7 +280,7 @@ typedef struct
   int32_t         link_age;           /* 0x0004 */
   char            unk_00_[0x0002];    /* 0x0008 */
   int16_t         cutscene_index;     /* 0x000A */
-  int16_t         day_time;           /* 0x000C */
+  uint16_t        day_time;           /* 0x000C */
   char            unk_01_[0x0002];    /* 0x000E */
   int32_t         night_flag;         /* 0x0010 */
   char            unk_02_[0x0008];    /* 0x0014 */
@@ -461,31 +431,32 @@ typedef struct
   uint16_t        inf_table[30];      /* 0x0EF8 */
   char            unk_0D_[0x041E];    /* 0x0F34 */
   uint16_t        checksum;           /* 0x1352 */
-  int32_t         file_index;         /* 0x1354 */
-  char            unk_0E_[0x0004];    /* 0x1358 */
+  char            unk_0E_[0x0003];    /* 0x1354 */
+  int8_t          file_index;         /* 0x1357 */
+  char            unk_0F_[0x0004];    /* 0x1358 */
   int32_t         interface_flag;     /* 0x135C */
   uint32_t        scene_setup_index;  /* 0x1360 */
   int32_t         void_flag;          /* 0x1364 */
-  char            unk_0F_[0x0010];    /* 0x1368 */
+  char            unk_10_[0x0010];    /* 0x1368 */
   int16_t         void_entrance;      /* 0x1378 */
-  char            unk_10_[0x0002];    /* 0x137A */
+  char            unk_11_[0x0002];    /* 0x137A */
   uint32_t        temp_switch_flags;  /* 0x137C */
   uint32_t        unk_flags_4;        /* 0x1380 */
-  char            unk_11_[0x0044];    /* 0x1384 */
+  char            unk_12_[0x0044];    /* 0x1384 */
   uint16_t        nayrus_love_timer;  /* 0x13C8 */
-  char            unk_12_[0x0008];    /* 0x13CA */
+  char            unk_13_[0x0008];    /* 0x13CA */
   uint16_t        timer;              /* 0x13D2 */
-  char            unk_13_[0x0030];    /* 0x13D4 */
+  char            unk_14_[0x0030];    /* 0x13D4 */
   int16_t         minigame_state;     /* 0x1404 */
-  char            unk_14_[0x0003];    /* 0x1406 */
+  char            unk_15_[0x0003];    /* 0x1406 */
   uint8_t         language;           /* 0x1409 */
-  char            unk_15_[0x0002];    /* 0x140A */
+  char            unk_16_[0x0002];    /* 0x140A */
   uint8_t         z_targeting;        /* 0x140C */
-  char            unk_16_[0x0001];    /* 0x140D */
+  char            unk_17_[0x0001];    /* 0x140D */
   uint16_t        disable_music_flag; /* 0x140E */
-  char            unk_17_[0x0020];    /* 0x1410 */
+  char            unk_18_[0x0020];    /* 0x1410 */
   z64_gameinfo_t *gameinfo;           /* 0x1430 */
-  char            unk_18_[0x001C];    /* 0x1434 */
+  char            unk_19_[0x001C];    /* 0x1434 */
                                       /* 0x1450 */
 } z64_file_t;
 
@@ -801,6 +772,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAE8
 #define z64_frame_input_func_addr               0x800A0BA0
 #define z64_frame_input_call_addr               0x800A16AC
+#define z64_day_speed_addr                      0x800F1650
 #define z64_entrance_table_addr                 0x800F9C90
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
@@ -848,6 +820,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAF8
 #define z64_frame_input_func_addr               0x800A0BB0
 #define z64_frame_input_call_addr               0x800A16BC
+#define z64_day_speed_addr                      0x800F1810
 #define z64_entrance_table_addr                 0x800F9E50
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
@@ -895,6 +868,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009D1D8
 #define z64_frame_input_func_addr               0x800A1290
 #define z64_frame_input_call_addr               0x800A1D8C
+#define z64_day_speed_addr                      0x800F1C90
 #define z64_entrance_table_addr                 0x800FA2E0
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
@@ -941,6 +915,7 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *ctxt);
 #define z64_vi_counter          (*(uint32_t*)         z64_vi_counter_addr)
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)
+#define z64_day_speed           (*(uint16_t*)         z64_day_speed_addr)
 #define z64_entrance_table      ( (z64_entrance_table_t*)                     \
                                    z64_entrance_table_addr)
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \

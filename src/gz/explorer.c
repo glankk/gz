@@ -5,6 +5,7 @@
 #include <n64.h>
 #include "gfx.h"
 #include "gu.h"
+#include "input.h"
 #include "menu.h"
 #include "resource.h"
 #include "z64.h"
@@ -163,7 +164,7 @@ static void draw_crosshair(struct menu_item *item)
   );
   /* render navigation indicator primitives */
   gfx_disp(gsDPSetPrimColor(0, 0, 0xFF, 0xFF, 0xFF, 0x40));
-  if (z64_input_direct.pad & BUTTON_Z) {
+  if (input_pad() & BUTTON_Z) {
     gfx_rdp_load_tile(texture, 2);
     gfx_disp(gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0));
   }
@@ -184,6 +185,20 @@ static void draw_crosshair(struct menu_item *item)
     gsDPSetPrimColor(0, 0, 0x00, 0xFF, 0x00, 0x40),
     gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0),
   );
+}
+
+static int enter_proc(struct menu_item *item)
+{
+  input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
+                BUTTON_Z | BUTTON_R);
+  return 0;
+}
+
+static int leave_proc(struct menu_item *item)
+{
+  input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
+             BUTTON_Z | BUTTON_R);
+  return 0;
 }
 
 static int think_proc(struct menu_item *item)
@@ -207,7 +222,7 @@ static int draw_proc(struct menu_item *item,
   static Gfx null_dl = gsSPEndDisplayList();
   struct item_data *data = item->data;
   /* handle input */
-  uint16_t pad = z64_input_direct.pad;
+  uint16_t pad = input_pad();
   if (!(pad & BUTTON_R)) {
     if (pad & BUTTON_Z) {
       if (pad & BUTTON_D_UP)
@@ -436,7 +451,7 @@ static int draw_proc(struct menu_item *item,
 static int navigate_proc(struct menu_item *item, enum menu_navigation nav)
 {
   struct item_data *data = item->data;
-  if (data->state == STATE_RENDER && (z64_input_direct.pad & BUTTON_R)) {
+  if (data->state == STATE_RENDER && (input_pad() & BUTTON_R)) {
     if (nav == MENU_NAVIGATE_UP)
       data->room_next = (data->room_next + 1) % data->no_rooms;
     else if (nav == MENU_NAVIGATE_DOWN)
@@ -475,6 +490,8 @@ void explorer_create(struct menu *menu)
   data->room_file = NULL;
   data->scale = .5f;
   item->data = data;
+  item->enter_proc = enter_proc;
+  item->leave_proc = leave_proc;
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
   item->navigate_proc = navigate_proc;
