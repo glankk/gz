@@ -112,9 +112,12 @@ static struct menu_item    *menu_watchlist;
 static _Bool                menu_active = 0;
 static int32_t              frames_queued = -1;
 static int32_t              frame_counter = 0;
-static int32_t              vi_offset = 0;
-static uint16_t             day_time_prev = 0;
-static int                  target_time = -1;
+static int32_t              lag_vi_offset;
+static _Bool                timer_active = 0;
+static int32_t              timer_vi_offset;
+static int32_t              timer_vi_prev;
+static uint16_t             day_time_prev;
+static int                  target_day_time = -1;
 static struct memory_file  *memfile;
 static _Bool                memfile_saved[SETTINGS_MEMFILE_MAX] = {0};
 static uint8_t              memfile_slot = 0;
@@ -331,6 +334,8 @@ static const char *command_names[] =
   "save memfile",
   "load memfile",
   "reset lag counter",
+  "start/stop timer",
+  "reset timer",
   "pause/unpause",
   "frame advance",
 };
@@ -425,6 +430,19 @@ static int lag_counter_proc(struct menu_item *item,
     settings->menu_settings.lag_counter = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->menu_settings.lag_counter);
+  return 0;
+}
+
+static int timer_proc(struct menu_item *item,
+                      enum menu_callback_reason reason,
+                      void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.timer = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.timer = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.timer);
   return 0;
 }
 
@@ -748,9 +766,14 @@ static void restore_gs_proc(struct menu_item *item, void *data)
   memset(&z64_file.gs_flags, 0x00, sizeof(z64_file.gs_flags));
 }
 
+static void call_navi_proc(struct menu_item *item, void *data)
+{
+  z64_file.navi_timer = 0x025A;
+}
+
 static void set_time_proc(struct menu_item *item, void *data)
 {
-  target_time = (uint32_t)data;
+  target_day_time = (uint32_t)data;
 }
 
 static void set_carpenter_flags_proc(struct menu_item *item, void *data)
@@ -1105,7 +1128,7 @@ void main_hook()
   if (settings->cheats & (1 << CHEAT_NL))
     z64_file.nayrus_love_timer = 0x044B;
   if (settings->cheats & (1 << CHEAT_FREEZETIME)) {
-    if (target_time == -1 && z64_day_speed < 0x0190 &&
+    if (target_day_time == -1 && z64_day_speed < 0x0190 &&
         (z64_file.day_time == (uint16_t)(day_time_prev + z64_day_speed) ||
          z64_file.day_time == (uint16_t)(day_time_prev + z64_day_speed * 2)))
       z64_file.day_time = day_time_prev;
@@ -1175,21 +1198,25 @@ void main_hook()
     load_memory_file();
   if (input_bind_held(COMMAND_RESETLAG)) {
     frame_counter = 0;
-    vi_offset = -(int32_t)z64_vi_counter;
+    lag_vi_offset = -(int32_t)z64_vi_counter;
   }
+  if (input_bind_pressed_raw(COMMAND_TIMER))
+    timer_active = !timer_active;
+  if (input_bind_held(COMMAND_RESETTIMER))
+    timer_vi_offset = -(int32_t)z64_vi_counter;
   if (input_bind_pressed_raw(COMMAND_PAUSE))
     pause_proc(NULL, NULL);
   if (input_bind_pressed(COMMAND_ADVANCE))
     advance_proc(NULL, NULL);
 
   /* update daytime after menu processing to avoid desync */
-  if (target_time != -1) {
+  if (target_day_time != -1) {
     const uint16_t speed = 0x0800;
-    if (z64_file.day_time < target_time &&
-        target_time - z64_file.day_time <= speed)
+    if (z64_file.day_time < target_day_time &&
+        target_day_time - z64_file.day_time <= speed)
     {
-      z64_file.day_time = target_time;
-      target_time = -1;
+      z64_file.day_time = target_day_time;
+      target_day_time = -1;
     }
     else
       z64_file.day_time += speed;
@@ -1240,19 +1267,40 @@ void main_hook()
   }
 
   if (settings->menu_settings.lag_counter) {
-    int cw = menu_get_cell_width(&menu_main, 1);
+    int32_t lag_frames = (int32_t)z64_vi_counter +
+                         lag_vi_offset - frame_counter;
+    int x = settings->lag_counter_x - cw * 8;
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
-    int32_t lag_frames = (int32_t)z64_vi_counter + vi_offset - frame_counter;
     if (settings->menu_settings.lag_unit == SETTINGS_LAG_FRAMES)
-      gfx_printf(menu_get_font(&menu_main, 1),
-                 settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                 "%8d", lag_frames);
+      gfx_printf(font, x , settings->lag_counter_y, "%8d", lag_frames);
     else if (settings->menu_settings.lag_unit == SETTINGS_LAG_SECONDS)
-      gfx_printf(menu_get_font(&menu_main, 1),
-                 settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                 "%8.2f", lag_frames / 60.f);
+      gfx_printf(font, x, settings->lag_counter_y, "%8.2f", lag_frames / 60.f);
   }
   frame_counter += z64_gameinfo.update_rate;
+
+  if (settings->menu_settings.timer) {
+    int32_t frames = (int32_t)z64_vi_counter + timer_vi_offset;
+    int tenths = frames / 6;
+    int seconds = tenths / 10;
+    int minutes = seconds / 60;
+    int hours = minutes / 60;
+    tenths %= 10;
+    seconds %= 60;
+    minutes %= 60;
+    int x = settings->timer_x;
+    int y = settings->timer_y;
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+    if (hours > 0)
+      gfx_printf(font, x, y, "%d:%02d:%02d.%d",
+                 hours, minutes, seconds, tenths);
+    else if (minutes > 0)
+      gfx_printf(font, x, y, "%d:%02d.%d", minutes, seconds, tenths);
+    else
+      gfx_printf(font, x, y, "%d.%d", seconds, tenths);
+  }
+  if (!timer_active && !input_bind_held(COMMAND_RESETTIMER))
+    timer_vi_offset -= (int32_t)z64_vi_counter - timer_vi_prev;
+  timer_vi_prev = z64_vi_counter;
 
   if (menu_active)
     menu_draw(&menu_main);
@@ -1314,6 +1362,12 @@ ENTRY void _start()
   /* disable map toggling */
   *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+
+  /* initialize variables */
+  lag_vi_offset = -(int32_t)z64_vi_counter;
+  timer_vi_offset = -(int32_t)z64_vi_counter;
+  timer_vi_prev = z64_vi_counter;
+  day_time_prev = z64_file.day_time;
 
   /* initialize menus */
   {
@@ -1802,42 +1856,44 @@ ENTRY void _start()
                                           "return");
     menu_add_button(&menu_file, 0, 1, "restore skulltulas",
                     restore_gs_proc, NULL);
+    menu_add_button(&menu_file, 0, 2, "call navi",
+                    call_navi_proc, NULL);
     {
       memfile = malloc(sizeof(*memfile) * SETTINGS_MEMFILE_MAX);
       static struct slot_info memfile_slot_info =
       {
         &memfile_slot, SETTINGS_MEMFILE_MAX,
       };
-      menu_add_static(&menu_file, 0, 2, "memory file", 0xC0C0C0);
-      menu_add_watch(&menu_file, 20, 2,
+      menu_add_static(&menu_file, 0, 3, "memory file", 0xC0C0C0);
+      menu_add_watch(&menu_file, 20, 3,
                      (uint32_t)memfile_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_file, 18, 2, "-",
+      menu_add_button(&menu_file, 18, 3, "-",
                       slot_dec_proc, &memfile_slot_info);
-      menu_add_button(&menu_file, 22, 2, "+",
+      menu_add_button(&menu_file, 22, 3, "+",
                       slot_inc_proc, &memfile_slot_info);
     }
-    menu_add_static(&menu_file, 0, 3, "time of day", 0xC0C0C0);
-    menu_add_intinput(&menu_file, 18, 3, 16, 4,
+    menu_add_static(&menu_file, 0, 4, "time of day", 0xC0C0C0);
+    menu_add_intinput(&menu_file, 18, 4, 16, 4,
                       halfword_mod_proc, &z64_file.day_time);
-    menu_add_button(&menu_file, 23, 3, "day", set_time_proc, (void*)0x4AB0);
-    menu_add_button(&menu_file, 27, 3, "night", set_time_proc, (void*)0xC010);
-    menu_add_static(&menu_file, 0, 4, "carpenter's freed", 0xC0C0C0);
-    menu_add_button(&menu_file, 18, 4, "set",
-                    set_carpenter_flags_proc, NULL);
-    menu_add_button(&menu_file, 22, 4, "clear",
-                    clear_carpenter_flags_proc, NULL);
-    menu_add_static(&menu_file, 0, 5, "intro cutscenes", 0xC0C0C0);
+    menu_add_button(&menu_file, 23, 4, "day", set_time_proc, (void*)0x4AB0);
+    menu_add_button(&menu_file, 27, 4, "night", set_time_proc, (void*)0xC010);
+    menu_add_static(&menu_file, 0, 5, "carpenter's freed", 0xC0C0C0);
     menu_add_button(&menu_file, 18, 5, "set",
-                    set_intro_flags_proc, NULL);
+                    set_carpenter_flags_proc, NULL);
     menu_add_button(&menu_file, 22, 5, "clear",
-                    clear_intro_flags_proc, NULL);
-    menu_add_static(&menu_file, 0, 6, "rewards obtained", 0xC0C0C0);
+                    clear_carpenter_flags_proc, NULL);
+    menu_add_static(&menu_file, 0, 6, "intro cutscenes", 0xC0C0C0);
     menu_add_button(&menu_file, 18, 6, "set",
-                    set_reward_flags_proc, NULL);
+                    set_intro_flags_proc, NULL);
     menu_add_button(&menu_file, 22, 6, "clear",
+                    clear_intro_flags_proc, NULL);
+    menu_add_static(&menu_file, 0, 7, "rewards obtained", 0xC0C0C0);
+    menu_add_button(&menu_file, 18, 7, "set",
+                    set_reward_flags_proc, NULL);
+    menu_add_button(&menu_file, 22, 7, "clear",
                     clear_reward_flags_proc, NULL);
-    menu_add_static(&menu_file, 0, 7, "file index", 0xC0C0C0);
-    menu_add_intinput(&menu_file, 18, 7, 16, 2,
+    menu_add_static(&menu_file, 0, 8, "file index", 0xC0C0C0);
+    menu_add_intinput(&menu_file, 18, 8, 16, 2,
                       byte_mod_proc, &z64_file.file_index);
     {
       static int8_t language_options[] = {0x00, 0x01};
@@ -1845,16 +1901,16 @@ ENTRY void _start()
       {
         &z64_file.language, language_options, 2,
       };
-      menu_add_static(&menu_file, 0, 8, "language", 0xC0C0C0);
-      menu_add_option(&menu_file, 18, 8, "japanese\0""english\0",
+      menu_add_static(&menu_file, 0, 9, "language", 0xC0C0C0);
+      menu_add_option(&menu_file, 18, 9, "japanese\0""english\0",
                       byte_option_proc, &language_option_data);
       static int8_t target_options[] = {0x00, 0x01};
       static struct byte_option target_option_data =
       {
         &z64_file.z_targeting, target_options, 2,
       };
-      menu_add_static(&menu_file, 0, 9, "z targeting", 0xC0C0C0);
-      menu_add_option(&menu_file, 18, 9, "switch\0""hold\0",
+      menu_add_static(&menu_file, 0, 10, "z targeting", 0xC0C0C0);
+      menu_add_option(&menu_file, 18, 10, "switch\0""hold\0",
                       byte_option_proc, &target_option_data);
     }
 
@@ -1884,41 +1940,39 @@ ENTRY void _start()
       menu_add_button(&menu_settings, 18, 1, "+",
                       slot_inc_proc, &profile_slot_info);
     }
-    menu_add_static(&menu_settings, 0, 2, "menu", 0xFFFFFF);
-    menu_add_static(&menu_settings, 2, 3, "font", 0xC0C0C0);
-    menu_font_option = menu_add_option(&menu_settings, 14, 3,
+    menu_add_static(&menu_settings, 0, 2, "font", 0xC0C0C0);
+    menu_font_option = menu_add_option(&menu_settings, 14, 2,
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
                                        "smw text nc\0""werdna's return\0",
                                        menu_font_option_proc, NULL);
-    menu_add_static(&menu_settings, 2, 4, "drop shadow", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 4,
+    menu_add_static(&menu_settings, 0, 3, "drop shadow", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 3,
                       menu_drop_shadow_proc, NULL);
-    menu_add_static(&menu_settings, 2, 5, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 5, menu_position_proc, NULL);
-    menu_add_static(&menu_settings, 0, 6, "input display", 0xFFFFFF);
-    menu_add_static(&menu_settings, 2, 7, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 7, input_display_proc, NULL);
-    menu_add_static(&menu_settings, 2, 8, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 8,
+    menu_add_static(&menu_settings, 0, 4, "menu position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 14, 4, menu_position_proc, NULL);
+    menu_add_static(&menu_settings, 0, 5, "input display", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 5, input_display_proc, NULL);
+    menu_add_positioning(&menu_settings, 16, 5,
                          generic_position_proc, &settings->input_display_x);
-    menu_add_static(&menu_settings, 0, 9, "lag counter", 0xFFFFFF);
-    menu_add_static(&menu_settings, 2, 10, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 10, lag_counter_proc, NULL);
-    menu_add_static(&menu_settings, 2, 11, "unit", 0xC0C0C0);
-    menu_add_option(&menu_settings, 14, 11, "frames\0""seconds\0",
-                    lag_unit_proc, NULL);
-    menu_add_static(&menu_settings, 2, 12, "position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 12,
+    menu_add_static(&menu_settings, 0, 6, "lag counter", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 6, lag_counter_proc, NULL);
+    menu_add_positioning(&menu_settings, 16, 6,
                          generic_position_proc, &settings->lag_counter_x);
+    menu_add_option(&menu_settings, 18, 6, "frames\0""seconds\0",
+                    lag_unit_proc, NULL);
+    menu_add_static(&menu_settings, 0, 7, "timer", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 7, timer_proc, NULL);
+    menu_add_positioning(&menu_settings, 16, 7,
+                         generic_position_proc, &settings->timer_x);
     static struct menu menu_binds;
-    menu_add_submenu(&menu_settings, 0, 13, &menu_binds, "button maps");
-    menu_add_button(&menu_settings, 0, 14, "save settings",
+    menu_add_submenu(&menu_settings, 0, 8, &menu_binds, "button maps");
+    menu_add_button(&menu_settings, 0, 9, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 15, "load settings",
+    menu_add_button(&menu_settings, 0, 10, "load settings",
                     load_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 16, "restore defaults",
+    menu_add_button(&menu_settings, 0, 11, "restore defaults",
                     restore_settings_proc, NULL);
     menu_init(&menu_binds, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_binds.selector = menu_add_submenu(&menu_binds, 0, 0, NULL, "return");

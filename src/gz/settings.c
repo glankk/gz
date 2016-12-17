@@ -39,6 +39,7 @@ void settings_load_default(void)
   d->menu_settings.input_display = 0;
   d->menu_settings.lag_counter = 0;
   d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
+  d->menu_settings.timer = 0;
   d->menu_settings.warp_age = 0;
   d->menu_x = 16;
   d->menu_y = 64;
@@ -46,6 +47,8 @@ void settings_load_default(void)
   d->input_display_y = Z64_SCREEN_HEIGHT - 6;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
   d->lag_counter_y = 20;
+  d->timer_x = 16;
+  d->timer_y = 20;
   d->no_watches = 0;
   d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
@@ -70,8 +73,12 @@ void settings_load_default(void)
                                                     BUTTON_D_LEFT);
   d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R,
                                                     BUTTON_D_RIGHT);
-  d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_A,
+  d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                  BUTTON_D_RIGHT);
+  d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
+                                            BUTTON_D_LEFT);
+  d->binds[COMMAND_RESETTIMER] = input_bind_make(3, BUTTON_R, BUTTON_B,
+                                                 BUTTON_D_LEFT);
   d->binds[COMMAND_PAUSE] = input_bind_make(1, BUTTON_D_DOWN);
   d->binds[COMMAND_ADVANCE] = input_bind_make(1, BUTTON_D_UP);
 }
