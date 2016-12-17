@@ -58,34 +58,44 @@ enum commands
   COMMAND_MAX,
 };
 
+struct watch_info
+{
+  uint8_t type          : 4;
+  uint8_t anchored      : 1;
+  uint8_t position_set  : 1;
+};
+
+struct menu_settings
+{
+  uint8_t font_resource : 3;
+  uint8_t drop_shadow   : 1;
+  uint8_t input_display : 1;
+  uint8_t lag_counter   : 1;
+  uint8_t lag_unit      : 1;
+  uint8_t warp_age      : 1;
+};
+
 struct settings_data
 {
   /* order elements by size for space-efficient packing */
-  z64_xyz_t   teleport_pos[SETTINGS_TELEPORT_MAX];
-  uint32_t    watch_address[SETTINGS_WATCHES_MAX];
-  z64_angle_t teleport_rot[SETTINGS_TELEPORT_MAX];
-  int16_t     menu_x;
-  int16_t     menu_y;
-  int16_t     input_display_x;
-  int16_t     input_display_y;
-  int16_t     lag_counter_x;
-  int16_t     lag_counter_y;
-  int16_t     watch_x[SETTINGS_WATCHES_MAX];
-  int16_t     watch_y[SETTINGS_WATCHES_MAX];
-  uint16_t    warp_entrance;
-  uint16_t    binds[SETTINGS_BIND_MAX];
-  uint8_t     menu_font_resource_id;
-  int8_t      menu_drop_shadow;
-  int8_t      input_display_enabled;
-  int8_t      lag_counter_enabled;
-  int8_t      lag_unit;
-  uint8_t     teleport_slot;
-  int8_t      warp_age;
-  uint8_t     no_watches;
-  int8_t      cheats[CHEAT_MAX];
-  uint8_t     watch_type[SETTINGS_WATCHES_MAX];
-  uint8_t     watch_anchored[SETTINGS_WATCHES_MAX];
-  int8_t      watch_position_set[SETTINGS_WATCHES_MAX];
+  z64_xyz_t             teleport_pos[SETTINGS_TELEPORT_MAX];
+  uint32_t              watch_address[SETTINGS_WATCHES_MAX];
+  uint32_t              cheats;
+  z64_angle_t           teleport_rot[SETTINGS_TELEPORT_MAX];
+  int16_t               menu_x;
+  int16_t               menu_y;
+  int16_t               input_display_x;
+  int16_t               input_display_y;
+  int16_t               lag_counter_x;
+  int16_t               lag_counter_y;
+  int16_t               watch_x[SETTINGS_WATCHES_MAX];
+  int16_t               watch_y[SETTINGS_WATCHES_MAX];
+  uint16_t              warp_entrance;
+  uint16_t              binds[SETTINGS_BIND_MAX];
+  struct menu_settings  menu_settings;
+  struct watch_info     watch_info[SETTINGS_WATCHES_MAX];
+  uint8_t               teleport_slot;
+  uint8_t               no_watches;
 };
 
 struct settings_header

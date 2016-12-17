@@ -108,7 +108,6 @@ static uint8_t              profile = 0;
 static struct menu          menu_main;
 static struct menu          menu_global_watches;
 static struct menu_item    *menu_font_option;
-static struct menu_item    *menu_lag_unit_option;
 static struct menu_item    *menu_watchlist;
 static _Bool                menu_active = 0;
 static int32_t              frames_queued = -1;
@@ -389,17 +388,43 @@ static void load_memory_file(void)
   z64_UpdateEquipment(&z64_game, &z64_link);
 }
 
-static int generic_checkbox_proc(struct menu_item *item,
-                                 enum menu_callback_reason reason,
-                                 void *data)
+static int cheat_proc(struct menu_item *item,
+                      enum menu_callback_reason reason,
+                      void *data)
 {
-  int8_t *state = data;
+  int cheat_index = (int)data;
   if (reason == MENU_CALLBACK_SWITCH_ON)
-    *state = 1;
+    settings->cheats |= (1 << cheat_index);
   else if (reason == MENU_CALLBACK_SWITCH_OFF)
-    *state = 0;
+    settings->cheats &= ~(1 << cheat_index);
   else if (reason == MENU_CALLBACK_THINK)
-    menu_checkbox_set(item, *state);
+    menu_checkbox_set(item, settings->cheats & (1 << cheat_index));
+  return 0;
+}
+
+static int input_display_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.input_display = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.input_display = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.input_display);
+  return 0;
+}
+
+static int lag_counter_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.lag_counter = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.lag_counter = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.lag_counter);
   return 0;
 }
 
@@ -677,6 +702,32 @@ static int byte_option_proc(struct menu_item *item,
   return 0;
 }
 
+static int age_option_proc(struct menu_item *item,
+                           enum menu_callback_reason reason,
+                           void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.warp_age)
+      menu_option_set(item, settings->menu_settings.warp_age);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.warp_age = menu_option_get(item);
+  return 0;
+}
+
+static int lag_unit_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.lag_unit)
+      menu_option_set(item, settings->menu_settings.lag_unit);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.lag_unit = menu_option_get(item);
+  return 0;
+}
+
 static int button_item_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
@@ -818,7 +869,7 @@ static void do_warp(int16_t entrance_index, int16_t cutscene_index)
 
 static void warp_proc(struct menu_item *item, void *data)
 {
-  z64_game.link_age = settings->warp_age;
+  z64_game.link_age = settings->menu_settings.warp_age;
   do_warp(settings->warp_entrance, 0x0000);
 }
 
@@ -830,7 +881,7 @@ static void places_proc(struct menu_item *item, void *data)
   for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
-      z64_game.link_age = settings->warp_age;
+      z64_game.link_age = settings->menu_settings.warp_age;
       do_warp(i, 0x0000);
       if (zu_scene_info[scene_index].no_entrances > 1)
         menu_return(&menu_main);
@@ -846,8 +897,9 @@ static int menu_font_option_proc(struct menu_item *item,
                                  void *data)
 {
   if (reason == MENU_CALLBACK_CHANGED) {
-    settings->menu_font_resource_id = menu_font_options[menu_option_get(item)];
-    struct gfx_font *font = resource_get(settings->menu_font_resource_id);
+    int font_resource = menu_font_options[menu_option_get(item)];
+    settings->menu_settings.font_resource = font_resource;
+    struct gfx_font *font = resource_get(font_resource);
     menu_set_font(&menu_main, font);
     menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
     menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
@@ -861,11 +913,11 @@ static int menu_drop_shadow_proc(struct menu_item *item,
                                  void *data)
 {
   if (reason == MENU_CALLBACK_CHANGED) {
-    settings->menu_drop_shadow = menu_checkbox_get(item);
-    gfx_mode_set(GFX_MODE_DROPSHADOW, settings->menu_drop_shadow);
+    settings->menu_settings.drop_shadow = menu_checkbox_get(item);
+    gfx_mode_set(GFX_MODE_DROPSHADOW, settings->menu_settings.drop_shadow);
   }
   else if (reason == MENU_CALLBACK_THINK)
-    menu_checkbox_set(item, settings->menu_drop_shadow);
+    menu_checkbox_set(item, settings->menu_settings.drop_shadow);
   return 0;
 }
 
@@ -918,15 +970,15 @@ static void apply_settings()
   size_t no_font_options = sizeof(menu_font_options) /
                            sizeof(*menu_font_options);
   for (int i = 0; i < no_font_options; ++i)
-    if (menu_font_options[i] == settings->menu_font_resource_id) {
+    if (menu_font_options[i] == settings->menu_settings.font_resource) {
       menu_option_set(menu_font_option, i);
       break;
     }
-  struct gfx_font *font = resource_get(settings->menu_font_resource_id);
+  struct gfx_font *font = resource_get(settings->menu_settings.font_resource);
   menu_set_font(&menu_main, font);
   menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
   menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
-  gfx_mode_set(GFX_MODE_DROPSHADOW, settings->menu_drop_shadow);
+  gfx_mode_set(GFX_MODE_DROPSHADOW, settings->menu_settings.drop_shadow);
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
   menu_imitate(&menu_global_watches, &menu_main);
@@ -1013,54 +1065,54 @@ void main_hook()
   gfx_mode_init();
   input_update();
 
-  if (settings->cheats[CHEAT_ENERGY])
+  if (settings->cheats & (1 << CHEAT_ENERGY))
     z64_file.energy = z64_file.energy_capacity;
-  if (settings->cheats[CHEAT_MAGIC])
+  if (settings->cheats & (1 << CHEAT_MAGIC))
     z64_file.magic = (z64_file.magic_capacity + 1) * 0x30;
-  if (settings->cheats[CHEAT_STICKS]) {
+  if (settings->cheats & (1 << CHEAT_STICKS)) {
     int stick_capacity[] = {1, 10, 20, 30, 1, 20, 30, 40};
     z64_file.ammo[Z64_SLOT_STICK] = stick_capacity[z64_file.stick_upgrade];
   }
-  if (settings->cheats[CHEAT_NUTS]) {
+  if (settings->cheats & (1 << CHEAT_NUTS)) {
     int nut_capacity[] = {1, 20, 30, 40, 1, 0x7F, 1, 0x7F};
     z64_file.ammo[Z64_SLOT_NUT] = nut_capacity[z64_file.nut_upgrade];
   }
-  if (settings->cheats[CHEAT_BOMBS]) {
+  if (settings->cheats & (1 << CHEAT_BOMBS)) {
     int bomb_bag_capacity[] = {1, 20, 30, 40, 1, 1, 1, 1};
     z64_file.ammo[Z64_SLOT_BOMB] = bomb_bag_capacity[z64_file.bomb_bag];
   }
-  if (settings->cheats[CHEAT_ARROWS]) {
+  if (settings->cheats & (1 << CHEAT_ARROWS)) {
     int quiver_capacity[] = {1, 30, 40, 50, 1, 20, 30, 40};
     z64_file.ammo[Z64_SLOT_BOW] = quiver_capacity[z64_file.quiver];
   }
-  if (settings->cheats[CHEAT_SEEDS]) {
+  if (settings->cheats & (1 << CHEAT_SEEDS)) {
     int bullet_bag_capacity[] = {1, 30, 40, 50, 1, 10, 20, 30};
     z64_file.ammo[Z64_SLOT_SLINGSHOT] =
       bullet_bag_capacity[z64_file.bullet_bag];
   }
-  if (settings->cheats[CHEAT_BOMBCHUS])
+  if (settings->cheats & (1 << CHEAT_BOMBCHUS))
     z64_file.ammo[Z64_SLOT_BOMBCHU] = 50;
-  if (settings->cheats[CHEAT_BEANS])
+  if (settings->cheats & (1 << CHEAT_BEANS))
     z64_file.ammo[Z64_SLOT_BEANS] = 1;
-  if (settings->cheats[CHEAT_KEYS]) {
+  if (settings->cheats & (1 << CHEAT_KEYS)) {
     if (z64_game.scene_index >= 0x0000 && z64_game.scene_index <= 0x0010)
       z64_file.dungeon_keys[z64_game.scene_index] = 1;
   }
-  if (settings->cheats[CHEAT_RUPEES]) {
+  if (settings->cheats & (1 << CHEAT_RUPEES)) {
     int wallet_capacity[] = {99, 200, 500, 0xFFFF};
     z64_file.rupees = wallet_capacity[z64_file.wallet];
   }
-  if (settings->cheats[CHEAT_NL])
+  if (settings->cheats & (1 << CHEAT_NL))
     z64_file.nayrus_love_timer = 0x044B;
-  if (settings->cheats[CHEAT_FREEZETIME]) {
+  if (settings->cheats & (1 << CHEAT_FREEZETIME)) {
     if (target_time == -1 && z64_day_speed < 0x0190 &&
         (z64_file.day_time == (uint16_t)(day_time_prev + z64_day_speed) ||
          z64_file.day_time == (uint16_t)(day_time_prev + z64_day_speed * 2)))
       z64_file.day_time = day_time_prev;
   }
-  if (settings->cheats[CHEAT_NOMUSIC])
+  if (settings->cheats & (1 << CHEAT_NOMUSIC))
     zu_setmusic(0x01);
-  if (settings->cheats[CHEAT_USEITEMS])
+  if (settings->cheats & (1 << CHEAT_USEITEMS))
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
 
   while (menu_think(&menu_global_watches))
@@ -1089,8 +1141,11 @@ void main_hook()
   else if (input_bind_pressed_raw(COMMAND_MENU))
     show_menu();
   if (input_bind_held(COMMAND_BREAK)) {
-    z64_game.cutscene_state = 0x03;
     z64_game.event_flag = 0x0000;
+    z64_game.cutscene_state = 0x03;
+    z64_game.textbox_state_1 = 0x36;
+    z64_game.textbox_state_2 = 0x00;
+    z64_game.textbox_state_3 = 0x02;
   }
   if (input_bind_pressed_raw(COMMAND_VOID))
     zu_void();
@@ -1146,7 +1201,7 @@ void main_hook()
   int cw = menu_get_cell_width(&menu_main, 1);
   int ch = menu_get_cell_height(&menu_main, 1);
 
-  if (settings->input_display_enabled) {
+  if (settings->menu_settings.input_display) {
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
     gfx_printf(font, settings->input_display_x, settings->input_display_y,
                "%4i %4i", z64_input_direct.x, z64_input_direct.y);
@@ -1184,22 +1239,20 @@ void main_hook()
     }
   }
 
-  {
-    if (settings->lag_counter_enabled) {
-      int cw = menu_get_cell_width(&menu_main, 1);
-      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
-      int32_t lag_frames = (int32_t)z64_vi_counter + vi_offset - frame_counter;
-      if (settings->lag_unit == SETTINGS_LAG_FRAMES)
-        gfx_printf(menu_get_font(&menu_main, 1),
-                   settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                   "%8d", lag_frames);
-      else if (settings->lag_unit == SETTINGS_LAG_SECONDS)
-        gfx_printf(menu_get_font(&menu_main, 1),
-                   settings->lag_counter_x - cw * 8, settings->lag_counter_y,
-                   "%8.2f", lag_frames / 60.f);
-    }
-    frame_counter += z64_gameinfo.update_rate;
+  if (settings->menu_settings.lag_counter) {
+    int cw = menu_get_cell_width(&menu_main, 1);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+    int32_t lag_frames = (int32_t)z64_vi_counter + vi_offset - frame_counter;
+    if (settings->menu_settings.lag_unit == SETTINGS_LAG_FRAMES)
+      gfx_printf(menu_get_font(&menu_main, 1),
+                 settings->lag_counter_x - cw * 8, settings->lag_counter_y,
+                 "%8d", lag_frames);
+    else if (settings->menu_settings.lag_unit == SETTINGS_LAG_SECONDS)
+      gfx_printf(menu_get_font(&menu_main, 1),
+                 settings->lag_counter_x - cw * 8, settings->lag_counter_y,
+                 "%8.2f", lag_frames / 60.f);
   }
+  frame_counter += z64_gameinfo.update_rate;
 
   if (menu_active)
     menu_draw(&menu_main);
@@ -1323,14 +1376,9 @@ ENTRY void _start()
     menu_add_static(&menu_warps, 0, 2, "entrance", 0xC0C0C0);
     menu_add_intinput(&menu_warps, 9, 2, 16, 4,
                       halfword_mod_proc, &settings->warp_entrance);
-    {
-      static int8_t age_options[] = {0, 1};
-      static struct byte_option option = {NULL, age_options, 2};
-      option.data = &settings->warp_age;
-      menu_add_static(&menu_warps, 0, 3, "age", 0xC0C0C0);
-      menu_add_option(&menu_warps, 9, 3, "adult\0""child\0",
-                      byte_option_proc, &option);
-    }
+    menu_add_static(&menu_warps, 0, 3, "age", 0xC0C0C0);
+    menu_add_option(&menu_warps, 9, 3, "adult\0""child\0",
+                    age_option_proc, NULL);
     menu_add_button(&menu_warps, 0, 4, "warp", warp_proc, NULL);
     menu_add_button(&menu_warps, 0, 5, "clear cutscene pointer",
                     clear_csp_proc, NULL);
@@ -1383,8 +1431,7 @@ ENTRY void _start()
     {
       for (int i = 0; i < CHEAT_MAX; ++i) {
         menu_add_static(&menu_cheats, 0, 1 + i, cheat_names[i], 0xC0C0C0);
-        menu_add_checkbox(&menu_cheats, 14, 1 + i,
-                          generic_checkbox_proc, &settings->cheats[i]);
+        menu_add_checkbox(&menu_cheats, 14, 1 + i, cheat_proc, (void*)i);
       }
     }
 
@@ -1839,7 +1886,7 @@ ENTRY void _start()
     }
     menu_add_static(&menu_settings, 0, 2, "menu", 0xFFFFFF);
     menu_add_static(&menu_settings, 2, 3, "font", 0xC0C0C0);
-    menu_font_option = menu_add_option(&menu_settings, 14, 2,
+    menu_font_option = menu_add_option(&menu_settings, 14, 3,
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
@@ -1852,26 +1899,16 @@ ENTRY void _start()
     menu_add_positioning(&menu_settings, 14, 5, menu_position_proc, NULL);
     menu_add_static(&menu_settings, 0, 6, "input display", 0xFFFFFF);
     menu_add_static(&menu_settings, 2, 7, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 7,
-                      generic_checkbox_proc, &settings->input_display_enabled);
+    menu_add_checkbox(&menu_settings, 14, 7, input_display_proc, NULL);
     menu_add_static(&menu_settings, 2, 8, "position", 0xC0C0C0);
     menu_add_positioning(&menu_settings, 14, 8,
                          generic_position_proc, &settings->input_display_x);
     menu_add_static(&menu_settings, 0, 9, "lag counter", 0xFFFFFF);
     menu_add_static(&menu_settings, 2, 10, "enabled", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 10,
-                      generic_checkbox_proc, &settings->lag_counter_enabled);
+    menu_add_checkbox(&menu_settings, 14, 10, lag_counter_proc, NULL);
     menu_add_static(&menu_settings, 2, 11, "unit", 0xC0C0C0);
-    static int8_t lag_unit_options[] =
-    {
-      SETTINGS_LAG_FRAMES,
-      SETTINGS_LAG_SECONDS,
-    };
-    static struct byte_option lag_unit_data = {NULL, lag_unit_options, 2};
-    lag_unit_data.data = &settings->lag_unit;
-    menu_lag_unit_option = menu_add_option(&menu_settings, 14, 11,
-                                           "frames\0""seconds\0",
-                                           byte_option_proc, &lag_unit_data);
+    menu_add_option(&menu_settings, 14, 11, "frames\0""seconds\0",
+                    lag_unit_proc, NULL);
     menu_add_static(&menu_settings, 2, 12, "position", 0xC0C0C0);
     menu_add_positioning(&menu_settings, 14, 12,
                          generic_position_proc, &settings->lag_counter_x);

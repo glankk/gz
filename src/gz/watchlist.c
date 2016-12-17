@@ -264,11 +264,11 @@ void watchlist_store(struct menu_item *item)
     struct member_data *member_data = get_member(data, i);
     struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
     settings->watch_address[i] = menu_watch_get_address(watch);
-    settings->watch_type[i] = menu_watch_get_type(watch);
-    settings->watch_anchored[i] = member_data->anchored;
     settings->watch_x[i] = member_data->x;
     settings->watch_y[i] = member_data->y;
-    settings->watch_position_set[i] = member_data->position_set;
+    settings->watch_info[i].type = menu_watch_get_type(watch);
+    settings->watch_info[i].anchored = member_data->anchored;
+    settings->watch_info[i].position_set = member_data->position_set;
   }
 }
 
@@ -278,8 +278,8 @@ void watchlist_fetch(struct menu_item *item)
   for (int i = data->members.size - 1; i >= 0; --i)
     remove_member(data, i);
   for (int i = 0; i < settings->no_watches; ++i)
-    add_member(data, settings->watch_address[i], settings->watch_type[i], i,
-               settings->watch_anchored[i],
+    add_member(data, settings->watch_address[i], settings->watch_info[i].type,
+               i, settings->watch_info[i].anchored,
                settings->watch_x[i], settings->watch_y[i],
-               settings->watch_position_set[i]);
+               settings->watch_info[i].position_set);
 }

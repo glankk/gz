@@ -34,20 +34,20 @@ void settings_load_default(void)
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
-  d->menu_font_resource_id = RES_FONT_PRESSSTART2P;
-  d->menu_drop_shadow = 1;
+  d->menu_settings.font_resource = RES_FONT_PRESSSTART2P;
+  d->menu_settings.drop_shadow = 1;
+  d->menu_settings.input_display = 0;
+  d->menu_settings.lag_counter = 0;
+  d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
+  d->menu_settings.warp_age = 0;
   d->menu_x = 16;
   d->menu_y = 64;
-  d->input_display_enabled = 0;
   d->input_display_x = 16;
   d->input_display_y = Z64_SCREEN_HEIGHT - 6;
-  d->lag_counter_enabled = 0;
-  d->lag_unit = SETTINGS_LAG_FRAMES;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
   d->lag_counter_y = 20;
   d->no_watches = 0;
-  for (int i = 0; i < CHEAT_MAX; ++i)
-    d->cheats[i] = 0;
+  d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
     d->teleport_pos[i].x = 0.f;
     d->teleport_pos[i].y = 0.f;
@@ -56,7 +56,6 @@ void settings_load_default(void)
   }
   d->teleport_slot = 0;
   d->warp_entrance = 0;
-  d->warp_age = 0;
   d->binds[COMMAND_MENU] = input_bind_make(2, BUTTON_R, BUTTON_L);
   d->binds[COMMAND_RETURN] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
   d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_C_UP, BUTTON_L);
