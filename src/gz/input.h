@@ -35,5 +35,7 @@ _Bool     input_bind_pressed(int index);
 struct menu_item *binder_create(struct menu *menu, int x, int y,
                                 int bind_index);
 
+extern const uint32_t input_button_color[];
+
 #endif
 

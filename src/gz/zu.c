@@ -290,11 +290,14 @@ void zu_void(void)
 
 void zu_execute_game(int16_t entrance_index, int16_t cutscene_index)
 {
+  if (z64_file.entrance_index != z64_game.entrance_index)
+    z64_file.seq_index = -1;
   z64_file.entrance_index = entrance_index;
   z64_file.cutscene_index = cutscene_index;
   z64_file.interface_flag = 0;
   if (z64_file.minigame_state == 1)
     z64_file.minigame_state = 3;
+  z64_game.entrance_index = entrance_index;
   z64_ctxt.state_continue = 0;
   z64_ctxt.next_ctor = (void*)z64_ctxt_game_ctor;
   z64_ctxt.next_size = z64_ctxt_game_size;

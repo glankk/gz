@@ -183,6 +183,11 @@ static void *rc_icon_amount(void)
   return resource_load_grc_texture("amount_icons");
 }
 
+static void *rc_icon_buttons(void)
+{
+  return resource_load_grc_texture("button_icons");
+}
+
 static void *rc_texture_crosshair(void)
 {
   return resource_load_grc_texture("crosshair");
@@ -214,6 +219,7 @@ static void *(*res_ctor[RES_MAX])(void) =
   rc_zicon_action_buttons,
   rc_zfont_nes,
   rc_icon_amount,
+  rc_icon_buttons,
   rc_texture_crosshair,
 };
 
@@ -233,6 +239,7 @@ static void (*res_dtor[RES_MAX])() =
   gfx_texture_free,
   gfx_texture_free,
   rd_font_generic,
+  gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,
 };

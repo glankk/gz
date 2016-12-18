@@ -89,6 +89,13 @@
     "format":       "rgba32",
     "tile_height":  32
   },
+  "button_icons.png":
+  {
+    "type":         "texture",
+    "name":         "button_icons",
+    "format":       "ia8",
+    "tile_height":  8
+  },
   "crosshair.png":
   {
     "type":         "texture",

@@ -875,7 +875,7 @@ struct zu_scene_info zu_scene_info[] =
       "unknown",
       "from goron city",
       "from river",
-      "field",
+      "from field",
       "from forest exit",
     },
   },

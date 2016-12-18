@@ -3,6 +3,7 @@
 #include <string.h>
 #include "input.h"
 #include "menu.h"
+#include "resource.h"
 #include "settings.h"
 #include "z64.h"
 
@@ -46,6 +47,26 @@ static int bitmask_button_index(uint16_t bitmask)
       return i;
   return -1;
 }
+
+const uint32_t input_button_color[] =
+{
+  0xFFA000,
+  0xFFA000,
+  0xFFA000,
+  0xFFA000,
+  0xC0C0C0,
+  0xC0C0C0,
+  0x000000,
+  0x000000,
+  0xC8C8C8,
+  0xC8C8C8,
+  0xC8C8C8,
+  0xC8C8C8,
+  0xC80000,
+  0xC0C0C0,
+  0x009600,
+  0x5A5AFF,
+};
 
 void input_update(void)
 {
@@ -214,7 +235,6 @@ struct item_data
 {
   int       bind_index;
   int       state;
-  uint16_t  bind_cache;
 };
 
 static int think_proc(struct menu_item *item)
@@ -224,7 +244,9 @@ static int think_proc(struct menu_item *item)
   if (data->state == 1) {
     if (!pad)
       data->state = 2;
-    else if (button_time[bitmask_button_index(BUTTON_L)] >= 15) {
+    else if (button_time[bitmask_button_index(BUTTON_L)] >=
+             INPUT_REPEAT_DELAY)
+    {
       *b = input_bind_make(0);
       item->animate_highlight = 0;
       data->state = 0;
@@ -261,54 +283,37 @@ static int think_proc(struct menu_item *item)
   return 0;
 }
 
-static void binder_update(struct menu_item *item)
-{
-  static const char *button_name[] =
-  {
-    "cr",
-    "cl",
-    "cd",
-    "cu",
-    "r",
-    "l",
-    "?",
-    "?",
-    "dr",
-    "dl",
-    "dd",
-    "du",
-    "s",
-    "z",
-    "b",
-    "a",
-  };
-  struct item_data *data = item->data;
-  char *p = item->text;
-  uint16_t b = settings->binds[data->bind_index];
-  for (int i = 0; i < 4; ++i) {
-    uint16_t c = bind_get_component(b, i);
-    if (c == BIND_END)
-      break;
-    if (p > item->text)
-      *p++ = '+';
-    size_t l = strlen(button_name[c]);
-    memcpy(p, button_name[c], l);
-    p += l;
-  }
-  if (p == item->text)
-    strcpy(p, "<unbound>");
-  else
-    *p = 0;
-  data->bind_cache = b;
-}
-
 static int draw_proc(struct menu_item *item,
                      struct menu_draw_params *draw_params)
 {
   struct item_data *data = item->data;
-  if (data->bind_cache != settings->binds[data->bind_index])
-    binder_update(item);
-  return 0;
+  struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
+  int cw = menu_get_cell_width(item->owner, 1);
+  int x = draw_params->x + (cw - texture->tile_width) / 2;
+  int y = draw_params->y - (gfx_font_xheight(draw_params->font) +
+                            texture->tile_height + 1) / 2;
+  uint16_t b = settings->binds[data->bind_index];
+  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  for (int i = 0; i < 4; ++i) {
+    uint16_t c = bind_get_component(b, i);
+    if (c == BIND_END) {
+      if (i == 0)
+        gfx_printf(draw_params->font, draw_params->x, draw_params->y,
+                   "unbound");
+      break;
+    }
+    struct gfx_sprite sprite =
+    {
+      texture, c,
+      x + i * 10, y,
+      1.f, 1.f,
+    };
+    if (item->owner->selector != item)
+      gfx_mode_set(GFX_MODE_COLOR, (input_button_color[c] << 8) |
+                   draw_params->alpha);
+    gfx_sprite_draw(&sprite);
+  }
+  return 1;
 }
 
 static int activate_proc(struct menu_item *item)
@@ -334,6 +339,5 @@ struct menu_item *binder_create(struct menu *menu, int x, int y,
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
   item->activate_proc = activate_proc;
-  binder_update(item);
   return item;
 }

@@ -20,6 +20,8 @@ struct equipment_item_option
 {
   int       shift;
   uint32_t  mask;
+  int       x;
+  int       y;
   int       start;
   int       length;
 };
@@ -32,10 +34,20 @@ struct equipment_item_data
   int8_t    value;
 };
 
+struct capacity_item_option
+{
+  int       shift;
+  int       x;
+  int       y;
+  int       item_tile;
+  _Bool     multi_tile;
+  int       amount_tiles[8];
+};
+
 struct capacity_item_data
 {
   int       shift;
-  uint32_t  mask;
+  _Bool     multi_tile;
   int8_t    value;
 };
 
@@ -137,12 +149,18 @@ static uint16_t menu_font_options[] =
 
 static struct equipment_item_option equipment_item_list[] =
 {
-  {14, 0b111, Z64_ITEM_BULLET_BAG_30,   6},
-  {0,  0b111, Z64_ITEM_QUIVER_30,       6},
-  {3,  0b111, Z64_ITEM_BOMB_BAG_20,     6},
-  {6,  0b111, Z64_ITEM_GORONS_BRACELET, 6},
-  {9,  0b111, Z64_ITEM_SILVER_SCALE,    6},
-  {12, 0b11,  Z64_ITEM_ADULTS_WALLET,   3},
+  {6,  0b111, 0, 3, Z64_ITEM_GORONS_BRACELET, 6},
+  {9,  0b111, 0, 4, Z64_ITEM_SILVER_SCALE,    6},
+  {12, 0b11,  0, 5, Z64_ITEM_ADULTS_WALLET,   3},
+};
+
+static struct capacity_item_option capacity_item_list[] =
+{
+  {14, 0, 0, Z64_ITEM_BULLET_BAG_30, 1, {0,  3,  4,  5,  7,  8,  9,  10}},
+  {0,  0, 1, Z64_ITEM_QUIVER_30,     1, {0,  3,  4,  5,  7,  9,  10, 11}},
+  {3,  0, 2, Z64_ITEM_BOMB_BAG_20,   1, {0,  2,  3,  4,  7,  7,  7,  7}},
+  {17, 1, 5, Z64_ITEM_STICK,         0, {0,  1,  2,  3,  7,  9,  10, 11}},
+  {20, 2, 5, Z64_ITEM_NUT,           0, {0,  2,  3,  4,  7,  13, 7,  13}},
 };
 
 static struct equipment_switch equipment_list[] =
@@ -383,7 +401,12 @@ static void load_memory_file(void)
   if (!memfile_saved[memfile_slot])
     return;
   struct memory_file *file = &memfile[memfile_slot];
+  /* keep some data intact to prevent glitchiness */
+  int8_t seq_index = z64_file.seq_index;
+  uint8_t minimap_index = z64_file.minimap_index;
   memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
+  z64_file.seq_index = seq_index;
+  z64_file.minimap_index = minimap_index;
   if (file->scene_index == z64_game.scene_index)
     memcpy(&z64_game.switch_flags, &file->scene_flags,
            sizeof(file->scene_flags));
@@ -497,12 +520,19 @@ static int capacity_item_proc(struct menu_item *item,
                               void *data)
 {
   struct capacity_item_data *d = data;
-  if (reason == MENU_CALLBACK_CHANGED)
+  if (reason == MENU_CALLBACK_CHANGED) {
+    int v = d->value;
+    if (d->multi_tile)
+      ++v;
     z64_file.equipment_items = (z64_file.equipment_items &
-                                ~(d->mask << d->shift)) |
-                                (d->value << d->shift);
-  else if (reason == MENU_CALLBACK_THINK)
-    d->value = (z64_file.equipment_items >> d->shift) & d->mask;
+                                ~(0b111 << d->shift)) | (v << d->shift);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    int v = (z64_file.equipment_items >> d->shift) & 0b111;
+    if (d->multi_tile)
+      --v;
+    d->value = v;
+  }
   return 0;
 }
 
@@ -1133,8 +1163,11 @@ void main_hook()
          z64_file.day_time == (uint16_t)(day_time_prev + z64_day_speed * 2)))
       z64_file.day_time = day_time_prev;
   }
-  if (settings->cheats & (1 << CHEAT_NOMUSIC))
-    zu_setmusic(0x01);
+  if (settings->cheats & (1 << CHEAT_NOMUSIC)) {
+    zu_setmusic(0x00000001);
+    zu_setmusic(0x01000001);
+    z64_file.seq_index = -1;
+  }
   if (settings->cheats & (1 << CHEAT_USEITEMS))
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
 
@@ -1202,8 +1235,10 @@ void main_hook()
   }
   if (input_bind_pressed_raw(COMMAND_TIMER))
     timer_active = !timer_active;
-  if (input_bind_held(COMMAND_RESETTIMER))
+  if (input_bind_held(COMMAND_RESETTIMER)) {
     timer_vi_offset = -(int32_t)z64_vi_counter;
+    timer_vi_prev = z64_vi_counter;
+  }
   if (input_bind_pressed_raw(COMMAND_PAUSE))
     pause_proc(NULL, NULL);
   if (input_bind_pressed(COMMAND_ADVANCE))
@@ -1229,40 +1264,28 @@ void main_hook()
   int ch = menu_get_cell_height(&menu_main, 1);
 
   if (settings->menu_settings.input_display) {
+    struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
     gfx_printf(font, settings->input_display_x, settings->input_display_y,
                "%4i %4i", z64_input_direct.x, z64_input_direct.y);
-    static struct
+    static const int buttons[] =
     {
-      uint16_t    mask;
-      const char *name;
-      uint32_t    color;
-    }
-    buttons[] =
-    {
-      {BUTTON_A,        "A", 0x0000FF},
-      {BUTTON_B,        "B", 0x00FF00},
-      {BUTTON_START,    "S", 0xFF0000},
-      {BUTTON_L,        "L", 0xC0C0C0},
-      {BUTTON_R,        "R", 0xC0C0C0},
-      {BUTTON_Z,        "Z", 0xC0C0C0},
-      {BUTTON_C_UP,     "u", 0xFFFF00},
-      {BUTTON_C_DOWN,   "d", 0xFFFF00},
-      {BUTTON_C_LEFT,   "l", 0xFFFF00},
-      {BUTTON_C_RIGHT,  "r", 0xFFFF00},
-      {BUTTON_D_UP,     "u", 0xC0C0C0},
-      {BUTTON_D_DOWN,   "d", 0xC0C0C0},
-      {BUTTON_D_LEFT,   "l", 0xC0C0C0},
-      {BUTTON_D_RIGHT,  "r", 0xC0C0C0},
+      15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
     };
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
-      if (!(z64_input_direct.pad & buttons[i].mask))
+      int b = buttons[i];
+      if (!(z64_input_direct.pad & (1 << b)))
         continue;
-      gfx_mode_set(GFX_MODE_COLOR, (buttons[i].color << 8) | alpha);
-      gfx_printf(font,
-                 settings->input_display_x + cw * (12 + i),
-                 settings->input_display_y,
-                 "%s", buttons[i].name);
+      int x = (cw - texture->tile_width) / 2 + i * 10;
+      int y = -(gfx_font_xheight(font) + texture->tile_height + 1) / 2;
+      struct gfx_sprite sprite =
+      {
+        texture, b,
+        settings->input_display_x + cw * 10 + x, settings->input_display_y + y,
+        1.f, 1.f,
+      };
+      gfx_mode_set(GFX_MODE_COLOR, (input_button_color[b] << 8) | alpha);
+      gfx_sprite_draw(&sprite);
     }
   }
 
@@ -1278,6 +1301,9 @@ void main_hook()
   }
   frame_counter += z64_gameinfo.update_rate;
 
+  if (!timer_active)
+    timer_vi_offset -= (int32_t)z64_vi_counter - timer_vi_prev;
+  timer_vi_prev = z64_vi_counter;
   if (settings->menu_settings.timer) {
     int32_t frames = (int32_t)z64_vi_counter + timer_vi_offset;
     int tenths = frames / 6;
@@ -1298,9 +1324,6 @@ void main_hook()
     else
       gfx_printf(font, x, y, "%d.%d", seconds, tenths);
   }
-  if (!timer_active && !input_bind_held(COMMAND_RESETTIMER))
-    timer_vi_offset -= (int32_t)z64_vi_counter - timer_vi_prev;
-  timer_vi_prev = z64_vi_counter;
 
   if (menu_active)
     menu_draw(&menu_main);
@@ -1530,55 +1553,37 @@ ENTRY void _start()
                                   NULL, t_ab, 1, NULL, 0,
                                   0xFFFFFF, .5f, .5625f, 0.f,
                                   equipment_item_proc, data);
-        item->pyoffset = i * 18;
+        item->pxoffset = option->x * 18;
+        item->pyoffset = option->y * 18;
       }
-      {
+      size_t capacity_item_list_length = sizeof(capacity_item_list) /
+                                         sizeof(*capacity_item_list);
+      for (int i = 0; i < capacity_item_list_length; ++i) {
+        struct capacity_item_option *option = &capacity_item_list[i];
+        int no_tiles = option->multi_tile ? 7 : 8;
         struct gfx_texture *t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                                                   32, 32, 1, 8);
-        for (int i = 0; i < 8; ++i)
-          gfx_texture_copy_tile(t, i, t_on, Z64_ITEM_STICK, 0);
-        gfx_texture_copy_tile(t, 0, t_am, 0, 1);
-        gfx_texture_copy_tile(t, 1, t_am, 1, 1);
-        gfx_texture_copy_tile(t, 2, t_am, 2, 1);
-        gfx_texture_copy_tile(t, 3, t_am, 3, 1);
-        gfx_texture_copy_tile(t, 4, t_am, 6, 1);
-        gfx_texture_copy_tile(t, 5, t_am, 8, 1);
-        gfx_texture_copy_tile(t, 6, t_am, 9, 1);
-        gfx_texture_copy_tile(t, 7, t_am, 10, 1);
+                                                   32, 32, 1, no_tiles);
+        for (int j = 0; j < no_tiles; ++j) {
+          if (option->multi_tile)
+            gfx_texture_copy_tile(t, j, t_on, option->item_tile + j, 0);
+          else
+            gfx_texture_copy_tile(t, j, t_on, option->item_tile, 0);
+          gfx_texture_copy_tile(t, j, t_am,
+                                option->amount_tiles[8 - no_tiles + j], 1);
+        }
+        struct capacity_item_data *data = malloc(sizeof(*data));
+        data->shift = option->shift;
+        data->multi_tile = option->multi_tile;
         static int8_t options[] = {0, 1, 2, 3, 4, 5, 6, 7};
-        static struct capacity_item_data data = {17, 0b111};
+        static int8_t multi_options[] = {Z64_ITEM_NULL, 0, 1, 2, 3, 4, 5, 6};
         struct menu_item *item;
-        item = item_option_create(&menu_equipment_items, 0, 2,
-                                  8, options, &data.value,
-                                  t, t_ab, 1, NULL, 0,
+        item = item_option_create(&menu_equipment_items, 0, 2, 8,
+                                  option->multi_tile ? multi_options : options,
+                                  &data->value, t, t_ab, 1, NULL, 0,
                                   0xFFFFFF, .5f, .5625f, 0.f,
-                                  capacity_item_proc, &data);
-        item->pxoffset = 1 * 18;
-        item->pyoffset = 5 * 18;
-      }
-      {
-        struct gfx_texture *t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                                                   32, 32, 1, 8);
-        for (int i = 0; i < 8; ++i)
-          gfx_texture_copy_tile(t, i, t_on, Z64_ITEM_NUT, 0);
-        gfx_texture_copy_tile(t, 0, t_am, 0, 1);
-        gfx_texture_copy_tile(t, 1, t_am, 2, 1);
-        gfx_texture_copy_tile(t, 2, t_am, 3, 1);
-        gfx_texture_copy_tile(t, 3, t_am, 4, 1);
-        gfx_texture_copy_tile(t, 4, t_am, 6, 1);
-        gfx_texture_copy_tile(t, 5, t_am, 11, 1);
-        gfx_texture_copy_tile(t, 6, t_am, 6, 1);
-        gfx_texture_copy_tile(t, 7, t_am, 11, 1);
-        static int8_t options[] = {0, 1, 2, 3, 4, 5, 6, 7};
-        static struct capacity_item_data data = {20, 0b111};
-        struct menu_item *item;
-        item = item_option_create(&menu_equipment_items, 0, 2,
-                                  8, options, &data.value,
-                                  t, t_ab, 1, NULL, 0,
-                                  0xFFFFFF, .5f, .5625f, 0.f,
-                                  capacity_item_proc, &data);
-        item->pxoffset = 2 * 18;
-        item->pyoffset = 5 * 18;
+                                  capacity_item_proc, data);
+        item->pxoffset = option->x * 18;
+        item->pyoffset = option->y * 18;
       }
       size_t equipment_list_length = sizeof(equipment_list) /
                                      sizeof(*equipment_list);
@@ -1823,28 +1828,28 @@ ENTRY void _start()
       item = item_option_create(&menu_equips, 0, 2, 91, NULL,
                                 &z64_file.button_items[Z64_ITEMBTN_B],
                                 NULL, t_ab, 0, NULL, 0,
-                                0x009600, .5625f, 0.f, 0.f,
+                                input_button_color[14], .5625f, 0.f, 0.f,
                                 button_item_proc, (void*)Z64_ITEMBTN_B);
       item->pxoffset = 0;
       item->pyoffset = 74;
       item = item_option_create(&menu_equips, 0, 2, 91, NULL,
                                 &z64_file.button_items[Z64_ITEMBTN_CL],
                                 NULL, t_ab, 0, t_ab, 2,
-                                0xFFA000, .5f, 0.f, 0.f,
+                                input_button_color[1], .5f, 0.f, 0.f,
                                 button_item_proc, (void*)Z64_ITEMBTN_CL);
       item->pxoffset = 20;
       item->pyoffset = 74;
       item = item_option_create(&menu_equips, 0, 2, 91, NULL,
                                 &z64_file.button_items[Z64_ITEMBTN_CD],
                                 NULL, t_ab, 0, t_ab, 3,
-                                0xFFA000, .5f, 0.f, 0.f,
+                                input_button_color[2], .5f, 0.f, 0.f,
                                 button_item_proc, (void*)Z64_ITEMBTN_CD);
       item->pxoffset = 34;
       item->pyoffset = 86;
       item = item_option_create(&menu_equips, 0, 2, 91, NULL,
                                 &z64_file.button_items[Z64_ITEMBTN_CR],
                                 NULL, t_ab, 0, t_ab, 4,
-                                0xFFA000, .5, 0.f, 0.f,
+                                input_button_color[0], .5, 0.f, 0.f,
                                 button_item_proc, (void*)Z64_ITEMBTN_CR);
       item->pxoffset = 48;
       item->pyoffset = 74;
