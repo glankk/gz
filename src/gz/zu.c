@@ -8,9 +8,9 @@
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr)
 {
-  uint8_t   seg   = (seg_addr >> 24) & 0x0000000F;
-  uint32_t  off   = (seg_addr >> 0)  & 0x00FFFFFF;
-  uint32_t  phys  = stab->seg[seg] + off;
+  uint8_t seg = (seg_addr >> 24) & 0x0000000F;
+  uint32_t off = (seg_addr >> 0) & 0x00FFFFFF;
+  uint32_t phys = stab->seg[seg] + off;
   if (!phys)
     return NULL;
   return (void*)MIPS_PHYS_TO_KSEG0(phys);
@@ -23,8 +23,8 @@ void *zu_zseg_locate(uint32_t seg_addr)
 
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
 {
-  OSMesgQueue   notify_mq;
-  OSMesg        notify_m;
+  OSMesgQueue notify_mq;
+  OSMesg notify_m;
   z64_osCreateMesgQueue(&notify_mq, &notify_m, 1);
   z64_getfile_t f =
   {
@@ -290,8 +290,11 @@ void zu_void(void)
 
 void zu_execute_game(int16_t entrance_index, int16_t cutscene_index)
 {
-  if (z64_file.entrance_index != z64_game.entrance_index)
+  if (z64_file.entrance_index != z64_game.entrance_index) {
     z64_file.seq_index = -1;
+    zu_setmusic(0x101E00FF);
+  }
+  zu_setmusic(0x111E00FF);
   z64_file.entrance_index = entrance_index;
   z64_file.cutscene_index = cutscene_index;
   z64_file.interface_flag = 0;
@@ -311,11 +314,11 @@ void zu_execute_filemenu(void)
   z64_ctxt.next_size = z64_ctxt_filemenu_size;
 }
 
-void zu_setmusic(uint32_t index)
+void zu_setmusic(uint32_t command)
 {
   uint32_t *buf = (void*)z64_seq_buf_addr;
   uint8_t *pos = (void*)z64_seq_pos_addr;
-  buf[(*pos)++] = index;
+  buf[(*pos)++] = command;
 }
 
 void zu_set_event_flag(int flag_index)

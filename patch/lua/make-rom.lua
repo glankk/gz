@@ -1,6 +1,6 @@
 local arg = {...}
 if #arg < 1 then
-  print("usage: `make-patch <rom-file>`")
+  print("usage: `make-rom <rom-file>`")
   return
 end
 local make = loadfile("patch/lua/make.lua")

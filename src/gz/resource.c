@@ -154,6 +154,18 @@ static void *rc_zicon_note(void)
   return gfx_texture_load(&td, NULL);
 }
 
+static void *rc_zicon_rupee(void)
+{
+  static struct gfx_texdesc td =
+  {
+    G_IM_FMT_IA, G_IM_SIZ_8b, 0x00001F00,
+    16, 16, 1, 1,
+    z64_parameter_static_vaddr,
+    z64_parameter_static_vsize,
+  };
+  return gfx_texture_load(&td, NULL);
+}
+
 static void *rc_zicon_action_buttons(void)
 {
   static struct gfx_texdesc td =
@@ -176,6 +188,16 @@ static void *rc_zfont_nes(void)
     z64_nes_font_static_vsize,
   };
   return rc_font_generic(&td, 16, 16, 32, -6, -5, 12, 4, 0);
+}
+
+static void *rc_icon_check(void)
+{
+  return resource_load_grc_texture("check_icons");
+}
+
+static void *rc_icon_daytime(void)
+{
+  return resource_load_grc_texture("day_time_icons");
 }
 
 static void *rc_icon_amount(void)
@@ -216,8 +238,11 @@ static void *(*res_ctor[RES_MAX])(void) =
   rc_zicon_item_gray,
   rc_zicon_item_24,
   rc_zicon_note,
+  rc_zicon_rupee,
   rc_zicon_action_buttons,
   rc_zfont_nes,
+  rc_icon_check,
+  rc_icon_daytime,
   rc_icon_amount,
   rc_icon_buttons,
   rc_texture_crosshair,
@@ -238,7 +263,10 @@ static void (*res_dtor[RES_MAX])() =
   gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,
+  gfx_texture_free,
   rd_font_generic,
+  gfx_texture_free,
+  gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,

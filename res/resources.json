@@ -55,6 +55,13 @@
     "format":       "i4",
     "tile_height":  192
   },
+  "logo.png":
+  {
+    "type":         "texture",
+    "name":         "logo",
+    "format":       "rgba16",
+    "tile_height":  24
+  },
   "move_icon.png":
   {
     "type":         "texture",
@@ -80,6 +87,20 @@
     "type":         "texture",
     "name":         "list_icons",
     "format":       "ia16",
+    "tile_height":  8
+  },
+  "check_icons.png":
+  {
+    "type":         "texture",
+    "name":         "check_icons",
+    "format":       "ia16",
+    "tile_height":  8
+  },
+  "day_time_icons.png":
+  {
+    "type":         "texture",
+    "name":         "day_time_icons",
+    "format":       "ia4",
     "tile_height":  8
   },
   "amount_icons.png":

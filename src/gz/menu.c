@@ -423,6 +423,7 @@ struct menu_item *menu_item_add(struct menu *menu, int x, int y,
     }
     else
       item->text = NULL;
+    item->tooltip = NULL;
     item->color = color;
     item->animate_highlight = 0;
     item->data = NULL;

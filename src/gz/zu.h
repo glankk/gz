@@ -93,7 +93,7 @@ void zu_void(void);
 void zu_execute_game(int16_t entrance_index, int16_t cutscene_index);
 void zu_execute_filemenu(void);
 
-void zu_setmusic(uint32_t index);
+void zu_setmusic(uint32_t command);
 
 void zu_set_event_flag(int flag_index);
 void zu_clear_event_flag(int flag_index);

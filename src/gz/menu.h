@@ -57,6 +57,7 @@ struct menu_item
   int               pxoffset;
   int               pyoffset;
   char             *text;
+  const char       *tooltip;
   uint32_t          color;
   _Bool             animate_highlight;
   void             *data;
@@ -167,6 +168,8 @@ struct menu_item   *menu_add_static_icon(struct menu *menu, int x, int y,
                                          struct gfx_texture *texture,
                                          int texture_tile,
                                          uint32_t color, float scale);
+struct menu_item   *menu_add_tooltip(struct menu *menu, int x, int y,
+                                     struct menu *tool_menu, uint32_t color);
 struct menu_item   *menu_add_imenu(struct menu *menu, int x, int y,
                                    struct menu **p_imenu);
 

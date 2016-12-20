@@ -34,8 +34,7 @@ static int static_icon_draw_proc(struct menu_item *item,
   };
   gfx_mode_replace(GFX_MODE_FILTER, G_TF_BILERP);
   gfx_mode_replace(GFX_MODE_DROPSHADOW, 0);
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
-               draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
   gfx_sprite_draw(&sprite);
   gfx_mode_pop(GFX_MODE_FILTER);
   gfx_mode_pop(GFX_MODE_DROPSHADOW);
@@ -55,6 +54,38 @@ struct menu_item *menu_add_static_icon(struct menu *menu, int x, int y,
   item->data = data;
   item->selectable = 0;
   item->draw_proc = static_icon_draw_proc;
+  return item;
+}
+
+static int tooltip_draw_proc(struct menu_item *item,
+                             struct menu_draw_params *draw_params)
+{
+  struct menu *tool_menu = item->data;
+  while (tool_menu->child)
+    tool_menu = tool_menu->child;
+  if (tool_menu->selector && tool_menu->selector->tooltip) {
+    gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
+                 draw_params->alpha);
+    gfx_printf(draw_params->font, draw_params->x, draw_params->y,
+               "%s", tool_menu->selector->tooltip);
+  }
+  return 1;
+}
+
+static int tooltip_destroy_proc(struct menu_item *item)
+{
+  item->data = NULL;
+  return 0;
+}
+
+struct menu_item *menu_add_tooltip(struct menu *menu, int x, int y,
+                                   struct menu *tool_menu, uint32_t color)
+{
+  struct menu_item *item = menu_item_add(menu, x, y, NULL, color);
+  item->data = tool_menu;
+  item->selectable = 0;
+  item->draw_proc = tooltip_draw_proc;
+  item->destroy_proc = tooltip_destroy_proc;
   return item;
 }
 

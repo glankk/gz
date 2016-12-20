@@ -71,8 +71,9 @@ struct quest_item_switch
 
 struct song_switch
 {
-  uint32_t  mask;
-  uint32_t  color;
+  uint32_t    mask;
+  uint32_t    color;
+  const char *tooltip;
 };
 
 struct switch_info
@@ -222,18 +223,18 @@ static struct quest_item_switch quest_item_list[] =
 
 static struct song_switch song_list[] =
 {
-  {0x00001000, 0xFFFFFF},
-  {0x00002000, 0xFFFFFF},
-  {0x00004000, 0xFFFFFF},
-  {0x00008000, 0xFFFFFF},
-  {0x00010000, 0xFFFFFF},
-  {0x00020000, 0xFFFFFF},
-  {0x00000040, 0x96FF64},
-  {0x00000080, 0xFF5028},
-  {0x00000100, 0x6496FF},
-  {0x00000200, 0xFFA000},
-  {0x00000400, 0xFF64FF},
-  {0x00000800, 0xFFF064},
+  {0x00001000, 0xFFFFFF, "zelda's lullaby"},
+  {0x00002000, 0xFFFFFF, "epona's song"},
+  {0x00004000, 0xFFFFFF, "saria's song"},
+  {0x00008000, 0xFFFFFF, "sun's song"},
+  {0x00010000, 0xFFFFFF, "song of time"},
+  {0x00020000, 0xFFFFFF, "song of storms"},
+  {0x00000040, 0x96FF64, "minuet of forest"},
+  {0x00000080, 0xFF5028, "bolero of fire"},
+  {0x00000100, 0x6496FF, "serenade of water"},
+  {0x00000200, 0xFFA000, "requiem of spirit"},
+  {0x00000400, 0xFF64FF, "nocturne of shadow"},
+  {0x00000800, 0xFFF064, "prelude of light"},
 };
 
 static struct scene_category scene_categories[] =
@@ -341,7 +342,7 @@ static const char *command_names[] =
 {
   "show/hide menu",
   "return from menu",
-  "break cutscene",
+  "break free",
   "void out",
   "reload scene",
   "file select",
@@ -410,6 +411,17 @@ static void load_memory_file(void)
   if (file->scene_index == z64_game.scene_index)
     memcpy(&z64_game.switch_flags, &file->scene_flags,
            sizeof(file->scene_flags));
+  else {
+    uint32_t f;
+    f = z64_file.scene_flags[z64_game.scene_index].chests;
+    z64_game.chest_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].switches;
+    z64_game.switch_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
+    z64_game.room_clear_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
+    z64_game.collectible_flags = f;
+  }
   for (int i = 0; i < 4; ++i)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
       z64_UpdateItemButton(&z64_game, i);
@@ -536,15 +548,37 @@ static int capacity_item_proc(struct menu_item *item,
   return 0;
 }
 
+static void update_bgs(void)
+{
+  if (z64_file.bgs_flag || !z64_file.broken_giants_knife) {
+    if (z64_file.button_items[Z64_ITEMBTN_B] == Z64_ITEM_BROKEN_GIANTS_KNIFE) {
+      z64_file.button_items[Z64_ITEMBTN_B] = Z64_ITEM_BIGGORON_SWORD;
+      z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_B);
+    }
+  }
+  else {
+    if (z64_file.button_items[Z64_ITEMBTN_B] == Z64_ITEM_BIGGORON_SWORD) {
+      z64_file.button_items[Z64_ITEMBTN_B] = Z64_ITEM_BROKEN_GIANTS_KNIFE;
+      z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_B);
+    }
+  }
+}
+
 static int equipment_switch_proc(struct menu_item *item,
                                  enum menu_callback_reason reason,
                                  void *data)
 {
   struct equipment_switch *d = data;
-  if (reason == MENU_CALLBACK_SWITCH_ON)
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
     z64_file.equipment |= d->mask;
-  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    if (d->mask == 0x0008)
+      update_bgs();
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     z64_file.equipment &= ~d->mask;
+    if (d->mask == 0x0008)
+      update_bgs();
+  }
   else if (reason == MENU_CALLBACK_THINK)
     menu_switch_set(item, z64_file.equipment & d->mask);
   return 0;
@@ -554,10 +588,15 @@ static int bgs_switch_proc(struct menu_item *item,
                            enum menu_callback_reason reason,
                            void *data)
 {
-  if (reason == MENU_CALLBACK_SWITCH_ON)
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
     z64_file.bgs_flag = 1;
-  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    z64_file.bgs_hits_left = 8;
+    update_bgs();
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     z64_file.bgs_flag = 0;
+    update_bgs();
+  }
   else if (reason == MENU_CALLBACK_THINK)
     menu_switch_set(item, z64_file.bgs_flag);
   return 0;
@@ -710,8 +749,11 @@ static int equip_switch_proc(struct menu_item *item,
     z64_file.equips = (z64_file.equips & ~(0x000F << equip_row * 4)) |
                       (equip_value << equip_row * 4);
     if (equip_row == 0) {
-      z64_file.button_items[Z64_ITEMBTN_B] = Z64_ITEM_KOKIRI_SWORD +
-                                             equip_value - 1;
+      int v = Z64_ITEM_KOKIRI_SWORD + equip_value - 1;
+      if (v == Z64_ITEM_BIGGORON_SWORD &&
+          !z64_file.bgs_flag && z64_file.broken_giants_knife)
+        v = Z64_ITEM_BROKEN_GIANTS_KNIFE;
+      z64_file.button_items[Z64_ITEMBTN_B] = v;
       z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_B);
     }
   }
@@ -1164,8 +1206,8 @@ void main_hook()
       z64_file.day_time = day_time_prev;
   }
   if (settings->cheats & (1 << CHEAT_NOMUSIC)) {
-    zu_setmusic(0x00000001);
-    zu_setmusic(0x01000001);
+    zu_setmusic(0x100000FF);
+    zu_setmusic(0x110000FF);
     z64_file.seq_index = -1;
   }
   if (settings->cheats & (1 << CHEAT_USEITEMS))
@@ -1197,18 +1239,22 @@ void main_hook()
   else if (input_bind_pressed_raw(COMMAND_MENU))
     show_menu();
   if (input_bind_held(COMMAND_BREAK)) {
-    z64_game.event_flag = 0x0000;
-    z64_game.cutscene_state = 0x03;
-    z64_game.textbox_state_1 = 0x36;
-    z64_game.textbox_state_2 = 0x00;
-    z64_game.textbox_state_3 = 0x02;
+    z64_game.camera_mode = 0x0001;
+    z64_game.camera_flag_1 = 0x0000;
+    if (z64_game.event_flag != -1)
+      z64_game.event_flag = 0x0000;
+    if (z64_game.cutscene_state != 0x00)
+      z64_game.cutscene_state = 0x03;
+    if (z64_game.textbox_state_1 != 0x00) {
+      z64_game.textbox_state_1 = 0x36;
+      z64_game.textbox_state_2 = 0x00;
+      z64_game.textbox_state_3 = 0x02;
+    }
+    z64_link.state_flags_1 = 0x00000000;
+    z64_link.state_flags_2 = 0x00000000;
+    if (z64_link.action != 0x00)
+      z64_link.action = 0x07;
   }
-  if (input_bind_pressed_raw(COMMAND_VOID))
-    zu_void();
-  if (input_bind_pressed_raw(COMMAND_RELOAD))
-    do_warp(z64_file.entrance_index, 0x0000);
-  if (input_bind_pressed_raw(COMMAND_FILESELECT))
-    zu_execute_filemenu();
   if (input_bind_held(COMMAND_LEVITATE))
     z64_link.common.vel_1.y = 6.34375f;
   if (input_bind_held(COMMAND_TURBO))
@@ -1243,6 +1289,12 @@ void main_hook()
     pause_proc(NULL, NULL);
   if (input_bind_pressed(COMMAND_ADVANCE))
     advance_proc(NULL, NULL);
+  if (input_bind_pressed_raw(COMMAND_FILESELECT))
+    zu_execute_filemenu();
+  if (input_bind_pressed_raw(COMMAND_RELOAD))
+    do_warp(z64_file.entrance_index, 0x0000);
+  if (input_bind_pressed_raw(COMMAND_VOID))
+    zu_void();
 
   /* update daytime after menu processing to avoid desync */
   if (target_day_time != -1) {
@@ -1336,6 +1388,21 @@ void main_hook()
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
                  "gz-0.2.0 github.com/glankk/gz");
+      static struct gfx_texture *logo_texture = NULL;
+      if (!logo_texture)
+        logo_texture = resource_load_grc_texture("logo");
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF, alpha));
+      for (int y = 0; y < logo_texture->tiles_y; ++y) {
+        struct gfx_sprite logo_sprite =
+        {
+          logo_texture, y,
+          Z64_SCREEN_WIDTH - 12 - logo_texture->tile_width,
+          Z64_SCREEN_HEIGHT - 6 - ch - (logo_texture->tiles_y -
+                                        y) * logo_texture->tile_height,
+          1.f, 1.f,
+        };
+        gfx_sprite_draw(&logo_sprite);
+      }
     }
   }
 
@@ -1757,7 +1824,11 @@ ENTRY void _start()
                                quest_item_switch_proc, (void*)d->mask);
         item->pxoffset = i % 6 * 18;
         item->pyoffset = 2 * 18 + i / 6 * 18;
+        item->tooltip = d->tooltip;
       }
+      struct menu_item *tooltip = menu_add_tooltip(&menu_quest_items, 0, 10,
+                                                   &menu_main, 0xC0C0C0);
+      tooltip->pyoffset = 4 * 18;
     }
     menu_init(&menu_amounts, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_amounts.selector = menu_add_submenu(&menu_amounts, 0, 0, NULL,
@@ -1765,6 +1836,7 @@ ENTRY void _start()
     {
       struct gfx_texture *t_item = resource_get(RES_ZICON_ITEM);
       struct gfx_texture *t_item_24 = resource_get(RES_ZICON_ITEM_24);
+      struct gfx_texture *t_rupee = resource_get(RES_ZICON_RUPEE);
       menu_add_static_icon(&menu_amounts, 0, 2, t_item, Z64_ITEM_STICK,
                            0xFFFFFF, .5f);
       menu_add_intinput(&menu_amounts, 2, 2, 10, 2,
@@ -1801,6 +1873,14 @@ ENTRY void _start()
                            0xFFFFFF, 2.f / 3.f);
       menu_add_intinput(&menu_amounts, 12, 6, 16, 4,
                         halfword_mod_proc, &z64_file.energy);
+      menu_add_static_icon(&menu_amounts, 0, 8,
+                           t_item, Z64_ITEM_BIGGORON_SWORD, 0xFFFFFF, .5f);
+      menu_add_intinput(&menu_amounts, 2, 8, 16, 4,
+                        halfword_mod_proc, &z64_file.bgs_hits_left);
+      menu_add_static_icon(&menu_amounts, 10, 8, t_rupee, 0,
+                           0xC8FF64, 1.f);
+      menu_add_intinput(&menu_amounts, 12, 8, 10, 5,
+                        halfword_mod_proc, &z64_file.rupees);
     }
 
     /* equips */
@@ -1877,26 +1957,34 @@ ENTRY void _start()
       menu_add_button(&menu_file, 22, 3, "+",
                       slot_inc_proc, &memfile_slot_info);
     }
-    menu_add_static(&menu_file, 0, 4, "time of day", 0xC0C0C0);
-    menu_add_intinput(&menu_file, 18, 4, 16, 4,
-                      halfword_mod_proc, &z64_file.day_time);
-    menu_add_button(&menu_file, 23, 4, "day", set_time_proc, (void*)0x4AB0);
-    menu_add_button(&menu_file, 27, 4, "night", set_time_proc, (void*)0xC010);
-    menu_add_static(&menu_file, 0, 5, "carpenter's freed", 0xC0C0C0);
-    menu_add_button(&menu_file, 18, 5, "set",
-                    set_carpenter_flags_proc, NULL);
-    menu_add_button(&menu_file, 22, 5, "clear",
-                    clear_carpenter_flags_proc, NULL);
-    menu_add_static(&menu_file, 0, 6, "intro cutscenes", 0xC0C0C0);
-    menu_add_button(&menu_file, 18, 6, "set",
-                    set_intro_flags_proc, NULL);
-    menu_add_button(&menu_file, 22, 6, "clear",
-                    clear_intro_flags_proc, NULL);
-    menu_add_static(&menu_file, 0, 7, "rewards obtained", 0xC0C0C0);
-    menu_add_button(&menu_file, 18, 7, "set",
-                    set_reward_flags_proc, NULL);
-    menu_add_button(&menu_file, 22, 7, "clear",
-                    clear_reward_flags_proc, NULL);
+    {
+      struct gfx_texture *t = resource_get(RES_ICON_DAYTIME);
+      menu_add_static(&menu_file, 0, 4, "time of day", 0xC0C0C0);
+      menu_add_button_icon(&menu_file, 18, 4, t, 0, 0xFFC800,
+                           set_time_proc, (void*)0x4AB0);
+      menu_add_button_icon(&menu_file, 20, 4, t, 1, 0xA0A0E0,
+                           set_time_proc, (void*)0xC010);
+      menu_add_intinput(&menu_file, 22, 4, 16, 4,
+                        halfword_mod_proc, &z64_file.day_time);
+    }
+    {
+      struct gfx_texture *t = resource_get(RES_ICON_CHECK);
+      menu_add_static(&menu_file, 0, 5, "carpenter's freed", 0xC0C0C0);
+      menu_add_button_icon(&menu_file, 18, 5, t, 0, 0x00FF00,
+                           set_carpenter_flags_proc, NULL);
+      menu_add_button_icon(&menu_file, 20, 5, t, 1, 0xFF0000,
+                           clear_carpenter_flags_proc, NULL);
+      menu_add_static(&menu_file, 0, 6, "intro cutscenes", 0xC0C0C0);
+      menu_add_button_icon(&menu_file, 18, 6, t, 0, 0x00FF00,
+                           set_intro_flags_proc, NULL);
+      menu_add_button_icon(&menu_file, 20, 6, t, 1, 0xFF0000,
+                           clear_intro_flags_proc, NULL);
+      menu_add_static(&menu_file, 0, 7, "rewards obtained", 0xC0C0C0);
+      menu_add_button_icon(&menu_file, 18, 7, t, 0, 0x00FF00,
+                           set_reward_flags_proc, NULL);
+      menu_add_button_icon(&menu_file, 20, 7, t, 1, 0xFF0000,
+                           clear_reward_flags_proc, NULL);
+    }
     menu_add_static(&menu_file, 0, 8, "file index", 0xC0C0C0);
     menu_add_intinput(&menu_file, 18, 8, 16, 2,
                       byte_mod_proc, &z64_file.file_index);
