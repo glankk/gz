@@ -60,7 +60,7 @@
     "type":         "texture",
     "name":         "logo",
     "format":       "rgba16",
-    "tile_height":  24
+    "tile_height":  22
   },
   "move_icon.png":
   {
