@@ -137,6 +137,8 @@ uint8_t             menu_get_alpha_i(struct menu *menu, _Bool inherit);
 void                menu_set_alpha(struct menu *menu, float alpha);
 int                 menu_cell_screen_x(struct menu *menu, int cell_x);
 int                 menu_cell_screen_y(struct menu *menu, int cell_y);
+struct menu_item   *menu_get_selector(struct menu *menu);
+struct menu        *menu_get_front(struct menu *menu);
 int                 menu_think(struct menu *menu);
 void                menu_draw(struct menu *menu);
 void                menu_navigate(struct menu *menu, enum menu_navigation nav);
@@ -172,6 +174,12 @@ struct menu_item   *menu_add_tooltip(struct menu *menu, int x, int y,
                                      struct menu *tool_menu, uint32_t color);
 struct menu_item   *menu_add_imenu(struct menu *menu, int x, int y,
                                    struct menu **p_imenu);
+struct menu_item   *menu_add_tab(struct menu *menu, int x, int y,
+                                 struct menu *tabs, int no_tabs);
+void                menu_tab_goto(struct menu_item *item, int tab_index);
+void                menu_tab_previous(struct menu_item *item);
+void                menu_tab_next(struct menu_item *item);
+
 
 struct menu_item   *menu_add_intinput(struct menu *menu, int x, int y,
                                       int base, int length,

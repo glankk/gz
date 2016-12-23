@@ -288,13 +288,16 @@ void zu_void(void)
   zu_execute_game(z64_file.void_entrance, 0x0000);
 }
 
-void zu_execute_game(int16_t entrance_index, int16_t cutscene_index)
+void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
 {
-  if (z64_file.entrance_index != z64_game.entrance_index) {
+  if (entrance_index != z64_file.entrance_index ||
+      cutscene_index != z64_file.cutscene_index)
+  {
     z64_file.seq_index = -1;
     zu_setmusic(0x101E00FF);
   }
   zu_setmusic(0x111E00FF);
+  zu_setmusic(0x131E00FF);
   z64_file.entrance_index = entrance_index;
   z64_file.cutscene_index = cutscene_index;
   z64_file.interface_flag = 0;

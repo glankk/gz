@@ -4,19 +4,22 @@
 #include "input.h"
 #include "z64.h"
 
-#define SETTINGS_ADDRESS      0x7A00
-#define SETTINGS_MAXSIZE      (0x8000-(SETTINGS_ADDRESS))
-#define SETTINGS_PADSIZE      ((sizeof(struct settings)+1)/2*2)
-#define SETTINGS_PROFILE_MAX  ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION      0x0000
+#define SETTINGS_ADDRESS          0x7A00
+#define SETTINGS_MAXSIZE          (0x8000-(SETTINGS_ADDRESS))
+#define SETTINGS_PADSIZE          ((sizeof(struct settings)+1)/2*2)
+#define SETTINGS_PROFILE_MAX      ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
+#define SETTINGS_VERSION          0x0000
 
-#define SETTINGS_WATCHES_MAX  14
-#define SETTINGS_TELEPORT_MAX 7
-#define SETTINGS_MEMFILE_MAX  10
-#define SETTINGS_BIND_MAX     COMMAND_MAX
+#define SETTINGS_WATCHES_MAX      18
+#define SETTINGS_TELEPORT_MAX     9
+#define SETTINGS_MEMFILE_MAX      10
+#define SETTINGS_BIND_MAX         COMMAND_MAX
 
-#define SETTINGS_LAG_FRAMES   0
-#define SETTINGS_LAG_SECONDS  1
+#define SETTINGS_LAG_FRAMES       0
+#define SETTINGS_LAG_SECONDS      1
+
+#define SETTINGS_BREAK_NORMAL     0
+#define SETTINGS_BREAK_AGGRESSIVE 1
 
 enum cheats
 {
@@ -35,6 +38,7 @@ enum cheats
   CHEAT_FREEZETIME,
   CHEAT_NOMUSIC,
   CHEAT_USEITEMS,
+  CHEAT_NOMAP,
   CHEAT_MAX,
 };
 
@@ -43,11 +47,7 @@ enum commands
   COMMAND_MENU,
   COMMAND_RETURN,
   COMMAND_BREAK,
-  COMMAND_VOID,
-  COMMAND_RELOAD,
-  COMMAND_FILESELECT,
   COMMAND_LEVITATE,
-  COMMAND_TURBO,
   COMMAND_SAVEPOS,
   COMMAND_LOADPOS,
   COMMAND_SAVEMEMFILE,
@@ -57,6 +57,20 @@ enum commands
   COMMAND_RESETTIMER,
   COMMAND_PAUSE,
   COMMAND_ADVANCE,
+  COMMAND_FILESELECT,
+  COMMAND_RELOAD,
+  COMMAND_VOID,
+  COMMAND_TURBO,
+  COMMAND_FALL,
+  COMMAND_AGE,
+  COMMAND_STARTTIMER,
+  COMMAND_STOPTIMER,
+  COMMAND_PREVPOS,
+  COMMAND_NEXTPOS,
+  COMMAND_PREVFILE,
+  COMMAND_NEXTFILE,
+  COMMAND_PREVROOM,
+  COMMAND_NEXTROOM,
   COMMAND_MAX,
 };
 
@@ -75,7 +89,10 @@ struct menu_settings
   uint16_t lag_counter   : 1;
   uint16_t lag_unit      : 1;
   uint16_t timer         : 1;
+  uint16_t pause_display : 1;
+  uint16_t break_type    : 1;
   uint16_t warp_age      : 1;
+  uint16_t warp_cutscene : 5;
 };
 
 struct settings_data

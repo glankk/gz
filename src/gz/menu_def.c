@@ -135,3 +135,72 @@ struct menu_item *menu_add_imenu(struct menu *menu, int x, int y,
     *p_imenu = imenu;
   return item;
 }
+
+struct tab_data
+{
+  struct menu  *tabs;
+  int           no_tabs;
+  int           current_tab;
+};
+
+static int tab_destroy_proc(struct menu_item *item)
+{
+  item->imenu = NULL;
+  return 0;
+}
+
+struct menu_item *menu_add_tab(struct menu *menu, int x, int y,
+                               struct menu *tabs, int no_tabs)
+{
+  struct tab_data *data = malloc(sizeof(*data));
+  data->tabs = tabs;
+  data->no_tabs = no_tabs;
+  data->current_tab = -1;
+  struct menu_item *item = menu_item_add(menu, x, y, NULL, 0);
+  item->data = data;
+  item->selectable = 0;
+  item->think_proc = imenu_think_proc;
+  item->navigate_proc = imenu_navigate_proc;
+  item->activate_proc = imenu_activate_proc;
+  item->destroy_proc = tab_destroy_proc;
+  return item;
+}
+
+void menu_tab_goto(struct menu_item *item, int tab_index)
+{
+  struct tab_data *data = item->data;
+  if (data->tabs) {
+    if (data->current_tab >= 0) {
+      struct menu *tab = &data->tabs[data->current_tab];
+      struct menu_item *selector = menu_get_selector(tab);
+      if (selector)
+        menu_select_top(item->owner, NULL);
+      tab->parent = NULL;
+      item->imenu = NULL;
+    }
+    data->current_tab = tab_index;
+    if (data->current_tab >= 0) {
+      struct menu *tab = &data->tabs[data->current_tab];
+      tab->parent = item->owner;
+      item->imenu = tab;
+    }
+  }
+}
+
+void menu_tab_previous(struct menu_item *item)
+{
+  struct tab_data *data = item->data;
+  if (data->no_tabs >= 0) {
+    int tab_index = (data->current_tab + data->no_tabs - 1) % data->no_tabs;
+    menu_tab_goto(item, tab_index);
+  }
+}
+
+void menu_tab_next(struct menu_item *item)
+{
+  struct tab_data *data = item->data;
+  if (data->no_tabs >= 0) {
+    int tab_index = (data->current_tab + 1) % data->no_tabs;
+    menu_tab_goto(item, tab_index);
+  }
+}

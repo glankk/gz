@@ -265,10 +265,12 @@ typedef struct
   uint16_t  magic_bar_x;            /* 0x0AF6 */
   uint16_t  magic_bar_y;            /* 0x0AF8 */
   uint16_t  magic_fill_x;           /* 0x0AFA */
-  char      unk_12_[0x0498];        /* 0x0AFC */
+  char      unk_12_[0x02D6];        /* 0x0AFC */
+  int16_t   minimap_disabled;       /* 0x0DD2 */
+  char      unk_13_[0x01C0];        /* 0x0DD4 */
   uint16_t  item_ammo_x[4];         /* 0x0F94 */
   uint16_t  item_ammo_y[4];         /* 0x0F9C */
-  char      unk_13_[0x0008];        /* 0x0FA4 */
+  char      unk_14_[0x0008];        /* 0x0FA4 */
   uint16_t  item_icon_space[4];     /* 0x0FAC */
   uint16_t  item_button_space[4];   /* 0x0FB4 */
                                     /* 0x0FBC */
@@ -279,7 +281,7 @@ typedef struct
   int32_t         entrance_index;     /* 0x0000 */
   int32_t         link_age;           /* 0x0004 */
   char            unk_00_[0x0002];    /* 0x0008 */
-  int16_t         cutscene_index;     /* 0x000A */
+  uint16_t        cutscene_index;     /* 0x000A */
   uint16_t        day_time;           /* 0x000C */
   char            unk_01_[0x0002];    /* 0x000E */
   int32_t         night_flag;         /* 0x0010 */
@@ -444,9 +446,12 @@ typedef struct
   uint32_t        unk_flags_4;        /* 0x1380 */
   char            unk_12_[0x0044];    /* 0x1384 */
   uint16_t        nayrus_love_timer;  /* 0x13C8 */
-  char            unk_13_[0x0008];    /* 0x13CA */
-  uint16_t        timer;              /* 0x13D2 */
-  char            unk_14_[0x000C];    /* 0x13D4 */
+  char            unk_13_[0x0004];    /* 0x13CA */
+  int16_t         timer_1_state;      /* 0x13CE */
+  int16_t         timer_1_value;      /* 0x13D0 */
+  int16_t         timer_2_state;      /* 0x13D2 */
+  int16_t         timer_2_value;      /* 0x13D4 */
+  char            unk_14_[0x000A];    /* 0x13D6 */
   int8_t          seq_index;          /* 0x13E0 */
   char            unk_15_[0x0022];    /* 0x13E1 */
   uint8_t         minimap_index;      /* 0x1403 */

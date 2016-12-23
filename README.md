@@ -1,5 +1,6 @@
 ## About
-This is a trainer / practice / testing utility for The Legend of Zelda: Ocarina of Time.
+This is a trainer / practice / testing utility for The Legend of Zelda: Ocarina of Time,
+formally known by its codename **gz**, but generally referred to as _"the practice rom"_.
 
 ## Download
 The latest release can be found on the [releases page](https://github.com/glankk/gz/releases).

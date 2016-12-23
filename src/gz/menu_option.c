@@ -34,8 +34,9 @@ static int navigate_proc(struct menu_item *item,
                          enum menu_navigation nav)
 {
   struct item_data *data = item->data;
-  if (data->callback_proc && data->callback_proc(item, nav,
-                                                 data->callback_data))
+  if (data->callback_proc &&
+      data->callback_proc(item, MENU_CALLBACK_NAV_UP + nav,
+                          data->callback_data))
     return 1;
   int value = data->value;
   switch (nav) {

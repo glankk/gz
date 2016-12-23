@@ -36,11 +36,14 @@ void settings_load_default(void)
   struct settings_data *d = &settings_store.data;
   d->menu_settings.font_resource = RES_FONT_PRESSSTART2P;
   d->menu_settings.drop_shadow = 1;
-  d->menu_settings.input_display = 0;
+  d->menu_settings.input_display = 1;
   d->menu_settings.lag_counter = 0;
   d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
   d->menu_settings.timer = 0;
+  d->menu_settings.pause_display = 1;
+  d->menu_settings.break_type = SETTINGS_BREAK_NORMAL;
   d->menu_settings.warp_age = 0;
+  d->menu_settings.warp_cutscene = 0;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;
@@ -62,25 +65,33 @@ void settings_load_default(void)
   d->binds[COMMAND_MENU] = input_bind_make(2, BUTTON_R, BUTTON_L);
   d->binds[COMMAND_RETURN] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
   d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_C_UP, BUTTON_L);
-  d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
-  d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
-  d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
-  d->binds[COMMAND_TURBO] = input_bind_make(0);
   d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);
-  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R,
-                                                    BUTTON_D_LEFT);
-  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R,
-                                                    BUTTON_D_RIGHT);
+  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
+  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
-                                                 BUTTON_D_RIGHT);
+                                               BUTTON_D_RIGHT);
   d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
                                             BUTTON_D_LEFT);
   d->binds[COMMAND_RESETTIMER] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                  BUTTON_D_LEFT);
   d->binds[COMMAND_PAUSE] = input_bind_make(1, BUTTON_D_DOWN);
   d->binds[COMMAND_ADVANCE] = input_bind_make(1, BUTTON_D_UP);
+  d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
+  d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_TURBO] = input_bind_make(0);
+  d->binds[COMMAND_FALL] = input_bind_make(0);
+  d->binds[COMMAND_AGE] = input_bind_make(0);
+  d->binds[COMMAND_STARTTIMER] = input_bind_make(0);
+  d->binds[COMMAND_STOPTIMER] = input_bind_make(0);
+  d->binds[COMMAND_PREVPOS] = input_bind_make(0);
+  d->binds[COMMAND_NEXTPOS] = input_bind_make(0);
+  d->binds[COMMAND_PREVFILE] = input_bind_make(0);
+  d->binds[COMMAND_NEXTFILE] = input_bind_make(0);
+  d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);
+  d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
 }
 
 void settings_save(int profile)

@@ -1,11 +1,13 @@
 ## Installing gz
 The currently supported games are:
-- The Legend of Zelda: Ocarina of Time (NTSC Version 1.0)
-- The Legend of Zelda: Ocarina of Time (NTSC Version 1.2)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.0)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.1)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.2)
 
 There are two methods of using this software, described below.
 
 ### Using gz with a Gameshark
+*Note: Gameshark support has been deprecated. It is still provided, but untested and without guarantees.*
 You will need:
 - An N64 with a supported game cartridge, and an Expansion Pak.
 - A Gameshark with a functional parallel port (note that some 3.3s only have dummy ports).
@@ -15,9 +17,9 @@ You will need:
 
 Follow these steps;
 
-1.  Boot the Gameshark with your game cartridge. If your game requires a special keycode to boot, you'll first
-    need to boot the Gameshark with a game that works with the default keycode, select the the required keycode in
-    the Key Codes menu, and then reboot with the game you wish to use with gz.
+1.  Boot the Gameshark with your game cartridge. If your game requires a special keycode to boot,
+    you'll first need to boot the Gameshark with a game that works with the default keycode,
+    select the the required keycode in the Key Codes menu, and then reboot with the game you wish to use with gz.
 2.  In the Select Cheat Codes menu, select your game and make sure the `(M)` code is active, if one exists.
 3.  In the Start Game submenu, enable the Code Generator option, and select Start Game With Selected Codes.
 4.  Connect the Gameshark to your computer with your Parallel to USB adapter cable.
@@ -29,8 +31,9 @@ Follow these steps;
 8.  When the upload is completed, you can disconnect the USB cable and start playing.
 
 ### Using gz with an emulator / flash cart
-Drag and drop the rom you wish to patch onto the `patch.bat` script. A patched rom will be
-created in the same directory as the script. The patched rom can be played with an emulator or transferred to a flash cart.
+Drag and drop the rom you wish to patch onto the `patch.bat` script.
+A patched rom will be created in the same directory as the script.
+The patched rom can be played with an emulator or transferred to a flash cart.
 For emulator usage, you will need to enable Expansion Pak emulation.
 On some emulators, you may need to change CPU Core Style to Interpreter.
 For use with a flash cart, your N64 will need an Expansion Pak.

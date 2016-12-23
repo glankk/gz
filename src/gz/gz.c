@@ -18,12 +18,13 @@
 
 struct equipment_item_option
 {
-  int       shift;
-  uint32_t  mask;
-  int       x;
-  int       y;
-  int       start;
-  int       length;
+  int         shift;
+  uint32_t    mask;
+  int         x;
+  int         y;
+  int         start;
+  int         length;
+  const char *tooltip;
 };
 
 struct equipment_item_data
@@ -36,12 +37,13 @@ struct equipment_item_data
 
 struct capacity_item_option
 {
-  int       shift;
-  int       x;
-  int       y;
-  int       item_tile;
-  _Bool     multi_tile;
-  int       amount_tiles[8];
+  int         shift;
+  int         x;
+  int         y;
+  int         item_tile;
+  _Bool       multi_tile;
+  int         amount_tiles[8];
+  const char *tooltip;
 };
 
 struct capacity_item_data
@@ -97,6 +99,20 @@ struct scene_category
   const uint8_t  *scenes;
 };
 
+enum cmdact
+{
+  CMDACT_HOLD,
+  CMDACT_PRESS,
+  CMDACT_PRESS_ONCE,
+};
+
+struct command_info
+{
+  const char   *name;
+  void        (*proc)(void);
+  enum cmdact   activation_type;
+};
+
 struct byte_option
 {
   void    *data;
@@ -117,8 +133,10 @@ struct memory_file
   uint32_t    scene_flags[9];
 };
 
+#define                     CPU_COUNTER_FREQ 46875000
 static uint8_t              profile = 0;
 static struct menu          menu_main;
+static struct menu          menu_explorer;
 static struct menu          menu_global_watches;
 static struct menu_item    *menu_font_option;
 static struct menu_item    *menu_watchlist;
@@ -126,9 +144,10 @@ static _Bool                menu_active = 0;
 static int32_t              frames_queued = -1;
 static int32_t              frame_counter = 0;
 static int32_t              lag_vi_offset;
+static int64_t              cpu_counter = 0;
 static _Bool                timer_active = 0;
-static int32_t              timer_vi_offset;
-static int32_t              timer_vi_prev;
+static int64_t              timer_counter_offset;
+static int64_t              timer_counter_prev;
 static uint16_t             day_time_prev;
 static int                  target_day_time = -1;
 static struct memory_file  *memfile;
@@ -150,18 +169,33 @@ static uint16_t menu_font_options[] =
 
 static struct equipment_item_option equipment_item_list[] =
 {
-  {6,  0b111, 0, 3, Z64_ITEM_GORONS_BRACELET, 6},
-  {9,  0b111, 0, 4, Z64_ITEM_SILVER_SCALE,    6},
-  {12, 0b11,  0, 5, Z64_ITEM_ADULTS_WALLET,   3},
+  {6,  0b111, 0, 3, Z64_ITEM_GORONS_BRACELET, 6, "strength upgrade"},
+  {9,  0b111, 0, 4, Z64_ITEM_SILVER_SCALE,    6, "diving upgrade"},
+  {12, 0b11,  0, 5, Z64_ITEM_ADULTS_WALLET,   3, "wallet"},
 };
 
 static struct capacity_item_option capacity_item_list[] =
 {
-  {14, 0, 0, Z64_ITEM_BULLET_BAG_30, 1, {0,  3,  4,  5,  7,  8,  9,  10}},
-  {0,  0, 1, Z64_ITEM_QUIVER_30,     1, {0,  3,  4,  5,  7,  9,  10, 11}},
-  {3,  0, 2, Z64_ITEM_BOMB_BAG_20,   1, {0,  2,  3,  4,  7,  7,  7,  7}},
-  {17, 1, 5, Z64_ITEM_STICK,         0, {0,  1,  2,  3,  7,  9,  10, 11}},
-  {20, 2, 5, Z64_ITEM_NUT,           0, {0,  2,  3,  4,  7,  13, 7,  13}},
+  {
+    14, 0, 0, Z64_ITEM_BULLET_BAG_30, 1,
+    {0, 3, 4, 5, 7, 8, 9, 10}, "bullet bag",
+  },
+  {
+    0,  0, 1, Z64_ITEM_QUIVER_30, 1,
+    {0, 3, 4, 5, 7, 9, 10, 11}, "quiver",
+  },
+  {
+    3,  0, 2, Z64_ITEM_BOMB_BAG_20, 1,
+    {0, 2, 3, 4, 7, 7, 7, 7},  "bomb bag",
+  },
+  {
+    17, 1, 5, Z64_ITEM_STICK, 0,
+    {0, 1, 2, 3, 7, 9, 10, 11}, "stick capacity",
+  },
+  {
+    20, 2, 5, Z64_ITEM_NUT, 0,
+    {0, 2, 3, 4,  7, 13, 7, 13}, "nut capacity",
+  },
 };
 
 static struct equipment_switch equipment_list[] =
@@ -336,27 +370,247 @@ static const char *cheat_names[] =
   "freze time",
   "no music",
   "items usable",
+  "no minimap",
 };
 
-static const char *command_names[] =
+void command_break(void)
 {
-  "show/hide menu",
-  "return from menu",
-  "break free",
-  "void out",
-  "reload scene",
-  "file select",
-  "levitate",
-  "turbo",
-  "save position",
-  "load position",
-  "save memfile",
-  "load memfile",
-  "reset lag counter",
-  "start/stop timer",
-  "reset timer",
-  "pause/unpause",
-  "frame advance",
+  if (z64_game.event_flag != -1)
+    z64_game.event_flag = 0x0000;
+  if (z64_game.cutscene_state != 0x00)
+    z64_game.cutscene_state = 0x03;
+  if (z64_game.textbox_state_1 != 0x00) {
+    z64_game.textbox_state_1 = 0x36;
+    z64_game.textbox_state_2 = 0x00;
+    z64_game.textbox_state_3 = 0x02;
+  }
+  if (settings->menu_settings.break_type == SETTINGS_BREAK_AGGRESSIVE) {
+    z64_game.camera_mode = 0x0001;
+    z64_game.camera_flag_1 = 0x0000;
+    z64_link.state_flags_1 = 0x00000000;
+    z64_link.state_flags_2 = 0x00000000;
+    if (z64_link.action != 0x00)
+      z64_link.action = 0x07;
+  }
+}
+
+void command_levitate(void)
+{
+  z64_link.common.vel_1.y = 6.34375f;
+}
+
+void command_savepos(void)
+{
+  uint8_t slot = settings->teleport_slot;
+  settings->teleport_pos[slot] = z64_link.common.pos_2;
+  settings->teleport_rot[slot] = z64_link.common.rot_2.y;
+}
+
+void command_loadpos(void)
+{
+  uint8_t slot = settings->teleport_slot;
+  z64_link.common.pos_1 = settings->teleport_pos[slot];
+  z64_link.common.pos_2 = settings->teleport_pos[slot];
+  z64_link.common.rot_2.y = settings->teleport_rot[slot];
+  z64_link.target_yaw = settings->teleport_rot[slot];
+}
+
+void command_savememfile(void)
+{
+  struct memory_file *file = &memfile[memfile_slot];
+  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
+  file->scene_index = z64_game.scene_index;
+  memcpy(&file->scene_flags, &z64_game.switch_flags,
+         sizeof(file->scene_flags));
+  memfile_saved[memfile_slot] = 1;
+}
+
+void command_loadmemfile(void)
+{
+  if (!memfile_saved[memfile_slot])
+    return;
+  struct memory_file *file = &memfile[memfile_slot];
+  /* keep some data intact to prevent glitchiness */
+  int8_t seq_index = z64_file.seq_index;
+  uint8_t minimap_index = z64_file.minimap_index;
+  int32_t link_age = z64_file.link_age;
+  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
+  z64_game.link_age = z64_file.link_age;
+  z64_file.seq_index = seq_index;
+  z64_file.minimap_index = minimap_index;
+  z64_file.link_age = link_age;
+  if (file->scene_index == z64_game.scene_index)
+    memcpy(&z64_game.switch_flags, &file->scene_flags,
+           sizeof(file->scene_flags));
+  else {
+    uint32_t f;
+    f = z64_file.scene_flags[z64_game.scene_index].chests;
+    z64_game.chest_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].switches;
+    z64_game.switch_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
+    z64_game.room_clear_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
+    z64_game.collectible_flags = f;
+  }
+  for (int i = 0; i < 4; ++i)
+    if (z64_file.button_items[i] != Z64_ITEM_NULL)
+      z64_UpdateItemButton(&z64_game, i);
+  z64_UpdateEquipment(&z64_game, &z64_link);
+}
+
+void command_resetlag(void)
+{
+  frame_counter = 0;
+  lag_vi_offset = -(int32_t)z64_vi_counter;
+}
+
+void command_timer(void)
+{
+  timer_active = !timer_active;
+}
+
+void command_resettimer(void)
+{
+  timer_counter_offset = -cpu_counter;
+  timer_counter_prev = cpu_counter;
+}
+
+static void input_hook()
+{
+  if (frames_queued != 0)
+    ((void(*)())z64_frame_input_func_addr)();
+}
+
+static void update_hook()
+{
+  if (frames_queued != 0) {
+    if (frames_queued > 0)
+      --frames_queued;
+    ((void(*)())z64_frame_update_func_addr)();
+  }
+}
+
+void command_pause(void)
+{
+  uint32_t *input_call = (void*)z64_frame_input_call_addr;
+  *input_call = MIPS_JAL(&input_hook);
+  uint32_t *update_call = (void*)z64_frame_update_call_addr;
+  *update_call = MIPS_JAL(&update_hook);
+  if (frames_queued >= 0)
+    frames_queued = -1;
+  else
+    frames_queued = 0;
+}
+
+void command_advance(void)
+{
+  if (frames_queued >= 0)
+    ++frames_queued;
+  else
+    command_pause();
+}
+
+void command_fileselect(void)
+{
+  zu_execute_filemenu();
+}
+
+static void do_warp(int16_t entrance_index, uint16_t cutscene_index)
+{
+  override_offset = 1;
+  zu_execute_game(entrance_index, cutscene_index);
+}
+
+void command_reload(void)
+{
+  do_warp(z64_file.entrance_index, 0x0000);
+}
+
+void command_void(void)
+{
+  zu_void();
+}
+
+void command_turbo(void)
+{
+  z64_link.linear_vel = 27.f;
+}
+
+void command_fall(void)
+{
+  z64_link.common.pos_1.y = -32768.f;
+}
+
+void command_age(void)
+{
+  z64_game.link_age = !z64_game.link_age;
+}
+
+void command_starttimer(void)
+{
+  if (!timer_active)
+    command_timer();
+}
+
+void command_stoptimer(void)
+{
+  if (timer_active)
+    command_timer();
+}
+
+void command_prevpos(void)
+{
+  settings->teleport_slot = (settings->teleport_slot + SETTINGS_TELEPORT_MAX -
+                             1) % SETTINGS_TELEPORT_MAX;
+}
+
+void command_nextpos(void)
+{
+  settings->teleport_slot = (settings->teleport_slot +
+                             1) % SETTINGS_TELEPORT_MAX;
+}
+
+void command_prevfile(void)
+{
+  memfile_slot = (memfile_slot + SETTINGS_MEMFILE_MAX -
+                  1) % SETTINGS_MEMFILE_MAX;
+}
+
+void command_nextfile(void)
+{
+  memfile_slot = (memfile_slot + 1) % SETTINGS_MEMFILE_MAX;
+}
+
+static struct command_info command_info[] =
+{
+  {"show/hide menu",    NULL,                 CMDACT_PRESS_ONCE},
+  {"return from menu",  NULL,                 CMDACT_PRESS_ONCE},
+  {"break free",        command_break,        CMDACT_HOLD},
+  {"levitate",          command_levitate,     CMDACT_HOLD},
+  {"save position",     command_savepos,      CMDACT_HOLD},
+  {"load position",     command_loadpos,      CMDACT_HOLD},
+  {"save memfile",      command_savememfile,  CMDACT_PRESS_ONCE},
+  {"load memfile",      command_loadmemfile,  CMDACT_PRESS_ONCE},
+  {"reset lag counter", command_resetlag,     CMDACT_HOLD},
+  {"start/stop timer",  command_timer,        CMDACT_PRESS_ONCE},
+  {"reset timer",       command_resettimer,   CMDACT_HOLD},
+  {"pause/unpause",     command_pause,        CMDACT_PRESS_ONCE},
+  {"frame advance",     command_advance,      CMDACT_PRESS},
+  {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
+  {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
+  {"void out",          command_void,         CMDACT_PRESS_ONCE},
+  {"turbo",             command_turbo,        CMDACT_HOLD},
+  {"fall",              command_fall,         CMDACT_HOLD},
+  {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
+  {"start timer",       command_starttimer,   CMDACT_PRESS_ONCE},
+  {"stop timer",        command_stoptimer,    CMDACT_PRESS_ONCE},
+  {"previous position", command_prevpos,      CMDACT_PRESS_ONCE},
+  {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
+  {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
+  {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
+  {"explore prev room", NULL,                 CMDACT_PRESS},
+  {"explore next room", NULL,                 CMDACT_PRESS},
 };
 
 static int8_t bottle_options[] =
@@ -387,45 +641,15 @@ static int8_t child_trade_options[] =
   Z64_ITEM_SOLD_OUT,
 };
 
-static void save_memory_file(void)
+static void update_cpu_counter()
 {
-  struct memory_file *file = &memfile[memfile_slot];
-  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
-  file->scene_index = z64_game.scene_index;
-  memcpy(&file->scene_flags, &z64_game.switch_flags,
-         sizeof(file->scene_flags));
-  memfile_saved[memfile_slot] = 1;
-}
-
-static void load_memory_file(void)
-{
-  if (!memfile_saved[memfile_slot])
-    return;
-  struct memory_file *file = &memfile[memfile_slot];
-  /* keep some data intact to prevent glitchiness */
-  int8_t seq_index = z64_file.seq_index;
-  uint8_t minimap_index = z64_file.minimap_index;
-  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
-  z64_file.seq_index = seq_index;
-  z64_file.minimap_index = minimap_index;
-  if (file->scene_index == z64_game.scene_index)
-    memcpy(&z64_game.switch_flags, &file->scene_flags,
-           sizeof(file->scene_flags));
-  else {
-    uint32_t f;
-    f = z64_file.scene_flags[z64_game.scene_index].chests;
-    z64_game.chest_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].switches;
-    z64_game.switch_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
-    z64_game.room_clear_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
-    z64_game.collectible_flags = f;
-  }
-  for (int i = 0; i < 4; ++i)
-    if (z64_file.button_items[i] != Z64_ITEM_NULL)
-      z64_UpdateItemButton(&z64_game, i);
-  z64_UpdateEquipment(&z64_game, &z64_link);
+  static uint32_t count = 0;
+  uint32_t new_count;
+  __asm__ volatile ("mfc0 $t0, $9\n"
+                    "nop\n"
+                    "sw $t0, %0" : "=m"(new_count) :: "t0");
+  cpu_counter += new_count - count;
+  count = new_count;
 }
 
 static int cheat_proc(struct menu_item *item,
@@ -452,6 +676,19 @@ static int input_display_proc(struct menu_item *item,
     settings->menu_settings.input_display = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->menu_settings.input_display);
+  return 0;
+}
+
+static int pause_display_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.pause_display = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.pause_display = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.pause_display);
   return 0;
 }
 
@@ -792,6 +1029,20 @@ static int byte_option_proc(struct menu_item *item,
   return 0;
 }
 
+static int halfword_optionmod_proc(struct menu_item *item,
+                                   enum menu_callback_reason reason,
+                                   void *data)
+{
+  uint16_t *v = data;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != *v)
+      menu_option_set(item, *v);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *v = menu_option_get(item);
+  return 0;
+}
+
 static int age_option_proc(struct menu_item *item,
                            enum menu_callback_reason reason,
                            void *data)
@@ -815,6 +1066,19 @@ static int lag_unit_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
     settings->menu_settings.lag_unit = menu_option_get(item);
+  return 0;
+}
+
+static int break_type_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.break_type)
+      menu_option_set(item, settings->menu_settings.break_type);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.break_type = menu_option_get(item);
   return 0;
 }
 
@@ -956,16 +1220,26 @@ static void slot_inc_proc(struct menu_item *item, void *data)
   *info->data = (*info->data + 1) % info->max;
 }
 
-static void do_warp(int16_t entrance_index, int16_t cutscene_index)
-{
-  override_offset = 1;
-  zu_execute_game(entrance_index, cutscene_index);
-}
-
 static void warp_proc(struct menu_item *item, void *data)
 {
   z64_game.link_age = settings->menu_settings.warp_age;
-  do_warp(settings->warp_entrance, 0x0000);
+  uint16_t cutscene = settings->menu_settings.warp_cutscene;
+  if (cutscene > 0x0000)
+    cutscene += 0xFFEF;
+  do_warp(settings->warp_entrance, cutscene);
+}
+
+static int cutscene_option_proc(struct menu_item *item,
+                                enum menu_callback_reason reason,
+                                void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.warp_cutscene)
+      menu_option_set(item, settings->menu_settings.warp_cutscene);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.warp_cutscene = menu_option_get(item);
+  return 0;
 }
 
 static void places_proc(struct menu_item *item, void *data)
@@ -977,7 +1251,10 @@ static void places_proc(struct menu_item *item, void *data)
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
       z64_game.link_age = settings->menu_settings.warp_age;
-      do_warp(i, 0x0000);
+      uint16_t cutscene = settings->menu_settings.warp_cutscene;
+      if (cutscene > 0x0000)
+        cutscene += 0xFFEF;
+      do_warp(i, cutscene);
       if (zu_scene_info[scene_index].no_entrances > 1)
         menu_return(&menu_main);
       menu_return(&menu_main);
@@ -1060,6 +1337,13 @@ static int generic_position_proc(struct menu_item *item,
   return 0;
 }
 
+static void activate_command_proc(struct menu_item *item, void *data)
+{
+  int command_index = (int)data;
+  if (command_info[command_index].proc)
+    command_info[command_index].proc();
+}
+
 static void apply_settings()
 {
   size_t no_font_options = sizeof(menu_font_options) /
@@ -1104,6 +1388,28 @@ static void clear_csp_proc(struct menu_item *item, void *data)
   z64_game.cutscene_ptr = &null_cs;
 }
 
+static int warp_info_draw_proc(struct menu_item *item,
+                               struct menu_draw_params *draw_params)
+{
+  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  struct gfx_font *font = draw_params->font;
+  int ch = menu_get_cell_height(item->owner, 1);
+  int x = draw_params->x;
+  int y = draw_params->y;
+  if (z64_game.link_age == 0)
+    gfx_printf(font, x, y + ch * 0, "current age      adult");
+  else
+    gfx_printf(font, x, y + ch * 0, "current age      child");
+  gfx_printf(font, x, y + ch * 1,
+             "current entrance %04" PRIx16, z64_file.entrance_index);
+  if (z64_file.cutscene_index >= 0xFFF0 && z64_file.cutscene_index <= 0xFFFF)
+    gfx_printf(font, x, y + ch * 2, "current cutscene %" PRIu16,
+               z64_file.cutscene_index - 0xFFEF);
+  else
+    gfx_printf(font, x, y + ch * 2, "current cutscene none");
+  return 1;
+}
+
 static void load_room_proc(struct menu_item *item, void *data)
 {
   uint8_t new_room_index = menu_intinput_get(data);
@@ -1120,45 +1426,75 @@ static void load_room_proc(struct menu_item *item, void *data)
   }
 }
 
-static void input_hook()
+static void tab_prev_proc(struct menu_item *item, void *data)
 {
-  if (frames_queued != 0)
-    ((void(*)())z64_frame_input_func_addr)();
+  menu_tab_previous(data);
 }
 
-static void update_hook()
+static void tab_next_proc(struct menu_item *item, void *data)
 {
-  if (frames_queued != 0) {
-    if (frames_queued > 0)
-      --frames_queued;
-    ((void(*)())z64_frame_update_func_addr)();
-  }
-}
-
-static void pause_proc(struct menu_item *item, void *data)
-{
-  uint32_t *input_call = (void*)z64_frame_input_call_addr;
-  *input_call = MIPS_JAL(&input_hook);
-  uint32_t *update_call = (void*)z64_frame_update_call_addr;
-  *update_call = MIPS_JAL(&update_hook);
-  if (frames_queued >= 0)
-    frames_queued = -1;
-  else
-    frames_queued = 0;
-}
-
-static void advance_proc(struct menu_item *item, void *data)
-{
-  if (frames_queued >= 0)
-    ++frames_queued;
-  else
-    pause_proc(item, data);
+  menu_tab_next(data);
 }
 
 void main_hook()
 {
-  gfx_mode_init();
+  update_cpu_counter();
   input_update();
+  gfx_mode_init();
+
+  {
+    /* emergency settings reset */
+    uint16_t pad_pressed = input_pressed();
+    if (pad_pressed) {
+      static const uint16_t input_list[] =
+      {
+        BUTTON_D_UP,
+        BUTTON_D_UP,
+        BUTTON_D_DOWN,
+        BUTTON_D_DOWN,
+        BUTTON_D_LEFT,
+        BUTTON_D_RIGHT,
+        BUTTON_D_LEFT,
+        BUTTON_D_RIGHT,
+        BUTTON_B,
+        BUTTON_A,
+      };
+      static int input_pos = 0;
+      size_t input_list_length = sizeof(input_list) / sizeof(*input_list);
+      if (pad_pressed == input_list[input_pos]) {
+        ++input_pos;
+        if (input_pos == input_list_length) {
+          input_pos = 0;
+          settings_load_default();
+          apply_settings();
+        }
+      }
+      else
+        input_pos = 0;
+    }
+  }
+
+  if (menu_active) {
+    if (input_bind_pressed_raw(COMMAND_MENU))
+      hide_menu();
+    else if (input_bind_pressed(COMMAND_RETURN))
+      menu_return(&menu_main);
+    else {
+      uint16_t pad_pressed = input_pressed();
+      if (pad_pressed & BUTTON_D_UP)
+        menu_navigate(&menu_main, MENU_NAVIGATE_UP);
+      if (pad_pressed & BUTTON_D_DOWN)
+        menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
+      if (pad_pressed & BUTTON_D_LEFT)
+        menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
+      if (pad_pressed & BUTTON_D_RIGHT)
+        menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
+      if (pad_pressed & BUTTON_L)
+        menu_activate(&menu_main);
+    }
+  }
+  else if (input_bind_pressed_raw(COMMAND_MENU))
+    show_menu();
 
   if (settings->cheats & (1 << CHEAT_ENERGY))
     z64_file.energy = z64_file.energy_capacity;
@@ -1208,93 +1544,35 @@ void main_hook()
   if (settings->cheats & (1 << CHEAT_NOMUSIC)) {
     zu_setmusic(0x100000FF);
     zu_setmusic(0x110000FF);
+    zu_setmusic(0x130000FF);
     z64_file.seq_index = -1;
   }
   if (settings->cheats & (1 << CHEAT_USEITEMS))
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
+  if (settings->cheats & (1 << CHEAT_NOMAP))
+    z64_gameinfo.minimap_disabled = 1;
 
+  for (int i = 0; i < COMMAND_MAX; ++i) {
+    _Bool active = 0;
+    switch (command_info[i].activation_type) {
+      case CMDACT_HOLD:       active = input_bind_held(i);        break;
+      case CMDACT_PRESS:      active = input_bind_pressed(i);     break;
+      case CMDACT_PRESS_ONCE: active = input_bind_pressed_raw(i); break;
+    }
+    if (command_info[i].proc && active)
+      command_info[i].proc();
+  }
+  if (input_bind_pressed(COMMAND_PREVROOM) &&
+      menu_get_front(&menu_main) == &menu_explorer)
+    explorer_room_prev(&menu_explorer);
+  if (input_bind_pressed(COMMAND_NEXTROOM) &&
+      menu_get_front(&menu_main) == &menu_explorer)
+    explorer_room_next(&menu_explorer);
+
+  while (menu_active && menu_think(&menu_main))
+    ;
   while (menu_think(&menu_global_watches))
     ;
-  if (menu_active) {
-    if (input_bind_pressed_raw(COMMAND_MENU))
-      hide_menu();
-    else if (input_bind_pressed(COMMAND_RETURN))
-      menu_return(&menu_main);
-    else {
-      uint16_t pad_pressed = input_pressed();
-      if (pad_pressed & BUTTON_D_UP)
-        menu_navigate(&menu_main, MENU_NAVIGATE_UP);
-      if (pad_pressed & BUTTON_D_DOWN)
-        menu_navigate(&menu_main, MENU_NAVIGATE_DOWN);
-      if (pad_pressed & BUTTON_D_LEFT)
-        menu_navigate(&menu_main, MENU_NAVIGATE_LEFT);
-      if (pad_pressed & BUTTON_D_RIGHT)
-        menu_navigate(&menu_main, MENU_NAVIGATE_RIGHT);
-      if (pad_pressed & BUTTON_L)
-        menu_activate(&menu_main);
-    }
-    while (menu_think(&menu_main))
-      ;
-  }
-  else if (input_bind_pressed_raw(COMMAND_MENU))
-    show_menu();
-  if (input_bind_held(COMMAND_BREAK)) {
-    z64_game.camera_mode = 0x0001;
-    z64_game.camera_flag_1 = 0x0000;
-    if (z64_game.event_flag != -1)
-      z64_game.event_flag = 0x0000;
-    if (z64_game.cutscene_state != 0x00)
-      z64_game.cutscene_state = 0x03;
-    if (z64_game.textbox_state_1 != 0x00) {
-      z64_game.textbox_state_1 = 0x36;
-      z64_game.textbox_state_2 = 0x00;
-      z64_game.textbox_state_3 = 0x02;
-    }
-    z64_link.state_flags_1 = 0x00000000;
-    z64_link.state_flags_2 = 0x00000000;
-    if (z64_link.action != 0x00)
-      z64_link.action = 0x07;
-  }
-  if (input_bind_held(COMMAND_LEVITATE))
-    z64_link.common.vel_1.y = 6.34375f;
-  if (input_bind_held(COMMAND_TURBO))
-    z64_link.linear_vel = 27.f;
-  if (input_bind_held(COMMAND_SAVEPOS)) {
-    uint8_t slot = settings->teleport_slot;
-    settings->teleport_pos[slot] = z64_link.common.pos_2;
-    settings->teleport_rot[slot] = z64_link.common.rot_2.y;
-  }
-  if (input_bind_held(COMMAND_LOADPOS)) {
-    uint8_t slot = settings->teleport_slot;
-    z64_link.common.pos_1 = settings->teleport_pos[slot];
-    z64_link.common.pos_2 = settings->teleport_pos[slot];
-    z64_link.common.rot_2.y = settings->teleport_rot[slot];
-    z64_link.target_yaw = settings->teleport_rot[slot];
-  }
-  if (input_bind_pressed_raw(COMMAND_SAVEMEMFILE))
-    save_memory_file();
-  if (input_bind_pressed_raw(COMMAND_LOADMEMFILE))
-    load_memory_file();
-  if (input_bind_held(COMMAND_RESETLAG)) {
-    frame_counter = 0;
-    lag_vi_offset = -(int32_t)z64_vi_counter;
-  }
-  if (input_bind_pressed_raw(COMMAND_TIMER))
-    timer_active = !timer_active;
-  if (input_bind_held(COMMAND_RESETTIMER)) {
-    timer_vi_offset = -(int32_t)z64_vi_counter;
-    timer_vi_prev = z64_vi_counter;
-  }
-  if (input_bind_pressed_raw(COMMAND_PAUSE))
-    pause_proc(NULL, NULL);
-  if (input_bind_pressed(COMMAND_ADVANCE))
-    advance_proc(NULL, NULL);
-  if (input_bind_pressed_raw(COMMAND_FILESELECT))
-    zu_execute_filemenu();
-  if (input_bind_pressed_raw(COMMAND_RELOAD))
-    do_warp(z64_file.entrance_index, 0x0000);
-  if (input_bind_pressed_raw(COMMAND_VOID))
-    zu_void();
 
   /* update daytime after menu processing to avoid desync */
   if (target_day_time != -1) {
@@ -1314,6 +1592,17 @@ void main_hook()
   uint8_t alpha = menu_get_alpha_i(&menu_main, 1);
   int cw = menu_get_cell_width(&menu_main, 1);
   int ch = menu_get_cell_height(&menu_main, 1);
+
+  if (settings->menu_settings.pause_display && frames_queued != -1) {
+    struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
+    struct gfx_sprite sprite =
+    {
+      t, frames_queued == 0 ? 0 : 1,
+      32, 32, 1.f, 1.f,
+    };
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+    gfx_sprite_draw(&sprite);
+  }
 
   if (settings->menu_settings.input_display) {
     struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
@@ -1354,11 +1643,11 @@ void main_hook()
   frame_counter += z64_gameinfo.update_rate;
 
   if (!timer_active)
-    timer_vi_offset -= (int32_t)z64_vi_counter - timer_vi_prev;
-  timer_vi_prev = z64_vi_counter;
+    timer_counter_offset -= cpu_counter - timer_counter_prev;
+  timer_counter_prev = cpu_counter;
   if (settings->menu_settings.timer) {
-    int32_t frames = (int32_t)z64_vi_counter + timer_vi_offset;
-    int tenths = frames / 6;
+    int64_t count = cpu_counter + timer_counter_offset;
+    int tenths = count * 10 / CPU_COUNTER_FREQ;
     int seconds = tenths / 10;
     int minutes = seconds / 60;
     int hours = minutes / 60;
@@ -1387,18 +1676,18 @@ void main_hook()
       --splash_time;
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
-                 "gz-0.2.0 github.com/glankk/gz");
+                 "gz-0.3.0 github.com/glankk/gz");
       static struct gfx_texture *logo_texture = NULL;
       if (!logo_texture)
         logo_texture = resource_load_grc_texture("logo");
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF, alpha));
-      for (int y = 0; y < logo_texture->tiles_y; ++y) {
+      for (int i = 0; i < logo_texture->tiles_y; ++i) {
         struct gfx_sprite logo_sprite =
         {
-          logo_texture, y,
+          logo_texture, i,
           Z64_SCREEN_WIDTH - 12 - logo_texture->tile_width,
-          Z64_SCREEN_HEIGHT - 6 - ch - (logo_texture->tiles_y -
-                                        y) * logo_texture->tile_height,
+          Z64_SCREEN_HEIGHT - 6 - ch * 2 -
+          (logo_texture->tiles_y - i) * logo_texture->tile_height,
           1.f, 1.f,
         };
         gfx_sprite_draw(&logo_sprite);
@@ -1454,9 +1743,10 @@ ENTRY void _start()
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
   /* initialize variables */
+  update_cpu_counter();
   lag_vi_offset = -(int32_t)z64_vi_counter;
-  timer_vi_offset = -(int32_t)z64_vi_counter;
-  timer_vi_prev = z64_vi_counter;
+  timer_counter_offset = -cpu_counter;
+  timer_counter_prev = cpu_counter;
   day_time_prev = z64_file.day_time;
 
   /* initialize menus */
@@ -1517,25 +1807,33 @@ ENTRY void _start()
                        cat->category_name);
     }
     menu_add_submenu(&menu_warps, 0, 1, &places, "places");
-    menu_add_static(&menu_warps, 0, 2, "entrance", 0xC0C0C0);
-    menu_add_intinput(&menu_warps, 9, 2, 16, 4,
-                      halfword_mod_proc, &settings->warp_entrance);
-    menu_add_static(&menu_warps, 0, 3, "age", 0xC0C0C0);
-    menu_add_option(&menu_warps, 9, 3, "adult\0""child\0",
+    menu_add_static(&menu_warps, 0, 2, "age", 0xC0C0C0);
+    menu_add_option(&menu_warps, 9, 2, "adult\0""child\0",
                     age_option_proc, NULL);
-    menu_add_button(&menu_warps, 0, 4, "warp", warp_proc, NULL);
-    menu_add_button(&menu_warps, 0, 5, "clear cutscene pointer",
+    menu_add_static(&menu_warps, 0, 3, "entrance", 0xC0C0C0);
+    menu_add_intinput(&menu_warps, 9, 3, 16, 4,
+                      halfword_mod_proc, &settings->warp_entrance);
+    menu_add_static(&menu_warps, 0, 4, "cutscene", 0xC0C0C0);
+    menu_add_option(&menu_warps, 9, 4,
+                    "none\0""1\0""2\0""3\0""4\0""5\0""6\0""7\0""8\0"
+                    "9\0""10\0""11\0""12\0""13\0""14\0""15\0""16\0",
+                    cutscene_option_proc, NULL);
+    menu_add_button(&menu_warps, 0, 5, "warp", warp_proc, NULL);
+    menu_add_button(&menu_warps, 0, 6, "clear cs pointer",
                     clear_csp_proc, NULL);
+    {
+      struct menu_item *item = menu_item_add(&menu_warps, 0, 7,
+                                             NULL, 0xC0C0C0);
+      item->selectable = 0;
+      item->draw_proc = warp_info_draw_proc;
+    }
 
     /* scene */
     menu_init(&menu_scene, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_scene.selector = menu_add_submenu(&menu_scene, 0, 0, NULL,
                                            "return");
-    {
-      static struct menu explorer;
-      explorer_create(&explorer);
-      menu_add_submenu(&menu_scene, 0, 1, &explorer, "explorer");
-    }
+    explorer_create(&menu_explorer);
+    menu_add_submenu(&menu_scene, 0, 1, &menu_explorer, "explorer");
     menu_add_button(&menu_scene, 0, 2, "clear flags",
                     clear_scene_flags_proc, NULL);
     menu_add_button(&menu_scene, 0, 3, "set flags",
@@ -1622,6 +1920,7 @@ ENTRY void _start()
                                   equipment_item_proc, data);
         item->pxoffset = option->x * 18;
         item->pyoffset = option->y * 18;
+        item->tooltip = option->tooltip;
       }
       size_t capacity_item_list_length = sizeof(capacity_item_list) /
                                          sizeof(*capacity_item_list);
@@ -1651,6 +1950,7 @@ ENTRY void _start()
                                   capacity_item_proc, data);
         item->pxoffset = option->x * 18;
         item->pyoffset = option->y * 18;
+        item->tooltip = option->tooltip;
       }
       size_t equipment_list_length = sizeof(equipment_list) /
                                      sizeof(*equipment_list);
@@ -1698,6 +1998,9 @@ ENTRY void _start()
                                     NULL, NULL);
           item->pxoffset = 76 + i * 18;
           item->pyoffset = 72;
+          char *tooltip = malloc(9);
+          sprintf(tooltip, "bottle %d", i + 1);
+          item->tooltip = tooltip;
         }
         size_t adult_trade_options_length = sizeof(adult_trade_options) /
                                             sizeof(*adult_trade_options);
@@ -1711,6 +2014,7 @@ ENTRY void _start()
                                   NULL, NULL);
         item->pxoffset = 76 + 4 * 18;
         item->pyoffset = 72;
+        item->tooltip = "adult trade item";
         size_t child_trade_options_length = sizeof(child_trade_options) /
                                             sizeof(*child_trade_options);
         item = item_option_create(&menu_equipment_items, 0, 2,
@@ -1722,7 +2026,13 @@ ENTRY void _start()
                                   NULL, NULL);
         item->pxoffset = 76 + 5 * 18;
         item->pyoffset = 72;
+        item->tooltip = "child trade item";
       }
+      struct menu_item *item;
+      item = menu_add_tooltip(&menu_equipment_items, 0, 2, &menu_main,
+                              0xC0C0C0);
+      item->pxoffset = 76;
+      item->pyoffset = 90;
     }
     menu_init(&menu_quest_items, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_quest_items.selector = menu_add_submenu(&menu_quest_items, 0, 0, NULL,
@@ -1950,43 +2260,59 @@ ENTRY void _start()
         &memfile_slot, SETTINGS_MEMFILE_MAX,
       };
       menu_add_static(&menu_file, 0, 3, "memory file", 0xC0C0C0);
-      menu_add_watch(&menu_file, 20, 3,
+      menu_add_watch(&menu_file, 19, 3,
                      (uint32_t)memfile_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_file, 18, 3, "-",
+      menu_add_button(&menu_file, 17, 3, "-",
                       slot_dec_proc, &memfile_slot_info);
-      menu_add_button(&menu_file, 22, 3, "+",
+      menu_add_button(&menu_file, 21, 3, "+",
                       slot_inc_proc, &memfile_slot_info);
     }
     {
       struct gfx_texture *t = resource_get(RES_ICON_DAYTIME);
       menu_add_static(&menu_file, 0, 4, "time of day", 0xC0C0C0);
-      menu_add_button_icon(&menu_file, 18, 4, t, 0, 0xFFC800,
+      menu_add_button_icon(&menu_file, 17, 4, t, 0, 0xFFC800,
                            set_time_proc, (void*)0x4AB0);
-      menu_add_button_icon(&menu_file, 20, 4, t, 1, 0xA0A0E0,
+      menu_add_button_icon(&menu_file, 19, 4, t, 1, 0xA0A0E0,
                            set_time_proc, (void*)0xC010);
-      menu_add_intinput(&menu_file, 22, 4, 16, 4,
+      menu_add_intinput(&menu_file, 21, 4, 16, 4,
                         halfword_mod_proc, &z64_file.day_time);
     }
     {
       struct gfx_texture *t = resource_get(RES_ICON_CHECK);
-      menu_add_static(&menu_file, 0, 5, "carpenter's freed", 0xC0C0C0);
-      menu_add_button_icon(&menu_file, 18, 5, t, 0, 0x00FF00,
+      menu_add_static(&menu_file, 0, 5, "carpenters freed", 0xC0C0C0);
+      menu_add_button_icon(&menu_file, 17, 5, t, 0, 0x00FF00,
                            set_carpenter_flags_proc, NULL);
-      menu_add_button_icon(&menu_file, 20, 5, t, 1, 0xFF0000,
+      menu_add_button_icon(&menu_file, 19, 5, t, 1, 0xFF0000,
                            clear_carpenter_flags_proc, NULL);
       menu_add_static(&menu_file, 0, 6, "intro cutscenes", 0xC0C0C0);
-      menu_add_button_icon(&menu_file, 18, 6, t, 0, 0x00FF00,
+      menu_add_button_icon(&menu_file, 17, 6, t, 0, 0x00FF00,
                            set_intro_flags_proc, NULL);
-      menu_add_button_icon(&menu_file, 20, 6, t, 1, 0xFF0000,
+      menu_add_button_icon(&menu_file, 19, 6, t, 1, 0xFF0000,
                            clear_intro_flags_proc, NULL);
       menu_add_static(&menu_file, 0, 7, "rewards obtained", 0xC0C0C0);
-      menu_add_button_icon(&menu_file, 18, 7, t, 0, 0x00FF00,
+      menu_add_button_icon(&menu_file, 17, 7, t, 0, 0x00FF00,
                            set_reward_flags_proc, NULL);
-      menu_add_button_icon(&menu_file, 20, 7, t, 1, 0xFF0000,
+      menu_add_button_icon(&menu_file, 19, 7, t, 1, 0xFF0000,
                            clear_reward_flags_proc, NULL);
     }
-    menu_add_static(&menu_file, 0, 8, "file index", 0xC0C0C0);
-    menu_add_intinput(&menu_file, 18, 8, 16, 2,
+    menu_add_static(&menu_file, 0, 8, "timer 1", 0xC0C0C0);
+    menu_add_intinput(&menu_file, 17, 8, 10, 5,
+                      halfword_mod_proc, &z64_file.timer_1_value);
+    menu_add_option(&menu_file, 23, 8,
+                    "inactive\0""heat starting\0""heat initial\0"
+                    "heat moving\0""heat active\0""race starting\0"
+                    "race initial\0""race moving\0""race active\0"
+                    "race stopped\0""race ending\0",
+                    halfword_optionmod_proc, &z64_file.timer_1_state);
+    menu_add_static(&menu_file, 0, 9, "timer 2", 0xC0C0C0);
+    menu_add_intinput(&menu_file, 17, 9, 10, 5,
+                      halfword_mod_proc, &z64_file.timer_2_value);
+    menu_add_option(&menu_file, 23, 9,
+                    "inactive\0""starting\0""initial\0"
+                    "moving\0""active\0""stopped\0",
+                    halfword_optionmod_proc, &z64_file.timer_2_state);
+    menu_add_static(&menu_file, 0, 10, "file index", 0xC0C0C0);
+    menu_add_intinput(&menu_file, 17, 10, 16, 2,
                       byte_mod_proc, &z64_file.file_index);
     {
       static int8_t language_options[] = {0x00, 0x01};
@@ -1994,16 +2320,16 @@ ENTRY void _start()
       {
         &z64_file.language, language_options, 2,
       };
-      menu_add_static(&menu_file, 0, 9, "language", 0xC0C0C0);
-      menu_add_option(&menu_file, 18, 9, "japanese\0""english\0",
+      menu_add_static(&menu_file, 0, 11, "language", 0xC0C0C0);
+      menu_add_option(&menu_file, 17, 11, "japanese\0""english\0",
                       byte_option_proc, &language_option_data);
       static int8_t target_options[] = {0x00, 0x01};
       static struct byte_option target_option_data =
       {
         &z64_file.z_targeting, target_options, 2,
       };
-      menu_add_static(&menu_file, 0, 10, "z targeting", 0xC0C0C0);
-      menu_add_option(&menu_file, 18, 10, "switch\0""hold\0",
+      menu_add_static(&menu_file, 0, 12, "z targeting", 0xC0C0C0);
+      menu_add_option(&menu_file, 17, 12, "switch\0""hold\0",
                       byte_option_proc, &target_option_data);
     }
 
@@ -2059,19 +2385,47 @@ ENTRY void _start()
     menu_add_checkbox(&menu_settings, 14, 7, timer_proc, NULL);
     menu_add_positioning(&menu_settings, 16, 7,
                          generic_position_proc, &settings->timer_x);
-    static struct menu menu_binds;
-    menu_add_submenu(&menu_settings, 0, 8, &menu_binds, "button maps");
-    menu_add_button(&menu_settings, 0, 9, "save settings",
+    menu_add_static(&menu_settings, 0, 8, "pause display", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 8, pause_display_proc, NULL);
+    menu_add_static(&menu_settings, 0, 9, "break type", 0xC0C0C0);
+    menu_add_option(&menu_settings, 14, 9, "normal\0""aggressive\0",
+                    break_type_proc, NULL);
+    static struct menu menu_commands;
+    menu_add_submenu(&menu_settings, 0, 10, &menu_commands, "commands");
+    menu_add_button(&menu_settings, 0, 11, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 10, "load settings",
+    menu_add_button(&menu_settings, 0, 12, "load settings",
                     load_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 11, "restore defaults",
+    menu_add_button(&menu_settings, 0, 13, "restore defaults",
                     restore_settings_proc, NULL);
-    menu_init(&menu_binds, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-    menu_binds.selector = menu_add_submenu(&menu_binds, 0, 0, NULL, "return");
-    for (int i = 0; i < COMMAND_MAX; ++i) {
-      menu_add_static(&menu_binds, 0, 1 + i, command_names[i], 0xC0C0C0);
-      binder_create(&menu_binds, 18, 1 + i, i);
+    menu_init(&menu_commands, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_commands.selector = menu_add_submenu(&menu_commands, 0, 0,
+                                              NULL, "return");
+    {
+      const int page_length = 16;
+      int no_pages = (COMMAND_MAX + page_length - 1) / page_length;
+      struct menu *pages = malloc(sizeof(*pages) * no_pages);
+      struct menu_item *tab = menu_add_tab(&menu_commands, 0, 1,
+                                           pages, no_pages);
+      for (int i = 0; i < no_pages; ++i) {
+        struct menu *page = &pages[i];
+        menu_init(page, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+        for (int j = 0; j < page_length; ++j) {
+          int n = i * page_length + j;
+          if (n >= COMMAND_MAX)
+            break;
+          if (command_info[n].proc)
+            menu_add_button(page, 0, j, command_info[n].name,
+                            activate_command_proc, (void*)n);
+          else
+            menu_add_static(page, 0, j, command_info[n].name, 0xC0C0C0);
+          binder_create(page, 18, j, n);
+        }
+      }
+      if (no_pages > 0)
+        menu_tab_goto(tab, 0);
+      menu_add_button(&menu_commands, 8, 0, "<", tab_prev_proc, tab);
+      menu_add_button(&menu_commands, 10, 0, ">", tab_next_proc, tab);
     }
     input_bind_set_override(COMMAND_MENU, 1);
     input_bind_set_override(COMMAND_RETURN, 1);

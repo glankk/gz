@@ -8,6 +8,7 @@
 #include "input.h"
 #include "menu.h"
 #include "resource.h"
+#include "settings.h"
 #include "z64.h"
 #include "zu.h"
 
@@ -190,14 +191,18 @@ static void draw_crosshair(struct menu_item *item)
 static int enter_proc(struct menu_item *item)
 {
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
-                BUTTON_Z | BUTTON_R);
+                BUTTON_Z);
+  input_bind_set_override(COMMAND_PREVROOM, 1);
+  input_bind_set_override(COMMAND_NEXTROOM, 1);
   return 0;
 }
 
 static int leave_proc(struct menu_item *item)
 {
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
-             BUTTON_Z | BUTTON_R);
+             BUTTON_Z);
+  input_bind_set_override(COMMAND_PREVROOM, 0);
+  input_bind_set_override(COMMAND_NEXTROOM, 0);
   return 0;
 }
 
@@ -448,18 +453,6 @@ static int draw_proc(struct menu_item *item,
   return 1;
 }
 
-static int navigate_proc(struct menu_item *item, enum menu_navigation nav)
-{
-  struct item_data *data = item->data;
-  if (data->state == STATE_RENDER && (input_pad() & BUTTON_R)) {
-    if (nav == MENU_NAVIGATE_UP)
-      data->room_next = (data->room_next + 1) % data->no_rooms;
-    else if (nav == MENU_NAVIGATE_DOWN)
-      data->room_next = (data->room_next + data->no_rooms - 1) % data->no_rooms;
-  }
-  return 1;
-}
-
 static int activate_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
@@ -494,6 +487,21 @@ void explorer_create(struct menu *menu)
   item->leave_proc = leave_proc;
   item->think_proc = think_proc;
   item->draw_proc = draw_proc;
-  item->navigate_proc = navigate_proc;
   item->activate_proc = activate_proc;
+}
+
+void explorer_room_prev(struct menu *menu)
+{
+  struct menu_item *item = menu->items.first;
+  struct item_data *data = item->data;
+  if (data->state == STATE_RENDER)
+    data->room_next = (data->room_next + data->no_rooms - 1) % data->no_rooms;
+}
+
+void explorer_room_next(struct menu *menu)
+{
+  struct menu_item *item = menu->items.first;
+  struct item_data *data = item->data;
+  if (data->state == STATE_RENDER)
+    data->room_next = (data->room_next + 1) % data->no_rooms;
 }

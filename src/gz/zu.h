@@ -90,7 +90,7 @@ void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size);
 
 void zu_void(void);
 
-void zu_execute_game(int16_t entrance_index, int16_t cutscene_index);
+void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index);
 void zu_execute_filemenu(void);
 
 void zu_setmusic(uint32_t command);

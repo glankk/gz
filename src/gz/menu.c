@@ -165,6 +165,20 @@ int menu_cell_screen_y(struct menu *menu, int y)
          menu_get_pyoffset(menu, 1);
 }
 
+struct menu_item *menu_get_selector(struct menu *menu)
+{
+  if (menu->child)
+    return menu_get_selector(menu->child);
+  return menu->selector;
+}
+
+struct menu *menu_get_front(struct menu *menu)
+{
+  if (menu->child)
+    return menu_get_front(menu->child);
+  return menu;
+}
+
 int menu_think(struct menu *menu)
 {
   if (menu->child)
