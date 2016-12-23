@@ -42,7 +42,7 @@ While holding Z, the D-Pad up and down will navigate vertically through the scen
 D-Pad left and right will move sideways.
 Use the `explore prev room` and `explore next room` commands
 to cycle through the rooms of the scene (bound to `R + D-Down` and `R + D-Up` by default).
-Pressing L will teleport link to location and orientation of the crosshair and close the scene explorer.
+Pressing L will teleport link to the location and orientation of the crosshair and close the scene explorer.
 
 **clear flags** and **set flags** modifies the temporary and permanent flags for the current scene,
 which keep track of things such as which chests have been opened,
@@ -51,7 +51,7 @@ The **load room** option loads the room with the specified index,
 if a room which such an index exists within the current scene.
 If that room is already the currently loaded room, it will be unloaded.
 **teleport slot** selects which position to save and load when using the
-teleportation commands (this can also be bound a button combination, but is unbound by default).
+teleportation commands (this can also be bound to a button combination, but is unbound by default).
 The bottom of the scene menu shows information about the current scene.
 
 ### Cheats menu
@@ -122,7 +122,9 @@ affected until the scene is reloaded.
 **call navi** sets Navi's advice timer to a value which will make her want to talk to you.
 This will not have any effect until you enter an area where Navi normally appears.
 The **memory file** selects the memory file to save to and load from when using the memory file commands
-(see (Settings)[#settings-menu]).
+(see [Settings](#settings-menu)).
+The current time of day can be manually adjusted,
+or automatically fast-forwarded to day or night with the corresponding buttons.
 **carpenters freed**, **intro cutscenes**, and **rewards obtained** let's you set and clear
 various flags in the current file.
 Pressing the checkmark will set the pertinent flags such that they have been "completed",
@@ -177,7 +179,7 @@ The visibility of the on-screen display elements can be configured with the **in
 **lag counter**, **timer**, and **pause display** options.
 The screen position of the utility menu, input display, lag counter, and timer can be configured
 by their respective positioning buttons.
-Holding Z when positiong an element will move it faster.
+Holding Z when positioning an element will move it faster.
 The display unit of the lag counter can be set to *frames* or *seconds*.
 The *break type* option decides how the *break free* command will function.
 When the break type is *normal*, the command will end textboxes, certain events and traditional cutscenes.
@@ -206,6 +208,7 @@ For example,
 a command with the button combo `R + A` will only be activated if you press R first and then A,
 or R and A at the same time.
 `A + R`, or `R + B + A` will not activate the corresponding command.
+If two or more button combos interfere with one another, the most recently activated will take priority.
 
 The following commands are available:
 - **show/hide menu**: Opens the utility menu if it's closed, closes it if it's opened.
