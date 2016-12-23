@@ -13,6 +13,7 @@ The button icons that appear represent the buttons that are pressed on the contr
 passed from the game's vertical interrupt counter.
 Displayed in units of frames (60Hz, default), or seconds. *Disabled by default.*
 - **A timer.** Measures real-time using the CPU counter. *Disabled by default.*
+- **_Various button-activated commands._**
 
 These features can be configured from the settings menu (see [Settings](#settings-menu)).
 
