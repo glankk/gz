@@ -246,6 +246,8 @@ Everything that would be saved when saving the game normally is saved to the mem
 If the game is already frozen, resumes gameplay as normal.
 While the game is frozen, a pause icon will appear on the top-left of the screen
 (enabled by default, can be turned off).
+*Note:* Some elements, such as timers, textboxes, and certain particle effects operate independently of the game world,
+and are thus unaffected by the *pause* and *frame advance* commands.
 *Default: `D-Down`*
 - **frame advance:** If the game is frozen by the pause command, advances one frame of gameplay.
 Otherwise, freezes the game as if the pause command was activated.
