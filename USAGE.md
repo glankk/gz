@@ -1,7 +1,7 @@
 ## User manual
 The main interface for accessing the provided tools is the utility menu.
 By default, this menu is brought up by pressing `R + L`,
-but this button combination can be changed (See [Settings](#settings-menu)).
+but this button combination can be changed (see [Settings](#settings-menu)).
 Use the D-Pad to navigate the menu, and L to make a selection.
 For a description of each of the submenus, see their respective section below.
 
@@ -14,7 +14,7 @@ passed from the game's vertical interrupt counter.
 Displayed in units of frames (60Hz, default), or seconds. *Disabled by default.*
 - **A timer.** Measures real-time using the CPU counter. *Disabled by default.*
 
-These features can be configured from the settings menu (See [Settings](#settings-menu)).
+These features can be configured from the settings menu (see [Settings](#settings-menu)).
 
 ### Warps menu
 The **places** menu provides a list of all scenes and their respective entrances,
@@ -181,7 +181,7 @@ The screen position of the utility menu, input display, lag counter, and timer c
 by their respective positioning buttons.
 Holding Z when positioning an element will move it faster.
 The display unit of the lag counter can be set to *frames* or *seconds*.
-The *break type* option decides how the *break free* command will function.
+The **break type** option decides how the *break free* command will function.
 When the break type is *normal*, the command will end textboxes, certain events and traditional cutscenes.
 The *aggressive* break type will cause the command to also try to reset the camera and some of Link's state flags.
 **save settings** and **load settings** will save and load the current settings to the
