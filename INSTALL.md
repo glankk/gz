@@ -7,7 +7,8 @@ The currently supported games are:
 There are two methods of using this software, described below.
 
 ### Using gz with a Gameshark
-*Note: Gameshark support has been deprecated. It is still provided, but untested and without guarantees.*
+*Note: Gameshark support has been deprecated. It is still provided, but without guarantees.*
+
 You will need:
 - An N64 with a supported game cartridge, and an Expansion Pak.
 - A Gameshark with a functional parallel port (note that some 3.3s only have dummy ports).
