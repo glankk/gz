@@ -26,7 +26,7 @@ Scenes with only one entrance will warp you to that entrance when selected,
 without showing an entrance list.
 If you want to warp to a specific entrance index,
 you can enter that index in the warps menu and select **warp**.
-The **age** and **cutscene** options specify which age link will be at when performing a
+The **age** and **cutscene** options specify which age Link will be at when performing a
 warp, and which cutscene should be played for that scene.
 These options apply to both the places menu and warping using an entrance index.
 
@@ -146,7 +146,7 @@ and the options show the current state of the timers. Both of these can be modif
 *Note:* When the first timer is set to a heat state,
 the game will instantly deactivate it if the current room is not "hot".
 **_Warning:_** Modifying the state of the timers can yield strange behavior.
-In general, it is safest to use the the "starting" and "stopped" states when doing this.
+In general, it is safest to use the the *starting* and *stopped* states when doing this.
 
 The **file index** option decides which file the game will be saved to when saving from
 the start menu or the Game Over screen.
