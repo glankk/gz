@@ -194,6 +194,8 @@ static int enter_proc(struct menu_item *item)
                 BUTTON_Z);
   input_bind_set_override(COMMAND_PREVROOM, 1);
   input_bind_set_override(COMMAND_NEXTROOM, 1);
+  input_bind_set_disable(COMMAND_PREVROOM, 0);
+  input_bind_set_disable(COMMAND_NEXTROOM, 0);
   return 0;
 }
 
@@ -203,6 +205,8 @@ static int leave_proc(struct menu_item *item)
              BUTTON_Z);
   input_bind_set_override(COMMAND_PREVROOM, 0);
   input_bind_set_override(COMMAND_NEXTROOM, 0);
+  input_bind_set_disable(COMMAND_PREVROOM, 1);
+  input_bind_set_disable(COMMAND_NEXTROOM, 1);
   return 0;
 }
 

@@ -420,6 +420,15 @@ void command_savememfile(void)
   struct memory_file *file = &memfile[memfile_slot];
   memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
   file->scene_index = z64_game.scene_index;
+  uint32_t f;
+  f = z64_game.chest_flags;
+  file->z_file.scene_flags[z64_game.scene_index].chests = f;
+  f = z64_game.switch_flags;
+  file->z_file.scene_flags[z64_game.scene_index].switches = f;
+  f = z64_game.room_clear_flags;
+  file->z_file.scene_flags[z64_game.scene_index].rooms_cleared = f;
+  f = z64_game.collectible_flags;
+  file->z_file.scene_flags[z64_game.scene_index].collectibles = f;
   memcpy(&file->scene_flags, &z64_game.switch_flags,
          sizeof(file->scene_flags));
   memfile_saved[memfile_slot] = 1;
@@ -1562,11 +1571,9 @@ void main_hook()
     if (command_info[i].proc && active)
       command_info[i].proc();
   }
-  if (input_bind_pressed(COMMAND_PREVROOM) &&
-      menu_get_front(&menu_main) == &menu_explorer)
+  if (input_bind_pressed(COMMAND_PREVROOM))
     explorer_room_prev(&menu_explorer);
-  if (input_bind_pressed(COMMAND_NEXTROOM) &&
-      menu_get_front(&menu_main) == &menu_explorer)
+  if (input_bind_pressed(COMMAND_NEXTROOM))
     explorer_room_next(&menu_explorer);
 
   while (menu_active && menu_think(&menu_main))
@@ -2429,6 +2436,8 @@ ENTRY void _start()
     }
     input_bind_set_override(COMMAND_MENU, 1);
     input_bind_set_override(COMMAND_RETURN, 1);
+    input_bind_set_disable(COMMAND_PREVROOM, 1);
+    input_bind_set_disable(COMMAND_NEXTROOM, 1);
   }
 
   /* reflect loaded settings */

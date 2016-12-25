@@ -20,6 +20,7 @@ static int      bind_component_state[COMMAND_MAX] = {0};
 static int      bind_time[COMMAND_MAX] = {0};
 static _Bool    bind_pressed_raw[COMMAND_MAX];
 static _Bool    bind_pressed[COMMAND_MAX];
+static _Bool    bind_disable[COMMAND_MAX] = {0};
 static _Bool    bind_override[COMMAND_MAX] = {0};
 static _Bool    input_enabled = 1;
 
@@ -91,7 +92,8 @@ void input_update(void)
     int *cs = &bind_component_state[i];
     int j;
     uint16_t c;
-    if (!input_enabled || (reservation_enabled && !bind_override[i] &&
+    if (!input_enabled || bind_disable[i] ||
+        (reservation_enabled && !bind_override[i] &&
         (pad_reserved & bind_pad[i])))
       *cs = 0;
     else {
@@ -209,6 +211,11 @@ uint16_t input_bind_make(int length, ...)
   if (length < 4)
     bind |= BIND_END << (length * 4);
   return bind;
+}
+
+void input_bind_set_disable(int index, _Bool value)
+{
+  bind_disable[index] = value;
 }
 
 void input_bind_set_override(int index, _Bool value)

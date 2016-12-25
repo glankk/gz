@@ -27,6 +27,7 @@ void      input_reservation_set(_Bool enabled);
 void      input_reserve(uint16_t bitmask);
 void      input_free(uint16_t bitmask);
 uint16_t  input_bind_make(int length, ...);
+void      input_bind_set_disable(int index, _Bool value);
 void      input_bind_set_override(int index, _Bool value);
 _Bool     input_bind_held(int index);
 _Bool     input_bind_pressed_raw(int index);
