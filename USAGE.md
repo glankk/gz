@@ -122,6 +122,7 @@ Pressing a piece of equipment that is already equipped will unequip it.
 Unequpping a sword or equipping nothing to the B button will
 automatically set the current file's swordless flag.
 **_Warning:_** Unequipping boots will have strange effects, and usually cause an immediate crash.
+*Note:* Changing a C-button equip will not modify the equipped item slot for that button.
 
 ### File menu
 The **restore skulltulas** option clears all the gold skulltula flags in the current file,
