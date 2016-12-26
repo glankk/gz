@@ -129,7 +129,7 @@ static int wheel_draw_proc(struct menu_item *item,
     gsDPSetTextureLUT(G_TT_NONE),
     gsDPSetTextureLOD(G_TL_TILE),
     /* texture filter */
-    gsDPSetTextureFilter(G_TF_POINT),
+    gsDPSetTextureFilter(G_TF_BILERP),
     gsDPSetTextureConvert(G_TC_FILT),
     /* color combiner */
     gsDPSetCombineKey(G_OFF),

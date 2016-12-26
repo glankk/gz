@@ -192,8 +192,6 @@ static int enter_proc(struct menu_item *item)
 {
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_Z);
-  input_bind_set_override(COMMAND_PREVROOM, 1);
-  input_bind_set_override(COMMAND_NEXTROOM, 1);
   input_bind_set_disable(COMMAND_PREVROOM, 0);
   input_bind_set_disable(COMMAND_NEXTROOM, 0);
   return 0;
@@ -203,8 +201,6 @@ static int leave_proc(struct menu_item *item)
 {
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_Z);
-  input_bind_set_override(COMMAND_PREVROOM, 0);
-  input_bind_set_override(COMMAND_NEXTROOM, 0);
   input_bind_set_disable(COMMAND_PREVROOM, 1);
   input_bind_set_disable(COMMAND_NEXTROOM, 1);
   return 0;
@@ -231,8 +227,10 @@ static int draw_proc(struct menu_item *item,
   static Gfx null_dl = gsSPEndDisplayList();
   struct item_data *data = item->data;
   /* handle input */
-  uint16_t pad = input_pad();
-  if (!(pad & BUTTON_R)) {
+  if (!input_bind_held(COMMAND_PREVROOM) &&
+      !input_bind_held(COMMAND_NEXTROOM))
+  {
+    uint16_t pad = input_pad();
     if (pad & BUTTON_Z) {
       if (pad & BUTTON_D_UP)
         data->y += 50.f;

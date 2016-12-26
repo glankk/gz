@@ -1848,7 +1848,7 @@ ENTRY void _start()
     menu_add_static(&menu_scene, 0, 4, "room", 0xC0C0C0);
     {
       struct menu_item *item;
-      item = menu_add_intinput(&menu_scene, 5, 4, 16, 2, NULL, NULL);
+      item = menu_add_intinput(&menu_scene, 5, 4, 10, 2, NULL, NULL);
       menu_add_button(&menu_scene, 0, 5, "load room", load_room_proc, item);
     }
     {
@@ -2436,6 +2436,8 @@ ENTRY void _start()
     }
     input_bind_set_override(COMMAND_MENU, 1);
     input_bind_set_override(COMMAND_RETURN, 1);
+    input_bind_set_override(COMMAND_PREVROOM, 1);
+    input_bind_set_override(COMMAND_NEXTROOM, 1);
     input_bind_set_disable(COMMAND_PREVROOM, 1);
     input_bind_set_disable(COMMAND_NEXTROOM, 1);
   }
