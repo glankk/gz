@@ -504,32 +504,32 @@ typedef struct
 
 typedef struct
 {
-  Gfx      *poly_opa_disp_w;      /* 0x0000 */
-  Gfx      *poly_xlu_disp_w;      /* 0x0004 */
+  Gfx      *poly_opa_w;           /* 0x0000 */
+  Gfx      *poly_xlu_w;           /* 0x0004 */
   char      unk_00_[0x0008];      /* 0x0008 */
-  Gfx      *overlay_disp_w;       /* 0x0010 */
+  Gfx      *overlay_w;            /* 0x0010 */
   char      unk_01_[0x00A4];      /* 0x0014 */
-  Gfx      *work_disp_c;          /* 0x00B8 */
-  size_t    work_disp_c_size;     /* 0x00BC */
+  Gfx      *work_c;               /* 0x00B8 */
+  size_t    work_c_size;          /* 0x00BC */
   char      unk_02_[0x00F0];      /* 0x00C0 */
-  Gfx      *work_disp_w;          /* 0x01B0 */
-  size_t    work_disp_size;       /* 0x01B4 */
-  Gfx      *work_disp;            /* 0x01B8 */
-  Gfx      *work_disp_p;          /* 0x01BC */
-  Gfx      *work_disp_e;          /* 0x01C0 */
+  Gfx      *work_w;               /* 0x01B0 */
+  size_t    work_size;            /* 0x01B4 */
+  Gfx      *work;                 /* 0x01B8 */
+  Gfx      *work_p;               /* 0x01BC */
+  Gfx      *work_d;               /* 0x01C0 */
   char      unk_03_[0x00E4];      /* 0x01C4 */
-  size_t    overlay_disp_size;    /* 0x02A8 */
-  Gfx      *overlay_disp;         /* 0x02AC */
-  Gfx      *overlay_disp_p;       /* 0x02B0 */
-  Gfx      *overlay_disp_e;       /* 0x02B4 */
-  size_t    poly_opa_disp_size;   /* 0x02B8 */
-  Gfx      *poly_opa_disp;        /* 0x02BC */
-  Gfx      *poly_opa_disp_p;      /* 0x02C0 */
-  Gfx      *poly_opa_disp_e;      /* 0x02C4 */
-  size_t    poly_xlu_disp_size;   /* 0x02C8 */
-  Gfx      *poly_xlu_disp;        /* 0x02CC */
-  Gfx      *poly_xlu_disp_p;      /* 0x02D0 */
-  Gfx      *poly_xlu_disp_e;      /* 0x02D4 */
+  size_t    overlay_size;         /* 0x02A8 */
+  Gfx      *overlay;              /* 0x02AC */
+  Gfx      *overlay_p;            /* 0x02B0 */
+  Gfx      *overlay_d;            /* 0x02B4 */
+  size_t    poly_opa_size;        /* 0x02B8 */
+  Gfx      *poly_opa;             /* 0x02BC */
+  Gfx      *poly_opa_p;           /* 0x02C0 */
+  Gfx      *poly_opa_d;           /* 0x02C4 */
+  size_t    poly_xlu_size;        /* 0x02C8 */
+  Gfx      *poly_xlu;             /* 0x02CC */
+  Gfx      *poly_xlu_p;           /* 0x02D0 */
+  Gfx      *poly_xlu_d;           /* 0x02D4 */
   size_t    frame_count_1;        /* 0x02D8 */
   void     *frame_buffer;         /* 0x02DC */
   char      unk_04_[0x0008];      /* 0x02E0 */
@@ -646,6 +646,7 @@ typedef struct
   char              unk_00_[0x0014];
 } z64_input_t;
 
+/* context base */
 typedef struct
 {
   z64_gfx_t      *gfx;                    /* 0x0000 */
@@ -668,6 +669,103 @@ typedef struct
 
 typedef struct
 {
+  /* file loading params */
+  uint32_t      vrom_addr;
+  void         *dram_addr;
+  size_t        size;
+  /* unknown, seem to be unused */
+  void         *unk_00_;
+  uint32_t      unk_01_;
+  uint32_t      unk_02_;
+  /* completion notification params */
+  OSMesgQueue  *notify_queue;
+  OSMesg        notify_message;
+} z64_getfile_t;
+
+/* object structs */
+typedef struct
+{
+  int16_t       object_no;
+  void         *object;
+  z64_getfile_t getfile;
+  OSMesgQueue   load_mq;
+  OSMesg        load_m;
+} z64_mem_obj_t;
+
+typedef struct
+{
+  void         *obj_space_start;
+  void         *obj_space_end;
+  uint8_t       no_objects;
+  char          unk_00_;
+  uint8_t       keep_index;
+  uint8_t       skeep_index;
+  z64_mem_obj_t objects[19];
+} z64_obj_ctxt_t;
+
+typedef struct
+{
+  uint32_t vrom_start;
+  uint32_t vrom_end;
+} z64_object_table_t;
+
+/* lighting structs */
+typedef struct
+{
+  int8_t  dir[3];
+  uint8_t col[3];
+} z64_light1_t;
+
+typedef struct
+{
+  int16_t x;
+  int16_t y;
+  int16_t z;
+  uint8_t col[3];
+  int16_t intensity;
+} z64_light2_t;
+
+typedef union
+{
+  z64_light1_t  light1;
+  z64_light2_t  light2;
+} z64_lightn_t;
+
+typedef struct
+{
+  uint8_t       type;
+  z64_lightn_t  lightn;
+} z64_light_t;
+
+typedef struct z64_light_node_s z64_light_node_t;
+struct z64_light_node_s
+{
+  z64_light_t      *light;
+  z64_light_node_t *prev;
+  z64_light_node_t *next;
+};
+
+typedef struct
+{
+  z64_light_node_t *light_list;
+  uint8_t           ambient[3];
+  uint8_t           fog[3];
+  int16_t           fog_position;
+  int16_t           draw_distance;
+} z64_lighting_t;
+
+typedef struct
+{
+  int8_t  numlights;
+  Lightsn lites;
+} z64_gbi_lights_t;
+
+typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
+                                    z64_actor_t*);
+
+/* game context */
+typedef struct
+{
   z64_ctxt_t      common;                 /* 0x00000 */
   uint16_t        scene_index;            /* 0x000A4 */
   char            unk_00_[0x001A];        /* 0x000A6 */
@@ -687,18 +785,21 @@ typedef struct
   uint16_t        camera_flag_1;          /* 0x0033E */
   char            unk_05_[0x016C];        /* 0x00340 */
   int16_t         event_flag;             /* 0x004AC */
-  char            unk_06_[0x177E];        /* 0x004AE */
+  char            unk_06_[0x02FA];        /* 0x004AE */
+  z64_lighting_t  lighting;               /* 0x007A8 */
+  char            unk_07_[0x146C];        /* 0x007B8 */
+  char            actor_ctxt[0x0008];     /* 0x01C24 */
   uint8_t         no_actors_loaded;       /* 0x01C2C */
-  char            unk_07_[0x0003];        /* 0x01C2D */
+  char            unk_08_[0x0003];        /* 0x01C2D */
   struct
   {
     uint32_t      length;
     z64_actor_t  *first;
   }               actor_list[12];         /* 0x01C30 */
-  char            unk_08_[0x0038];        /* 0x01C90 */
+  char            unk_09_[0x0038];        /* 0x01C90 */
   z64_actor_t    *arrow_actor;            /* 0x01CC8 */
   z64_actor_t    *target_actor;           /* 0x01CCC */
-  char            unk_09_[0x0058];        /* 0x01CD0 */
+  char            unk_0A_[0x0058];        /* 0x01CD0 */
   uint32_t        switch_flags;           /* 0x01D28 */
   uint32_t        temp_switch_flags;      /* 0x01D2C */
   uint32_t        unk_flags_0;            /* 0x01D30 */
@@ -709,18 +810,18 @@ typedef struct
   uint32_t        collectible_flags;      /* 0x01D44 */
   uint32_t        unk_flags_4;            /* 0x01D48 */
   void           *title_card_texture;     /* 0x01D4C */
-  char            unk_0A_[0x0007];        /* 0x01D50 */
+  char            unk_0B_[0x0007];        /* 0x01D50 */
   uint8_t         title_card_delay;       /* 0x01D57 */
-  char            unk_0B_[0x0010];        /* 0x01D58 */
+  char            unk_0C_[0x0010];        /* 0x01D58 */
   void           *cutscene_ptr;           /* 0x01D68 */
   int8_t          cutscene_state;         /* 0x01D6C */
-  char            unk_0C_[0xE66F];        /* 0x01D6D */
+  char            unk_0D_[0xE66F];        /* 0x01D6D */
   uint8_t         textbox_state_1;        /* 0x103DC */
-  char            unk_0D_[0x00DF];        /* 0x103DD */
+  char            unk_0E_[0x00DF];        /* 0x103DD */
   uint8_t         textbox_state_2;        /* 0x104BC */
-  char            unk_0E_[0x0002];        /* 0x104BD */
+  char            unk_0F_[0x0002];        /* 0x104BD */
   uint8_t         textbox_state_3;        /* 0x104BF */
-  char            unk_0F_[0x0292];        /* 0x104C0 */
+  char            unk_10_[0x0292];        /* 0x104C0 */
   struct
   {
     uint8_t       unk_00_;
@@ -736,44 +837,32 @@ typedef struct
     uint8_t       dfnl;
     uint8_t       all;
   }               restriction_flags;      /* 0x10752 */
-  char            unk_10_[0x155E];        /* 0x1075E */
+  char            unk_11_[0x01D6];        /* 0x1075E */
+  uint16_t        pause_state;            /* 0x10934 */
+  char            unk_12_[0x0E6E];        /* 0x10936 */
+  z64_obj_ctxt_t  obj_ctxt;               /* 0x117A4 */
   int8_t          room_index;             /* 0x11CBC */
-  char            unk_11_[0x000B];        /* 0x11CBD */
+  char            unk_13_[0x000B];        /* 0x11CBD */
   void           *room_ptr;               /* 0x11CC8 */
-  char            unk_12_[0x0118];        /* 0x11CCC */
+  char            unk_14_[0x0118];        /* 0x11CCC */
   uint32_t        gameplay_frames;        /* 0x11DE4 */
   uint8_t         link_age;               /* 0x11DE8 */
-  char            unk_13_;                /* 0x11DE9 */
+  char            unk_15_;                /* 0x11DE9 */
   uint8_t         spawn_index;            /* 0x11DEA */
   uint8_t         no_map_actors;          /* 0x11DEB */
   uint8_t         no_rooms;               /* 0x11DEC */
-  char            unk_14_[0x000B];        /* 0x11DED */
+  char            unk_16_[0x000B];        /* 0x11DED */
   void           *map_actor_list;         /* 0x11DF8 */
-  char            unk_15_[0x0008];        /* 0x11DFC */
+  char            unk_17_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_16_[0x000D];        /* 0x11E08 */
+  char            unk_18_[0x000D];        /* 0x11E08 */
   int8_t          scene_load_flag;        /* 0x11E15 */
-  char            unk_17_[0x0004];        /* 0x11E16 */
+  char            unk_19_[0x0004];        /* 0x11E16 */
   int16_t         entrance_index;         /* 0x11E1A */
-  char            unk_18_[0x0042];        /* 0x11E1C */
+  char            unk_1A_[0x0042];        /* 0x11E1C */
   uint8_t         fadeout_transition;     /* 0x11E5E */
                                           /* 0x11E5F */
 } z64_game_t;
-
-typedef struct
-{
-  /* file loading params */
-  uint32_t      vrom_addr;
-  void         *dram_addr;
-  size_t        size;
-  /* unknown, seem to be unused */
-  void         *unk_00_;
-  uint32_t      unk_01_;
-  uint32_t      unk_02_;
-  /* completion notification params */
-  OSMesgQueue  *notify_queue;
-  OSMesg        notify_message;
-} z64_getfile_t;
 
 #if Z64_VERSION == Z64_OOT10
 
@@ -783,6 +872,9 @@ typedef struct
 #define z64_osCreateMesgQueue_addr              0x80004220
 #define z64_file_mq_addr                        0x80007D40
 #define z64_vi_counter_addr                     0x80009E8C
+#define z64_DrawActors_addr                     0x80024AB4
+#define z64_DeleteActor_addr                    0x80024FE0
+#define z64_SpawnActor_addr                     0x80025110
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_UpdateItemButton_addr               0x8006FB50
@@ -793,9 +885,12 @@ typedef struct
 #define z64_entrance_offset_hook_addr           0x8009AA44
 #define z64_frame_update_func_addr              0x8009AF1C
 #define z64_frame_update_call_addr              0x8009CAE8
+#define z64_disp_swap_addr                      0x8009FEC0
 #define z64_frame_input_func_addr               0x800A0BA0
 #define z64_frame_input_call_addr               0x800A16AC
 #define z64_day_speed_addr                      0x800F1650
+#define z64_light_handlers_addr                 0x800F1B40
+#define z64_object_table_addr                   0x800F8FF8
 #define z64_entrance_table_addr                 0x800F9C90
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
@@ -831,6 +926,9 @@ typedef struct
 #define z64_osCreateMesgQueue_addr              0x80004220
 #define z64_file_mq_addr                        0x80007D40
 #define z64_vi_counter_addr                     0x80009E8C
+#define z64_DrawActors_addr                     0x80024AB4
+#define z64_DeleteActor_addr                    0x80024FE0
+#define z64_SpawnActor_addr                     0x80025110
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
 #define z64_UpdateItemButton_addr               0x8006FB50
@@ -841,9 +939,12 @@ typedef struct
 #define z64_entrance_offset_hook_addr           0x8009AA54
 #define z64_frame_update_func_addr              0x8009AF2C
 #define z64_frame_update_call_addr              0x8009CAF8
+#define z64_disp_swap_addr                      0x8009FED0
 #define z64_frame_input_func_addr               0x800A0BB0
 #define z64_frame_input_call_addr               0x800A16BC
 #define z64_day_speed_addr                      0x800F1810
+#define z64_light_handlers_addr                 0x800F1D00
+#define z64_object_table_addr                   0x800F91B8
 #define z64_entrance_table_addr                 0x800F9E50
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
@@ -879,6 +980,9 @@ typedef struct
 #define z64_osCreateMesgQueue_addr              0x800043E0
 #define z64_file_mq_addr                        0x80008A30
 #define z64_vi_counter_addr                     0x8000A4CC
+#define z64_DrawActors_addr                     0x800250F4
+#define z64_DeleteActor_addr                    0x80025620
+#define z64_SpawnActor_addr                     0x80025750
 #define z64_minimap_disable_1_addr              0x8006D3B0
 #define z64_minimap_disable_2_addr              0x8006DB44
 #define z64_UpdateItemButton_addr               0x800701B0
@@ -889,9 +993,12 @@ typedef struct
 #define z64_entrance_offset_hook_addr           0x8009B134
 #define z64_frame_update_func_addr              0x8009B60C
 #define z64_frame_update_call_addr              0x8009D1D8
+#define z64_disp_swap_addr                      0x800A05B0
 #define z64_frame_input_func_addr               0x800A1290
 #define z64_frame_input_call_addr               0x800A1D8C
 #define z64_day_speed_addr                      0x800F1C90
+#define z64_light_handlers_addr                 0x800F2180
+#define z64_object_table_addr                   0x800F9648
 #define z64_entrance_table_addr                 0x800FA2E0
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
@@ -922,16 +1029,23 @@ typedef struct
 #endif
 
 /* function prototypes */
-typedef void (*z64_UpdateItemButton_proc) (z64_game_t *ctxt, int button_index);
-typedef void (*z64_UpdateEquipment_proc)  (z64_game_t *ctxt, z64_link_t *link);
-typedef void (*z64_LoadRoom_proc)         (z64_game_t *ctxt,
+typedef void (*z64_DrawActors_proc)       (z64_game_t *game, void *actor_ctxt);
+typedef void (*z64_DeleteActor_proc)      (z64_game_t *game, void *actor_ctxt,
+                                           z64_actor_t *actor);
+typedef void (*z64_SpawnActor_proc)       (void *actor_ctxt, z64_game_t *game,
+                                           int actor_no, float x, float y,
+                                           float z, uint16_t rx, uint16_t ry,
+                                           uint16_t rz, uint16_t variable);
+typedef void (*z64_UpdateItemButton_proc) (z64_game_t *game, int button_index);
+typedef void (*z64_UpdateEquipment_proc)  (z64_game_t *game, z64_link_t *link);
+typedef void (*z64_LoadRoom_proc)         (z64_game_t *game,
                                            void *p_ctxt_room_index,
                                            uint8_t room_index);
-typedef void (*z64_UnloadRoom_proc)       (z64_game_t *ctxt,
+typedef void (*z64_UnloadRoom_proc)       (z64_game_t *game,
                                            void *p_ctxt_room_index);
 typedef void (*z64_Io_proc)               (uint32_t dev_addr, void *dram_addr,
                                            size_t size, int32_t direction);
-typedef void (*z64_SceneConfig_proc)      (z64_game_t *ctxt);
+typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 
 /* data */
 #define z64_file_mq             (*(OSMesgQueue*)      z64_file_mq_addr)
@@ -939,6 +1053,10 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *ctxt);
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)
 #define z64_day_speed           (*(uint16_t*)         z64_day_speed_addr)
+#define z64_light_handlers      ( (z64_light_handler_t*)                      \
+                                                      z64_light_handlers_addr)
+#define z64_object_table        ( (z64_object_table_t*)                      \
+                                                      z64_object_table_addr)
 #define z64_entrance_table      ( (z64_entrance_table_t*)                     \
                                    z64_entrance_table_addr)
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \
@@ -955,6 +1073,10 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *ctxt);
 #define z64_osRecvMesg          ((osRecvMesg_t)       z64_osRecvMesg_addr)
 #define z64_osCreateMesgQueue   ((osCreateMesgQueue_t)                        \
                                  z64_osCreateMesgQueue_addr)
+#define z64_DrawActors          ((z64_DrawActors_proc)z64_DrawActors_addr)
+#define z64_DeleteActor         ((z64_DeleteActor_proc)                       \
+                                 z64_DeleteActor_addr)
+#define z64_SpawnActor          ((z64_SpawnActor_proc)z64_SpawnActor_addr)
 #define z64_UpdateItemButton    ((z64_UpdateItemButton_proc)                  \
                                                       z64_UpdateItemButton_addr)
 #define z64_UpdateEquipment     ((z64_UpdateEquipment_proc)                   \

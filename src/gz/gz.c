@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <inttypes.h>
 #include <startup.h>
 #include <mips.h>
@@ -131,6 +132,34 @@ struct memory_file
   z64_file_t  z_file;
   uint16_t    scene_index;
   uint32_t    scene_flags[9];
+};
+
+struct heap_node
+{
+  uint16_t          magic;
+  uint16_t          free;
+  size_t            size;
+  struct heap_node *next;
+  struct heap_node *prev;
+  char              _unk_00[0x0020];
+};
+
+struct actor_debug_info
+{
+  uint8_t group;
+  uint8_t index;
+};
+
+struct actor_spawn_info
+{
+  uint16_t  actor_no;
+  uint16_t  variable;
+  int32_t   x;
+  int32_t   y;
+  int32_t   z;
+  uint16_t  rx;
+  uint16_t  ry;
+  uint16_t  rz;
 };
 
 #define                     CPU_COUNTER_FREQ 46875000
@@ -367,7 +396,7 @@ static const char *cheat_names[] =
   "small keys",
   "rupees",
   "nayru's love",
-  "freze time",
+  "freeze time",
   "no music",
   "items usable",
   "no minimap",
@@ -650,7 +679,7 @@ static int8_t child_trade_options[] =
   Z64_ITEM_SOLD_OUT,
 };
 
-static void update_cpu_counter()
+static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
   uint32_t new_count;
@@ -904,6 +933,20 @@ static int halfword_mod_proc(struct menu_item *item,
   return 0;
 }
 
+static int word_mod_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  uint32_t *p = data;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_intinput_get(item) != *p)
+      menu_intinput_set(item, *p);
+  }
+  else if (reason == MENU_CALLBACK_CHANGED)
+    *p = menu_intinput_get(item);
+  return 0;
+}
+
 static int byte_mod_indirect_proc(struct menu_item *item,
                                   enum menu_callback_reason reason,
                                   void *data)
@@ -1035,6 +1078,20 @@ static int byte_option_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_DEACTIVATE)
     *p = option->option_list[menu_option_get(item)];
+  return 0;
+}
+
+static int byte_optionmod_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  uint8_t *v = data;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != *v)
+      menu_option_set(item, *v);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    *v = menu_option_get(item);
   return 0;
 }
 
@@ -1435,6 +1492,330 @@ static void load_room_proc(struct menu_item *item, void *data)
   }
 }
 
+static _Bool heap_node_validate(struct heap_node *node)
+{
+  return node->magic == 0x7373 &&
+         (!node->next ||
+          ((uint32_t)node->next >= 0x80000000 &&
+           (uint32_t)node->next < 0x80400000 &&
+           (uint32_t)node->next > (uint32_t)node &&
+           (uint32_t)node->next - (uint32_t)node == node->size + 0x30)) &&
+         (!node->prev ||
+          ((uint32_t)node->prev >= 0x80000000 &&
+           (uint32_t)node->prev < 0x80400000 &&
+           (uint32_t)node->prev < (uint32_t)node));
+}
+
+static int heap_draw_proc(struct menu_item *item,
+                          struct menu_draw_params *draw_params)
+{
+  int x = draw_params->x;
+  int y = draw_params->y;
+  struct gfx_font *font = draw_params->font;
+  uint32_t color = draw_params->color;
+  uint8_t alpha = draw_params->alpha;
+  int ch = menu_get_cell_height(item->owner, 1);
+  /* collect heap data */
+  const uint32_t heap_start = (uint32_t)&z64_link - 0x30;
+  size_t max_alloc = 0;
+  size_t min_alloc = 0;
+  size_t total_alloc = 0;
+  size_t max_avail = 0;
+  size_t min_avail = 0;
+  size_t total_avail = 0;
+  size_t overhead = 0;
+  size_t total = 0;
+  struct heap_node *p = (void*)heap_start;
+  struct heap_node *error_node = NULL;
+  int node_count_total = 0;
+  int node_count_free = 0;
+  while (p) {
+    ++node_count_total;
+    if (!heap_node_validate(p)) {
+      error_node = p;
+      break;
+    }
+    if (p->free) {
+      ++node_count_free;
+      total_avail += p->size;
+      if (p->size > max_avail)
+        max_avail = p->size;
+      if (min_avail == 0 || p->size < min_avail)
+        min_avail = p->size;
+    }
+    else {
+      total_alloc += p->size;
+      if (p->size > max_alloc)
+        max_alloc = p->size;
+      if (min_alloc == 0 || p->size < min_alloc)
+        min_alloc = p->size;
+    }
+    overhead += 0x30;
+    total += p->size + 0x30;
+    p = p->next;
+  }
+  /* show heap data */
+  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  gfx_printf(font, x, y + ch * 0, "node count     %i (%i free)",
+             node_count_total, node_count_free);
+  gfx_printf(font, x, y + ch * 1, "allocated      0x%8" PRIx32, total_alloc);
+  gfx_printf(font, x, y + ch * 2, "available      0x%8" PRIx32, total_avail);
+  gfx_printf(font, x, y + ch * 3, "max allocated  0x%8" PRIx32, max_alloc);
+  gfx_printf(font, x, y + ch * 4, "min allocated  0x%8" PRIx32, min_alloc);
+  gfx_printf(font, x, y + ch * 5, "max available  0x%8" PRIx32, max_avail);
+  gfx_printf(font, x, y + ch * 6, "min available  0x%8" PRIx32, min_avail);
+  gfx_printf(font, x, y + ch * 7, "overhead       0x%8" PRIx32, overhead);
+  gfx_printf(font, x, y + ch * 8, "total          0x%8" PRIx32, total);
+  if (error_node)
+    gfx_printf(font, x, y + ch * 9, "erroneous node 0x%08" PRIx32,
+               (uint32_t)error_node);
+  /* plot graph */
+  static struct gfx_texture *t = NULL;
+  if (!t)
+    t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 1, 9, 1);
+  size_t graph_width = t->tile_width * t->tiles_x;
+  uint16_t *d = t->data;
+  p = (void*)heap_start;
+  while (p) {
+    if (p == error_node)
+      break;
+    size_t b = (uint32_t)p - heap_start;
+    size_t e = b + p->size + 0x30;
+    b = b * graph_width / total;
+    e = e * graph_width / total;
+    for (size_t i = b; i < e; ++i) {
+      uint16_t c;
+      if (p->free)
+        c = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+      else
+        c = GPACK_RGBA5551(0x1F, 0x1F - p->size * 0x1F / max_alloc,
+                           i == b ? 0x1F : 0x00, 0x01);
+      d[i] = c;
+    }
+    p = p->next;
+  }
+  /* draw graph */
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF, alpha));
+  for (int i = 0; i < t->tiles_x; ++i) {
+    struct gfx_sprite s =
+    {
+      t, i,
+      x + t->tile_width * i,
+      y + ch * 10,
+      1.f, 16.f,
+    };
+    gfx_sprite_draw(&s);
+  }
+  return 1;
+}
+
+static size_t disp_size[4];
+static size_t disp_p[4];
+static size_t disp_d[4];
+
+static int disp_draw_proc(struct menu_item *item,
+                          struct menu_draw_params *draw_params)
+{
+  int x = draw_params->x;
+  int y = draw_params->y;
+  struct gfx_font *font = draw_params->font;
+  uint32_t color = draw_params->color;
+  uint8_t alpha = draw_params->alpha;
+  int cw = menu_get_cell_width(item->owner, 1);
+  int ch = menu_get_cell_height(item->owner, 1);
+  for (int i = 0; i < 4; ++i) {
+    /* plot graph */
+    static struct gfx_texture *t[4];
+    if (!t[i])
+      t[i] = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 1, 2, 1);
+    size_t graph_width = t[i]->tile_width * t[i]->tiles_x;
+    uint16_t *d = t[i]->data;
+    size_t b = disp_p[i] * graph_width / disp_size[i];
+    size_t e = disp_d[i] * graph_width / disp_size[i];
+    for (size_t j = 0; j < graph_width; ++j) {
+      uint16_t c;
+      if (j < b) {
+        if (j >= e)
+          c = GPACK_RGBA5551(0xFF, 0x00, 0x00, 0x01);
+        else
+          c = GPACK_RGBA5551(0x00, 0xFF, 0x00, 0x01);
+      }
+      else if (j >= e)
+        c = GPACK_RGBA5551(0x00, 0x00, 0xFF, 0x01);
+      else
+        c = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+      d[j] = c;
+    }
+    /* display info */
+    gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+    static const char *disp_name[4] =
+    {
+      "work",
+      "poly_opa",
+      "poly_xlu",
+      "overlay",
+    };
+    gfx_printf(font, x, y + ch * i * 2, "%s", disp_name[i]);
+    gfx_printf(font, x + cw * 2, y + ch * (i * 2 + 1),
+               "0x%04" PRIx32 "  0x%04" PRIx32, disp_size[i], disp_p[i]);
+    gfx_printf(font, x + cw * 2 + 192, y + ch * (i * 2 + 1),
+               "0x%04" PRIx32, disp_size[i] - disp_d[i]);
+    /* draw graph */
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF, alpha));
+    for (int j = 0; j < t[i]->tiles_x; ++j) {
+      struct gfx_sprite s =
+      {
+        t[i], j,
+        x + cw * 2 + 120 + t[i]->tile_width * j,
+        y + ch * i * 2 + 1,
+        1.f, ch - 2,
+      };
+      gfx_sprite_draw(&s);
+    }
+  }
+  return 1;
+}
+
+static void push_object_proc(struct menu_item *item, void *data)
+{
+  int16_t object_no = menu_intinput_get(data);
+  if (object_no == 0)
+    return;
+  int n = z64_game.obj_ctxt.no_objects++;
+  z64_mem_obj_t *obj = z64_game.obj_ctxt.objects;
+  obj[n].object_no = -object_no;
+  obj[n].getfile.vrom_addr = 0;
+  size_t size = z64_object_table[object_no].vrom_end -
+                z64_object_table[object_no].vrom_start;
+  obj[n + 1].object = (char*)obj[n].object + size;
+}
+
+static void pop_object_proc(struct menu_item *item, void *data)
+{
+  if (z64_game.obj_ctxt.no_objects > 0)
+    z64_game.obj_ctxt.objects[--z64_game.obj_ctxt.no_objects].object_no = 0;
+}
+
+static int objects_draw_proc(struct menu_item *item,
+                             struct menu_draw_params *draw_params)
+{
+  int x = draw_params->x;
+  int y = draw_params->y;
+  struct gfx_font *font = draw_params->font;
+  uint32_t color = draw_params->color;
+  uint8_t alpha = draw_params->alpha;
+  int cw = menu_get_cell_width(item->owner, 1);
+  int ch = menu_get_cell_height(item->owner, 1);
+  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  char *s = z64_game.obj_ctxt.obj_space_start;
+  char *e = z64_game.obj_ctxt.obj_space_end;
+  char *p = z64_game.obj_ctxt.objects[z64_game.obj_ctxt.no_objects].object;
+  size_t max_objects = sizeof(z64_game.obj_ctxt.objects) /
+                       sizeof(*z64_game.obj_ctxt.objects) - 1;
+  gfx_printf(font, x, y + ch * 0, "objects   %i / %i",
+             z64_game.obj_ctxt.no_objects, max_objects);
+  gfx_printf(font, x, y + ch * 1, "allocated %08" PRIx32, p - s);
+  gfx_printf(font, x, y + ch * 2, "available %08" PRIx32, e - p);
+  gfx_printf(font, x, y + ch * 3, "total     %08" PRIx32, e - s);
+  for (int i = 0; i < z64_game.obj_ctxt.no_objects; ++i)
+    gfx_printf(font, x + cw * (i % 2) * 16, y + ch * (i / 2 + 5),
+               "%08" PRIx32 " %04" PRIx16,
+               z64_game.obj_ctxt.objects[i].object,
+               z64_game.obj_ctxt.objects[i].object_no);
+  return 1;
+}
+
+static void actor_index_dec_proc(struct menu_item *item, void *data)
+{
+  struct actor_debug_info *info = data;
+  uint32_t max = z64_game.actor_list[info->group].length;
+  if (max == 0)
+    max = 1;
+  info->index = (info->index + max - 1) % max;
+}
+
+static void actor_index_inc_proc(struct menu_item *item, void *data)
+{
+  struct actor_debug_info *info = data;
+  uint32_t max = z64_game.actor_list[info->group].length;
+  if (max == 0)
+    max = 1;
+  info->index = (info->index + 1) % max;
+}
+
+static int actor_draw_proc(struct menu_item *item,
+                           struct menu_draw_params *draw_params)
+{
+  struct actor_debug_info *info = item->data;
+  int x = draw_params->x;
+  int y = draw_params->y;
+  struct gfx_font *font = draw_params->font;
+  uint32_t color = draw_params->color;
+  uint8_t alpha = draw_params->alpha;
+  int ch = menu_get_cell_height(item->owner, 1);
+  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  uint32_t max = z64_game.actor_list[info->group].length;
+  if (info->index >= max) {
+    if (max > 0)
+      info->index = max - 1;
+    else
+      info->index = 0;
+  }
+  if (info->index < max) {
+    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+    for (int i = 0; i < info->index; ++i)
+      actor = actor->actor_next;
+    gfx_printf(font, x, y, "%08" PRIx32 " %04" PRIx16,
+               actor, actor->actor_index);
+    gfx_printf(font, x, y + ch, "variable %04" PRIx16, actor->actor_variable);
+  }
+  else
+    gfx_printf(font, x, y, "<none>");
+  return 1;
+}
+
+static void delete_actor_proc(struct menu_item *item, void *data)
+{
+  struct actor_debug_info *info = data;
+  if (info->index < z64_game.actor_list[info->group].length) {
+    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+    for (int i = 0; i < info->index; ++i)
+      actor = actor->actor_next;
+    z64_DeleteActor(&z64_game, &z64_game.actor_ctxt, actor);
+  }
+}
+
+static void goto_actor_proc(struct menu_item *item, void *data)
+{
+  struct actor_debug_info *info = data;
+  if (info->index < z64_game.actor_list[info->group].length) {
+    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+    for (int i = 0; i < info->index; ++i)
+      actor = actor->actor_next;
+    z64_link.common.pos_1 = actor->pos_2;
+    z64_link.common.pos_2 = actor->pos_2;
+  }
+}
+
+static void spawn_actor_proc(struct menu_item *item, void *data)
+{
+  struct actor_spawn_info *info = data;
+  z64_SpawnActor(&z64_game.actor_ctxt, &z64_game, info->actor_no,
+                  info->x, info->y, info->z, info->rx, info->ry, info->rz,
+                  info->variable);
+}
+
+static void fetch_actor_info_proc(struct menu_item *item, void *data)
+{
+  struct actor_spawn_info *info = data;
+  info->x = floorf(z64_link.common.pos_2.x + 0.5f);
+  info->y = floorf(z64_link.common.pos_2.y + 0.5f);
+  info->z = floorf(z64_link.common.pos_2.z + 0.5f);
+  info->rx = z64_link.common.rot_2.x;
+  info->ry = z64_link.common.rot_2.y;
+  info->rz = z64_link.common.rot_2.z;
+}
+
 static void tab_prev_proc(struct menu_item *item, void *data)
 {
   menu_tab_previous(data);
@@ -1445,7 +1826,7 @@ static void tab_next_proc(struct menu_item *item, void *data)
   menu_tab_next(data);
 }
 
-void main_hook()
+static void main_hook(void)
 {
   update_cpu_counter();
   input_update();
@@ -1705,7 +2086,7 @@ void main_hook()
   gfx_flush();
 }
 
-void entrance_offset_hook()
+static void entrance_offset_hook()
 {
   uint32_t at;
   uint32_t offset;
@@ -1721,7 +2102,57 @@ void entrance_offset_hook()
                     "lw $at, %1 \n" :: "m"(offset), "m"(at));
 }
 
-ENTRY void _start()
+static void disp_hook(void *p_size, Gfx *buf, size_t size)
+{
+  struct disp
+  {
+    size_t size;
+    Gfx *buf;
+    Gfx *p;
+    Gfx *d;
+  };
+  struct disp *d = p_size;
+  size_t *disp_s[4] =
+  {
+    &z64_ctxt.gfx->work_size,
+    &z64_ctxt.gfx->poly_opa_size,
+    &z64_ctxt.gfx->poly_xlu_size,
+    &z64_ctxt.gfx->overlay_size,
+  };
+  for (int i = 0; i < 4; ++i)
+    if (&d->size == disp_s[i]) {
+      disp_size[i] = d->size;
+      disp_p[i] = (char*)d->p - (char*)d->buf;
+      disp_d[i] = (char*)d->d - (char*)d->buf;
+      break;
+    }
+  d->size = size;
+  d->buf = buf;
+  d->p = buf;
+  d->d = (void*)((char*)buf + size);
+}
+
+static _Noreturn void stack_thunk(void *func)
+{
+  static __attribute__((section(".stack")))
+    _Alignas(uint64_t) char stack[0x2000];
+  static __attribute__((section(".stack"))) void *sp;
+  __asm__ volatile ("la $t0, %0     \n"
+                    "sw $sp, ($t0)  \n"
+                    "la $sp, %1 - 8 \n"
+                    "sw $ra, 4($sp) \n"
+                    "jalr $a0       \n"
+                    "lw $ra, 4($sp) \n"
+                    "la $t0, %0     \n"
+                    "lw $sp, ($t0)  \n"
+                    "jr $ra         \n"
+                    :: "i" (&sp), "i" (&stack[sizeof(stack)]));
+  __builtin_unreachable();
+}
+
+ENTRY void _start();
+
+static void init(void)
 {
   /* startup */
   {
@@ -1749,6 +2180,17 @@ ENTRY void _start()
   *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
+  /* install disp swap hook */
+  {
+    uint32_t hook[] =
+    {
+      MIPS_LA(MIPS_T0, &disp_hook),
+      MIPS_JR(MIPS_T0),
+      MIPS_NOP,
+    };
+    memcpy((void*)z64_disp_swap_addr, &hook, sizeof(hook));
+  }
+
   /* initialize variables */
   update_cpu_counter();
   lag_vi_offset = -(int32_t)z64_vi_counter;
@@ -1775,8 +2217,10 @@ ENTRY void _start()
     menu_add_submenu(&menu_main, 0, 6, &menu_file, "file");
     static struct menu menu_watches;
     menu_add_submenu(&menu_main, 0, 7, &menu_watches, "watches");
+    static struct menu menu_debug;
+    menu_add_submenu(&menu_main, 0, 8, &menu_debug, "debug");
     static struct menu menu_settings;
-    menu_add_submenu(&menu_main, 0, 8, &menu_settings, "settings");
+    menu_add_submenu(&menu_main, 0, 9, &menu_settings, "settings");
 
     /* warps */
     menu_init(&menu_warps, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -1828,12 +2272,8 @@ ENTRY void _start()
     menu_add_button(&menu_warps, 0, 5, "warp", warp_proc, NULL);
     menu_add_button(&menu_warps, 0, 6, "clear cs pointer",
                     clear_csp_proc, NULL);
-    {
-      struct menu_item *item = menu_item_add(&menu_warps, 0, 7,
-                                             NULL, 0xC0C0C0);
-      item->selectable = 0;
-      item->draw_proc = warp_info_draw_proc;
-    }
+    menu_add_static_custom(&menu_warps, 0, 7, warp_info_draw_proc,
+                           NULL, 0xC0C0C0);
 
     /* scene */
     menu_init(&menu_scene, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -2349,6 +2789,79 @@ ENTRY void _start()
                                       0, 1);
     watchlist_fetch(menu_watchlist);
 
+    /* debug */
+    menu_init(&menu_debug, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    menu_debug.selector = menu_add_submenu(&menu_debug, 0, 0, NULL,
+                                           "return");
+    static struct menu heap;
+    menu_add_submenu(&menu_debug, 0, 1, &heap, "heap");
+    menu_init(&heap, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    heap.selector = menu_add_submenu(&heap, 0, 0, NULL, "return");
+    menu_add_static_custom(&heap, 0, 1, heap_draw_proc, NULL, 0xC0C0C0);
+    static struct menu disp;
+    menu_add_submenu(&menu_debug, 0, 2, &disp, "display lists");
+    menu_init(&disp, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    disp.selector = menu_add_submenu(&disp, 0, 0, NULL, "return");
+    menu_add_static_custom(&disp, 0, 1, disp_draw_proc, NULL, 0xC0C0C0);
+    {
+      static struct menu objects;
+      menu_add_submenu(&menu_debug, 0, 3, &objects, "objects");
+      menu_init(&objects, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+      objects.selector = menu_add_submenu(&objects, 0, 0, NULL, "return");
+      menu_add_static(&objects, 0, 1, "object id", 0xC0C0C0);
+      struct menu_item *object_no = menu_add_intinput(&objects, 10, 1, 16, 4,
+                                                      NULL, NULL);
+      menu_add_button(&objects, 16, 1, "push", push_object_proc, object_no);
+      menu_add_button(&objects, 22, 1, "pop", pop_object_proc, NULL);
+      menu_add_static_custom(&objects, 0, 3, objects_draw_proc, NULL, 0xC0C0C0);
+    }
+    {
+      static struct menu actors;
+      menu_add_submenu(&menu_debug, 0, 4, &actors, "actors");
+      menu_init(&actors, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+      actors.selector = menu_add_submenu(&actors, 0, 0, NULL, "return");
+      {
+        static struct actor_debug_info data;
+        menu_add_static(&actors, 0, 1, "group", 0xC0C0C0);
+        menu_add_option(&actors, 10, 1,
+                        "switch\0""prop (1)\0""player\0""bomb\0""npc\0"
+                        "enemy\0""prop (2)\0""item/action\0""misc\0""boss\0"
+                        "door\0""chest\0",
+                        byte_optionmod_proc, &data.group);
+        menu_add_static(&actors, 0, 2, "index", 0xC0C0C0);
+        menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, &data);
+        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
+        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
+        menu_add_button(&actors, 15, 2, ">", actor_index_inc_proc, &data);
+        struct menu_item *item = menu_add_static_custom(&actors, 0, 3,
+                                                        actor_draw_proc,
+                                                        NULL, 0xC0C0C0);
+        item->data = &data;
+        menu_add_button(&actors, 0, 5, "delete", &delete_actor_proc, &data);
+        menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &data);
+      }
+      {
+        static struct actor_spawn_info data;
+        menu_add_static(&actors, 0, 6, "actor id", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 6, 16, 4,
+                          halfword_mod_proc, &data.actor_no);
+        menu_add_static(&actors, 0, 7, "variable", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 7, 16, 4,
+                          halfword_mod_proc, &data.variable);
+        menu_add_static(&actors, 0, 8, "position", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 8, -10, 6, word_mod_proc, &data.x);
+        menu_add_intinput(&actors, 17, 8, -10, 6, word_mod_proc, &data.y);
+        menu_add_intinput(&actors, 24, 8, -10, 6, word_mod_proc, &data.z);
+        menu_add_static(&actors, 0, 9, "rotation", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 9, 10, 5, halfword_mod_proc, &data.rx);
+        menu_add_intinput(&actors, 17, 9, 10, 5, halfword_mod_proc, &data.ry);
+        menu_add_intinput(&actors, 24, 9, 10, 5, halfword_mod_proc, &data.rz);
+        menu_add_button(&actors, 0, 10, "spawn", spawn_actor_proc, &data);
+        menu_add_button(&actors, 10, 10,"fetch from link",
+                        &fetch_actor_info_proc, &data);
+      }
+    }
+
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
@@ -2449,13 +2962,21 @@ ENTRY void _start()
   {
     uint32_t main_jump[] =
     {
-      MIPS_SW(MIPS_RA, -4, MIPS_SP),
-      MIPS_LA(MIPS_RA, &main_hook),
-      MIPS_JR(MIPS_RA),
-      MIPS_LW(MIPS_RA, -4, MIPS_SP),
+      MIPS_LA(MIPS_T0, &stack_thunk),
+      MIPS_LA(MIPS_A0, &main_hook),
+      MIPS_JR(MIPS_T0),
+      MIPS_NOP,
     };
     memcpy(&_start, &main_jump, sizeof(main_jump));
   }
+}
+
+ENTRY _Noreturn void _start()
+{
+  __asm__ volatile ("la $t0, %0 \n"
+                    "la $a0, %1 \n"
+                    "jr $t0     \n" :: "i" (stack_thunk), "i" (init));
+  __builtin_unreachable();
 }
 
 /* support libraries */

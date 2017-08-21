@@ -5,6 +5,7 @@
 
 struct item_data
 {
+  _Bool                   signed_;
   int                     base;
   int                     length;
   menu_generic_callback   callback_proc;
@@ -87,13 +88,31 @@ static int activate_proc(struct menu_item *item)
       return 1;
     uint32_t value = 0;
     uint32_t mul = 1;
+    int sign = data->signed_ && data->digits[0]->text[0] == '-' ? -1 : 1;
     for (int i = data->length - 1; i >= 0; --i) {
       int n = data->digits[i]->text[0];
-      data->item->text[i] = n;
-      value += char_to_int(n) * mul;
-      mul *= data->base;
+      if (data->signed_ && i == 0) {
+        if (value == 0 && sign == -1) {
+          sign = 1;
+          data->digits[i]->text[0] = '+';
+          data->item->text[0] = '0';
+          data->item->text[data->length - 1] = ' ';
+        }
+      }
+      else {
+        value += char_to_int(n) * mul;
+        mul *= data->base;
+      }
+      if (data->signed_ && sign == 1) {
+        if (i > 0)
+          data->item->text[i - 1] = n;
+        if (i == data->length - 1)
+          data->item->text[i] = ' ';
+      }
+      else
+        data->item->text[i] = n;
     }
-    data->value = value;
+    data->value = value * sign;
     if (data->callback_proc)
       data->callback_proc(item, MENU_CALLBACK_CHANGED, data->callback_data);
   }
@@ -115,6 +134,16 @@ static int destroy_proc(struct menu_item *item)
   menu_destroy(data->imenu);
   free(data->digits);
   return 0;
+}
+
+static int sign_navigate_proc(struct menu_item *item,
+                              enum menu_navigation nav)
+{
+  if (nav != MENU_NAVIGATE_UP && nav != MENU_NAVIGATE_DOWN)
+    return 0;
+  char c[2] = "+-";
+  item->text[0] = c[1 - (item->text[0] - '+') / 2];
+  return 1;
 }
 
 static int digit_navigate_proc(struct menu_item *item,
@@ -139,6 +168,12 @@ struct menu_item *menu_add_intinput(struct menu *menu, int x, int y,
                                     void *callback_data)
 {
   struct item_data *data = malloc(sizeof(*data));
+  if (base < 0) {
+    data->signed_ = 1;
+    base = -base;
+  }
+  else
+    data->signed_ = 0;
   data->base = base;
   data->length = length;
   data->callback_proc = callback_proc;
@@ -160,17 +195,26 @@ struct menu_item *menu_add_intinput(struct menu *menu, int x, int y,
   item->activate_proc = activate_proc;
   item->destroy_proc = destroy_proc;
   for (int i = 0; i < length; ++i) {
-    item->text[i] = '0';
     struct menu_item *digit = menu_item_add(data->imenu, i, 0, NULL,
                                             data->imenu->
                                             highlight_color_static);
     data->digits[i] = digit;
     digit->text = malloc(2);
-    digit->text[0] = '0';
+    if (data->signed_ && i == 0) {
+      digit->text[0] = '+';
+      digit->navigate_proc = sign_navigate_proc;
+    }
+    else {
+      digit->text[0] = '0';
+      digit->navigate_proc = digit_navigate_proc;
+    }
+    if (data->signed_ && i == data->length - 1)
+      item->text[i] = ' ';
+    else
+      item->text[i] = '0';
     digit->text[1] = 0;
     digit->animate_highlight = 1;
     digit->data = data;
-    digit->navigate_proc = digit_navigate_proc;
   }
   data->imenu->selector = data->digits[length - 1];
   return item;
@@ -182,14 +226,33 @@ uint32_t menu_intinput_get(struct menu_item *item)
   return data->value;
 }
 
+int32_t menu_intinput_gets(struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  return data->value;
+}
+
 void menu_intinput_set(struct menu_item *item, uint32_t value)
 {
   struct item_data *data = item->data;
   data->value = value;
+  int sign = data->signed_ && (int32_t)value < 0 ? -1 : 1;
+  value *= sign;
   for (int i = data->length - 1; i >= 0; --i) {
-    int c = int_to_char(value % data->base);
+    int c;
+    if (data->signed_ && i == 0)
+      c = '+' - (sign - 1);
+    else
+      c = int_to_char(value % data->base);
     value /= data->base;
     data->digits[i]->text[0] = c;
-    data->item->text[i] = c;
+    if (data->signed_ && sign == 1) {
+      if (i > 0)
+        data->item->text[i - 1] = c;
+      if (i == data->length - 1)
+        data->item->text[i] = ' ';
+    }
+    else
+      data->item->text[i] = c;
   }
 }

@@ -67,6 +67,34 @@ struct zu_scene_info
   const char  **entrance_names;
 };
 
+struct zu_gfx
+{
+  Gfx *work;
+  Gfx *work_p;
+  Gfx *work_d;
+  Gfx *work_w;
+  Gfx *z_work_p;
+  Gfx *z_work_d;
+  Gfx *poly_opa;
+  Gfx *poly_opa_p;
+  Gfx *poly_opa_d;
+  Gfx *poly_opa_w;
+  Gfx *z_poly_opa_p;
+  Gfx *z_poly_opa_d;
+  Gfx *poly_xlu;
+  Gfx *poly_xlu_p;
+  Gfx *poly_xlu_d;
+  Gfx *poly_xlu_w;
+  Gfx *z_poly_xlu_p;
+  Gfx *z_poly_xlu_d;
+  Gfx *overlay;
+  Gfx *overlay_p;
+  Gfx *overlay_d;
+  Gfx *overlay_w;
+  Gfx *z_overlay_p;
+  Gfx *z_overlay_d;
+};
+
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);
 void *zu_zseg_locate(uint32_t seg_addr);
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size);
@@ -97,6 +125,12 @@ void zu_setmusic(uint32_t command);
 
 void zu_set_event_flag(int flag_index);
 void zu_clear_event_flag(int flag_index);
+
+void zu_gfx_init(struct zu_gfx *gfx);
+void zu_gfx_destroy(struct zu_gfx *gfx);
+void zu_gfx_inject(struct zu_gfx *gfx);
+void zu_gfx_restore(struct zu_gfx *gfx);
+Gfx *zu_gfx_flush(struct zu_gfx *gfx);
 
 extern struct zu_scene_info zu_scene_info[];
 

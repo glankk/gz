@@ -170,6 +170,12 @@ struct menu_item   *menu_add_static_icon(struct menu *menu, int x, int y,
                                          struct gfx_texture *texture,
                                          int texture_tile,
                                          uint32_t color, float scale);
+struct menu_item   *menu_add_static_custom(struct menu *menu, int x, int y,
+                                           int (*draw_proc)
+                                           (struct menu_item *item,
+                                            struct menu_draw_params
+                                            *draw_params),
+                                           const char *text, uint32_t color);
 struct menu_item   *menu_add_tooltip(struct menu *menu, int x, int y,
                                      struct menu *tool_menu, uint32_t color);
 struct menu_item   *menu_add_imenu(struct menu *menu, int x, int y,
@@ -186,6 +192,7 @@ struct menu_item   *menu_add_intinput(struct menu *menu, int x, int y,
                                       menu_generic_callback callback_proc,
                                       void *callback_data);
 uint32_t            menu_intinput_get(struct menu_item *item);
+int32_t             menu_intinput_gets(struct menu_item *item);
 void                menu_intinput_set(struct menu_item *item, uint32_t value);
 struct menu_item   *menu_add_option(struct menu *menu, int x, int y,
                                     const char *options,

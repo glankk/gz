@@ -21,6 +21,7 @@ enum state
 
 struct item_data
 {
+  struct zu_gfx   gfx;
   enum state      state;
   int             scene_index;
   int             scene_next;
@@ -37,43 +38,34 @@ struct item_data
   float           yaw;
 };
 
-static void execute_scene_config(int config_index, Gfx **p_opa, Gfx **p_xlu)
+static void set_lighting(void)
 {
-  static int buf = 0;
-  static Gfx opa_buf[2][128];
-  static Gfx xlu_buf[2][128];
-  Gfx *opa = opa_buf[buf];
-  Gfx *opa_p = opa;
-  Gfx *opa_e = opa + 128;
-  Gfx *xlu = xlu_buf[buf];
-  Gfx *xlu_p = xlu;
-  Gfx *xlu_e = xlu + 128;
-  buf = (buf + 1) % 2;
-  /* save graphics context */
-  Gfx *z_opa_p = z64_ctxt.gfx->poly_opa_disp_p;
-  Gfx *z_opa_e = z64_ctxt.gfx->poly_opa_disp_e;
-  Gfx *z_xlu_p = z64_ctxt.gfx->poly_xlu_disp_p;
-  Gfx *z_xlu_e = z64_ctxt.gfx->poly_xlu_disp_e;
-  /* inject context variables */
-  z64_ctxt.gfx->poly_opa_disp_p = opa_p;
-  z64_ctxt.gfx->poly_opa_disp_e = opa_e;
-  z64_ctxt.gfx->poly_xlu_disp_p = xlu_p;
-  z64_ctxt.gfx->poly_xlu_disp_e = xlu_e;
-  /* execute config */
-  z64_scene_config_table[config_index](&z64_game);
-  /* retrieve updated pointers */
-  opa_p = z64_ctxt.gfx->poly_opa_disp_p;
-  xlu_p = z64_ctxt.gfx->poly_xlu_disp_p;
-  /* restore graphics context */
-  z64_ctxt.gfx->poly_opa_disp_p = z_opa_p;
-  z64_ctxt.gfx->poly_opa_disp_e = z_opa_e;
-  z64_ctxt.gfx->poly_xlu_disp_p = z_xlu_p;
-  z64_ctxt.gfx->poly_xlu_disp_e = z_xlu_e;
-  /* end dlist buffers and return pointers */
-  gSPEndDisplayList(opa_p);
-  gSPEndDisplayList(xlu_p);
-  *p_opa = opa;
-  *p_xlu = xlu;
+  /* create light */
+  z64_gbi_lights_t *gbi_lights = gDisplayListAlloc(&z64_ctxt.gfx->poly_opa_d,
+                                                   sizeof(z64_gbi_lights_t));
+  gbi_lights->numlights = 0;
+  Ambient *a = &gbi_lights->lites.a;
+  a->l.col[0] = a->l.colc[0] = z64_game.lighting.ambient[0];
+  a->l.col[1] = a->l.colc[1] = z64_game.lighting.ambient[1];
+  a->l.col[2] = a->l.colc[2] = z64_game.lighting.ambient[2];
+  /* fill light */
+  for (z64_light_node_t *light_node = z64_game.lighting.light_list;
+       light_node; light_node = light_node->next)
+  {
+    z64_light_handler_t handler = z64_light_handlers[light_node->light->type];
+    handler(gbi_lights, &light_node->light->lightn, NULL);
+  }
+  /* set light */
+  gSPNumLights(z64_ctxt.gfx->poly_opa_p++, gbi_lights->numlights);
+  gSPNumLights(z64_ctxt.gfx->poly_xlu_p++, gbi_lights->numlights);
+  for (int i = 0; i < gbi_lights->numlights; ++i) {
+    gSPLight(z64_ctxt.gfx->poly_opa_p++, &gbi_lights->lites.l[i], i + 1);
+    gSPLight(z64_ctxt.gfx->poly_xlu_p++, &gbi_lights->lites.l[i], i + 1);
+  }
+  gSPLight(z64_ctxt.gfx->poly_opa_p++, &gbi_lights->lites.a,
+           gbi_lights->numlights + 1);
+  gSPLight(z64_ctxt.gfx->poly_xlu_p++, &gbi_lights->lites.a,
+           gbi_lights->numlights + 1);
 }
 
 static void draw_crosshair(struct menu_item *item)
@@ -110,13 +102,13 @@ static void draw_crosshair(struct menu_item *item)
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_latz_mtx = gfx_data_append(&m, sizeof(m));
+  Mtx *p_latz_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
   {
     guRotateF(&mt, -M_PI / 2.f, 0.f, 1.f, 0.f);
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_latx_mtx = gfx_data_append(&m, sizeof(m));
+  Mtx *p_latx_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
   {
     guTranslateF(&mf, data->x, data->y, data->z);
   }
@@ -129,10 +121,9 @@ static void draw_crosshair(struct menu_item *item)
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_vert_mtx = gfx_data_append(&m, sizeof(m));
+  Mtx *p_vert_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
   /* build dlist */
-  gfx_disp
-  (
+  gDisplayListAppend(&data->gfx.poly_xlu_p,
     gsDPPipeSync(),
     /* rsp state */
     gsSPGeometryMode(~0, G_ZBUFFER),
@@ -164,19 +155,18 @@ static void draw_crosshair(struct menu_item *item)
     gsSPVertex(&lat_mesh, 4, 8),
   );
   /* render navigation indicator primitives */
-  gfx_disp(gsDPSetPrimColor(0, 0, 0xFF, 0xFF, 0xFF, 0x40));
+  gDPSetPrimColor(data->gfx.poly_xlu_p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x40);
   if (input_pad() & BUTTON_Z) {
-    gfx_rdp_load_tile(texture, 2);
-    gfx_disp(gsSP2Triangles(4, 5, 6, 0, 6, 5, 7, 0));
+    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 2);
+    gSP2Triangles(data->gfx.poly_xlu_p++, 4, 5, 6, 0, 6, 5, 7, 0);
   }
   else {
-    gfx_rdp_load_tile(texture, 1);
-    gfx_disp(gsSP2Triangles(0, 1, 2, 0, 2, 1, 3, 0));
+    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 1);
+    gSP2Triangles(data->gfx.poly_xlu_p++, 0, 1, 2, 0, 2, 1, 3, 0);
   }
   /* render crosshair primitives */
-  gfx_rdp_load_tile(texture, 0);
-  gfx_disp
-  (
+  gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 0);
+  gDisplayListAppend(&data->gfx.poly_xlu_p,
     gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x40),
     gsSP2Triangles(8, 9, 10, 0, 10, 9, 11, 0),
     gsDPPipeSync(),
@@ -335,8 +325,7 @@ static int draw_proc(struct menu_item *item,
     static void *zbuf = NULL;
     if (!zbuf)
       zbuf = memalign(64, 2 * Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
-    gfx_disp
-    (
+    gDisplayListAppend(&data->gfx.poly_opa_p,
       /* clear z buffer */
       gsDPPipeSync(),
       gsDPSetCycleType(G_CYC_FILL),
@@ -407,39 +396,53 @@ static int draw_proc(struct menu_item *item,
         guMtxCatF(&mt, &mf, &mf);
       }
       guMtxF2L(&mf, &m);
-      gfx_disp(gsSPMatrix(gfx_data_append(&m, sizeof(m)),
-                          G_MTX_PROJECTION | G_MTX_LOAD));
+      gSPMatrix(data->gfx.poly_opa_p++,
+                gDisplayListData(&data->gfx.poly_opa_d, m),
+                G_MTX_PROJECTION | G_MTX_LOAD);
+      gSPMatrix(data->gfx.poly_xlu_p++,
+                gDisplayListData(&data->gfx.poly_xlu_d, m),
+                G_MTX_PROJECTION | G_MTX_LOAD);
     }
     /* create modelview matrix */
     {
       Mtx m;
       guMtxIdent(&m);
-      gfx_disp(gsSPMatrix(gfx_data_append(&m, sizeof(m)),
-                          G_MTX_MODELVIEW | G_MTX_LOAD));
+      gSPMatrix(data->gfx.poly_opa_p++,
+                gDisplayListData(&data->gfx.poly_opa_d, m),
+                G_MTX_MODELVIEW | G_MTX_LOAD);
+      gSPMatrix(data->gfx.poly_xlu_p++,
+                gDisplayListData(&data->gfx.poly_xlu_d, m),
+                G_MTX_MODELVIEW | G_MTX_LOAD);
     }
     /* configure lights */
-    static Lights3 lights = gdSPDefLights3(0x40, 0x40, 0x40,
-                                           0xD0, 0xD0, 0xD0, 127, 0, 0,
-                                           0xA0, 0xA0, 0xA0, 0, 127, 0,
-                                           0x70, 0x70, 0x70, -127, 0, 0);
-    gfx_disp(gsSPSetLights3(lights));
-    /* create scene config dlists */
-    Gfx *opa;
-    Gfx *xlu;
-    execute_scene_config(z64_scene_table[z64_game.scene_index].scene_config,
-                         &opa, &xlu);
-    /* render */
-    for (int i = 0; i < ZU_MESH_TYPES; ++i) {
-      if ((data->room_mesh.near.size > 0 && i == ZU_MESH_NEAR) ||
-          (data->room_mesh.opa.size > 0 && i == ZU_MESH_OPA))
-        gfx_disp(gsSPDisplayList(opa));
-      if ((data->room_mesh.far.size > 0 && i == ZU_MESH_FAR) ||
-          (data->room_mesh.xlu.size > 0 && i == ZU_MESH_XLU))
-        gfx_disp(gsSPDisplayList(xlu));
-      for (int j = 0; j < data->room_mesh.all[i].size; ++j)
-        gfx_disp(gsSPDisplayList(data->room_mesh.all[i].dlists[j]));
+    zu_gfx_inject(&data->gfx);
+    set_lighting();
+    /* execute scene config */
+    z64_scene_config_table[z64_scene_table[
+                           z64_game.scene_index].scene_config](&z64_game);
+    zu_gfx_restore(&data->gfx);
+    /* draw scene */
+    for (int i = 0; i < ZU_MESH_TYPES; ++i)
+      for (int j = 0; j < data->room_mesh.all[i].size; ++j) {
+        if (i == ZU_MESH_OPA || i == ZU_MESH_NEAR) {
+          gSPDisplayList(data->gfx.poly_opa_p++,
+                         data->room_mesh.all[i].dlists[j]);
+        }
+        else if (i == ZU_MESH_XLU || i == ZU_MESH_FAR) {
+          gSPDisplayList(data->gfx.poly_xlu_p++,
+                         data->room_mesh.all[i].dlists[j]);
+        }
+      }
+    /* draw actors */
+    if (z64_game.pause_state == 0) {
+      zu_gfx_inject(&data->gfx);
+      z64_DrawActors(&z64_game, &z64_game.actor_ctxt);
+      zu_gfx_restore(&data->gfx);
     }
+    /* draw additional stuff */
     draw_crosshair(item);
+    /* flush */
+    gfx_disp(gsSPDisplayList(zu_gfx_flush(&data->gfx)));
     /* restore rcp modes */
     gfx_mode_init();
     /* draw info */
@@ -478,6 +481,7 @@ void explorer_create(struct menu *menu)
   struct menu_item *item = menu_item_add(menu, 0, 0, NULL, 0);
   menu->selector = item;
   struct item_data *data = malloc(sizeof(*data));
+  zu_gfx_init(&data->gfx);
   data->state = STATE_LOAD;
   data->scene_index = -1;
   data->scene_file = NULL;

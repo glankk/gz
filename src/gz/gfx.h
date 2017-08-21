@@ -111,6 +111,9 @@ void                gfx_texture_copy_tile(struct gfx_texture *dest,
 void                gfx_texture_colortransform(struct gfx_texture *texture,
                                                const MtxF *matrix);
 
+void gfx_disp_rdp_load_tile(Gfx **disp,
+                            const struct gfx_texture *texture,
+                            int16_t texture_tile);
 void gfx_rdp_load_tile(const struct gfx_texture *texture,
                        int16_t texture_tile);
 

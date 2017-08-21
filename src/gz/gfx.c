@@ -13,13 +13,13 @@
 static Gfx       *gfx_disp;
 static Gfx       *gfx_disp_w;
 static Gfx       *gfx_disp_p;
-static Gfx       *gfx_disp_e;
+static Gfx       *gfx_disp_d;
 
 #define           GFX_STACK_LENGTH  8
 static uint64_t   gfx_modes[GFX_MODE_ALL];
 static uint64_t   gfx_mode_stack[GFX_MODE_ALL][GFX_STACK_LENGTH];
-static int        gfx_mode_stack_pos[GFX_MODE_ALL] = {0};
-static _Bool      gfx_synced = 0;
+static int        gfx_mode_stack_pos[GFX_MODE_ALL];
+static _Bool      gfx_synced;
 
 static inline void gfx_sync(void)
 {
@@ -39,7 +39,7 @@ void gfx_start(void)
   gfx_disp = malloc(GFX_DISP_SIZE);
   gfx_disp_w = malloc(GFX_DISP_SIZE);
   gfx_disp_p = gfx_disp;
-  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
+  gfx_disp_d = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
                sizeof(*gfx_disp);
 }
 
@@ -125,7 +125,7 @@ void gfx_mode_pop(enum gfx_mode mode)
 {
   if (mode == GFX_MODE_ALL) {
     for (int i = 0; i < GFX_MODE_ALL; ++i) {
-      int *p = &gfx_mode_stack_pos[mode];
+      int *p = &gfx_mode_stack_pos[i];
       *p = (*p + GFX_STACK_LENGTH - 1) % GFX_STACK_LENGTH;
       gfx_mode_set(i, gfx_mode_stack[i][*p]);
     }
@@ -155,20 +155,20 @@ Gfx *gfx_disp_append(Gfx *disp, size_t size)
 
 void *gfx_data_append(void *data, size_t size)
 {
-  gfx_disp_e -= (size + sizeof(*gfx_disp_e) - 1) / sizeof(*gfx_disp_e);
-  memcpy(gfx_disp_e, data, size);
-  return gfx_disp_e;
+  gfx_disp_d -= (size + sizeof(*gfx_disp_d) - 1) / sizeof(*gfx_disp_d);
+  memcpy(gfx_disp_d, data, size);
+  return gfx_disp_d;
 }
 
 void gfx_flush(void)
 {
   gSPEndDisplayList(gfx_disp_p++);
-  gSPDisplayList(z64_ctxt.gfx->overlay_disp_p++, gfx_disp);
+  gSPDisplayList(z64_ctxt.gfx->overlay_p++, gfx_disp);
   Gfx *disp_w = gfx_disp_w;
   gfx_disp_w = gfx_disp;
   gfx_disp = disp_w;
   gfx_disp_p = gfx_disp;
-  gfx_disp_e = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
+  gfx_disp_d = gfx_disp + (GFX_DISP_SIZE + sizeof(*gfx_disp) - 1) /
                sizeof(*gfx_disp);
   gfx_synced = 0;
 }
@@ -383,10 +383,12 @@ void gfx_texture_colortransform(struct gfx_texture *texture,
   }
 }
 
-void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
+void gfx_disp_rdp_load_tile(Gfx **disp,
+                            const struct gfx_texture *texture,
+                            int16_t texture_tile)
 {
   if (texture->im_siz == G_IM_SIZ_4b) {
-    gDPLoadTextureTile_4b(gfx_disp_p++,
+    gDPLoadTextureTile_4b((*disp)++,
                           gfx_texture_data(texture, texture_tile),
                           texture->im_fmt,
                           texture->tile_width, texture->tile_height,
@@ -399,7 +401,7 @@ void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
                           G_TX_NOLOD, G_TX_NOLOD);
   }
   else {
-    gDPLoadTextureTile(gfx_disp_p++,
+    gDPLoadTextureTile((*disp)++,
                        gfx_texture_data(texture, texture_tile),
                        texture->im_fmt, texture->im_siz,
                        texture->tile_width, texture->tile_height,
@@ -411,6 +413,11 @@ void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
                        G_TX_NOMASK, G_TX_NOMASK,
                        G_TX_NOLOD, G_TX_NOLOD);
   }
+}
+
+void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
+{
+  gfx_disp_rdp_load_tile(&gfx_disp_p, texture, texture_tile);
   gfx_synced = 1;
 }
 

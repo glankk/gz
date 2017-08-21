@@ -57,6 +57,18 @@ struct menu_item *menu_add_static_icon(struct menu *menu, int x, int y,
   return item;
 }
 
+struct menu_item *menu_add_static_custom(struct menu *menu, int x, int y,
+                                         int (*draw_proc)
+                                         (struct menu_item *item,
+                                          struct menu_draw_params *draw_params),
+                                          const char *text, uint32_t color)
+{
+  struct menu_item *item = menu_item_add(menu, x, y, text, color);
+  item->selectable = 0;
+  item->draw_proc = draw_proc;
+  return item;
+}
+
 static int tooltip_draw_proc(struct menu_item *item,
                              struct menu_draw_params *draw_params)
 {
