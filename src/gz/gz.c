@@ -8,6 +8,7 @@
 #include <n64.h>
 #include "input.h"
 #include "explorer.h"
+#include "flags.h"
 #include "gfx.h"
 #include "item_option.h"
 #include "menu.h"
@@ -2861,6 +2862,9 @@ static void init(void)
                         &fetch_actor_info_proc, &data);
       }
     }
+    static struct menu flags;
+    menu_add_submenu(&menu_debug, 0, 5, &flags, "flags");
+    flag_log_create(&flags);
 
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);

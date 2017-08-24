@@ -62,6 +62,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/explorer.h" />
+		<Unit filename="src/gz/flags.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/flags.h" />
 		<Unit filename="src/gz/gfx.c">
 			<Option compilerVar="CC" />
 		</Unit>
