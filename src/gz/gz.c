@@ -2864,7 +2864,7 @@ static void init(void)
     }
     static struct menu flags;
     menu_add_submenu(&menu_debug, 0, 5, &flags, "flags");
-    flag_log_create(&flags);
+    flag_menu_create(&flags);
 
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);

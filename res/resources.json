@@ -124,6 +124,20 @@
     "format":       "ia8",
     "tile_height":  16
   },
+  "arrow_icons.png":
+  {
+    "type":         "texture",
+    "name":         "arrow_icons",
+    "format":       "ia8",
+    "tile_height":  8
+  },
+  "flag_icons.png":
+  {
+    "type":         "texture",
+    "name":         "flag_icons",
+    "format":       "rgba32",
+    "tile_height":  8
+  },
   "crosshair.png":
   {
     "type":         "texture",

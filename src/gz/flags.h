@@ -3,6 +3,6 @@
 #include "menu.h"
 
 void update_flag_records(void);
-void flag_log_create(struct menu *menu);
+void flag_menu_create(struct menu *menu);
 
 #endif

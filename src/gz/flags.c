@@ -7,9 +7,18 @@
 #include "flags.h"
 #include "gfx.h"
 #include "menu.h"
+#include "resource.h"
 #include "z64.h"
 
 #define FLAG_LOG_LENGTH 16
+#define FLAG_VIEW_ROWS  16
+
+static int                view_record_index;
+static struct menu_item  *view_record_name;
+static struct menu_item  *view_pageup;
+static struct menu_item  *view_pagedown;
+static struct menu_item  *view_rows[FLAG_VIEW_ROWS];
+static struct menu_item  *view_cells[FLAG_VIEW_ROWS * 0x10];
 
 struct flag_record
 {
@@ -19,6 +28,7 @@ struct flag_record
   void       *comp;
   int         index_length;
   const char *name;
+  int         view_offset;
 };
 
 struct flag_event
@@ -43,6 +53,7 @@ static void add_record(size_t word_size, size_t length, void *data,
   record->comp = calloc(length, word_size);
   int no_flags = word_size * 8 * length;
   record->index_length = ((int)(ceilf(log2f(no_flags))) + 3) / 4;
+  record->view_offset = 0;
 }
 
 static void add_event(int record_index, int flag_index, _Bool value)
@@ -97,7 +108,7 @@ static void modify_flag(void *data, size_t word_size, int flag_index,
   }
 }
 
-static void check_flags(void)
+static int log_think_proc(struct menu_item *item)
 {
   for (int i = 0; i < records.size; ++i) {
     struct flag_record *r = vector_at(&records, i);
@@ -112,10 +123,11 @@ static void check_flags(void)
     }
   }
   update_flag_records();
+  return 0;
 }
 
-static int draw_proc(struct menu_item *item,
-                     struct menu_draw_params *draw_params)
+static int log_draw_proc(struct menu_item *item,
+                         struct menu_draw_params *draw_params)
 {
   int x = draw_params->x;
   int y = draw_params->y;
@@ -124,17 +136,14 @@ static int draw_proc(struct menu_item *item,
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
   gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
-
-  check_flags();
   for (int i = 0; i < events.size && i < FLAG_LOG_LENGTH; ++i) {
     struct flag_event *e = vector_at(&events, events.size - i - 1);
     gfx_printf(font, x, y + ch * i, "%s", e->description);
   }
-
   return 1;
 }
 
-static void undo_proc(struct menu_item *item, void *data)
+static void log_undo_proc(struct menu_item *item, void *data)
 {
   if (events.size == 0)
     return;
@@ -145,12 +154,86 @@ static void undo_proc(struct menu_item *item, void *data)
   vector_erase(&events, events.size - 1, 1);
 }
 
-void flag_log_create(struct menu *menu)
+static void update_view(void)
 {
-  menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
-  menu_add_static_custom(menu, 0, 2, draw_proc, NULL, 0xC0C0C0);
-  menu_add_button(menu, 0, 1, "undo", undo_proc, NULL);
+  struct flag_record *r = vector_at(&records, view_record_index);
+  strcpy(view_record_name->text, r->name);
+  int no_flags = r->word_size * 8 * r->length;
+  view_pageup->enabled = view_pagedown->enabled = (no_flags >
+                                                   FLAG_VIEW_ROWS * 0x10);
+  for (int y = 0; y < FLAG_VIEW_ROWS; ++y) {
+    struct menu_item *row = view_rows[y];
+    row->enabled = (r->view_offset + y * 0x10 < no_flags);
+    if (row->enabled)
+      sprintf(view_rows[y]->text, "%04x", r->view_offset + y * 0x10);
+    for (int x = 0; x < 0x10; ++x) {
+      int n = y * 0x10 + x;
+      struct menu_item *cell = view_cells[n];
+      cell->enabled = (r->view_offset + n < no_flags);
+      if (cell->enabled)
+        cell->think_proc(cell);
+    }
+  }
+}
+
+static void goto_record(int record_index)
+{
+  view_record_index = record_index;
+  update_view();
+}
+
+static void prev_record_proc(struct menu_item *item, void *data)
+{
+  goto_record((view_record_index + records.size - 1) % records.size);
+}
+
+static void next_record_proc(struct menu_item *item, void *data)
+{
+  goto_record((view_record_index + 1) % records.size);
+}
+
+static void page_up_proc(struct menu_item *item, void *data)
+{
+  struct flag_record *r = vector_at(&records, view_record_index);
+  if (r->view_offset > 0) {
+    r->view_offset -= 0x10;
+    update_view();
+  }
+}
+
+static void page_down_proc(struct menu_item *item, void *data)
+{
+  struct flag_record *r = vector_at(&records, view_record_index);
+  int no_flags = r->word_size * 8 * r->length;
+  if (r->view_offset + FLAG_VIEW_ROWS * 0x10 < no_flags) {
+    r->view_offset += 0x10;
+    update_view();
+  }
+}
+
+static int flag_proc(struct menu_item *item,
+                     enum menu_callback_reason reason,
+                     void *data)
+{
+  int flag_index = (int)data;
+  struct flag_record *r = vector_at(&records, view_record_index);
+  flag_index += r->view_offset;
+  if (reason == MENU_CALLBACK_THINK) {
+    int word = flag_index / (r->word_size * 8);
+    int bit = flag_index % (r->word_size * 8);
+    _Bool v = (get_flag_word(r->data, r->word_size, word) >> bit) & 1;
+    menu_switch_set(item, v);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_ON)
+    modify_flag(r->data, r->word_size, flag_index, 1);
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    modify_flag(r->data, r->word_size, flag_index, 0);
+  return 0;
+}
+
+void flag_menu_create(struct menu *menu)
+{
+  /* initialize data */
   vector_init(&records, sizeof(struct flag_record));
   vector_init(&events, sizeof(struct flag_event));
   add_record(1, 56, z64_file.gs_flags, "gs");
@@ -162,6 +245,46 @@ void flag_log_create(struct menu *menu)
   add_record(4, 1, &z64_game.chest_flags, "chest");
   add_record(4, 1, &z64_game.room_clear_flags, "clear");
   add_record(4, 1, &z64_game.collectible_flags, "collect");
+  /* initialize menus */
+  menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
+  {
+    static struct menu log;
+    menu_add_submenu(menu, 0, 1, &log, "log");
+    menu_init(&log, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+    log.selector = menu_add_submenu(&log, 0, 0, NULL, "return");
+    menu_add_button(&log, 0, 1, "undo", log_undo_proc, NULL);
+    struct menu_item *log_item = menu_item_add(&log, 0, 2, NULL, 0xC0C0C0);
+    log_item->think_proc = log_think_proc;
+    log_item->draw_proc = log_draw_proc;
+  }
+  {
+    menu_add_button(menu, 4, 1, "<", prev_record_proc, NULL);
+    menu_add_button(menu, 6, 1, ">", next_record_proc, NULL);
+    view_record_name = menu_add_static(menu, 8, 1, NULL, 0xC0C0C0);
+    view_record_name->text = malloc(32);
+    struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
+    view_pageup = menu_add_button_icon(menu, 0, 2, t_arrow, 0, 0xFFFFFF,
+                                       page_up_proc, NULL);
+    view_pagedown = menu_add_button_icon(menu, 2, 2, t_arrow, 1, 0xFFFFFF,
+                                         page_down_proc, NULL);
+    menu_add_static(menu, 4, 2, "0123456789ABCDEF", 0xC0C0C0);
+    static struct gfx_texture *t_flag;
+    if (!t_flag)
+      t_flag = resource_load_grc_texture("flag_icons");
+    for (int y = 0; y < FLAG_VIEW_ROWS; ++y) {
+      view_rows[y] = menu_add_static(menu, 0, 3 + y, NULL, 0xC0C0C0);
+      view_rows[y]->text = malloc(5);
+      for (int x = 0; x < 0x10; ++x) {
+        int n = y * 0x10 + x;
+        view_cells[n] = menu_add_switch(menu, 4 + x, 3 + y,
+                                        t_flag, 1, 0xFFFFFF,
+                                        t_flag, 0, 0xFFFFFF,
+                                        0.75f, flag_proc, (void*)n);
+      }
+    }
+    goto_record(0);
+  }
 }
 
 void update_flag_records(void)
