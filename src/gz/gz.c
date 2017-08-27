@@ -6,11 +6,12 @@
 #include <startup.h>
 #include <mips.h>
 #include <n64.h>
-#include "input.h"
 #include "explorer.h"
 #include "flags.h"
 #include "gfx.h"
+#include "input.h"
 #include "item_option.h"
+#include "mem.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
@@ -2137,17 +2138,15 @@ static _Noreturn void stack_thunk(void *func)
 {
   static __attribute__((section(".stack")))
     _Alignas(uint64_t) char stack[0x2000];
-  static __attribute__((section(".stack"))) void *sp;
-  __asm__ volatile ("la $t0, %0     \n"
-                    "sw $sp, ($t0)  \n"
-                    "la $sp, %1 - 8 \n"
-                    "sw $ra, 4($sp) \n"
-                    "jalr $a0       \n"
-                    "lw $ra, 4($sp) \n"
-                    "la $t0, %0     \n"
-                    "lw $sp, ($t0)  \n"
-                    "jr $ra         \n"
-                    :: "i" (&sp), "i" (&stack[sizeof(stack)]));
+  __asm__ volatile ("la $t0, %0         \n"
+                    "sw $sp, -4($t0)    \n"
+                    "sw $ra, -8($t0)    \n"
+                    "addiu $sp, $t0, -8 \n"
+                    "jalr $a0           \n"
+                    "lw $ra, 0($sp)     \n"
+                    "lw $sp, 4($sp)     \n"
+                    "jr $ra             \n"
+                    :: "i" (&stack[sizeof(stack)]));
   __builtin_unreachable();
 }
 
@@ -2865,6 +2864,9 @@ static void init(void)
     static struct menu flags;
     menu_add_submenu(&menu_debug, 0, 5, &flags, "flags");
     flag_menu_create(&flags);
+    static struct menu mem;
+    menu_add_submenu(&menu_debug, 0, 6, &mem, "memory");
+    mem_menu_create(&mem);
 
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);

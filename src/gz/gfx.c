@@ -9,7 +9,7 @@
 #include "z64.h"
 #include "zu.h"
 
-#define           GFX_DISP_SIZE     0xC000
+#define           GFX_DISP_SIZE     0x10000
 static Gfx       *gfx_disp;
 static Gfx       *gfx_disp_w;
 static Gfx       *gfx_disp_p;

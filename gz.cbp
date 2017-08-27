@@ -85,6 +85,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/item_option.h" />
+		<Unit filename="src/gz/mem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/mem.h" />
 		<Unit filename="src/gz/menu.c">
 			<Option compilerVar="CC" />
 		</Unit>

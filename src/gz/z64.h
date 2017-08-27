@@ -453,18 +453,20 @@ typedef struct
   int16_t         timer_2_value;      /* 0x13D4 */
   char            unk_14_[0x000A];    /* 0x13D6 */
   int8_t          seq_index;          /* 0x13E0 */
-  char            unk_15_[0x0022];    /* 0x13E1 */
+  char            unk_15_[0x0019];    /* 0x13E1 */
+  uint16_t        event_inf[4];       /* 0x13FA */
+  char            unk_16_[0x0001];    /* 0x1402 */
   uint8_t         minimap_index;      /* 0x1403 */
   int16_t         minigame_state;     /* 0x1404 */
-  char            unk_16_[0x0003];    /* 0x1406 */
+  char            unk_17_[0x0003];    /* 0x1406 */
   uint8_t         language;           /* 0x1409 */
-  char            unk_17_[0x0002];    /* 0x140A */
+  char            unk_18_[0x0002];    /* 0x140A */
   uint8_t         z_targeting;        /* 0x140C */
-  char            unk_18_[0x0001];    /* 0x140D */
+  char            unk_19_[0x0001];    /* 0x140D */
   uint16_t        disable_music_flag; /* 0x140E */
-  char            unk_19_[0x0020];    /* 0x1410 */
+  char            unk_1A_[0x0020];    /* 0x1410 */
   z64_gameinfo_t *gameinfo;           /* 0x1430 */
-  char            unk_1A_[0x001C];    /* 0x1434 */
+  char            unk_1B_[0x001C];    /* 0x1434 */
                                       /* 0x1450 */
 } z64_file_t;
 

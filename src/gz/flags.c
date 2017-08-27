@@ -154,6 +154,11 @@ static void log_undo_proc(struct menu_item *item, void *data)
   vector_erase(&events, events.size - 1, 1);
 }
 
+static void log_clear_proc(struct menu_item *item, void *data)
+{
+  vector_erase(&events, 0, events.size);
+}
+
 static void update_view(void)
 {
   struct flag_record *r = vector_at(&records, view_record_index);
@@ -240,6 +245,7 @@ void flag_menu_create(struct menu *menu)
   add_record(2, 14, z64_file.event_chk_inf, "event_chk_inf");
   add_record(2, 4, z64_file.item_get_inf, "item_get_inf");
   add_record(2, 30, z64_file.inf_table, "inf_table");
+  add_record(2, 4, z64_file.event_inf, "event_inf");
   add_record(4, 1, &z64_game.switch_flags, "switch");
   add_record(4, 1, &z64_game.temp_switch_flags, "temp_switch");
   add_record(4, 1, &z64_game.chest_flags, "chest");
@@ -254,6 +260,7 @@ void flag_menu_create(struct menu *menu)
     menu_init(&log, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     log.selector = menu_add_submenu(&log, 0, 0, NULL, "return");
     menu_add_button(&log, 0, 1, "undo", log_undo_proc, NULL);
+    menu_add_button(&log, 5, 1, "clear", log_clear_proc, NULL);
     struct menu_item *log_item = menu_item_add(&log, 0, 2, NULL, 0xC0C0C0);
     log_item->think_proc = log_think_proc;
     log_item->draw_proc = log_draw_proc;
