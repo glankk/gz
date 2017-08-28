@@ -12,6 +12,7 @@
 #define MEM_VIEW_SIZE  ((MEM_VIEW_COLS)*(MEM_VIEW_ROWS))
 
 static int                view_domain_index;
+static int                view_data_size;
 static struct menu_item  *view_address;
 static struct menu_item  *view_domain_name;
 static struct menu_item  *view_pageup;
@@ -56,6 +57,8 @@ static void update_view(void)
               d->start + d->view_offset + y * MEM_VIEW_COLS);
     for (int x = 0; x < MEM_VIEW_COLS; ++x) {
       int n = y * MEM_VIEW_COLS + x;
+      if (n % view_data_size != 0)
+        continue;
       struct menu_item *cell = view_cells[n];
       cell->enabled = (d->view_offset + n < d->size);
       if (cell->enabled)
@@ -64,10 +67,65 @@ static void update_view(void)
   }
 }
 
-static void goto_domain(int domain_index)
+static int cell_proc(struct menu_item *item,
+                     enum menu_callback_reason reason,
+                     void *data)
 {
-  view_domain_index = domain_index;
-  update_view();
+  int cell_index = (int)data;
+  struct mem_domain *d = vector_at(&domains, view_domain_index);
+  switch (view_data_size) {
+    case 1: {
+      uint8_t *p = (void*)(d->start + d->view_offset + cell_index);
+      if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+        uint8_t v = *p;
+        if (menu_intinput_get(item) != v)
+          menu_intinput_set(item, v);
+      }
+      else if (reason == MENU_CALLBACK_CHANGED)
+        *p = menu_intinput_get(item);
+      break;
+    }
+    case 2: {
+      uint16_t *p = (void*)(d->start + d->view_offset + cell_index);
+      if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+        uint16_t v = *p;
+        if (menu_intinput_get(item) != v)
+          menu_intinput_set(item, v);
+      }
+      else if (reason == MENU_CALLBACK_CHANGED)
+        *p = menu_intinput_get(item);
+      break;
+    }
+    case 4: {
+      uint32_t *p = (void*)(d->start + d->view_offset + cell_index);
+      if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+        uint32_t v = *p;
+        if (menu_intinput_get(item) != v)
+          menu_intinput_set(item, v);
+      }
+      else if (reason == MENU_CALLBACK_CHANGED)
+        *p = menu_intinput_get(item);
+      break;
+    }
+  }
+  return 0;
+}
+
+static void make_cells(struct menu *menu)
+{
+  int n = 0;
+  for (int y = 0; y < MEM_VIEW_ROWS; ++y)
+    for (int x = 0; x < MEM_VIEW_COLS; ++x) {
+      if (view_cells[n])
+        menu_item_remove(view_cells[n]);
+      if (n % view_data_size == 0)
+        view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
+                                          16, view_data_size * 2,
+                                          cell_proc, (void*)n);
+      else
+        view_cells[n] = NULL;
+      ++n;
+    }
 }
 
 static int address_proc(struct menu_item *item,
@@ -87,6 +145,27 @@ static int address_proc(struct menu_item *item,
     update_view();
   }
   return 0;
+}
+
+static int data_size_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  if (reason == MENU_CALLBACK_DEACTIVATE) {
+    int v = (1 << menu_option_get(item));
+    if (view_data_size != v) {
+      view_data_size = v;
+      make_cells(item->owner);
+      update_view();
+    }
+  }
+  return 0;
+}
+
+static void goto_domain(int domain_index)
+{
+  view_domain_index = domain_index;
+  update_view();
 }
 
 static void prev_domain_proc(struct menu_item *item, void *data)
@@ -113,23 +192,6 @@ static void page_down_proc(struct menu_item *item, void *data)
   update_view();
 }
 
-static int cell_proc(struct menu_item *item,
-                     enum menu_callback_reason reason,
-                     void *data)
-{
-  int cell_index = (int)data;
-  struct mem_domain *d = vector_at(&domains, view_domain_index);
-  uint8_t *p = (void*)(d->start + d->view_offset + cell_index);
-  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    uint8_t v = *p;
-    if (menu_intinput_get(item) != v)
-      menu_intinput_set(item, v);
-  }
-  else if (reason == MENU_CALLBACK_CHANGED)
-    *p = menu_intinput_get(item);
-  return 0;
-}
-
 void mem_menu_create(struct menu *menu)
 {
   /* initialize data */
@@ -154,9 +216,14 @@ void mem_menu_create(struct menu *menu)
   menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
   {
     view_address = menu_add_intinput(menu, 0, 1, 16, 8, address_proc, NULL);
-    menu_add_button(menu, 9, 1, "<", prev_domain_proc, NULL);
-    menu_add_button(menu, 11, 1, ">", next_domain_proc, NULL);
-    view_domain_name = menu_add_static(menu, 13, 1, NULL, 0xC0C0C0);
+    struct menu_item *data_size = menu_add_option(menu, 9, 1,
+                                                  "byte\0""halfword\0""word\0",
+                                                  data_size_proc, NULL);
+    menu_option_set(data_size, 2);
+    view_data_size = 4;
+    menu_add_button(menu, 18, 1, "<", prev_domain_proc, NULL);
+    menu_add_button(menu, 20, 1, ">", next_domain_proc, NULL);
+    view_domain_name = menu_add_static(menu, 22, 1, NULL, 0xC0C0C0);
     view_domain_name->text = malloc(32);
     struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
     view_pageup = menu_add_button_icon(menu, 0, 2, t_arrow, 0, 0xFFFFFF,
@@ -166,13 +233,9 @@ void mem_menu_create(struct menu *menu)
     menu_add_static(menu, 9, 2, "0 1 2 3 4 5 6 7", 0xC0C0C0);
     for (int y = 0; y < MEM_VIEW_ROWS; ++y) {
       view_rows[y] = menu_add_static(menu, 0, 3 + y, NULL, 0xC0C0C0);
-      view_rows[y]->text = malloc(5);
-      for (int x = 0; x < MEM_VIEW_COLS; ++x) {
-        int n = y * MEM_VIEW_COLS + x;
-        view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
-                                          16, 2, cell_proc, (void*)n);
-      }
+      view_rows[y]->text = malloc(9);
     }
+    make_cells(menu);
     goto_domain(0);
   }
 }
