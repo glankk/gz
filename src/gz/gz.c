@@ -745,6 +745,19 @@ static int pause_display_proc(struct menu_item *item,
   return 0;
 }
 
+static int macro_input_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.macro_input = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.macro_input = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.macro_input);
+  return 0;
+}
+
 static int lag_counter_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
@@ -2151,16 +2164,37 @@ static void update_hook()
 static void input_hook()
 {
   if (frames_queued != 0) {
+    z64_input_t input = z64_input_direct;
     void (*frame_input_func)() = (void*)z64_frame_input_func_addr;
     frame_input_func();
     if (movie_state == MOVIE_RECORDING)
       vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
     else if (movie_state == MOVIE_PLAYING) {
-      if (movie_frame >= movie_inputs.size)
-        movie_state = MOVIE_IDLE;
-      else {
+      if (movie_frame >= movie_inputs.size) {
+        if (input_bind_held(COMMAND_PLAYMACRO))
+          movie_frame = 0;
+        else
+          movie_state = MOVIE_IDLE;
+      }
+      if (movie_state == MOVIE_PLAYING) {
         z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame++);
-        z64_ctxt.input[0] = *frame_input;
+        z64_input_t *ctxt_input = &z64_ctxt.input[0];
+        *ctxt_input = *frame_input;
+        if (settings->menu_settings.macro_input) {
+          if (frame_input->adjusted_x == 0) {
+            ctxt_input->raw.x = input.raw.x;
+            ctxt_input->x_diff = input.x_diff;
+            ctxt_input->adjusted_x = input.adjusted_x;
+          }
+          if (frame_input->adjusted_y == 0) {
+            ctxt_input->raw.y = input.raw.y;
+            ctxt_input->y_diff = input.y_diff;
+            ctxt_input->adjusted_y = input.adjusted_y;
+          }
+          ctxt_input->raw.pad |= input.raw.pad;
+          ctxt_input->pad_pressed |= input.pad_pressed;
+          ctxt_input->pad_released |= input.pad_released;
+        }
       }
     }
   }
@@ -2980,16 +3014,18 @@ static void init(void)
                          generic_position_proc, &settings->timer_x);
     menu_add_static(&menu_settings, 0, 8, "pause display", 0xC0C0C0);
     menu_add_checkbox(&menu_settings, 14, 8, pause_display_proc, NULL);
-    menu_add_static(&menu_settings, 0, 9, "break type", 0xC0C0C0);
-    menu_add_option(&menu_settings, 14, 9, "normal\0""aggressive\0",
+    menu_add_static(&menu_settings, 0, 9, "macro input", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 14, 9, macro_input_proc, NULL);
+    menu_add_static(&menu_settings, 0, 10, "break type", 0xC0C0C0);
+    menu_add_option(&menu_settings, 14, 10, "normal\0""aggressive\0",
                     break_type_proc, NULL);
     static struct menu menu_commands;
-    menu_add_submenu(&menu_settings, 0, 10, &menu_commands, "commands");
-    menu_add_button(&menu_settings, 0, 11, "save settings",
+    menu_add_submenu(&menu_settings, 0, 11, &menu_commands, "commands");
+    menu_add_button(&menu_settings, 0, 12, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 12, "load settings",
+    menu_add_button(&menu_settings, 0, 13, "load settings",
                     load_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 13, "restore defaults",
+    menu_add_button(&menu_settings, 0, 14, "restore defaults",
                     restore_settings_proc, NULL);
     menu_init(&menu_commands, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_commands.selector = menu_add_submenu(&menu_commands, 0, 0,

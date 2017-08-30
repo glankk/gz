@@ -41,6 +41,7 @@ void settings_load_default(void)
   d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
   d->menu_settings.timer = 0;
   d->menu_settings.pause_display = 1;
+  d->menu_settings.macro_input = 0;
   d->menu_settings.break_type = SETTINGS_BREAK_NORMAL;
   d->menu_settings.warp_age = 0;
   d->menu_settings.warp_cutscene = 0;

@@ -85,16 +85,17 @@ struct watch_info
 
 struct menu_settings
 {
-  uint16_t font_resource : 3;
-  uint16_t drop_shadow   : 1;
-  uint16_t input_display : 1;
-  uint16_t lag_counter   : 1;
-  uint16_t lag_unit      : 1;
-  uint16_t timer         : 1;
-  uint16_t pause_display : 1;
-  uint16_t break_type    : 1;
-  uint16_t warp_age      : 1;
-  uint16_t warp_cutscene : 5;
+  uint32_t font_resource : 3;
+  uint32_t drop_shadow   : 1;
+  uint32_t input_display : 1;
+  uint32_t lag_counter   : 1;
+  uint32_t lag_unit      : 1;
+  uint32_t timer         : 1;
+  uint32_t pause_display : 1;
+  uint32_t macro_input   : 1;
+  uint32_t break_type    : 1;
+  uint32_t warp_age      : 1;
+  uint32_t warp_cutscene : 5;
 };
 
 struct settings_data
