@@ -29,11 +29,15 @@ CFILES              = *.c
 CXXFILES            = *.cpp *.cxx *.cc *.c++
 GSCFILES            = *.gsc
 
-gz-oot-1.0          : CPPFLAGS += -DZ64_VERSION=Z64_OOT10
-gz-oot-1.1          : CPPFLAGS += -DZ64_VERSION=Z64_OOT11
-gz-oot-1.2          : CPPFLAGS += -DZ64_VERSION=Z64_OOT12
+gz-oot-1.0          : CPPFLAGS       += -DZ64_VERSION=Z64_OOT10
+gz-oot-1.0-debug    : CPPFLAGS_DEBUG += -DZ64_VERSION=Z64_OOT10
+gz-oot-1.1          : CPPFLAGS       += -DZ64_VERSION=Z64_OOT11
+gz-oot-1.1-debug    : CPPFLAGS_DEBUG += -DZ64_VERSION=Z64_OOT11
+gz-oot-1.2          : CPPFLAGS       += -DZ64_VERSION=Z64_OOT12
+gz-oot-1.2-debug    : CPPFLAGS_DEBUG += -DZ64_VERSION=Z64_OOT12
 
 GZ                  = $(foreach v,$(GZ_VERSIONS),gz-$(v))
+GZ-DEBUG            = $(foreach v,$(GZ_VERSIONS),gz-$(v)-debug)
 all                 : $(GZ)
 cleanall            :
 	rm -rf $(OBJDIR) $(BINDIR)
