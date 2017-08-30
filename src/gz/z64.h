@@ -539,30 +539,32 @@ typedef struct
                                   /* 0x02EC */
 } z64_gfx_t;
 
-typedef union
+typedef struct
 {
-  struct
+  union
   {
-    uint32_t a  : 1;
-    uint32_t b  : 1;
-    uint32_t z  : 1;
-    uint32_t s  : 1;
-    uint32_t du : 1;
-    uint32_t dd : 1;
-    uint32_t dl : 1;
-    uint32_t dr : 1;
-    uint32_t    : 2;
-    uint32_t l  : 1;
-    uint32_t r  : 1;
-    uint32_t cu : 1;
-    uint32_t cd : 1;
-    uint32_t cl : 1;
-    uint32_t cr : 1;
-    int32_t  x  : 8;
-    int32_t  y  : 8;
+    struct
+    {
+      uint16_t  a  : 1;
+      uint16_t  b  : 1;
+      uint16_t  z  : 1;
+      uint16_t  s  : 1;
+      uint16_t  du : 1;
+      uint16_t  dd : 1;
+      uint16_t  dl : 1;
+      uint16_t  dr : 1;
+      uint16_t     : 2;
+      uint16_t  l  : 1;
+      uint16_t  r  : 1;
+      uint16_t  cu : 1;
+      uint16_t  cd : 1;
+      uint16_t  cl : 1;
+      uint16_t  cr : 1;
+    };
+    uint16_t    pad;
   };
-  uint16_t pad;
-  uint32_t data;
+  int8_t        x;
+  int8_t        y;
 } z64_controller_t;
 
 typedef struct z64_actor_s z64_actor_t;
@@ -644,8 +646,18 @@ typedef struct
 
 typedef struct
 {
-  z64_controller_t  ctrl;
-  char              unk_00_[0x0014];
+  z64_controller_t  raw;
+  uint16_t          unk_00_;
+  z64_controller_t  raw_prev;
+  uint16_t          unk_01_;
+  uint16_t          pad_pressed;
+  int8_t            x_diff;
+  int8_t            y_diff;
+  char              unk_02_[0x0002];
+  uint16_t          pad_released;
+  int8_t            adjusted_x;
+  int8_t            adjusted_y;
+  char              unk_03_[0x0002];
 } z64_input_t;
 
 /* context base */
@@ -1064,7 +1076,7 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \
                                    z64_scene_config_table_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)
-#define z64_input_direct        (*(z64_controller_t*) z64_input_direct_addr)
+#define z64_input_direct        (*(z64_input_t*)      z64_input_direct_addr)
 #define z64_gameinfo            (*                    z64_file.gameinfo)
 #define z64_ctxt                (*(z64_ctxt_t*)       z64_ctxt_addr)
 #define z64_game                (*(z64_game_t*)      &z64_ctxt)

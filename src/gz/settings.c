@@ -90,6 +90,8 @@ void settings_load_default(void)
   d->binds[COMMAND_NEXTPOS] = input_bind_make(0);
   d->binds[COMMAND_PREVFILE] = input_bind_make(0);
   d->binds[COMMAND_NEXTFILE] = input_bind_make(0);
+  d->binds[COMMAND_RECORDMACRO] = input_bind_make(0);
+  d->binds[COMMAND_PLAYMACRO] = input_bind_make(0);
   d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);
   d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
 }

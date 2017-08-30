@@ -164,6 +164,13 @@ struct actor_spawn_info
   uint16_t  rz;
 };
 
+enum movie_state
+{
+  MOVIE_IDLE,
+  MOVIE_RECORDING,
+  MOVIE_PLAYING,
+};
+
 #define                     CPU_COUNTER_FREQ 46875000
 static uint8_t              profile = 0;
 static struct menu          menu_main;
@@ -185,6 +192,9 @@ static struct memory_file  *memfile;
 static _Bool                memfile_saved[SETTINGS_MEMFILE_MAX] = {0};
 static uint8_t              memfile_slot = 0;
 static _Bool                override_offset = 0;
+static enum movie_state     movie_state = MOVIE_IDLE;
+static struct vector        movie_inputs;
+static int                  movie_frame;
 
 static uint16_t menu_font_options[] =
 {
@@ -516,27 +526,8 @@ void command_resettimer(void)
   timer_counter_prev = cpu_counter;
 }
 
-static void input_hook()
-{
-  if (frames_queued != 0)
-    ((void(*)())z64_frame_input_func_addr)();
-}
-
-static void update_hook()
-{
-  if (frames_queued != 0) {
-    if (frames_queued > 0)
-      --frames_queued;
-    ((void(*)())z64_frame_update_func_addr)();
-  }
-}
-
 void command_pause(void)
 {
-  uint32_t *input_call = (void*)z64_frame_input_call_addr;
-  *input_call = MIPS_JAL(&input_hook);
-  uint32_t *update_call = (void*)z64_frame_update_call_addr;
-  *update_call = MIPS_JAL(&update_hook);
   if (frames_queued >= 0)
     frames_queued = -1;
   else
@@ -622,6 +613,26 @@ void command_nextfile(void)
   memfile_slot = (memfile_slot + 1) % SETTINGS_MEMFILE_MAX;
 }
 
+void command_recordmacro(void)
+{
+  if (movie_state == MOVIE_RECORDING)
+    movie_state = MOVIE_IDLE;
+  else {
+    movie_state = MOVIE_RECORDING;
+    vector_erase(&movie_inputs, 0, movie_inputs.size);
+  }
+}
+
+void command_playmacro(void)
+{
+  if (movie_state == MOVIE_PLAYING)
+    movie_state = MOVIE_IDLE;
+  else {
+    movie_state = MOVIE_PLAYING;
+    movie_frame = 0;
+  }
+}
+
 static struct command_info command_info[] =
 {
   {"show/hide menu",    NULL,                 CMDACT_PRESS_ONCE},
@@ -649,6 +660,8 @@ static struct command_info command_info[] =
   {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
   {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
   {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
+  {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
+  {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                 CMDACT_PRESS},
   {"explore next room", NULL,                 CMDACT_PRESS},
 };
@@ -1983,29 +1996,51 @@ static void main_hook(void)
   int cw = menu_get_cell_width(&menu_main, 1);
   int ch = menu_get_cell_height(&menu_main, 1);
 
-  if (settings->menu_settings.pause_display && frames_queued != -1) {
-    struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
-    struct gfx_sprite sprite =
-    {
-      t, frames_queued == 0 ? 0 : 1,
-      32, 32, 1.f, 1.f,
-    };
-    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
-    gfx_sprite_draw(&sprite);
+  if (settings->menu_settings.pause_display) {
+    if (movie_state == MOVIE_RECORDING) {
+      struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
+      struct gfx_sprite sprite =
+      {
+        t, frames_queued == -1 ? 3 : frames_queued == 0 ? 4 : 5,
+        32, 32, 1.f, 1.f,
+      };
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
+      gfx_sprite_draw(&sprite);
+    }
+    else if (movie_state == MOVIE_PLAYING) {
+      struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
+      struct gfx_sprite sprite =
+      {
+        t, frames_queued == -1 ? 0 : frames_queued == 0 ? 1 : 2,
+        32, 32, 1.f, 1.f,
+      };
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
+      gfx_sprite_draw(&sprite);
+    }
+    else if (frames_queued != -1) {
+      struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
+      struct gfx_sprite sprite =
+      {
+        t, frames_queued == 0 ? 1 : 2,
+        32, 32, 1.f, 1.f,
+      };
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+      gfx_sprite_draw(&sprite);
+    }
   }
 
   if (settings->menu_settings.input_display) {
     struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
     gfx_printf(font, settings->input_display_x, settings->input_display_y,
-               "%4i %4i", z64_input_direct.x, z64_input_direct.y);
+               "%4i %4i", z64_input_direct.raw.x, z64_input_direct.raw.y);
     static const int buttons[] =
     {
       15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
     };
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
       int b = buttons[i];
-      if (!(z64_input_direct.pad & (1 << b)))
+      if (!(z64_input_direct.raw.pad & (1 << b)))
         continue;
       int x = (cw - texture->tile_width) / 2 + i * 10;
       int y = -(gfx_font_xheight(font) + texture->tile_height + 1) / 2;
@@ -2104,6 +2139,33 @@ static void entrance_offset_hook()
                     "lw $at, %1 \n" :: "m"(offset), "m"(at));
 }
 
+static void update_hook()
+{
+  if (frames_queued != 0) {
+    if (frames_queued > 0)
+      --frames_queued;
+    ((void(*)())z64_frame_update_func_addr)();
+  }
+}
+
+static void input_hook()
+{
+  if (frames_queued != 0) {
+    void (*frame_input_func)() = (void*)z64_frame_input_func_addr;
+    frame_input_func();
+    if (movie_state == MOVIE_RECORDING)
+      vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
+    else if (movie_state == MOVIE_PLAYING) {
+      if (movie_frame >= movie_inputs.size)
+        movie_state = MOVIE_IDLE;
+      else {
+        z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame++);
+        z64_ctxt.input[0] = *frame_input;
+      }
+    }
+  }
+}
+
 static void disp_hook(void *p_size, Gfx *buf, size_t size)
 {
   struct disp
@@ -2162,7 +2224,7 @@ static void init(void)
   }
 
   /* load settings */
-  if ((z64_input_direct.pad & BUTTON_START) || !settings_load(profile))
+  if ((z64_input_direct.raw.pad & BUTTON_START) || !settings_load(profile))
     settings_load_default();
 
   /* initialize gfx */
@@ -2173,12 +2235,16 @@ static void init(void)
                                                    G_CC_MODULATEIA_PRIM));
   }
 
-  /* install entrance offset hook */
-  *(uint32_t*)z64_entrance_offset_hook_addr = MIPS_JAL(&entrance_offset_hook);
-
   /* disable map toggling */
   *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
+
+  /* install entrance offset hook */
+  *(uint32_t*)z64_entrance_offset_hook_addr = MIPS_JAL(&entrance_offset_hook);
+
+  /* install update hooks */
+  *(uint32_t*)z64_frame_update_call_addr = MIPS_JAL(&update_hook);
+  *(uint32_t*)z64_frame_input_call_addr = MIPS_JAL(&input_hook);
 
   /* install disp swap hook */
   {
@@ -2197,6 +2263,7 @@ static void init(void)
   timer_counter_offset = -cpu_counter;
   timer_counter_prev = cpu_counter;
   day_time_prev = z64_file.day_time;
+  vector_init(&movie_inputs, sizeof(z64_input_t));
 
   /* initialize menus */
   {

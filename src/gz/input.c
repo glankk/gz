@@ -71,9 +71,9 @@ const uint32_t input_button_color[] =
 
 void input_update(void)
 {
-  pad_pressed_raw = (pad ^ z64_input_direct.pad) & z64_input_direct.pad;
-  pad_released = (pad ^ z64_input_direct.pad) & ~z64_input_direct.pad;
-  pad = z64_input_direct.pad;
+  pad_pressed_raw = (pad ^ z64_input_direct.raw.pad) & z64_input_direct.raw.pad;
+  pad_released = (pad ^ z64_input_direct.raw.pad) & ~z64_input_direct.raw.pad;
+  pad = z64_input_direct.raw.pad;
   pad_pressed = 0;
   for (int i = 0; i < 16; ++i) {
     uint16_t p = 1 << i;
