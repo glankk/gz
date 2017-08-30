@@ -4,16 +4,17 @@ LD                  = mips64-g++
 OBJCOPY             = mips64-objcopy
 LUAPATCH            = luapatch
 GRC                 = grc
-override CFLAGS    += -std=c11
-override CXXFLAGS  += -std=c++14
-override CPPFLAGS  += -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
-override INCLUDE   += -I $(N64ROOT)/include
+INCLUDE             = -I $(N64ROOT)/include
 LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
-override LDFLAGS   += -T $(LDSCRIPT) -nostdlib -O3 -flto -Wl,--gc-sections
-override LDLIBS    += -lstdc++ -lsupc++ -lg -lm -lgcc -lc -lnosys
-CPPFLAGS_DEBUG      = -fno-lto -g
-LDSCRIPT_DEBUG      = $(N64ROOT)/ldscripts/gl-n64-debug.ld
-LDFLAGS_DEBUG       =
+CFLAGS              = -std=c11 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
+CXXFLAGS            = -std=c++14 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
+CPPFLAGS            =
+LDFLAGS             = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -O3 -flto -Wl,--gc-sections
+LDLIBS              =
+CFLAGS_DEBUG        = -std=c11 -Wall -Og -g -ffunction-sections -fdata-sections
+CXXFLAGS_DEBUG      = -std=c++14 -Wall -Og -g -ffunction-sections -fdata-sections
+CPPFLAGS_DEBUG      =
+LDFLAGS_DEBUG       = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections
 LDLIBS_DEBUG        =
 LUAFILE             = $(EMUDIR)/Lua/patch-data.lua
 RESDESC             = $(RESDIR)/resources.json
@@ -62,17 +63,18 @@ define bin_template =
  BUILD-$(1)         = $(1) $(1)-debug
  CLEAN-$(1)         = clean$(1) clean$(1)-debug
  -include $$(DEPS-$(1))
+ $(1)-debug         : CFLAGS    = $$(CFLAGS_DEBUG)
+ $(1)-debug         : CXXFLAGS  = $$(CXXFLAGS_DEBUG)
+ $(1)-debug         : CPPFLAGS  = $$(CPPFLAGS_DEBUG)
+ $(1)-debug         : LDFLAGS   = $$(LDFLAGS_DEBUG)
+ $(1)-debug         : LDLIBS    = $$(LDLIBS_DEBUG)
  $$(BUILD-$(1))     : LDFLAGS  += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
- $(1)-debug         : CPPFLAGS += $$(CPPFLAGS_DEBUG)
- $(1)-debug         : LDSCRIPT  = $$(LDSCRIPT_DEBUG)
- $(1)-debug         : LDFLAGS  += $$(LDFLAGS_DEBUG)
- $(1)-debug         : LDLIBS   += $$(LDLIBS_DEBUG)
  $$(BUILD-$(1))     : $$(BIN-$(1))
  $$(CLEAN-$(1))     :
 	rm -rf $$(OBJDIR-$(1)) $$(BINDIR-$(1))
  .PHONY             : $$(BUILD-$(1)) $$(CLEAN-$(1))
  $$(BIN-$(1))       : $$(ELF-$(1)) | $$$$(dir $$$$@)
-	$$(OBJCOPY) $$< $$@ -O binary -g
+	$$(OBJCOPY) -S -O binary $$< $$@
  $$(ELF-$(1))       : $$(OBJ-$(1)) | $$$$(dir $$$$@)
 	$$(LD) $$(LDFLAGS) $$^ $$(LDLIBS) -o $$@
  $$(COBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)

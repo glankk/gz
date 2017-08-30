@@ -6,7 +6,7 @@
 		<Option makefile="makefile" />
 		<Option makefile_is_custom="1" />
 		<Option pch_mode="2" />
-		<Option compiler="n64-slim" />
+		<Option compiler="n64" />
 		<Option extended_obj_names="1" />
 		<MakeCommands>
 			<Build command="" />
@@ -22,7 +22,7 @@
 				<Option working_dir="$(EMUDIR)" />
 				<Option object_output="obj" />
 				<Option type="3" />
-				<Option compiler="n64-slim" />
+				<Option compiler="n64" />
 				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
@@ -35,7 +35,7 @@
 				<Option working_dir="$(EMUDIR)" />
 				<Option object_output="obj" />
 				<Option type="3" />
-				<Option compiler="n64-slim" />
+				<Option compiler="n64" />
 				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
@@ -48,7 +48,7 @@
 				<Option working_dir="$(EMUDIR)" />
 				<Option object_output="obj" />
 				<Option type="3" />
-				<Option compiler="n64-slim" />
+				<Option compiler="n64" />
 				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
