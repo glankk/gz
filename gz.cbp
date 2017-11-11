@@ -58,10 +58,21 @@
 			</Target>
 		</Build>
 		<Unit filename="res/resources.json" />
+		<Unit filename="src/gz/ed.h" />
+		<Unit filename="src/gz/ed_io.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/ed_sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/explorer.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/explorer.h" />
+		<Unit filename="src/gz/fat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/fat.h" />
 		<Unit filename="src/gz/flags.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -131,6 +142,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/settings.h" />
+		<Unit filename="src/gz/sys.h" />
 		<Unit filename="src/gz/watchlist.c">
 			<Option compilerVar="CC" />
 		</Unit>

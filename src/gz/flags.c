@@ -262,6 +262,7 @@ void flag_menu_create(struct menu *menu)
     menu_add_button(&log, 0, 1, "undo", log_undo_proc, NULL);
     menu_add_button(&log, 5, 1, "clear", log_clear_proc, NULL);
     struct menu_item *log_item = menu_item_add(&log, 0, 2, NULL, 0xC0C0C0);
+    log_item->selectable = 0;
     log_item->think_proc = log_think_proc;
     log_item->draw_proc = log_draw_proc;
   }
