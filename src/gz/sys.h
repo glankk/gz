@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <time.h>
+
+#define AT_FDCWD -100
 
 typedef void *DIR;
 
@@ -40,5 +43,6 @@ int             stat(const char *path, struct stat *buf);
 int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
 char           *getcwd(char *buf, size_t size);
+time_t          time(time_t *tloc);
 
 #endif

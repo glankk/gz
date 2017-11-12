@@ -244,6 +244,64 @@ static uint8_t compute_lfn_checksum(const char *sfn)
 }
 
 /*
+   time operations
+*/
+
+/* convert unix time to dos date and time */
+static void unix2dos(time_t time, uint16_t *dos_date, uint16_t *dos_time)
+{
+  int sec = time % 60;
+  time /= 60;
+  int min = time % 60;
+  time /= 60;
+  int hr = time % 24;
+  time /= 24;
+  time += 719468;
+  int era = (time >= 0 ? time : time - 146096) / 146097;
+  int doe = time - era * 146097;
+  int yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  int y = yoe + era * 400;
+  int doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  int mp = (5 * doy + 2) / 153;
+  int d = doy - (153 * mp + 2) / 5 + 1;
+  int m = mp + (mp < 10 ? 3 : -9);
+  y += (m <= 2);
+  if (y < 1980 || y > 2107) {
+    if (dos_date)
+      *dos_date = 0;
+    if (dos_time)
+      *dos_time = 0;
+  }
+  else {
+    if (dos_date)
+      *dos_date = ((uint16_t)(y - 1980) << 9) | ((uint16_t)m << 5) |
+                  ((uint16_t)d << 0);
+    if (dos_time)
+      *dos_time = ((uint16_t)hr << 11) | ((uint16_t)min << 5) |
+                  ((uint16_t)(sec / 2) << 0);
+  }
+}
+
+/* convert dos date and time to unix time */
+static time_t dos2unix(uint16_t dos_date, uint16_t dos_time)
+{
+  int y = 1980 + ((dos_date >> 9) & 0x7F);
+  int m = (int)((dos_date >> 5) & 0xF);
+  int d = (int)((dos_date >> 0) & 0x1F);
+  int hr = (dos_time >> 11) & 0x1F;
+  int min = (dos_time >> 5) & 0x3F;
+  int sec = ((dos_time >> 0) & 0x1F) * 2;
+  if (m < 1 || m > 12 || d < 1 || d > 31 || hr > 23 || min > 59 || sec > 59)
+    return 0;
+  y -= (m <= 2);
+  int era = (y >= 0 ? y : y - 399) / 400;
+  int yoe = y - era * 400;
+  int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+  int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+  return (era * 146097 + doe - 719468) * 86400 + hr * 3600 + min * 60 + sec;
+}
+
+/*
    cache operations
 */
 
@@ -875,6 +933,14 @@ int fat_dir(struct fat_file *dir, struct fat_entry *entry)
       }
       entry->last = ent_p;
       /* insert metadata */
+      entry->ctime = dos2unix(get_word(ent_buf, 0x10, 2),
+                              get_word(ent_buf, 0x0E, 2));
+      entry->cms = get_word(ent_buf, 0x0D, 1) * 10;
+      entry->ctime += entry->cms / 1000;
+      entry->cms %= 1000;
+      entry->atime = dos2unix(get_word(ent_buf, 0x12, 2), 0);
+      entry->mtime = dos2unix(get_word(ent_buf, 0x18, 2),
+                              get_word(ent_buf, 0x16, 2));
       entry->attrib = attrib;
       if (entry->attrib & FAT_ATTRIB_LABEL)
         entry->clust = 0;
@@ -1190,6 +1256,7 @@ static int generate_sfn(struct fat *fat, uint32_t clust,
 
 /* basic vfat directory entry insertion */
 static int dir_insert(struct fat *fat, uint32_t dir_clust, const char *name,
+                      time_t ctime, int cms, time_t atime, time_t mtime,
                       uint8_t attrib, uint32_t clust, uint32_t size,
                       struct fat_entry *entry)
 {
@@ -1307,19 +1374,29 @@ static int dir_insert(struct fat *fat, uint32_t dir_clust, const char *name,
   /* attribute */
   set_word(sfn_ent_buf, 0x0B, 1, attrib);
   /* ctime */
-  set_word(sfn_ent_buf, 0x0D, 1, 0x00);
-  set_word(sfn_ent_buf, 0x0E, 2, 0x0000);
-  /* cdate */
-  set_word(sfn_ent_buf, 0x10, 2, 0x0000);
-  /* adate */
-  set_word(sfn_ent_buf, 0x12, 2, 0x0000);
+  cms += (ctime % 2) * 1000;
+  ctime -= ctime % 2;
+  ctime += cms / 2000;
+  cms %= 2000;
+  uint16_t dos_cdate;
+  uint16_t dos_ctime;
+  unix2dos(ctime, &dos_cdate, &dos_ctime);
+  set_word(sfn_ent_buf, 0x0D, 1, cms / 10);
+  set_word(sfn_ent_buf, 0x0E, 2, dos_ctime);
+  set_word(sfn_ent_buf, 0x10, 2, dos_cdate);
+  /* atime */
+  uint16_t dos_adate;
+  unix2dos(atime, &dos_adate, NULL);
+  set_word(sfn_ent_buf, 0x12, 2, dos_adate);
   /* cluster */
   set_word(sfn_ent_buf, 0x14, 2, clust >> 16);
   set_word(sfn_ent_buf, 0x1A, 2, clust);
   /* mtime */
-  set_word(sfn_ent_buf, 0x16, 2, 0x0000);
-  /* mdate */
-  set_word(sfn_ent_buf, 0x18, 2, 0x0000);
+  uint16_t dos_mdate;
+  uint16_t dos_mtime;
+  unix2dos(ctime, &dos_mdate, &dos_mtime);
+  set_word(sfn_ent_buf, 0x16, 2, dos_mtime);
+  set_word(sfn_ent_buf, 0x18, 2, dos_mdate);
   /* size */
   set_word(sfn_ent_buf, 0x1C, 4, size);
   /* insert sfn entry */
@@ -1340,6 +1417,10 @@ static int dir_insert(struct fat *fat, uint32_t dir_clust, const char *name,
     entry->fat = fat;
     entry->first = start;
     entry->last = pos;
+    entry->ctime = dos2unix(dos_cdate, dos_ctime);
+    entry->cms = cms;
+    entry->atime = dos2unix(dos_adate, 0);
+    entry->mtime = dos2unix(dos_mdate, dos_mtime);
     entry->attrib = attrib;
     entry->clust = clust;
     entry->size = size;
@@ -1461,11 +1542,13 @@ int fat_create(struct fat *fat, struct fat_entry *dir, const char *path,
       return -1;
   }
   /* insert entry */
+  uint32_t dir_clust = dir_ent.clust;
+  time_t t = time(NULL);
   {
     char name[256];
     memcpy(name, file_s, file_l);
     name[file_l] = 0;
-    if (dir_insert(fat, dir_ent.clust, name, attrib, clust, 0, entry))
+    if (dir_insert(fat, dir_clust, name, t, 0, t, t, attrib, clust, 0, entry))
       return -1;
   }
   if (is_dir) {
@@ -1478,9 +1561,10 @@ int fat_create(struct fat *fat, struct fat_entry *dir, const char *path,
       return -1;
     }
     /* insert dot entries */
-    int d = dir_insert(fat, clust, ".", FAT_ATTRIB_DIRECTORY, clust, 0, NULL);
-    int dd = dir_insert(fat, clust, "..", FAT_ATTRIB_DIRECTORY, dir_ent.clust,
-                        0, NULL);
+    int d = dir_insert(fat, clust, ".", t, 0, t, t,
+                       FAT_ATTRIB_DIRECTORY, clust, 0, NULL);
+    int dd = dir_insert(fat, clust, "..", t, 0, t, t,
+                        FAT_ATTRIB_DIRECTORY, dir_clust, 0, NULL);
     if (d || dd)
       return -1;
   }
@@ -1696,8 +1780,9 @@ int fat_rename(struct fat *fat, struct fat_path *entry_fp,
   memcpy(name, tail, name_l);
   name[name_l] = 0;
   /* insert new entry, remove old entry */
-  if (dir_insert(fat, fat_path_target(dest_fp)->clust, name, entry->attrib,
-                 entry->clust, entry->size, new_entry) ||
+  if (dir_insert(fat, fat_path_target(dest_fp)->clust, name,
+                 entry->ctime, entry->cms, entry->atime, entry->mtime,
+                 entry->attrib, entry->clust, entry->size, new_entry) ||
       dir_remove(entry))
   {
     goto error;
@@ -1753,6 +1838,48 @@ int fat_attrib(struct fat_entry *entry, uint8_t attrib)
     return -1;
   entry->attrib = attrib;
   set_word(data, 0x0B, 1, attrib);
+  cache_dirty(fat, FAT_CACHE_DATA);
+  return 0;
+}
+
+/* update the access time of an entry */
+int fat_atime(struct fat_entry *entry, time_t timeval)
+{
+  struct fat *fat = entry->fat;
+  /* sanity check */
+  if (entry_mod(entry))
+    return -1;
+  if (file_sect(&entry->last, 1))
+    return -1;
+  void *data = file_data(&entry->last);
+  if (!data)
+    return -1;
+  uint16_t dos_adate;
+  entry->atime = timeval;
+  unix2dos(entry->atime, &dos_adate, NULL);
+  set_word(data, 0x12, 2, dos_adate);
+  cache_dirty(fat, FAT_CACHE_DATA);
+  return 0;
+}
+
+/* update the modified time of an entry */
+int fat_mtime(struct fat_entry *entry, time_t timeval)
+{
+  struct fat *fat = entry->fat;
+  /* sanity check */
+  if (entry_mod(entry))
+    return -1;
+  if (file_sect(&entry->last, 1))
+    return -1;
+  void *data = file_data(&entry->last);
+  if (!data)
+    return -1;
+  uint16_t dos_mdate;
+  uint16_t dos_mtime;
+  entry->mtime = timeval;
+  unix2dos(entry->mtime, &dos_mdate, &dos_mtime);
+  set_word(data, 0x16, 2, dos_mtime);
+  set_word(data, 0x18, 2, dos_mdate);
   cache_dirty(fat, FAT_CACHE_DATA);
   return 0;
 }

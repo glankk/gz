@@ -1,6 +1,7 @@
 #ifndef FAT_H
 #define FAT_H
 #include <stdint.h>
+#include <time.h>
 #include <list/list.h>
 
 #define FAT_CACHE_FAT         0
@@ -104,6 +105,10 @@ struct fat_entry
   /* lfn or case-adjusted sfn */
   char              name[256];
   /* metadata */
+  time_t            ctime;
+  int               cms;
+  time_t            atime;
+  time_t            mtime;
   uint8_t           attrib;
   uint32_t          clust;
   uint32_t          size;
@@ -138,6 +143,8 @@ int               fat_rename(struct fat *fat, struct fat_path *entry_fp,
                              struct fat_entry *new_entry);
 int               fat_remove(struct fat_entry *entry);
 int               fat_attrib(struct fat_entry *entry, uint8_t attrib);
+int               fat_atime(struct fat_entry *entry, time_t timeval);
+int               fat_mtime(struct fat_entry *entry, time_t timeval);
 int               fat_init(struct fat *fat, fat_io_proc read,
                            fat_io_proc write, uint32_t rec_lba, int part);
 int               fat_flush(struct fat *fat);

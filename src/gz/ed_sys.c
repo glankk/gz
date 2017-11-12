@@ -207,9 +207,9 @@ static void ent_stat(struct fat_entry *entry, struct stat *buf)
   buf->st_uid = 0;
   buf->st_gid = 0;
   buf->st_size = entry->size;
-  buf->st_atime = 0;
-  buf->st_mtime = 0;
-  buf->st_ctime = 0;
+  buf->st_atime = entry->atime;
+  buf->st_mtime = entry->mtime;
+  buf->st_ctime = entry->ctime;
   buf->st_blksize = fat.n_clust_byte;
   buf->st_blocks = (entry->size + fat.n_clust_byte - 1) / fat.n_clust_byte;
 }
@@ -295,7 +295,7 @@ int fstatat(int fildes, const char *path, struct stat *buf, int flag)
   if (init_fat())
     return -1;
   struct fat_entry *dir;
-  if (fildes == -100) /* AT_FDCWD */
+  if (fildes == AT_FDCWD)
     dir = fat_path_target(wd);
   else {
     struct desc *desc = get_desc(fildes);
@@ -373,6 +373,7 @@ int write(int fildes, void *buf, unsigned int nbyte)
   if (!fdesc)
     return -1;
   struct desc *desc = &fdesc->desc;
+  struct fat_entry *entry = fat_path_target(desc->fp);
   /* validate file desc */
   if (!(desc->flags & _FWRITE)) {
     errno = EBADF;
@@ -387,7 +388,7 @@ int write(int fildes, void *buf, unsigned int nbyte)
   if (fdesc->pos > desc->file.size) {
     uint32_t size = desc->file.size;
     /* resize file */
-    if (fat_resize(fat_path_target(desc->fp), fdesc->pos + nbyte, &desc->file))
+    if (fat_resize(entry, fdesc->pos + nbyte, &desc->file))
       return -1;
     /* seek and clear */
     uint32_t adv = size - desc->file.p_off;
@@ -401,7 +402,7 @@ int write(int fildes, void *buf, unsigned int nbyte)
     /* resize file if needed */
     uint32_t new_off = fdesc->pos + nbyte;
     if (new_off > desc->file.size) {
-      if (fat_resize(fat_path_target(desc->fp), new_off, &desc->file))
+      if (fat_resize(entry, new_off, &desc->file))
         return -1;
     }
     /* seek */
@@ -708,4 +709,11 @@ char *getcwd(char *buf, size_t size)
   }
   *p = 0;
   return buf;
+}
+
+time_t time(time_t *tloc)
+{
+  if (tloc)
+    *tloc = 0;
+  return 0;
 }
