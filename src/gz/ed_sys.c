@@ -124,10 +124,14 @@ static int ent_access(struct fat_entry *entry, _Bool write)
     return -1;
   for (int i = 0; i < FOPEN_MAX; ++i) {
     struct desc *desc = desc_list[i];
-    if (!desc || (!write && !(desc->flags & _FWRITE)))
+    if (!desc)
       continue;
-    if (check_path(sn, desc->fp))
+    if (write && check_path(sn, desc->fp))
       return -1;
+    if ((desc->flags & _FWRITE) && sn == make_sn(fat_path_target(desc->fp))) {
+      errno = EACCES;
+      return -1;
+    }
   }
   return 0;
 }
@@ -190,19 +194,26 @@ static int seek_file(struct file_desc *fdesc)
   return 0;
 }
 
+static mode_t ent_mode(struct fat_entry *entry)
+{
+  mode_t mode;
+  if (entry->attrib & FAT_ATTRIB_DIRECTORY)
+    mode = S_IFDIR;
+  else
+    mode = S_IFREG;
+  mode |= 0777;
+  if (entry->attrib & FAT_ATTRIB_HIDDEN)
+    mode &= ~0444;
+  if (entry->attrib & FAT_ATTRIB_READONLY)
+    mode &= ~0222;
+  return mode;
+}
+
 static void ent_stat(struct fat_entry *entry, struct stat *buf)
 {
   buf->st_dev = 0;
   buf->st_ino = make_sn(entry);
-  if (entry->attrib & FAT_ATTRIB_DIRECTORY)
-    buf->st_mode = S_IFDIR;
-  else
-    buf->st_mode = S_IFREG;
-  buf->st_mode |= 0777;
-  if (entry->attrib & FAT_ATTRIB_HIDDEN)
-    buf->st_mode &= 0111;
-  if (entry->attrib & FAT_ATTRIB_READONLY)
-    buf->st_mode &= 0222;
+  buf->st_mode = ent_mode(entry);
   buf->st_nlink = 1;
   buf->st_uid = 0;
   buf->st_gid = 0;
@@ -238,9 +249,10 @@ int open(const char *path, int oflags, ...)
     }
     if (ent_access(entry, flags & _FWRITE))
       goto error;
+    errno = e;
   }
   else {
-    if (errno == ENOENT) {
+    if (errno == ENOENT && (oflags & O_CREAT)) {
       va_list va;
       va_start(va, oflags);
       mode_t mode = va_arg(va, mode_t);
@@ -253,8 +265,8 @@ int open(const char *path, int oflags, ...)
       fp = fat_create_path(&fat, origin, tail, attrib);
       if (!fp)
         goto error;
-      errno = e;
       entry = fat_path_target(fp);
+      errno = e;
     }
     else
       goto error;
@@ -564,8 +576,14 @@ struct dirent *readdir(DIR *dirp)
       return NULL;
   } while (entry.attrib & FAT_ATTRIB_LABEL);
   ++ddesc->pos;
-  ddesc->dirent.d_ino = make_sn(&entry);
-  strcpy(ddesc->dirent.d_name, entry.name);
+  struct dirent *dirent = &ddesc->dirent;
+  dirent->d_ino = make_sn(&entry);
+  strcpy(dirent->d_name, entry.name);
+  /* extensions */
+  dirent->mode = ent_mode(&entry);
+  dirent->ctime = entry.ctime;
+  dirent->mtime = entry.mtime;
+  dirent->size = entry.size;
   return &ddesc->dirent;
 }
 
@@ -649,7 +667,8 @@ int stat(const char *path, struct stat *buf)
   struct fat_entry entry;
   if (wd_find(path, &entry))
     return -1;
-  ent_stat(&entry, buf);
+  if (buf)
+    ent_stat(&entry, buf);
   return 0;
 }
 
@@ -716,4 +735,17 @@ time_t time(time_t *tloc)
   if (tloc)
     *tloc = 0;
   return 0;
+}
+
+void sys_reset(void)
+{
+  fat_ready = 0;
+  for (int i = 0; i < OPEN_MAX; ++i) {
+    if (desc_list[i])
+      delete_desc(i);
+  }
+  if (wd) {
+    fat_free(wd);
+    wd = 0;
+  }
 }

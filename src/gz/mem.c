@@ -7,9 +7,9 @@
 #include "menu.h"
 #include "resource.h"
 
-#define MEM_VIEW_ROWS  16
-#define MEM_VIEW_COLS  8
-#define MEM_VIEW_SIZE  ((MEM_VIEW_COLS)*(MEM_VIEW_ROWS))
+#define MEM_VIEW_ROWS     16
+#define MEM_VIEW_COLS     8
+#define MEM_VIEW_SIZE     ((MEM_VIEW_COLS)*(MEM_VIEW_ROWS))
 
 static int                view_domain_index;
 static int                view_data_size;

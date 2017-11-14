@@ -10,8 +10,8 @@
 #include "resource.h"
 #include "z64.h"
 
-#define FLAG_LOG_LENGTH 16
-#define FLAG_VIEW_ROWS  16
+#define FLAG_LOG_LENGTH   16
+#define FLAG_VIEW_ROWS    16
 
 static int                view_record_index;
 static struct menu_item  *view_record_name;

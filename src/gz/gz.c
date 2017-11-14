@@ -7,8 +7,10 @@
 #include <mips.h>
 #include <n64.h>
 #include "explorer.h"
+#include "files.h"
 #include "flags.h"
 #include "gfx.h"
+#include "gz.h"
 #include "input.h"
 #include "item_option.h"
 #include "mem.h"
@@ -127,13 +129,6 @@ struct slot_info
 {
   uint8_t  *data;
   size_t    max;
-};
-
-struct memory_file
-{
-  z64_file_t  z_file;
-  uint16_t    scene_index;
-  uint32_t    scene_flags[9];
 };
 
 struct heap_node
@@ -414,6 +409,54 @@ static const char *cheat_names[] =
   "no minimap",
 };
 
+void save_memfile(struct memory_file *file)
+{
+  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
+  file->scene_index = z64_game.scene_index;
+  uint32_t f;
+  f = z64_game.chest_flags;
+  file->z_file.scene_flags[z64_game.scene_index].chests = f;
+  f = z64_game.switch_flags;
+  file->z_file.scene_flags[z64_game.scene_index].switches = f;
+  f = z64_game.room_clear_flags;
+  file->z_file.scene_flags[z64_game.scene_index].rooms_cleared = f;
+  f = z64_game.collectible_flags;
+  file->z_file.scene_flags[z64_game.scene_index].collectibles = f;
+  memcpy(&file->scene_flags, &z64_game.switch_flags,
+         sizeof(file->scene_flags));
+}
+
+void load_memfile(struct memory_file *file)
+{
+  /* keep some data intact to prevent glitchiness */
+  int8_t seq_index = z64_file.seq_index;
+  uint8_t minimap_index = z64_file.minimap_index;
+  int32_t link_age = z64_file.link_age;
+  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
+  z64_game.link_age = z64_file.link_age;
+  z64_file.seq_index = seq_index;
+  z64_file.minimap_index = minimap_index;
+  z64_file.link_age = link_age;
+  if (file->scene_index == z64_game.scene_index)
+    memcpy(&z64_game.switch_flags, &file->scene_flags,
+           sizeof(file->scene_flags));
+  else {
+    uint32_t f;
+    f = z64_file.scene_flags[z64_game.scene_index].chests;
+    z64_game.chest_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].switches;
+    z64_game.switch_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
+    z64_game.room_clear_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
+    z64_game.collectible_flags = f;
+  }
+  for (int i = 0; i < 4; ++i)
+    if (z64_file.button_items[i] != Z64_ITEM_NULL)
+      z64_UpdateItemButton(&z64_game, i);
+  z64_UpdateEquipment(&z64_game, &z64_link);
+}
+
 void command_break(void)
 {
   if (z64_game.event_flag != -1)
@@ -458,20 +501,7 @@ void command_loadpos(void)
 
 void command_savememfile(void)
 {
-  struct memory_file *file = &memfile[memfile_slot];
-  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
-  file->scene_index = z64_game.scene_index;
-  uint32_t f;
-  f = z64_game.chest_flags;
-  file->z_file.scene_flags[z64_game.scene_index].chests = f;
-  f = z64_game.switch_flags;
-  file->z_file.scene_flags[z64_game.scene_index].switches = f;
-  f = z64_game.room_clear_flags;
-  file->z_file.scene_flags[z64_game.scene_index].rooms_cleared = f;
-  f = z64_game.collectible_flags;
-  file->z_file.scene_flags[z64_game.scene_index].collectibles = f;
-  memcpy(&file->scene_flags, &z64_game.switch_flags,
-         sizeof(file->scene_flags));
+  save_memfile(&memfile[memfile_slot]);
   memfile_saved[memfile_slot] = 1;
 }
 
@@ -479,34 +509,7 @@ void command_loadmemfile(void)
 {
   if (!memfile_saved[memfile_slot])
     return;
-  struct memory_file *file = &memfile[memfile_slot];
-  /* keep some data intact to prevent glitchiness */
-  int8_t seq_index = z64_file.seq_index;
-  uint8_t minimap_index = z64_file.minimap_index;
-  int32_t link_age = z64_file.link_age;
-  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
-  z64_game.link_age = z64_file.link_age;
-  z64_file.seq_index = seq_index;
-  z64_file.minimap_index = minimap_index;
-  z64_file.link_age = link_age;
-  if (file->scene_index == z64_game.scene_index)
-    memcpy(&z64_game.switch_flags, &file->scene_flags,
-           sizeof(file->scene_flags));
-  else {
-    uint32_t f;
-    f = z64_file.scene_flags[z64_game.scene_index].chests;
-    z64_game.chest_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].switches;
-    z64_game.switch_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
-    z64_game.room_clear_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
-    z64_game.collectible_flags = f;
-  }
-  for (int i = 0; i < 4; ++i)
-    if (z64_file.button_items[i] != Z64_ITEM_NULL)
-      z64_UpdateItemButton(&z64_game, i);
-  z64_UpdateEquipment(&z64_game, &z64_link);
+  load_memfile(&memfile[memfile_slot]);
 }
 
 void command_resetlag(void)
@@ -1290,6 +1293,45 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
   zu_clear_event_flag(0x49);
   zu_clear_event_flag(0x4A);
   zu_clear_event_flag(0xC8);
+}
+
+static int do_save_file(const char *path, void *data)
+{
+  FILE *f = fopen(path, "wb");
+  if (f) {
+    struct memory_file *file = malloc(sizeof(*file));
+    save_memfile(file);
+    fwrite(file, 1, sizeof(*file), f);
+    fclose(f);
+    free(file);
+  }
+  return 0;
+}
+
+static int do_load_file(const char *path, void *data)
+{
+  FILE *f = fopen(path, "rb");
+  if (f) {
+    struct memory_file *file = malloc(sizeof(*file));
+    fread(file, 1, sizeof(*file), f);
+    fclose(f);
+    load_memfile(file);
+    free(file);
+  }
+  zu_execute_game(z64_file.entrance_index, z64_file.cutscene_index);
+  return 0;
+}
+
+static void save_file_proc(struct menu_item *item, void *data)
+{
+  menu_get_file(&menu_main, GETFILE_SAVE, "file", ".ootsave",
+                do_save_file, NULL);
+}
+
+static void load_file_proc(struct menu_item *item, void *data)
+{
+  menu_get_file(&menu_main, GETFILE_LOAD, NULL, ".ootsave",
+                do_load_file, NULL);
 }
 
 static void clear_scene_flags_proc(struct menu_item *item, void *data)
@@ -2879,6 +2921,10 @@ static void init(void)
       menu_add_static(&menu_file, 0, 12, "z targeting", 0xC0C0C0);
       menu_add_option(&menu_file, 17, 12, "switch\0""hold\0",
                       byte_option_proc, &target_option_data);
+      menu_add_button(&menu_file, 0, 13, "save to disk",
+                      save_file_proc, NULL);
+      menu_add_button(&menu_file, 0, 14, "load from disk",
+                      load_file_proc, NULL);
     }
 
     menu_init(&menu_watches, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -3090,6 +3136,7 @@ ENTRY _Noreturn void _start()
 
 /* support libraries */
 #include <startup.c>
+#include <set/set.c>
 #include <vector/vector.c>
 #include <list/list.c>
 #include <grc.c>

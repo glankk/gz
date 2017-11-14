@@ -12,8 +12,13 @@ typedef void *DIR;
 
 struct dirent
 {
-  ino_t d_ino;
-  char  d_name[256];
+  ino_t   d_ino;
+  char    d_name[256];
+  /* extensions */
+  mode_t  mode;
+  time_t  ctime;
+  time_t  mtime;
+  off_t   size;
 };
 
 int             open(const char *path, int oflags, ...);
@@ -44,5 +49,6 @@ int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
 char           *getcwd(char *buf, size_t size);
 time_t          time(time_t *tloc);
+void            sys_reset(void);
 
 #endif

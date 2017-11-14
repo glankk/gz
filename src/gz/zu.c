@@ -296,6 +296,7 @@ void zu_void(void)
 void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
 {
   if (entrance_index != z64_file.entrance_index ||
+      entrance_index != z64_game.entrance_index ||
       cutscene_index != z64_file.cutscene_index)
   {
     z64_file.seq_index = -1;

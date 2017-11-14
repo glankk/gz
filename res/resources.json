@@ -138,6 +138,13 @@
     "format":       "rgba32",
     "tile_height":  8
   },
+  "file_icons.png":
+  {
+    "type":         "texture",
+    "name":         "file_icons",
+    "format":       "rgba32",
+    "tile_height":  9
+  },
   "crosshair.png":
   {
     "type":         "texture",

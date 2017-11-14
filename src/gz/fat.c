@@ -589,6 +589,8 @@ static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
     if (get_clust(fat, clust, &value))
       return -1;
     if (!eoc && (value >= 0x0FFFFFF8 || value < 2)) {
+      if (set_clust(fat, clust, 0x0FFFFFFF))
+        return -1;
       if (n > i + 1) {
         /* check if there's enough space left for the
            additional requested clusters */
@@ -611,7 +613,10 @@ static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
       new_clust = link_free_clust(fat, clust, new_clust, 0);
       if (new_clust == 0)
         return -1;
+      clust = new_clust;
     }
+    else
+      clust = value;
   }
   return 0;
 }

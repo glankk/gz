@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include "ed.h"
 
+#define RETRY_MAX 256
+
 static uint32_t card_type;
 static uint32_t spi_cfg;
 
@@ -89,7 +91,7 @@ static int sd_cmd_resp_type(int cmd)
   }
 }
 
-enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf)
+enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf)
 {
   int resp_type = sd_cmd_resp_type(cmd);
   int resp_size = resp_type == SD_R2 ? 17 : 6;
@@ -136,12 +138,23 @@ enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf)
   return ED_ERROR_SUCCESS;
 }
 
+enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf)
+{
+  enum ed_error e;
+  for (int i = 0; i < RETRY_MAX; ++i) {
+    e = ed_sd_cmd_r(cmd, arg, resp_buf);
+    if (e == ED_ERROR_SUCCESS)
+      break;
+  }
+  return e;
+}
+
 enum ed_error ed_sd_init(void)
 {
   enum ed_error e;
   static uint8_t resp[17];
   /* initialize spi */
-  spi_cfg = (0 << SPI_CFG_SPD0) | (1 << SPI_CFG_SPD1) | (1 << SPI_CFG_SS);
+  spi_cfg = 0;
   ed_regs.cfg;
   ed_regs.key = 0x1234;
   ed_regs.cfg;
@@ -153,11 +166,11 @@ enum ed_error ed_sd_init(void)
   card_type = 0;
   for (int i = 0; i < 40; ++i)
     ed_spi_transmit(0xFF);
-  e = ed_sd_cmd(SD_CMD_GO_IDLE_STATE, 0, NULL);
+  e = ed_sd_cmd_r(SD_CMD_GO_IDLE_STATE, 0, NULL);
   for (int i = 0; i < 40; ++i)
     ed_spi_transmit(0xFF);
   /* 2.7-3.6V, check pattern 0b10101010 */
-  e = ed_sd_cmd(SD_CMD_SEND_IF_COND, 0x1AA, NULL);
+  e = ed_sd_cmd_r(SD_CMD_SEND_IF_COND, 0x1AA, NULL);
   if (e == ED_ERROR_SD_CMD_CRC)
     return e;
   else if (e == ED_ERROR_SUCCESS)
@@ -214,7 +227,7 @@ enum ed_error ed_sd_init(void)
     return e;
   uint32_t rca = (resp[1] << 24) | (resp[2] << 16) |
                  (resp[3] << 8) | (resp[4] << 0);
-  ed_sd_cmd(SD_CMD_SELECT_CARD, 0, NULL);
+  ed_sd_cmd_r(SD_CMD_SELECT_CARD, 0, NULL);
   e = ed_sd_cmd(SD_CMD_SEND_CSD, rca, NULL);
   if (e)
     return e;
@@ -299,8 +312,12 @@ enum ed_error ed_sd_write(uint32_t sector_index, uint32_t n_sectors, void *src)
       resp <<= 1;
       resp |= ed_spi_transmit(0xFF) & 1;
     }
-    if (resp != 0b010)
+    if (resp != 0b010) {
+      e = ed_sd_stop_rw();
+      if (e)
+        return e;
       return ED_ERROR_SD_WR_CRC;
+    }
     /* wait for free data receive buffer */
     timeout = 1;
     ed_spi_mode(1, 0, 1);

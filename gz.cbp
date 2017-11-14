@@ -73,6 +73,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/fat.h" />
+		<Unit filename="src/gz/files.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/files.h" />
 		<Unit filename="src/gz/flags.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -88,6 +92,7 @@
 		<Unit filename="src/gz/gz.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/gz.h" />
 		<Unit filename="src/gz/input.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -120,6 +125,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/menu_positioning.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/menu_prompt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/menu_strinput.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/menu_submenu.c">

@@ -47,6 +47,7 @@ typedef int  (*menu_generic_callback)(struct menu_item *item,
                                       enum menu_callback_reason reason,
                                       void *data);
 typedef void (*menu_action_callback) (struct menu_item *item, void *data);
+typedef int  (*menu_prompt_callback) (int option_index, void *data);
 
 struct menu_item
 {
@@ -194,6 +195,12 @@ struct menu_item   *menu_add_intinput(struct menu *menu, int x, int y,
 uint32_t            menu_intinput_get(struct menu_item *item);
 int32_t             menu_intinput_gets(struct menu_item *item);
 void                menu_intinput_set(struct menu_item *item, uint32_t value);
+struct menu_item   *menu_add_strinput(struct menu *menu, int x, int y,
+                                      int length,
+                                      menu_generic_callback callback_proc,
+                                      void *callback_data);
+void                menu_strinput_get(struct menu_item *item, char *buf);
+void                menu_strinput_set(struct menu_item *item, const char *str);
 struct menu_item   *menu_add_option(struct menu *menu, int x, int y,
                                     const char *options,
                                     menu_generic_callback callback_proc,
@@ -201,6 +208,10 @@ struct menu_item   *menu_add_option(struct menu *menu, int x, int y,
 int                 menu_option_get(struct menu_item *item);
 void                menu_option_set(struct menu_item *item,
                                     int value);
+void                menu_prompt(struct menu *menu, const char *prompt,
+                                const char *options, int default_option,
+                                menu_prompt_callback callback_proc,
+                                void *callback_data);
 struct menu_item   *menu_add_watch(struct menu *menu, int x, int y,
                                    uint32_t address, enum watch_type type);
 uint32_t            menu_watch_get_address(struct menu_item *item);

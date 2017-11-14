@@ -85,7 +85,9 @@ static int activate_proc(struct menu_item *item)
     if (data->callback_proc && data->callback_proc(item,
                                                    MENU_CALLBACK_DEACTIVATE,
                                                    data->callback_data))
+    {
       return 1;
+    }
     uint32_t value = 0;
     uint32_t mul = 1;
     int sign = data->signed_ && data->digits[0]->text[0] == '-' ? -1 : 1;
@@ -120,7 +122,9 @@ static int activate_proc(struct menu_item *item)
     if (data->callback_proc && data->callback_proc(item,
                                                    MENU_CALLBACK_ACTIVATE,
                                                    data->callback_data))
+    {
       return 1;
+    }
   }
   data->active = !data->active;
   return 1;
