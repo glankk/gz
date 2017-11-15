@@ -2,7 +2,8 @@
 #include <stdint.h>
 #include "ed.h"
 
-#define RETRY_MAX 256
+#define CMD_RETRY_MAX   16
+#define DATA_RETRY_MAX  16
 
 static uint32_t card_type;
 static uint32_t spi_cfg;
@@ -141,7 +142,7 @@ enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf)
 enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf)
 {
   enum ed_error e;
-  for (int i = 0; i < RETRY_MAX; ++i) {
+  for (int i = 0; i < CMD_RETRY_MAX; ++i) {
     e = ed_sd_cmd_r(cmd, arg, resp_buf);
     if (e == ED_ERROR_SUCCESS)
       break;
@@ -251,43 +252,82 @@ void ed_close(void)
   ed_regs.key = 0;
 }
 
-enum ed_error ed_sd_read(uint32_t sector_index, uint32_t n_sectors, void *dst)
+enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
+                           void *dst, uint32_t *n_read)
 {
-  enum ed_error e = ED_ERROR_SUCCESS;
+  enum ed_error e;
+  uint8_t *p = dst;
+  /* send read command */
   if (!(card_type & SD_HC))
-    sector_index *= 512;
-  e = ed_sd_cmd(SD_CMD_READ_MULTIPLE_BLOCK, sector_index, NULL);
+    lba *= 0x200;
+  e = ed_sd_cmd(SD_CMD_READ_MULTIPLE_BLOCK, lba, NULL);
   if (e)
     return e;
-  e = ed_spi_read(dst, n_sectors);
-  if (e)
-    return e;
-  e = ed_sd_stop_rw();
-  return e;
+  /* read blocks */
+  while (n_blocks-- > 0) {
+    void *block = p;
+    /* wait for start bit */
+    ed_spi_mode(1, 0, 0);
+    _Bool timeout = 1;
+    for (int i = 0; i < 0x10000; i++)
+      if ((ed_spi_transmit(0xFF) & 0xF1) == 0xF0) {
+        timeout = 0;
+        break;
+      }
+    if (timeout)
+      return ED_ERROR_SD_RD_TIMEOUT;
+    /* read data */
+    ed_spi_mode(1, 0, 1);
+    for (int i = 0; i < 0x200; ++i)
+      *p++ = ed_spi_transmit(0xFF);
+    /* verify crc */
+    uint16_t sd_crc[4];
+    uint16_t data_crc[4];
+    for (int i = 0; i < 4; ++i) {
+      uint16_t line_crc = 0;
+      line_crc |= ((ed_spi_transmit(0xFF) & 0xFF) << 8);
+      line_crc |= ((ed_spi_transmit(0xFF) & 0xFF) << 0);
+      sd_crc[i] = line_crc;
+    }
+    crc16_wide(block, 0x200, data_crc);
+    for (int i = 0; i < 4; ++i)
+      if (sd_crc[i] != data_crc[i]) {
+        e = ed_sd_stop_rw();
+        if (e)
+          return e;
+        return ED_ERROR_SD_RD_CRC;
+      }
+    /* increase block counter */
+    if (n_read)
+      ++*n_read;
+  }
+  /* stop data transmission */
+  return ed_sd_stop_rw();
 }
 
-enum ed_error ed_sd_write(uint32_t sector_index, uint32_t n_sectors, void *src)
+enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
+                            void *src, uint32_t *n_write)
 {
   enum ed_error e;
   uint8_t *p = src;
   /* send write command */
   if (!(card_type & SD_HC))
-    sector_index *= 512;
-  e = ed_sd_cmd(SD_CMD_WRITE_MULTIPLE_BLOCK, sector_index, NULL);
+    lba *= 0x200;
+  e = ed_sd_cmd(SD_CMD_WRITE_MULTIPLE_BLOCK, lba, NULL);
   if (e)
     return e;
   /* write blocks */
-  while (n_sectors-- > 0) {
+  while (n_blocks-- > 0) {
     /* compute crc for block, one for each data line */
     uint16_t crc[4];
-    crc16_wide(p, 512, crc);
+    crc16_wide(p, 0x200, crc);
     /* transmit a low nibble on the 4 data lines to start data block */
     ed_spi_mode(1, 1, 1);
     ed_spi_transmit(0xFF);
     ed_spi_transmit(0xF0);
     /* transmit data */
-    ed_spi_write(p);
-    p += 512;
+    for (int i = 0; i < 0x200; i++)
+      ed_spi_transmit(*p++);
     /* transmit crc */
     for (int i = 0; i < 4; i++) {
       ed_spi_transmit((crc[i] >> 8) & 0xFF);
@@ -299,7 +339,7 @@ enum ed_error ed_sd_write(uint32_t sector_index, uint32_t n_sectors, void *src)
     /* wait for crc status */
     _Bool timeout = 1;
     ed_spi_mode(1, 0, 0);
-    for (int i = 0; i < 1024; ++i)
+    for (int i = 0; i < 0x400; ++i)
       if (!(ed_spi_transmit(0xFF) & 1)) {
         timeout = 0;
         break;
@@ -329,12 +369,52 @@ enum ed_error ed_sd_write(uint32_t sector_index, uint32_t n_sectors, void *src)
       }
     if (timeout)
       return ED_ERROR_SD_WR_TIMEOUT;
+    /* increase block counter */
+    if (n_write)
+      ++*n_write;
   }
   /* stop data transmission */
-  e = ed_sd_stop_rw();
-  if (e)
-    return e;
-  return ED_ERROR_SUCCESS;
+  return ed_sd_stop_rw();
+}
+
+enum ed_error ed_sd_read(uint32_t lba, uint32_t n_blocks, void *dst)
+{
+  enum ed_error e = ED_ERROR_SUCCESS;
+  char *p = dst;
+  for (int i = 0; i < DATA_RETRY_MAX && n_blocks > 0; ) {
+    uint32_t n_read = 0;
+    e = ed_sd_read_r(lba, n_blocks, p, &n_read);
+    lba += n_read;
+    n_blocks -= n_read;
+    p += n_read * 0x200;
+    if (e == ED_ERROR_SD_RD_CRC)
+      ++i;
+    else if (e)
+      return e;
+    else
+      i = 0;
+  }
+  return e;
+}
+
+enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
+{
+  enum ed_error e = ED_ERROR_SUCCESS;
+  char *p = src;
+  for (int i = 0; i < DATA_RETRY_MAX && n_blocks > 0; ) {
+    uint32_t n_write = 0;
+    e = ed_sd_write_r(lba, n_blocks, p, &n_write);
+    lba += n_write;
+    n_blocks -= n_write;
+    p += n_write * 0x200;
+    if (e == ED_ERROR_SD_WR_CRC)
+      ++i;
+    else if (e)
+      return e;
+    else
+      i = 0;
+  }
+  return e;
 }
 
 enum ed_error ed_sd_stop_rw(void)
@@ -389,37 +469,4 @@ uint8_t ed_spi_transmit(uint8_t data)
     ed_regs.status;
   } while ((ed_regs.status >> ED_STATE_SPI) & 1);
   return ed_regs.spi;
-}
-
-enum ed_error ed_spi_read(void *dst, uint32_t n_sectors)
-{
-  uint8_t *p = dst;
-  while (n_sectors-- > 0) {
-    /* wait for start bit */
-    ed_spi_mode(1, 0, 0);
-    _Bool timeout = 1;
-    for (int i = 0; i < 65535; i++)
-      if ((ed_spi_transmit(0xFF) & 0xF1) == 0xF0) {
-        timeout = 0;
-        break;
-      }
-    if (timeout)
-      return ED_ERROR_SD_RD_TIMEOUT;
-    /* read data */
-    ed_spi_mode(1, 0, 1);
-    for (int i = 0; i < 512; ++i)
-      *p++ = ed_spi_transmit(0xFF);
-    /* FIXME: ignore crc */
-    for (int i = 0; i < 8; ++i)
-      ed_spi_transmit(0xFF);
-  }
-  return ED_ERROR_SUCCESS;
-}
-
-enum ed_error ed_spi_write(void *src)
-{
-  uint8_t *p = src;
-  for (int i = 0; i < 512; i++)
-    ed_spi_transmit(*p++);
-  return ED_ERROR_SUCCESS;
 }

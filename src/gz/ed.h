@@ -62,6 +62,7 @@ enum ed_error
   ED_ERROR_SD_WR_TIMEOUT,
   ED_ERROR_SD_WR_CRC,
   ED_ERROR_SD_RD_TIMEOUT,
+  ED_ERROR_SD_RD_CRC,
 };
 
 typedef struct
@@ -87,19 +88,22 @@ typedef struct
 
 #define ed_regs                     (*(volatile ed_regs_t*)0xA8040000)
 
+enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_init(void);
 void          ed_close(void);
 
-enum ed_error ed_sd_read(uint32_t lba, uint32_t n_sectors, void *dst);
-enum ed_error ed_sd_write(uint32_t lba, uint32_t n_sectors, void *src);
+enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
+                           void *dst, uint32_t *n_read);
+enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
+                            void *src, uint32_t *n_write);
+enum ed_error ed_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
+enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
 enum ed_error ed_sd_stop_rw(void);
 
 void          ed_spi_ss(_Bool enable);
 void          ed_spi_mode(_Bool data, _Bool write, _Bool wide);
 void          ed_spi_speed(int speed);
 uint8_t       ed_spi_transmit(uint8_t data);
-enum ed_error ed_spi_read(void *dst, uint32_t n_sectors);
-enum ed_error ed_spi_write(void *src);
 
 #endif

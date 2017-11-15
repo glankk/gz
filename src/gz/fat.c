@@ -1522,8 +1522,10 @@ int fat_create(struct fat *fat, struct fat_entry *dir, const char *path,
       return -1;
   }
   else {
+    int e = errno;
     if (fat_find(fat, dir, NULL, &dir_ent))
       return -1;
+    errno = e;
   }
   /* check if the file exists */
   {
@@ -1600,10 +1602,12 @@ struct fat_path *fat_create_path(struct fat *fat, struct fat_path *dir_fp,
   }
   /* create entry and insert into path */
   struct fat_entry entry;
-  if (fat_create(fat, fat_path_target(dest_fp), path, attrib, &entry))
+  if (fat_create(fat, fat_path_target(dest_fp), tail, attrib, &entry))
     goto error;
-  if (!list_push_back(&dest_fp->ent_list, &entry))
+  if (!list_push_back(&dest_fp->ent_list, &entry)) {
+    errno = ENOMEM;
     goto error;
+  }
   return dest_fp;
 error:
   if (dest_fp)
