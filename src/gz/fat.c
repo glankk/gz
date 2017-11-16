@@ -1522,10 +1522,8 @@ int fat_create(struct fat *fat, struct fat_entry *dir, const char *path,
       return -1;
   }
   else {
-    int e = errno;
     if (fat_find(fat, dir, NULL, &dir_ent))
       return -1;
-    errno = e;
   }
   /* check if the file exists */
   {

@@ -3,14 +3,13 @@
 #include <stdint.h>
 #include <n64.h>
 
+#ifndef Z64_VERSION
+#error no z64 version specified
+#endif
+
 #define Z64_OOT10             0x00
 #define Z64_OOT11             0x01
 #define Z64_OOT12             0x02
-#define Z64_OOTDEBUG          0x03
-
-#ifndef Z64_VERSION
-#define Z64_VERSION           Z64_OOT10
-#endif
 
 #define Z64_SCREEN_WIDTH      320
 #define Z64_SCREEN_HEIGHT     240

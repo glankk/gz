@@ -10,7 +10,7 @@
 
 #define FILE_VIEW_ROWS    14
 
-struct gf_dir_state
+struct dir_state
 {
   int     scroll;
   int     index;
@@ -133,7 +133,7 @@ static void update_view(_Bool enable, _Bool select)
     menu_item_enable(gf_scroll_down);
     gf_scroll_up->y = y;
     gf_scroll_down->y = y + FILE_VIEW_ROWS - 1;
-    struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+    struct dir_state *ds = vector_at(&gf_dir_state, 0);
     _Bool selected = 0;
     for (int i = 0; i < FILE_VIEW_ROWS; ++i) {
       int index = ds->scroll + i;
@@ -220,7 +220,7 @@ static void return_path(const char *name)
 static int file_enter_proc(struct menu_item *item)
 {
   int row = (int)item->data;
-  struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+  struct dir_state *ds = vector_at(&gf_dir_state, 0);
   int index = ds->scroll + row;
   if (index < gf_dir_entries.container.size) {
     struct dir_entry *entry = set_at(&gf_dir_entries, index);
@@ -233,7 +233,7 @@ static int file_draw_proc(struct menu_item *item,
                           struct menu_draw_params *draw_params)
 {
   int row = (int)item->data;
-  struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+  struct dir_state *ds = vector_at(&gf_dir_state, 0);
   struct dir_entry *entry = set_at(&gf_dir_entries, ds->scroll + row);
   if (entry->anim_state > 0) {
     ++draw_params->x;
@@ -265,7 +265,7 @@ static int file_draw_proc(struct menu_item *item,
 static int file_activate_proc(struct menu_item *item)
 {
   int row = (int)item->data;
-  struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+  struct dir_state *ds = vector_at(&gf_dir_state, 0);
   int index = ds->scroll + row;
   struct dir_entry *entry = set_at(&gf_dir_entries, index);
   entry->anim_state = 1;
@@ -275,7 +275,7 @@ static int file_activate_proc(struct menu_item *item)
     if (strcmp(entry->name, "..") == 0)
       vector_erase(&gf_dir_state, 0, 1);
     else {
-      struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+      struct dir_state *ds = vector_at(&gf_dir_state, 0);
       ds->index = index;
       ds = vector_insert(&gf_dir_state, 0, 1, NULL);
       ds->scroll = 0;
@@ -284,6 +284,8 @@ static int file_activate_proc(struct menu_item *item)
     update_view(update_list(), 1);
   }
   else {
+    struct dir_state *ds = vector_at(&gf_dir_state, 0);
+    ds->index = index;
     int l = strlen(entry->name) - gf_suffix_length;
     char *name = malloc(l + 1);
     strncpy(name, entry->name, l);
@@ -376,7 +378,7 @@ static void reset_proc(struct menu_item *item, void *data)
 {
   sys_reset();
   vector_clear(&gf_dir_state);
-  struct gf_dir_state *ds = vector_insert(&gf_dir_state, 0, 1, NULL);
+  struct dir_state *ds = vector_insert(&gf_dir_state, 0, 1, NULL);
   ds->scroll = 0;
   ds->index = 0;
   update_view(update_list(), 1);
@@ -384,7 +386,7 @@ static void reset_proc(struct menu_item *item, void *data)
 
 static void scroll_up_proc(struct menu_item *item, void *data)
 {
-  struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+  struct dir_state *ds = vector_at(&gf_dir_state, 0);
   --ds->scroll;
   if (ds->scroll < 0)
     ds->scroll = 0;
@@ -392,7 +394,7 @@ static void scroll_up_proc(struct menu_item *item, void *data)
 
 static void scroll_down_proc(struct menu_item *item, void *data)
 {
-  struct gf_dir_state *ds = vector_at(&gf_dir_state, 0);
+  struct dir_state *ds = vector_at(&gf_dir_state, 0);
   ++ds->scroll;
   int n_entries = gf_dir_entries.container.size;
   if (ds->scroll + FILE_VIEW_ROWS > n_entries)
@@ -426,9 +428,9 @@ static void gf_menu_init(void)
   if (!ready) {
     ready = 1;
     /* initialize data */
-    vector_init(&gf_dir_state, sizeof(struct gf_dir_state));
+    vector_init(&gf_dir_state, sizeof(struct dir_state));
     set_init(&gf_dir_entries, sizeof(struct dir_entry), dir_entry_comp);
-    struct gf_dir_state *ds = vector_insert(&gf_dir_state, 0, 1, NULL);
+    struct dir_state *ds = vector_insert(&gf_dir_state, 0, 1, NULL);
     ds->scroll = 0;
     ds->index = 0;
     /* initialize menus */

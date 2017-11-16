@@ -8,7 +8,7 @@
 #define SETTINGS_MAXSIZE          (0x8000-(SETTINGS_ADDRESS))
 #define SETTINGS_PADSIZE          ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX      ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION          0x0000
+#define SETTINGS_VERSION          0x0001
 
 #define SETTINGS_WATCHES_MAX      18
 #define SETTINGS_TELEPORT_MAX     9
@@ -94,7 +94,7 @@ struct menu_settings
   uint32_t pause_display : 1;
   uint32_t macro_input   : 1;
   uint32_t break_type    : 1;
-  uint32_t warp_age      : 1;
+  uint32_t warp_age      : 2;
   uint32_t warp_cutscene : 5;
 };
 

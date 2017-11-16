@@ -630,7 +630,7 @@ void command_playmacro(void)
 {
   if (movie_state == MOVIE_PLAYING)
     movie_state = MOVIE_IDLE;
-  else {
+  else if (movie_inputs.size > 0) {
     movie_state = MOVIE_PLAYING;
     movie_frame = 0;
   }
@@ -1358,7 +1358,8 @@ static void slot_inc_proc(struct menu_item *item, void *data)
 
 static void warp_proc(struct menu_item *item, void *data)
 {
-  z64_game.link_age = settings->menu_settings.warp_age;
+  if (settings->menu_settings.warp_age != 0)
+    z64_game.link_age = settings->menu_settings.warp_age - 1;
   uint16_t cutscene = settings->menu_settings.warp_cutscene;
   if (cutscene > 0x0000)
     cutscene += 0xFFEF;
@@ -1386,7 +1387,8 @@ static void places_proc(struct menu_item *item, void *data)
   for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
-      z64_game.link_age = settings->menu_settings.warp_age;
+      if (settings->menu_settings.warp_age != 0)
+        z64_game.link_age = settings->menu_settings.warp_age - 1;
       uint16_t cutscene = settings->menu_settings.warp_cutscene;
       if (cutscene > 0x0000)
         cutscene += 0xFFEF;
@@ -1540,7 +1542,7 @@ static int warp_info_draw_proc(struct menu_item *item,
              "current entrance %04" PRIx16, z64_file.entrance_index);
   if (z64_file.cutscene_index >= 0xFFF0 && z64_file.cutscene_index <= 0xFFFF)
     gfx_printf(font, x, y + ch * 2, "current cutscene %" PRIu16,
-               z64_file.cutscene_index - 0xFFEF);
+               z64_file.cutscene_index - 0xFFF0);
   else
     gfx_printf(font, x, y + ch * 2, "current cutscene none");
   return 1;
@@ -2213,7 +2215,7 @@ static void input_hook()
       vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
     else if (movie_state == MOVIE_PLAYING) {
       if (movie_frame >= movie_inputs.size) {
-        if (input_bind_held(COMMAND_PLAYMACRO))
+        if (input_bind_held(COMMAND_PLAYMACRO) && movie_inputs.size > 0)
           movie_frame = 0;
         else
           movie_state = MOVIE_IDLE;
@@ -2402,15 +2404,15 @@ static void init(void)
     }
     menu_add_submenu(&menu_warps, 0, 1, &places, "places");
     menu_add_static(&menu_warps, 0, 2, "age", 0xC0C0C0);
-    menu_add_option(&menu_warps, 9, 2, "adult\0""child\0",
+    menu_add_option(&menu_warps, 9, 2, "current age\0""adult\0""child\0",
                     age_option_proc, NULL);
     menu_add_static(&menu_warps, 0, 3, "entrance", 0xC0C0C0);
     menu_add_intinput(&menu_warps, 9, 3, 16, 4,
                       halfword_mod_proc, &settings->warp_entrance);
     menu_add_static(&menu_warps, 0, 4, "cutscene", 0xC0C0C0);
     menu_add_option(&menu_warps, 9, 4,
-                    "none\0""1\0""2\0""3\0""4\0""5\0""6\0""7\0""8\0"
-                    "9\0""10\0""11\0""12\0""13\0""14\0""15\0""16\0",
+                    "none\0""0\0""1\0""2\0""3\0""4\0""5\0""6\0""7\0"
+                    "8\0""9\0""10\0""11\0""12\0""13\0""14\0""15\0",
                     cutscene_option_proc, NULL);
     menu_add_button(&menu_warps, 0, 5, "warp", warp_proc, NULL);
     menu_add_button(&menu_warps, 0, 6, "clear cs pointer",

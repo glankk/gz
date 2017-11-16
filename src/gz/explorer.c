@@ -203,6 +203,8 @@ static int think_proc(struct menu_item *item)
   if (data->scene_index != z64_game.scene_index) {
     data->scene_next = z64_game.scene_index;
     data->room_next = z64_game.room_index;
+    if (data->room_next < 0)
+      data->room_next = 0;
   }
   if ((data->scene_index != data->scene_next ||
        data->room_index != data->room_next) &&
