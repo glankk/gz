@@ -45,6 +45,8 @@ void settings_load_default(void)
   d->menu_settings.break_type = SETTINGS_BREAK_NORMAL;
   d->menu_settings.warp_age = 0;
   d->menu_settings.warp_cutscene = 0;
+  d->menu_settings.load_to = SETTINGS_LOADTO_ZFILE;
+  d->menu_settings.on_load = SETTINGS_ONLOAD_NOTHING;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;

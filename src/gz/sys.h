@@ -6,8 +6,6 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#define AT_FDCWD -100
-
 typedef void *DIR;
 
 struct dirent

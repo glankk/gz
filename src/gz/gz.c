@@ -17,6 +17,7 @@
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
+#include "sys.h"
 #include "watchlist.h"
 #include "z64.h"
 #include "zu.h"
@@ -1297,29 +1298,84 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
 
 static int do_save_file(const char *path, void *data)
 {
+  const char *err_str = NULL;
+  struct memory_file *file = NULL;
   FILE *f = fopen(path, "wb");
   if (f) {
-    struct memory_file *file = malloc(sizeof(*file));
+    file = malloc(sizeof(*file));
     save_memfile(file);
-    fwrite(file, 1, sizeof(*file), f);
-    fclose(f);
-    free(file);
+    if (fwrite(file, 1, sizeof(*file), f) == sizeof(*file)) {
+      if (fclose(f))
+        err_str = strerror(errno);
+      f = NULL;
+    }
+    else
+      err_str = strerror(ferror(f));
   }
-  return 0;
+  else
+    err_str = strerror(errno);
+  if (f)
+    fclose(f);
+  if (file)
+    free(file);
+  if (err_str) {
+    menu_prompt(&menu_main, err_str, "return\0", 0, NULL, NULL);
+    return 1;
+  }
+  else
+    return 0;
 }
 
 static int do_load_file(const char *path, void *data)
 {
+  const char *err_str = NULL;
+  struct memory_file *file = NULL;
   FILE *f = fopen(path, "rb");
   if (f) {
-    struct memory_file *file = malloc(sizeof(*file));
-    fread(file, 1, sizeof(*file), f);
-    fclose(f);
-    load_memfile(file);
-    free(file);
+    struct stat st;
+    fstat(fileno(f), &st);
+    if (st.st_size == sizeof(*file)) {
+      file = malloc(sizeof(*file));
+      if (fread(file, 1, sizeof(*file), f) == sizeof(*file)) {
+        if (settings->menu_settings.load_to == SETTINGS_LOADTO_ZFILE ||
+            settings->menu_settings.load_to == SETTINGS_LOADTO_BOTH)
+        {
+          load_memfile(file);
+        }
+        if (settings->menu_settings.load_to == SETTINGS_LOADTO_MEMFILE ||
+            settings->menu_settings.load_to == SETTINGS_LOADTO_BOTH)
+        {
+          memfile[memfile_slot] = *file;
+          memfile_saved[memfile_slot] = 1;
+        }
+      }
+      else
+        err_str = strerror(ferror(f));
+    }
+    else
+      err_str = "the file is corrupted";
   }
-  zu_execute_game(z64_file.entrance_index, z64_file.cutscene_index);
-  return 0;
+  else
+    err_str = strerror(errno);
+  if (f)
+    fclose(f);
+  if (file)
+    free(file);
+  if (err_str) {
+    menu_prompt(&menu_main, err_str, "return\0", 0, NULL, NULL);
+    return 1;
+  }
+  else {
+    if (settings->menu_settings.load_to == SETTINGS_LOADTO_ZFILE ||
+        settings->menu_settings.load_to == SETTINGS_LOADTO_BOTH)
+    {
+      if (settings->menu_settings.on_load == SETTINGS_ONLOAD_RELOAD)
+        zu_execute_game(z64_file.entrance_index, z64_file.cutscene_index);
+      else if (settings->menu_settings.on_load == SETTINGS_ONLOAD_VOID)
+        zu_void();
+    }
+    return 0;
+  }
 }
 
 static void save_file_proc(struct menu_item *item, void *data)
@@ -1332,6 +1388,32 @@ static void load_file_proc(struct menu_item *item, void *data)
 {
   menu_get_file(&menu_main, GETFILE_LOAD, NULL, ".ootsave",
                 do_load_file, NULL);
+}
+
+static int load_file_to_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.load_to)
+      menu_option_set(item, settings->menu_settings.load_to);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.load_to = menu_option_get(item);
+  return 0;
+}
+
+static int on_file_load_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.on_load)
+      menu_option_set(item, settings->menu_settings.on_load);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.on_load = menu_option_get(item);
+  return 0;
 }
 
 static void clear_scene_flags_proc(struct menu_item *item, void *data)
@@ -2923,9 +3005,17 @@ static void init(void)
       menu_add_static(&menu_file, 0, 12, "z targeting", 0xC0C0C0);
       menu_add_option(&menu_file, 17, 12, "switch\0""hold\0",
                       byte_option_proc, &target_option_data);
-      menu_add_button(&menu_file, 0, 13, "save to disk",
+      menu_add_static(&menu_file, 0, 13, "load file to", 0xC0C0C0);
+      menu_add_option(&menu_file, 17, 13,
+                      "zelda file\0""current memfile\0""both\0",
+                      load_file_to_proc, &target_option_data);
+      menu_add_static(&menu_file, 0, 14, "after loading", 0xC0C0C0);
+      menu_add_option(&menu_file, 17, 14,
+                      "do nothing\0""reload scene\0""void out\0",
+                      on_file_load_proc, &target_option_data);
+      menu_add_button(&menu_file, 0, 15, "save to disk",
                       save_file_proc, NULL);
-      menu_add_button(&menu_file, 0, 14, "load from disk",
+      menu_add_button(&menu_file, 0, 16, "load from disk",
                       load_file_proc, NULL);
     }
 

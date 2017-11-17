@@ -21,6 +21,14 @@
 #define SETTINGS_BREAK_NORMAL     0
 #define SETTINGS_BREAK_AGGRESSIVE 1
 
+#define SETTINGS_LOADTO_ZFILE     0
+#define SETTINGS_LOADTO_MEMFILE   1
+#define SETTINGS_LOADTO_BOTH      2
+
+#define SETTINGS_ONLOAD_NOTHING   0
+#define SETTINGS_ONLOAD_RELOAD    1
+#define SETTINGS_ONLOAD_VOID      2
+
 enum cheats
 {
   CHEAT_ENERGY,
@@ -96,6 +104,8 @@ struct menu_settings
   uint32_t break_type    : 1;
   uint32_t warp_age      : 2;
   uint32_t warp_cutscene : 5;
+  uint32_t load_to       : 2;
+  uint32_t on_load       : 2;
 };
 
 struct settings_data

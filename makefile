@@ -6,8 +6,8 @@ LUAPATCH            = luapatch
 GRC                 = grc
 INCLUDE             = -I $(N64ROOT)/include
 LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
-CFLAGS              = -std=c11 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
-CXXFLAGS            = -std=c++14 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
+CFLAGS              = -std=gnu11 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
+CXXFLAGS            = -std=gnu++14 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
 CPPFLAGS            =
 LDFLAGS             = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -O3 -flto -Wl,--gc-sections
 LDLIBS              =
