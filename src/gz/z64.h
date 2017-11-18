@@ -234,14 +234,17 @@ typedef struct
   uint16_t  b_button_r;             /* 0x07EA */
   uint16_t  b_button_g;             /* 0x07EC */
   uint16_t  b_button_b;             /* 0x07EE */
-  char      unk_0A_[0x000E];        /* 0x07F0 */
+  char      unk_0A_[0x0004];        /* 0x07F0 */
+  qs510_t   start_icon_dd;          /* 0x07F4 */
+  int16_t   start_icon_scale;       /* 0x07F6 */
+  char      unk_0B_[0x0006];        /* 0x07F8 */
   uint16_t  start_icon_y;           /* 0x07FE */
-  char      unk_0B_[0x0002];        /* 0x0800 */
+  char      unk_0C_[0x0002];        /* 0x0800 */
   uint16_t  start_icon_x;           /* 0x0802 */
-  char      unk_0C_[0x000C];        /* 0x0804 */
+  char      unk_0D_[0x000C];        /* 0x0804 */
   uint16_t  c_up_button_x;          /* 0x0810 */
   uint16_t  c_up_button_y;          /* 0x0812 */
-  char      unk_0D_[0x0008];        /* 0x0814 */
+  char      unk_0E_[0x0008];        /* 0x0814 */
   uint16_t  start_button_x;         /* 0x081C */
   uint16_t  start_button_y;         /* 0x081E */
   uint16_t  item_button_x[4];       /* 0x0820 */
@@ -250,26 +253,26 @@ typedef struct
   uint16_t  item_icon_x[4];         /* 0x0838 */
   uint16_t  item_icon_y[4];         /* 0x0840 */
   qs510_t   item_icon_dd[4];        /* 0x0848 */
-  char      unk_0E_[0x0264];        /* 0x0850 */
+  char      unk_0F_[0x0264];        /* 0x0850 */
   uint16_t  a_button_y;             /* 0x0AB4 */
   uint16_t  a_button_x;             /* 0x0AB6 */
-  char      unk_0F_[0x0002];        /* 0x0AB8 */
+  char      unk_10_[0x0002];        /* 0x0AB8 */
   uint16_t  a_button_icon_y;        /* 0x0ABA */
   uint16_t  a_button_icon_x;        /* 0x0ABC */
-  char      unk_10_[0x0002];        /* 0x0ABE */
+  char      unk_11_[0x0002];        /* 0x0ABE */
   uint16_t  a_button_r;             /* 0x0AC0 */
   uint16_t  a_button_g;             /* 0x0AC2 */
   uint16_t  a_button_b;             /* 0x0AC4 */
-  char      unk_11_[0x0030];        /* 0x0AC6 */
+  char      unk_12_[0x0030];        /* 0x0AC6 */
   uint16_t  magic_bar_x;            /* 0x0AF6 */
   uint16_t  magic_bar_y;            /* 0x0AF8 */
   uint16_t  magic_fill_x;           /* 0x0AFA */
-  char      unk_12_[0x02D6];        /* 0x0AFC */
+  char      unk_13_[0x02D6];        /* 0x0AFC */
   int16_t   minimap_disabled;       /* 0x0DD2 */
-  char      unk_13_[0x01C0];        /* 0x0DD4 */
+  char      unk_14_[0x01C0];        /* 0x0DD4 */
   uint16_t  item_ammo_x[4];         /* 0x0F94 */
   uint16_t  item_ammo_y[4];         /* 0x0F9C */
-  char      unk_14_[0x0008];        /* 0x0FA4 */
+  char      unk_15_[0x0008];        /* 0x0FA4 */
   uint16_t  item_icon_space[4];     /* 0x0FAC */
   uint16_t  item_button_space[4];   /* 0x0FB4 */
                                     /* 0x0FBC */
@@ -852,27 +855,54 @@ typedef struct
   }               restriction_flags;      /* 0x10752 */
   char            unk_11_[0x01D6];        /* 0x1075E */
   uint16_t        pause_state;            /* 0x10934 */
-  char            unk_12_[0x0E6E];        /* 0x10936 */
+  char            unk_12_[0x0012];        /* 0x10936 */
+  uint16_t        pause_screen;           /* 0x10948 */
+  char            unk_13_[0x002E];        /* 0x1094A */
+  int16_t         item_screen_cursor;     /* 0x10978 */
+  char            unk_14_[0x0002];        /* 0x1097A */
+  int16_t         quest_screen_cursor;    /* 0x1097C */
+  int16_t         equip_screen_cursor;    /* 0x1097E */
+  int16_t         map_screen_cursor;      /* 0x10980 */
+  int16_t         item_screen_x;          /* 0x10982 */
+  char            unk_15_[0x0004];        /* 0x10984 */
+  int16_t         equipment_screen_x;     /* 0x10988 */
+  char            unk_16_[0x0002];        /* 0x1098A */
+  int16_t         item_screen_y;          /* 0x1098C */
+  char            unk_17_[0x0004];        /* 0x1099E */
+  int16_t         equipment_screen_y;     /* 0x10992 */
+  char            unk_18_[0x0004];        /* 0x10994 */
+  int16_t         pause_screen_cursor;    /* 0x10998 */
+  char            unk_19_[0x0002];        /* 0x1099A */
+  int16_t         pause_screen_item;      /* 0x1099C */
+  int16_t         item_screen_item;       /* 0x1099E */
+  int16_t         map_screen_item;        /* 0x109A0 */
+  int16_t         quest_screen_item;      /* 0x109A2 */
+  int16_t         equip_screen_item;      /* 0x109A4 */
+  char            unk_1A_[0x0004];        /* 0x109A6 */
+  int16_t         quest_screen_hilite;    /* 0x109AA */
+  char            unk_1B_[0x0018];        /* 0x109AC */
+  int16_t         quest_screen_song;      /* 0x109C4 */
+  char            unk_1C_[0x0DDE];        /* 0x109C6 */
   z64_obj_ctxt_t  obj_ctxt;               /* 0x117A4 */
   int8_t          room_index;             /* 0x11CBC */
-  char            unk_13_[0x000B];        /* 0x11CBD */
+  char            unk_1D_[0x000B];        /* 0x11CBD */
   void           *room_ptr;               /* 0x11CC8 */
-  char            unk_14_[0x0118];        /* 0x11CCC */
+  char            unk_1E_[0x0118];        /* 0x11CCC */
   uint32_t        gameplay_frames;        /* 0x11DE4 */
   uint8_t         link_age;               /* 0x11DE8 */
-  char            unk_15_;                /* 0x11DE9 */
+  char            unk_1F_;                /* 0x11DE9 */
   uint8_t         spawn_index;            /* 0x11DEA */
   uint8_t         no_map_actors;          /* 0x11DEB */
   uint8_t         no_rooms;               /* 0x11DEC */
-  char            unk_16_[0x000B];        /* 0x11DED */
+  char            unk_20_[0x000B];        /* 0x11DED */
   void           *map_actor_list;         /* 0x11DF8 */
-  char            unk_17_[0x0008];        /* 0x11DFC */
+  char            unk_21_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_18_[0x000D];        /* 0x11E08 */
+  char            unk_22_[0x000D];        /* 0x11E08 */
   int8_t          scene_load_flag;        /* 0x11E15 */
-  char            unk_19_[0x0004];        /* 0x11E16 */
+  char            unk_23_[0x0004];        /* 0x11E16 */
   int16_t         entrance_index;         /* 0x11E1A */
-  char            unk_1A_[0x0042];        /* 0x11E1C */
+  char            unk_24_[0x0042];        /* 0x11E1C */
   uint8_t         fadeout_transition;     /* 0x11E5E */
                                           /* 0x11E5F */
 } z64_game_t;

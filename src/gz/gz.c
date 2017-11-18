@@ -425,6 +425,23 @@ void save_memfile(struct memory_file *file)
   file->z_file.scene_flags[z64_game.scene_index].collectibles = f;
   memcpy(&file->scene_flags, &z64_game.switch_flags,
          sizeof(file->scene_flags));
+  /* pause screen stuff */
+  {
+    file->start_icon_dd = z64_gameinfo.start_icon_dd;
+    file->pause_screen = z64_game.pause_screen;
+    file->item_screen_cursor = z64_game.item_screen_cursor;
+    file->quest_screen_cursor = z64_game.quest_screen_cursor;
+    file->equip_screen_cursor = z64_game.equip_screen_cursor;
+    file->map_screen_cursor = z64_game.map_screen_cursor;
+    file->item_screen_x = z64_game.item_screen_x;
+    file->equipment_screen_x = z64_game.equipment_screen_x;
+    file->item_screen_y = z64_game.item_screen_y;
+    file->equipment_screen_y = z64_game.equipment_screen_y;
+    file->pause_screen_cursor = z64_game.pause_screen_cursor;
+    file->quest_screen_item = z64_game.quest_screen_item;
+    file->quest_screen_hilite = z64_game.quest_screen_hilite;
+    file->quest_screen_song = z64_game.quest_screen_song;
+  }
 }
 
 void load_memfile(struct memory_file *file)
@@ -451,6 +468,23 @@ void load_memfile(struct memory_file *file)
     z64_game.room_clear_flags = f;
     f = z64_file.scene_flags[z64_game.scene_index].collectibles;
     z64_game.collectible_flags = f;
+  }
+  /* pause screen stuff */
+  {
+    z64_gameinfo.start_icon_dd = file->start_icon_dd;
+    z64_game.pause_screen = file->pause_screen;
+    z64_game.item_screen_cursor = file->item_screen_cursor;
+    z64_game.quest_screen_cursor = file->quest_screen_cursor;
+    z64_game.equip_screen_cursor = file->equip_screen_cursor;
+    z64_game.map_screen_cursor = file->map_screen_cursor;
+    z64_game.item_screen_x = file->item_screen_x;
+    z64_game.equipment_screen_x = file->equipment_screen_x;
+    z64_game.item_screen_y = file->item_screen_y;
+    z64_game.equipment_screen_y = file->equipment_screen_y;
+    z64_game.pause_screen_cursor = file->pause_screen_cursor;
+    z64_game.quest_screen_item = file->quest_screen_item;
+    z64_game.quest_screen_hilite = file->quest_screen_hilite;
+    z64_game.quest_screen_song = file->quest_screen_song;
   }
   for (int i = 0; i < 4; ++i)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
