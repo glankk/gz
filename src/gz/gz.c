@@ -993,6 +993,19 @@ static int byte_mod_indirect_proc(struct menu_item *item,
   return 0;
 }
 
+static int double_defense_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    z64_file.double_defense = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    z64_file.double_defense = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, z64_file.double_defense);
+  return 0;
+}
+
 static int magic_acquired_proc(struct menu_item *item,
                                enum menu_callback_reason reason,
                                void *data)
@@ -2715,7 +2728,8 @@ static void init(void)
     menu_add_intinput(&menu_quest_items, 14, 1, 16, 4,
                       halfword_mod_proc, &z64_file.energy_capacity);
     menu_add_static(&menu_quest_items, 0, 2, "defense", 0xC0C0C0);
-    menu_add_intinput(&menu_quest_items, 14, 2, 16, 2,
+    menu_add_checkbox(&menu_quest_items, 14, 2, double_defense_proc, NULL);
+    menu_add_intinput(&menu_quest_items, 16, 2, 16, 2,
                       byte_mod_proc, &z64_file.defense_hearts);
     menu_add_static(&menu_quest_items, 0, 3, "magic", 0xC0C0C0);
     menu_add_checkbox(&menu_quest_items, 14, 3, magic_acquired_proc, NULL);

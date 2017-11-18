@@ -299,7 +299,7 @@ typedef struct
   uint8_t         magic_acquired;     /* 0x003A */
   char            unk_03_;            /* 0x003B */
   uint8_t         magic_capacity;     /* 0x003C */
-  char            unk_04_;            /* 0x003D */
+  int8_t          double_defense;     /* 0x003D */
   int8_t          bgs_flag;           /* 0x003E */
   char            unk_05_[0x0027];    /* 0x003F */
   int16_t         scene_index;        /* 0x0066 */
