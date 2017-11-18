@@ -127,7 +127,7 @@ enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf)
   for (int i = 1; i < resp_size; i++)
     resp_buf_u8[i] = ed_spi_transmit(0xFF);
   /* verify crc if applicable */
-  if (resp_type != SD_R3) {
+  if (resp_buf && resp_type != SD_R3) {
     uint8_t crc;
     if (resp_type == SD_R2)
       crc = crc7(&resp_buf_u8[1], resp_size - 2);
@@ -172,9 +172,7 @@ enum ed_error ed_sd_init(void)
     ed_spi_transmit(0xFF);
   /* 2.7-3.6V, check pattern 0b10101010 */
   e = ed_sd_cmd_r(SD_CMD_SEND_IF_COND, 0x1AA, NULL);
-  if (e == ED_ERROR_SD_CMD_CRC)
-    return e;
-  else if (e == ED_ERROR_SUCCESS)
+  if (e == ED_ERROR_SUCCESS)
     card_type |= SD_V2;
   /* else timeout, PLS v2.00 not supported */
   /* do initialization */
@@ -346,17 +344,11 @@ enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
       }
     if (timeout)
       return ED_ERROR_SD_WR_TIMEOUT;
-    /* receive and check crc status */
+    /* receive crc status */
     uint8_t resp = 0;
     for (int i = 0; i < 3; i++) {
       resp <<= 1;
       resp |= ed_spi_transmit(0xFF) & 1;
-    }
-    if (resp != 0b010) {
-      e = ed_sd_stop_rw();
-      if (e)
-        return e;
-      return ED_ERROR_SD_WR_CRC;
     }
     /* wait for free data receive buffer */
     timeout = 1;
@@ -369,6 +361,13 @@ enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
       }
     if (timeout)
       return ED_ERROR_SD_WR_TIMEOUT;
+    /* check crc status */
+    if (resp != 0b010) {
+      e = ed_sd_stop_rw();
+      if (e)
+        return e;
+      return ED_ERROR_SD_WR_CRC;
+    }
     /* increase block counter */
     if (n_write)
       ++*n_write;
