@@ -84,6 +84,7 @@ void settings_load_default(void)
   d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
   d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_RESET] = input_bind_make(0);
   d->binds[COMMAND_TURBO] = input_bind_make(0);
   d->binds[COMMAND_FALL] = input_bind_make(0);
   d->binds[COMMAND_AGE] = input_bind_make(0);

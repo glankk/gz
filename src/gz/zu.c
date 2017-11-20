@@ -285,6 +285,60 @@ void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
   z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
 }
 
+void zu_reset(void)
+{
+  volatile uint32_t *mi_intr = (void*)0xA4300008;
+  volatile uint32_t *sp_status = (void*)0xA4040010;
+  volatile uint32_t *pi_status = (void*)0xA4600010;
+  /* disable interrupts */
+  __asm__ volatile ("mfc0 $t0, $12  \n"
+                    "and  $t0, %0   \n"
+                    "mtc0 $t0, $12  \n" :: "r"(~MIPS_STATUS_IE));
+  /* wait for rsp to halt */
+  while (!(*sp_status & 3))
+    ;
+  /* wait for dma busy */
+  while (*pi_status & 3)
+    ;
+  /* reset pi */
+  *pi_status = 3;
+  /* wait for vblank */
+  while (!(*mi_intr & 8))
+    ;
+  /* copy pif code to rsp imem */
+  uint32_t imem[] =
+  {
+    MIPS_LUI(MIPS_T5, 0xBFC0),
+    MIPS_LW(MIPS_T0, 0x07FC, MIPS_T5),
+    MIPS_ADDIU(MIPS_T5, MIPS_T5, 0x07C0),
+    MIPS_ANDI(MIPS_T0, MIPS_T0, 0x0080),
+    MIPS_BNEZL(MIPS_T0, -4 * 4),
+    MIPS_LUI(MIPS_T5, 0xBFC0),
+    MIPS_LW(MIPS_T0, 0x0024, MIPS_T5),
+    MIPS_LUI(MIPS_T3, 0xB000),
+  };
+  memcpy((void*)0xA4001000, imem, sizeof(imem));
+  /* copy cic boot code to rsp dmem */
+  memcpy((void*)0xA4000040, (void*)0xB0000040, 0x0FC0);
+  /* simulate boot from cic boot code */
+  __asm__ volatile ("lui  $t0, 0x8000       \n"
+                    /* osRomType (0: N64, 1: 64DD) */
+                    "li   $s3, 0x0000       \n"
+                    /* osTvType (0: PAL, 1: NTSC, 2: MPAL) */
+                    "lw   $s4, 0x0300($t0)  \n"
+                    /* osResetType (0: Cold, 1: NMI) */
+                    "li   $s5, 0x0001       \n"
+                    /* osCicId (3F: 6101/6102, 78: 6103, 91: 6105, 85: 6106) */
+                    "li   $s6, 0x0091       \n"
+                    /* osVersion */
+                    "lw   $s7, 0x0314($t0)  \n"
+                    /* go */
+                    "la   $t3, 0xA4000040   \n"
+                    "la   $sp, 0xA4001FF0   \n"
+                    "la   $ra, 0xA4001550   \n"
+                    "jr   $t3               \n");
+}
+
 void zu_void(void)
 {
   z64_file.temp_switch_flags = z64_game.temp_switch_flags;

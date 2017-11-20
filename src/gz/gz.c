@@ -410,6 +410,12 @@ static const char *cheat_names[] =
   "no minimap",
 };
 
+static void do_warp(int16_t entrance_index, uint16_t cutscene_index)
+{
+  override_offset = 1;
+  zu_execute_game(entrance_index, cutscene_index);
+}
+
 void save_memfile(struct memory_file *file)
 {
   memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
@@ -585,12 +591,6 @@ void command_fileselect(void)
   zu_execute_filemenu();
 }
 
-static void do_warp(int16_t entrance_index, uint16_t cutscene_index)
-{
-  override_offset = 1;
-  zu_execute_game(entrance_index, cutscene_index);
-}
-
 void command_reload(void)
 {
   do_warp(z64_file.entrance_index, 0x0000);
@@ -599,6 +599,11 @@ void command_reload(void)
 void command_void(void)
 {
   zu_void();
+}
+
+void command_reset(void)
+{
+  zu_reset();
 }
 
 void command_turbo(void)
@@ -689,6 +694,7 @@ static struct command_info command_info[] =
   {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
   {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
   {"void out",          command_void,         CMDACT_PRESS_ONCE},
+  {"reset",             command_reset,        CMDACT_PRESS_ONCE},
   {"turbo",             command_turbo,        CMDACT_HOLD},
   {"fall",              command_fall,         CMDACT_HOLD},
   {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
