@@ -17,9 +17,10 @@ static int do_callback(int index)
     return 0;
 }
 
-static int leave_proc(struct menu_item *item)
+static int leave_proc(struct menu_item *item, enum menu_switch_reason reason)
 {
-  do_callback(-1);
+  if (reason == MENU_SWITCH_RETURN)
+    do_callback(-1);
   return 0;
 }
 

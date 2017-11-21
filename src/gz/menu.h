@@ -33,6 +33,14 @@ enum menu_callback_reason
   MENU_CALLBACK_CHANGED,
 };
 
+enum menu_switch_reason
+{
+  MENU_SWITCH_ENTER,
+  MENU_SWITCH_RETURN,
+  MENU_SWITCH_SHOW,
+  MENU_SWITCH_HIDE,
+};
+
 struct menu_draw_params
 {
   int               x;
@@ -64,8 +72,10 @@ struct menu_item
   void             *data;
   _Bool             selectable;
   struct menu      *imenu;
-  int             (*enter_proc)   (struct menu_item *item);
-  int             (*leave_proc)   (struct menu_item *item);
+  int             (*enter_proc)   (struct menu_item *item,
+                                   enum menu_switch_reason reason);
+  int             (*leave_proc)   (struct menu_item *item,
+                                   enum menu_switch_reason reason);
   int             (*think_proc)   (struct menu_item *item);
   int             (*draw_proc)    (struct menu_item *item,
                                    struct menu_draw_params *draw_params);
@@ -139,6 +149,7 @@ void                menu_set_alpha(struct menu *menu, float alpha);
 int                 menu_cell_screen_x(struct menu *menu, int cell_x);
 int                 menu_cell_screen_y(struct menu *menu, int cell_y);
 struct menu_item   *menu_get_selector(struct menu *menu);
+struct menu        *menu_get_top(struct menu *menu);
 struct menu        *menu_get_front(struct menu *menu);
 int                 menu_think(struct menu *menu);
 void                menu_draw(struct menu *menu);
@@ -147,8 +158,10 @@ void                menu_activate(struct menu *menu);
 void                menu_enter(struct menu *menu, struct menu *submenu);
 struct menu        *menu_return(struct menu *menu);
 void                menu_select(struct menu *menu, struct menu_item *item);
-void                menu_signal_enter(struct menu *menu);
-void                menu_signal_leave(struct menu *menu);
+void                menu_signal_enter(struct menu *menu,
+                                      enum menu_switch_reason reason);
+void                menu_signal_leave(struct menu *menu,
+                                      enum menu_switch_reason reason);
 void                menu_navigate_top(struct menu *menu,
                                       enum menu_navigation nav);
 void                menu_activate_top(struct menu *menu);

@@ -58,6 +58,10 @@
 			</Target>
 		</Build>
 		<Unit filename="res/resources.json" />
+		<Unit filename="src/gz/adex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/adex.h" />
 		<Unit filename="src/gz/ed.h" />
 		<Unit filename="src/gz/ed_io.c">
 			<Option compilerVar="CC" />

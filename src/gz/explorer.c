@@ -178,7 +178,7 @@ static void draw_crosshair(struct menu_item *item)
   );
 }
 
-static int enter_proc(struct menu_item *item)
+static int enter_proc(struct menu_item *item, enum menu_switch_reason reason)
 {
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_Z);
@@ -187,7 +187,7 @@ static int enter_proc(struct menu_item *item)
   return 0;
 }
 
-static int leave_proc(struct menu_item *item)
+static int leave_proc(struct menu_item *item, enum menu_switch_reason reason)
 {
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_Z);

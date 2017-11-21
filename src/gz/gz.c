@@ -830,7 +830,7 @@ static int timer_proc(struct menu_item *item,
 
 static void show_menu(void)
 {
-  menu_signal_enter(&menu_main);
+  menu_signal_enter(&menu_main, MENU_SWITCH_SHOW);
   menu_active = 1;
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_L);
@@ -839,7 +839,7 @@ static void show_menu(void)
 
 static void hide_menu(void)
 {
-  menu_signal_leave(&menu_main);
+  menu_signal_leave(&menu_main, MENU_SWITCH_HIDE);
   menu_active = 0;
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_L);

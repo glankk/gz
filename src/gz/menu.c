@@ -172,6 +172,13 @@ struct menu_item *menu_get_selector(struct menu *menu)
   return menu->selector;
 }
 
+struct menu *menu_get_top(struct menu *menu)
+{
+  if (menu->parent)
+    return menu_get_top(menu->parent);
+  return menu;
+}
+
 struct menu *menu_get_front(struct menu *menu)
 {
   if (menu->child)
@@ -327,10 +334,10 @@ void menu_enter(struct menu *menu, struct menu *submenu)
 {
   if (menu->child)
     return menu_enter(menu->child, submenu);
-  menu_signal_leave(menu);
+  menu_signal_leave(menu, MENU_SWITCH_ENTER);
   menu->child = submenu;
   submenu->parent = menu;
-  menu_signal_enter(submenu);
+  menu_signal_enter(submenu, MENU_SWITCH_ENTER);
 }
 
 struct menu *menu_return(struct menu *menu)
@@ -340,10 +347,10 @@ struct menu *menu_return(struct menu *menu)
   struct menu *parent = menu->parent;
   if (!parent || parent->child != menu)
     return NULL;
-  menu_signal_leave(menu);
+  menu_signal_leave(menu, MENU_SWITCH_RETURN);
   menu->parent = NULL;
   parent->child = NULL;
-  menu_signal_enter(parent);
+  menu_signal_enter(parent, MENU_SWITCH_RETURN);
   return parent;
 }
 
@@ -357,31 +364,31 @@ void menu_select(struct menu *menu, struct menu_item *item)
   item->owner->selector = item;
 }
 
-void menu_signal_enter(struct menu *menu)
+void menu_signal_enter(struct menu *menu, enum menu_switch_reason reason)
 {
   if (menu->child)
-    return menu_signal_enter(menu->child);
+    return menu_signal_enter(menu->child, reason);
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
-    if (item->enter_proc && item->enter_proc(item))
+    if (item->enter_proc && item->enter_proc(item, reason))
       continue;
     if (item->imenu)
-      menu_signal_enter(item->imenu);
+      menu_signal_enter(item->imenu, reason);
   }
 }
 
-void menu_signal_leave(struct menu *menu)
+void menu_signal_leave(struct menu *menu, enum menu_switch_reason reason)
 {
   if (menu->child)
-    return menu_signal_leave(menu->child);
+    return menu_signal_leave(menu->child, reason);
   for (struct menu_item *item = menu->items.first;
        item; item = list_next(item))
   {
-    if (item->leave_proc && item->leave_proc(item))
+    if (item->leave_proc && item->leave_proc(item, reason))
       continue;
     if (item->imenu)
-      menu_signal_leave(item->imenu);
+      menu_signal_leave(item->imenu, reason);
   }
 }
 

@@ -10,21 +10,6 @@
 
 #define FILE_VIEW_ROWS    14
 
-struct dir_state
-{
-  int     scroll;
-  int     index;
-};
-
-struct dir_entry
-{
-  char    name[256];
-  _Bool   dir;
-  int     tile;
-  char    text[32];
-  int     anim_state;
-};
-
 /* params */
 static enum get_file_mode gf_mode;
 static char              *gf_suffix;
@@ -45,6 +30,21 @@ static struct menu_item  *gf_clear;
 static struct menu_item  *gf_scroll_up;
 static struct menu_item  *gf_scroll_down;
 static struct menu_item  *gf_files[FILE_VIEW_ROWS];
+
+struct dir_state
+{
+  int     scroll;
+  int     index;
+};
+
+struct dir_entry
+{
+  char    name[256];
+  _Bool   dir;
+  int     tile;
+  char    text[32];
+  int     anim_state;
+};
 
 static _Bool stricmp(const char *a, const char *b)
 {
@@ -217,7 +217,8 @@ static void return_path(const char *name)
   free(path);
 }
 
-static int file_enter_proc(struct menu_item *item)
+static int file_enter_proc(struct menu_item *item,
+                           enum menu_switch_reason reason)
 {
   int row = (int)item->data;
   struct dir_state *ds = vector_at(&gf_dir_state, 0);

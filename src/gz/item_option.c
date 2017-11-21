@@ -237,7 +237,7 @@ static void create_wheel(struct menu *menu, struct item_data *data)
   animate_wheel(data, 1.f);
 }
 
-static int enter_proc(struct menu_item *item)
+static int enter_proc(struct menu_item *item, enum menu_switch_reason reason)
 {
   struct item_data *data = item->data;
   data->anim_state = 0;
