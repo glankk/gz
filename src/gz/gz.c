@@ -168,6 +168,7 @@ enum movie_state
 };
 
 #define                     CPU_COUNTER_FREQ 46875000
+static _Bool                first_run = 1;
 static uint8_t              profile = 0;
 static struct menu          menu_main;
 static struct menu          menu_explorer;
@@ -2150,6 +2151,9 @@ static void main_hook(void)
     z64_gameinfo.minimap_disabled = 1;
 
   for (int i = 0; i < COMMAND_MAX; ++i) {
+    /* prevent instant resets */
+    if (first_run && i == COMMAND_RESET)
+      continue;
     _Bool active = 0;
     switch (command_info[i].activation_type) {
       case CMDACT_HOLD:       active = input_bind_held(i);        break;
@@ -2313,6 +2317,7 @@ static void main_hook(void)
   }
 
   gfx_flush();
+  first_run = 0;
 }
 
 static void entrance_offset_hook()
