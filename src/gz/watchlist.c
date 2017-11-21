@@ -479,10 +479,10 @@ static void watchfile_view(struct menu *menu)
 static _Bool parse_line(const char *line, const char **err_str)
 {
   const char *p = line;
-  /* skip whitespace, check for comment */
-  while (*p == ' ' || *p == '\t')
+  /* skip whitespace, check for comment or empty line */
+  while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n')
     ++p;
-  if (*p == '#')
+  if (*p == '#' || *p == 0)
     return 1;
   /* read name part */
   if (*p++ != '"')

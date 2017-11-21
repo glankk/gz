@@ -539,6 +539,8 @@ static uint32_t link_free_clust(struct fat *fat, uint32_t clust,
   }
   /* find cluster */
   uint32_t free_clust = find_free_clust(fat, start);
+  if (free_clust == clust)
+    free_clust = find_free_clust(fat, clust + 1);
   if (free_clust != 0) {
     /* link cluster */
     if (set_clust(fat, clust, free_clust))

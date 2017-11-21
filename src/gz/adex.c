@@ -204,12 +204,12 @@ enum adex_error adex_parse(struct adex *adex, const char *str)
     struct tok tok;
     int op;
     /* parse whitespace */
-    if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+    if (c == ' ' || c == '\t') {
       ++p;
       continue;
     }
-    /* parse comment */
-    else if (c == '#')
+    /* parse comment and end-of-line */
+    else if (c == '#' || c == '\r' || c == '\n')
       break;
     /* parse operator */
     else if (parse_op(&p, &op))
@@ -220,6 +220,7 @@ enum adex_error adex_parse(struct adex *adex, const char *str)
       if (!word)
         goto mem_err;
       char *word_s = word;
+      char *word_e = word_s + strlen(word_s);
       int base;
       if (strncmp(word, "0x", 2) == 0 || strncmp(word, "0X", 2) == 0) {
         base = 16;
@@ -229,14 +230,13 @@ enum adex_error adex_parse(struct adex *adex, const char *str)
         base = 2;
         word_s += 2;
       }
-      else if (strncmp(word, "0", 1) == 0) {
+      else if (strncmp(word, "0", 1) == 0 && word_e - word_s > 1) {
         base = 8;
         word_s += 1;
       }
       else
         base = 10;
-      char *word_e = word_s + strlen(word_s);
-      if (word_e == word_s) {
+      if (word_s == word_e) {
         free(word);
         goto syntax_err;
       }
