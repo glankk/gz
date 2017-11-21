@@ -2437,7 +2437,7 @@ static void init(void)
   }
 
   /* load settings */
-  if ((z64_input_direct.raw.pad & BUTTON_START) || !settings_load(profile))
+  if (z64_input_direct.raw.pad == BUTTON_START || !settings_load(profile))
     settings_load_default();
 
   /* initialize gfx */
