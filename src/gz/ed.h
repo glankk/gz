@@ -2,35 +2,37 @@
 #define ED_H
 #include <stdint.h>
 
-#define ED_CFG_SDRAM_ON             0
-#define ED_CFG_SWAP                 1
-#define ED_CFG_WR_MOD               2
-#define ED_CFG_WR_ADDR_MASK         3
+#define ed_regs                     (*(volatile ed_regs_t*)0xA8040000)
 
-#define ED_STATE_DMA_BUSY           0
-#define ED_STATE_DMA_TOUT           1
-#define ED_STATE_TXE                2
-#define ED_STATE_RXF                3
-#define ED_STATE_SPI                4
+#define ED_CFG_SDRAM_ON             ((uint32_t)1 << 0)
+#define ED_CFG_SWAP                 ((uint32_t)1 << 1)
+#define ED_CFG_WR_MOD               ((uint32_t)1 << 2)
+#define ED_CFG_WR_ADDR_MASK         ((uint32_t)1 << 3)
 
-#define DCFG_SD_TO_RAM              1
-#define DCFG_RAM_TO_SD              2
-#define DCFG_FIFO_TO_RAM            3
-#define DCFG_RAM_TO_FIFO            4
+#define ED_STATE_DMA_BUSY           ((uint32_t)1 << 0)
+#define ED_STATE_DMA_TOUT           ((uint32_t)1 << 1)
+#define ED_STATE_TXE                ((uint32_t)1 << 2)
+#define ED_STATE_RXF                ((uint32_t)1 << 3)
+#define ED_STATE_SPI                ((uint32_t)1 << 4)
 
-#define SPI_CFG_SPD0                0
-#define SPI_CFG_SPD1                1
-#define SPI_CFG_SS                  2
-#define SPI_CFG_RD                  3
-#define SPI_CFG_DAT                 4
-#define SPI_CFG_1BIT                5
+#define ED_DMA_SD_TO_RAM            1
+#define ED_DMA_RAM_TO_SD            2
+#define ED_DMA_FIFO_TO_RAM          3
+#define ED_DMA_RAM_TO_FIFO          4
 
-#define SPI_SPEED_INIT              2
-#define SPI_SPEED_25                1
-#define SPI_SPEED_50                0
+#define ED_SPI_CFG_SPDMASK          ((uint32_t)0x00000003)
+#define ED_SPI_CFG_SPDSHIFT         0
+#define ED_SPI_CFG_SS               ((uint32_t)1 << 2)
+#define ED_SPI_CFG_RD               ((uint32_t)1 << 3)
+#define ED_SPI_CFG_DAT              ((uint32_t)1 << 4)
+#define ED_SPI_CFG_1BIT             ((uint32_t)1 << 5)
 
-#define SD_V2                       2
-#define SD_HC                       1
+#define ED_SPI_SPEED_50             0
+#define ED_SPI_SPEED_25             1
+#define ED_SPI_SPEED_INIT           2
+
+#define SD_HC                       ((uint32_t)1 << 0)
+#define SD_V2                       ((uint32_t)1 << 1)
 
 #define SD_CMD_GO_IDLE_STATE        0
 #define SD_CMD_ALL_SEND_CID         2
@@ -86,8 +88,6 @@ typedef struct
   uint32_t crc;
 } ed_regs_t;
 
-#define ed_regs                     (*(volatile ed_regs_t*)0xA8040000)
-
 enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_init(void);
@@ -99,6 +99,7 @@ enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
                             void *src, uint32_t *n_write);
 enum ed_error ed_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
 enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
+enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst);
 enum ed_error ed_sd_stop_rw(void);
 
 void          ed_spi_ss(_Bool enable);

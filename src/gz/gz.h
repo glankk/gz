@@ -6,6 +6,8 @@
 struct memory_file
 {
   z64_file_t  z_file;
+  _Bool       entrance_override;
+  int32_t     next_entrance;
   uint16_t    scene_index;
   uint32_t    scene_flags[9];
   qs510_t     start_icon_dd;

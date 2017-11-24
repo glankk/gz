@@ -340,6 +340,11 @@ static void cache_dirty(struct fat *fat, int index)
   fat->cache[index].dirty = 1;
 }
 
+static void cache_inval(struct fat *fat, int index)
+{
+  fat->cache[index].valid = 0;
+}
+
 static void cache_read(struct fat *fat, int index, uint32_t offset,
                        void *dst, uint32_t length)
 {
@@ -509,26 +514,9 @@ static int advance_clust(struct fat *fat, uint32_t *clust)
   return 1;
 }
 
-/* find first free cluster after `start` */
-static uint32_t find_free_clust(struct fat *fat, uint32_t start)
-{
-  if (start < 2)
-    start = 2;
-  for (uint32_t i = start; i < fat->max_clust; ++i) {
-    uint32_t value;
-    if (get_clust(fat, i, &value))
-      return 0;
-    if (value == 0)
-      return i;
-  }
-  errno = ENOSPC;
-  return 0;
-}
-
-/* link `cluster` to the first free cluster after `start`,
-   mark as end-of-chain if `eoc` */
-static uint32_t link_free_clust(struct fat *fat, uint32_t clust,
-                                uint32_t start, _Bool eoc)
+/* check the number of free clusters in a sequence from `clust`, up to `max` */
+static uint32_t check_free_chunk_length(struct fat *fat, uint32_t clust,
+                                        uint32_t max)
 {
   /* treat reserved clusters as the root directory */
   if (clust < 2) {
@@ -537,23 +525,73 @@ static uint32_t link_free_clust(struct fat *fat, uint32_t clust,
     else
       return 0;
   }
-  /* find cluster */
-  uint32_t free_clust = find_free_clust(fat, start);
-  if (free_clust == clust)
-    free_clust = find_free_clust(fat, clust + 1);
-  if (free_clust != 0) {
-    /* link cluster */
-    if (set_clust(fat, clust, free_clust))
+  uint32_t length = 0;
+  while (length < max && clust < fat->max_clust) {
+    uint32_t value;
+    if (get_clust(fat, clust, &value))
       return 0;
-    /* add end-of-chain marker */
-    if (eoc)
-      set_clust(fat, free_clust, 0x0FFFFFFF);
+    if (value != 0)
+      break;
+    ++length;
+    ++clust;
   }
-  return free_clust;
+  return length;
+}
+
+/* find the first free cluster after `clust` (inclusive),
+   preferably with at most `pref_length` free clusters chunked in a sequence.
+   returns the actual chunk length in `*length` if given. */
+static uint32_t find_free_clust(struct fat *fat, uint32_t clust,
+                                uint32_t pref_length, uint32_t *length)
+{
+  if (clust < 2)
+    clust = 2;
+  uint32_t max_clust = 0;
+  uint32_t max_length = 0;
+  while (max_length < pref_length && clust < fat->max_clust) {
+    uint32_t chunk_length = check_free_chunk_length(fat, clust, pref_length);
+    if (chunk_length > max_length) {
+      max_clust = clust;
+      max_length = chunk_length;
+    }
+    if (chunk_length > 0)
+      clust += chunk_length;
+    else
+      ++clust;
+  }
+  if (max_length == 0)
+    errno = ENOSPC;
+  if (length)
+    *length = max_length;
+  return max_clust;
+}
+
+/* link `clust` to `next_clust`, mark as end-of-chain if `eoc`. */
+static int link_clust(struct fat *fat, uint32_t clust, uint32_t next_clust,
+                      _Bool eoc)
+{
+  /* treat reserved clusters as the root directory */
+  if (clust < 2) {
+    if (fat->type == FAT32)
+      clust = fat->root_clust;
+    else {
+      errno = EINVAL;
+      return -1;
+    }
+  }
+  /* link cluster */
+  if (set_clust(fat, clust, next_clust))
+    return -1;
+  /* add end-of-chain marker */
+  if (eoc) {
+    if (set_clust(fat, next_clust, 0x0FFFFFFF))
+      return -1;
+  }
+  return 0;
 }
 
 /* check if there are at least `needed` free clusters available */
-static int check_free_clust(struct fat *fat, uint32_t needed)
+static int check_free_space(struct fat *fat, uint32_t needed)
 {
   uint32_t n_free = 0;
   for (uint32_t i = 2; i < fat->max_clust && n_free < needed; ++i) {
@@ -571,8 +609,10 @@ static int check_free_clust(struct fat *fat, uint32_t needed)
 }
 
 /* resize the cluster chain that begins at `cluster` to length `n`,
-   link and unlink clusters as needed */
-static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
+   link and unlink clusters as needed. `chunk_length` is the precomputed
+   number of free clusters in sequence at the end of the chain, or zero. */
+static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n,
+                              uint32_t chunk_length)
 {
   /* treat reserved clusters as the root directory */
   if (clust < 2) {
@@ -585,6 +625,7 @@ static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
   }
   /* walk cluster chain */
   _Bool eoc = 0;
+  uint32_t n_alloc = 0;
   uint32_t new_clust = 0;
   for (uint32_t i = 0; i < n || !eoc; ++i) {
     uint32_t value;
@@ -596,7 +637,8 @@ static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
       if (n > i + 1) {
         /* check if there's enough space left for the
            additional requested clusters */
-        if (check_free_clust(fat, n - (i + 1)))
+        n_alloc = n - (i + 1);
+        if (check_free_space(fat, n_alloc))
           return -1;
       }
       eoc = 1;
@@ -612,9 +654,19 @@ static int resize_clust_chain(struct fat *fat, uint32_t clust, uint32_t n)
       clust = value;
     }
     else if (eoc) {
-      new_clust = link_free_clust(fat, clust, new_clust, 0);
-      if (new_clust == 0)
+      if (chunk_length == 0) {
+        new_clust = find_free_clust(fat, new_clust, n_alloc, &chunk_length);
+        if (new_clust == clust)
+          new_clust = find_free_clust(fat, clust + 1, n_alloc, &chunk_length);
+        if (new_clust == 0)
+          return -1;
+        n_alloc -= chunk_length;
+      }
+      else
+        new_clust = clust + 1;
+      if (link_clust(fat, clust, new_clust, 0))
         return -1;
+      --chunk_length;
       clust = new_clust;
     }
     else
@@ -759,6 +811,67 @@ uint32_t fat_advance(struct fat_file *file, uint32_t n_byte, _Bool *eof)
   return p_off - old_off;
 }
 
+/* copy multiple clusters to or from a file and advance.
+   assumes the file is pointed at the start of a cluster. */
+static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
+                         uint32_t n_clust, _Bool *eof)
+{
+  struct fat *fat = file->fat;
+  char *p = buf;
+  /* flush and invalidate data cache to prevent conflicts */
+  cache_flush(fat, FAT_CACHE_DATA);
+  cache_inval(fat, FAT_CACHE_DATA);
+  /* treat reserved clusters as the root directory */
+  uint32_t clust = file->p_clust;
+  if (clust < 2)
+    clust = fat->root_clust;
+  /* cluster loop */
+  uint32_t n_copy = 0;
+  while (n_clust > 0) {
+    uint32_t chunk_start = clust;
+    uint32_t chunk_length = 1;
+    /* compute consecutive cluster chunk length */
+    while (1) {
+      uint32_t p_clust = clust;
+      if (get_clust(fat, clust, &clust))
+        return n_copy;
+      if (clust >= 0x0FFFFFF7 || clust != p_clust + 1 ||
+          chunk_length >= n_clust)
+      {
+        break;
+      }
+      ++chunk_length;
+    }
+    /* copy chunk */
+    uint32_t lba = fat->data_lba + fat->n_clust_sect * (chunk_start - 2);
+    uint32_t n_block = fat->n_clust_sect * chunk_length;
+    uint32_t n_byte = n_block * fat->n_sect_byte;
+    int e;
+    if (rw == FAT_READ)
+      e = fat->read(lba, n_block, p);
+    else
+      e = fat->write(lba, n_block, p);
+    if (e)
+      break;
+    n_clust -= chunk_length;
+    n_copy += chunk_length;
+    file->p_off += n_byte;
+    file->p_clust_seq += chunk_length;
+    if (clust < 2 || clust >= 0x0FFFFFF7) {
+      file->p_clust_sect = fat->n_clust_sect - 1;
+      file->p_sect_off = fat->n_sect_byte;
+      if (eof)
+        *eof = 1;
+      break;
+    }
+    else {
+      file->p_clust = clust;
+      p += n_byte;
+    }
+  }
+  return n_copy;
+}
+
 /* copy bytes to or from a file, returns the number of bytes copied.
    the updated file pointer is stored to `new_file` if given. */
 uint32_t fat_rw(struct fat_file *file, enum fat_rw rw, void *buf,
@@ -782,12 +895,29 @@ uint32_t fat_rw(struct fat_file *file, enum fat_rw rw, void *buf,
     if (new_off > file->size || new_off < file->p_off)
       n_byte = file->size - file->p_off;
   }
+  _Bool no_clust = fat->type != FAT32 && file->clust < 2;
   /* traverse file with a local copy of the file pointer */
   struct fat_file pos = *file;
   /* sector loop */
   char *p = buf;
   uint32_t n_copy = 0;
   while (n_byte > 0) {
+    /* write cluster chunks if possible */
+    if (!no_clust && n_byte >= fat->n_clust_byte &&
+        pos.p_clust_sect == 0 && pos.p_sect_off == 0)
+    {
+      uint32_t n_clust = n_byte / fat->n_clust_byte;
+      uint32_t n_copy_clust = clust_rw(&pos, rw, p, n_clust, &ate);
+      uint32_t n_byte_clust = n_copy_clust * fat->n_clust_byte;
+      if (p)
+        p += n_byte_clust;
+      n_byte -= n_byte_clust;
+      n_copy += n_byte_clust;
+      if (n_copy_clust != n_clust || ate)
+        break;
+      else
+        continue;
+    }
     /* compute chunk size */
     uint32_t chunk_size = fat->n_sect_byte - pos.p_sect_off;
     if (chunk_size > n_byte)
@@ -1317,8 +1447,10 @@ static int dir_insert(struct fat *fat, uint32_t dir_clust, const char *name,
         return -1;
       pos = ent_p;
       /* expand directory file */
-      uint32_t new_clust = link_free_clust(fat, pos.p_clust, 0, 1);
+      uint32_t new_clust = find_free_clust(fat, 0, 1, NULL);
       if (new_clust == 0)
+        return -1;
+      if (link_clust(fat, pos.p_clust, new_clust, 1))
         return -1;
       struct fat_file clust_pos;
       begin_dir(fat, &clust_pos, new_clust);
@@ -1541,7 +1673,7 @@ int fat_create(struct fat *fat, struct fat_entry *dir, const char *path,
   /* allocate directory cluster */
   uint32_t clust = 0;
   if (is_dir) {
-    clust = find_free_clust(fat, 0);
+    clust = find_free_clust(fat, 0, 1, NULL);
     if (clust < 2)
       return -1;
     /* end cluster chain */
@@ -1633,16 +1765,18 @@ int fat_resize(struct fat_entry *entry, uint32_t size, struct fat_file *file)
   if (size == entry->size)
     return 0;
   /* allocate a cluster if the file is empty */
+  uint32_t n_clust = (size + fat->n_clust_byte - 1) / fat->n_clust_byte;
   uint32_t clust = entry->clust;
+  uint32_t chunk_length = 0;
   if (size > 0 && clust < 2) {
-    clust = find_free_clust(fat, 0);
-    if (clust < 2)
+    clust = find_free_clust(fat, 0, n_clust, &chunk_length);
+    if (clust == 0)
       return -1;
+    --chunk_length;
   }
   /* resize cluster chain */
-  uint32_t n_clust = (size + fat->n_clust_byte - 1) / fat->n_clust_byte;
   if (clust >= 2) {
-    if (resize_clust_chain(fat, clust, n_clust))
+    if (resize_clust_chain(fat, clust, n_clust, chunk_length))
       return -1;
   }
   if (n_clust == 0)
@@ -1817,7 +1951,7 @@ int fat_remove(struct fat_entry *entry)
     return -1;
   /* free cluster chain */
   if (entry->clust >= 2) {
-    if (resize_clust_chain(fat, entry->clust, 0))
+    if (resize_clust_chain(fat, entry->clust, 0, 0))
       return -1;
   }
   /* remove physical entries */

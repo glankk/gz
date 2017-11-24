@@ -31,10 +31,20 @@ static _Bool            fat_ready = 0;
 static struct fat       fat;
 static void            *desc_list[OPEN_MAX] = {NULL};
 static struct fat_path *wd = NULL;
+static int              io_mode = SYS_IO_PIO;
 
 static int read_sd(uint32_t lba, uint32_t n_block, void *buf)
 {
-  if (ed_sd_read(lba, n_block, buf) != ED_ERROR_SUCCESS) {
+  enum ed_error e;
+  if (io_mode == SYS_IO_PIO)
+    e = ed_sd_read(lba, n_block, buf);
+  else if (io_mode == SYS_IO_DMA)
+    e = ed_sd_read_dma(lba, n_block, buf);
+  else {
+    errno = EINVAL;
+    return -1;
+  }
+  if (e != ED_ERROR_SUCCESS) {
     errno = EIO;
     return -1;
   }
@@ -198,14 +208,13 @@ static mode_t ent_mode(struct fat_entry *entry)
 {
   mode_t mode;
   if (entry->attrib & FAT_ATTRIB_DIRECTORY)
-    mode = S_IFDIR;
+    mode = S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
   else
     mode = S_IFREG;
-  mode |= 0777;
-  if (entry->attrib & FAT_ATTRIB_HIDDEN)
-    mode &= ~0444;
-  if (entry->attrib & FAT_ATTRIB_READONLY)
-    mode &= ~0222;
+  if (!(entry->attrib & FAT_ATTRIB_HIDDEN))
+    mode |= S_IRUSR | S_IRGRP | S_IROTH;
+  if (!(entry->attrib & FAT_ATTRIB_READONLY))
+    mode |= S_IWUSR;
   return mode;
 }
 
@@ -258,6 +267,8 @@ int open(const char *path, int oflags, ...)
       mode_t mode = va_arg(va, mode_t);
       va_end(va);
       uint8_t attrib = FAT_ATTRIB_ARCHIVE;
+      if (!(mode & S_IRUSR))
+        attrib |= FAT_ATTRIB_HIDDEN;
       if (!(mode & S_IWUSR))
         attrib |= FAT_ATTRIB_READONLY;
       if (fp)
@@ -619,6 +630,8 @@ int mkdir(const char *path, mode_t mode)
   if (init_fat())
     return -1;
   uint8_t attrib = FAT_ATTRIB_DIRECTORY;
+  if (!(mode & S_IRUSR))
+    attrib |= FAT_ATTRIB_HIDDEN;
   if (!(mode & S_IWUSR))
     attrib |= FAT_ATTRIB_READONLY;
   const char *tail;
@@ -735,6 +748,13 @@ time_t time(time_t *tloc)
   if (tloc)
     *tloc = 0;
   return 0;
+}
+
+int sys_io_mode(int mode)
+{
+  int p_mode = io_mode;
+  io_mode = mode;
+  return p_mode;
 }
 
 void sys_reset(void)

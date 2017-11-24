@@ -36,6 +36,7 @@ struct fat_cache
   _Bool     valid;
   _Bool     dirty;
   uint32_t  lba;
+  _Alignas(0x10)
   char      data[0x200];
 };
 

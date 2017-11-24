@@ -188,7 +188,9 @@ static int                  target_day_time = -1;
 static struct memory_file  *memfile;
 static _Bool                memfile_saved[SETTINGS_MEMFILE_MAX] = {0};
 static uint8_t              memfile_slot = 0;
-static _Bool                override_offset = 0;
+static _Bool                entrance_override_once = 0;
+static _Bool                entrance_override_next = 0;
+static int32_t              next_entrance = -1;
 static enum movie_state     movie_state = MOVIE_IDLE;
 static struct vector        movie_inputs;
 static int                  movie_frame;
@@ -411,15 +413,24 @@ static const char *cheat_names[] =
   "no minimap",
 };
 
-static void do_warp(int16_t entrance_index, uint16_t cutscene_index)
+static void do_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
 {
-  override_offset = 1;
+  if (age == 0)
+    age = z64_game.link_age;
+  else
+    --age;
+  if (z64_game.link_age == age)
+    z64_file.link_age = age;
+  else
+    z64_game.link_age = age;
   zu_execute_game(entrance_index, cutscene_index);
 }
 
 void save_memfile(struct memory_file *file)
 {
   memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
+  file->entrance_override = entrance_override_next;
+  file->next_entrance = next_entrance;
   file->scene_index = z64_game.scene_index;
   uint32_t f;
   f = z64_game.chest_flags;
@@ -454,14 +465,22 @@ void save_memfile(struct memory_file *file)
 void load_memfile(struct memory_file *file)
 {
   /* keep some data intact to prevent glitchiness */
-  int8_t seq_index = z64_file.seq_index;
-  uint8_t minimap_index = z64_file.minimap_index;
+  int32_t entrance_index = z64_file.entrance_index;
   int32_t link_age = z64_file.link_age;
+  int8_t seq_index = z64_file.seq_index;
+  int8_t night_sfx = z64_file.night_sfx;
+  uint8_t minimap_index = z64_file.minimap_index;
   memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
   z64_game.link_age = z64_file.link_age;
+  z64_file.entrance_index = entrance_index;
   z64_file.seq_index = seq_index;
+  z64_file.night_sfx = night_sfx;
   z64_file.minimap_index = minimap_index;
   z64_file.link_age = link_age;
+  entrance_override_next = file->entrance_override;
+  next_entrance = file->next_entrance;
+  if (next_entrance == -1)
+    next_entrance = file->z_file.entrance_index;
   if (file->scene_index == z64_game.scene_index)
     memcpy(&z64_game.switch_flags, &file->scene_flags,
            sizeof(file->scene_flags));
@@ -594,7 +613,11 @@ void command_fileselect(void)
 
 void command_reload(void)
 {
-  do_warp(z64_file.entrance_index, 0x0000);
+  entrance_override_once = entrance_override_next;
+  if (next_entrance != -1)
+    do_warp(next_entrance, 0x0000, 0);
+  else
+    do_warp(z64_file.entrance_index, 0x0000, 0);
 }
 
 void command_void(void)
@@ -1424,9 +1447,9 @@ static int do_load_file(const char *path, void *data)
         settings->menu_settings.load_to == SETTINGS_LOADTO_BOTH)
     {
       if (settings->menu_settings.on_load == SETTINGS_ONLOAD_RELOAD)
-        zu_execute_game(z64_file.entrance_index, z64_file.cutscene_index);
+        command_reload();
       else if (settings->menu_settings.on_load == SETTINGS_ONLOAD_VOID)
-        zu_void();
+        command_void();
     }
     return 0;
   }
@@ -1494,12 +1517,11 @@ static void slot_inc_proc(struct menu_item *item, void *data)
 
 static void warp_proc(struct menu_item *item, void *data)
 {
-  if (settings->menu_settings.warp_age != 0)
-    z64_game.link_age = settings->menu_settings.warp_age - 1;
   uint16_t cutscene = settings->menu_settings.warp_cutscene;
   if (cutscene > 0x0000)
     cutscene += 0xFFEF;
-  do_warp(settings->warp_entrance, cutscene);
+  entrance_override_once = 1;
+  do_warp(settings->warp_entrance, cutscene, settings->menu_settings.warp_age);
 }
 
 static int cutscene_option_proc(struct menu_item *item,
@@ -1523,12 +1545,11 @@ static void places_proc(struct menu_item *item, void *data)
   for (int i = 0; i < Z64_ETAB_LENGTH; ++i) {
     z64_entrance_table_t *e = &z64_entrance_table[i];
     if (e->scene_index == scene_index && e->entrance_index == entrance_index) {
-      if (settings->menu_settings.warp_age != 0)
-        z64_game.link_age = settings->menu_settings.warp_age - 1;
       uint16_t cutscene = settings->menu_settings.warp_cutscene;
       if (cutscene > 0x0000)
         cutscene += 0xFFEF;
-      do_warp(i, cutscene);
+      entrance_override_once = 1;
+      do_warp(i, cutscene, settings->menu_settings.warp_age);
       if (zu_scene_info[scene_index].no_entrances > 1)
         menu_return(&menu_main);
       menu_return(&menu_main);
@@ -2326,12 +2347,18 @@ static void entrance_offset_hook()
   uint32_t offset;
   __asm__ volatile (".set noat  \n"
                     "sw $at, %0 \n" : "=m"(at));
-  if (override_offset) {
+  if (z64_file.void_flag && z64_file.cutscene_index == 0x0000)
+    entrance_override_once = entrance_override_next;
+  if (entrance_override_once) {
     offset = 0;
-    override_offset = 0;
+    entrance_override_once = 0;
+    entrance_override_next = 1;
   }
-  else
+  else {
     offset = z64_file.scene_setup_index;
+    entrance_override_next = 0;
+  }
+  next_entrance = -1;
   __asm__ volatile ("lw $v1, %0 \n"
                     "lw $at, %1 \n" :: "m"(offset), "m"(at));
 }

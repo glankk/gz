@@ -289,7 +289,6 @@ void zu_reset(void)
 {
   volatile uint32_t *mi_intr = (void*)0xA4300008;
   volatile uint32_t *sp_status = (void*)0xA4040010;
-  volatile uint32_t *pi_status = (void*)0xA4600010;
   /* disable interrupts */
   __asm__ volatile ("mfc0 $t0, $12  \n"
                     "and  $t0, %0   \n"
@@ -298,10 +297,10 @@ void zu_reset(void)
   while (!(*sp_status & 3))
     ;
   /* wait for dma busy */
-  while (*pi_status & 3)
+  while (pi_regs.status & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
     ;
   /* reset pi */
-  *pi_status = 3;
+  pi_regs.status = PI_STATUS_RESET | PI_STATUS_CLR_INTR;
   /* wait for vblank */
   while (!(*mi_intr & 8))
     ;
@@ -350,11 +349,26 @@ void zu_void(void)
 void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
 {
   if (entrance_index != z64_file.entrance_index ||
-      entrance_index != z64_game.entrance_index ||
       cutscene_index != z64_file.cutscene_index)
   {
     z64_file.seq_index = -1;
+    z64_file.night_sfx = -1;
     zu_setmusic(0x101E00FF);
+    zu_setmusic(0x620A0000);
+    zu_setmusic(0x620A0100);
+    zu_setmusic(0x620A0200);
+    zu_setmusic(0x620A0300);
+    zu_setmusic(0x620A0400);
+    zu_setmusic(0x620A0500);
+    zu_setmusic(0x620A0600);
+    zu_setmusic(0x620A0700);
+    zu_setmusic(0x620A0800);
+    zu_setmusic(0x620A0900);
+    zu_setmusic(0x620A0A00);
+    zu_setmusic(0x620A0B00);
+    zu_setmusic(0x620A0C00);
+    zu_setmusic(0x620A0E00);
+    zu_setmusic(0x620A0F00);
   }
   zu_setmusic(0x111E00FF);
   zu_setmusic(0x131E00FF);
