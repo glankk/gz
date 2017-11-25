@@ -11,8 +11,8 @@ CXXFLAGS            = -std=gnu++14 -Wall -O3 -ffunction-sections -fdata-sections
 CPPFLAGS            =
 LDFLAGS             = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -O3 -flto -Wl,--gc-sections
 LDLIBS              =
-CFLAGS_DEBUG        = -std=c11 -Wall -Og -g -ffunction-sections -fdata-sections
-CXXFLAGS_DEBUG      = -std=c++14 -Wall -Og -g -ffunction-sections -fdata-sections
+CFLAGS_DEBUG        = -std=gnu11 -Wall -Og -g -ffunction-sections -fdata-sections
+CXXFLAGS_DEBUG      = -std=gnu++14 -Wall -Og -g -ffunction-sections -fdata-sections
 CPPFLAGS_DEBUG      =
 LDFLAGS_DEBUG       = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections
 LDLIBS_DEBUG        =

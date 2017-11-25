@@ -819,7 +819,8 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
   struct fat *fat = file->fat;
   char *p = buf;
   /* flush and invalidate data cache to prevent conflicts */
-  cache_flush(fat, FAT_CACHE_DATA);
+  if (cache_flush(fat, FAT_CACHE_DATA))
+    return 0;
   cache_inval(fat, FAT_CACHE_DATA);
   /* treat reserved clusters as the root directory */
   uint32_t clust = file->p_clust;

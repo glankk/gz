@@ -411,6 +411,7 @@ static const char *cheat_names[] =
   "no music",
   "items usable",
   "no minimap",
+  "isg",
 };
 
 static void do_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
@@ -2170,6 +2171,8 @@ static void main_hook(void)
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
   if (settings->cheats & (1 << CHEAT_NOMAP))
     z64_gameinfo.minimap_disabled = 1;
+  if (settings->cheats & (1 << CHEAT_ISG))
+    z64_link.sword_state = 1;
 
   for (int i = 0; i < COMMAND_MAX; ++i) {
     /* prevent instant resets */

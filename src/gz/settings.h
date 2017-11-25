@@ -47,6 +47,7 @@ enum cheats
   CHEAT_NOMUSIC,
   CHEAT_USEITEMS,
   CHEAT_NOMAP,
+  CHEAT_ISG,
   CHEAT_MAX,
 };
 

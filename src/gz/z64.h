@@ -667,7 +667,9 @@ typedef struct
   float       linear_vel;         /* 0x0828 */
   char        unk_03_[0x0002];    /* 0x082C */
   uint16_t    target_yaw;         /* 0x082E */
-  char        unk_04_[0x0054];    /* 0x0830 */
+  char        unk_04_[0x0003];    /* 0x0830 */
+  int8_t      sword_state;        /* 0x0833 */
+  char        unk_05_[0x0050];    /* 0x0834 */
   int16_t     drop_y;             /* 0x0884 */
   int16_t     drop_distance;      /* 0x0886 */
                                   /* 0x0888 */
