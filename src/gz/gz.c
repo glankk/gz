@@ -1494,6 +1494,15 @@ static int on_file_load_proc(struct menu_item *item,
   return 0;
 }
 
+static void set_entrance_proc(struct menu_item *item, void *data)
+{
+  z64_file.void_pos = z64_link.common.pos_2;
+  z64_file.void_yaw = z64_link.common.rot_2.y;
+  z64_file.void_var = z64_link.common.actor_variable;
+  z64_file.void_entrance = z64_file.entrance_index;
+  z64_file.void_room_index = z64_game.room_index;
+}
+
 static void clear_scene_flags_proc(struct menu_item *item, void *data)
 {
   memset(&z64_game.switch_flags, 0x00, 0x24);
@@ -2596,36 +2605,38 @@ static void init(void)
                                            "return");
     explorer_create(&menu_explorer);
     menu_add_submenu(&menu_scene, 0, 1, &menu_explorer, "explorer");
-    menu_add_button(&menu_scene, 0, 2, "clear flags",
+    menu_add_button(&menu_scene, 0, 2, "set entrance point",
+                    set_entrance_proc, NULL);
+    menu_add_button(&menu_scene, 0, 3, "clear flags",
                     clear_scene_flags_proc, NULL);
-    menu_add_button(&menu_scene, 0, 3, "set flags",
+    menu_add_button(&menu_scene, 0, 4, "set flags",
                     set_scene_flags_proc, NULL);
-    menu_add_static(&menu_scene, 0, 4, "room", 0xC0C0C0);
+    menu_add_static(&menu_scene, 0, 5, "room", 0xC0C0C0);
     {
       struct menu_item *item;
-      item = menu_add_intinput(&menu_scene, 5, 4, 10, 2, NULL, NULL);
-      menu_add_button(&menu_scene, 0, 5, "load room", load_room_proc, item);
+      item = menu_add_intinput(&menu_scene, 5, 5, 10, 2, NULL, NULL);
+      menu_add_button(&menu_scene, 0, 6, "load room", load_room_proc, item);
     }
     {
       static struct slot_info teleport_slot_info;
       teleport_slot_info.data = &settings->teleport_slot;
       teleport_slot_info.max = SETTINGS_TELEPORT_MAX;
-      menu_add_static(&menu_scene, 0, 6, "teleport slot", 0xC0C0C0);
-      menu_add_watch(&menu_scene, 16, 6,
+      menu_add_static(&menu_scene, 0, 7, "teleport slot", 0xC0C0C0);
+      menu_add_watch(&menu_scene, 16, 7,
                      (uint32_t)teleport_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_scene, 14, 6, "-",
+      menu_add_button(&menu_scene, 14, 7, "-",
                       slot_dec_proc, &teleport_slot_info);
-      menu_add_button(&menu_scene, 18, 6, "+",
+      menu_add_button(&menu_scene, 18, 7, "+",
                       slot_inc_proc, &teleport_slot_info);
     }
-    menu_add_static(&menu_scene, 0, 7, "current scene", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 14, 7,
-                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-    menu_add_static(&menu_scene, 0, 8, "current room", 0xC0C0C0);
+    menu_add_static(&menu_scene, 0, 8, "current scene", 0xC0C0C0);
     menu_add_watch(&menu_scene, 14, 8,
-                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
-    menu_add_static(&menu_scene, 0, 9, "no. rooms", 0xC0C0C0);
+                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+    menu_add_static(&menu_scene, 0, 9, "current room", 0xC0C0C0);
     menu_add_watch(&menu_scene, 14, 9,
+                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
+    menu_add_static(&menu_scene, 0, 10, "no. rooms", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 14, 10,
                    (uint32_t)&z64_game.no_rooms, WATCH_TYPE_U8);
 
     /* cheats */
