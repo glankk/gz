@@ -98,6 +98,10 @@ static void *rc_font_werdnasreturn(void)
   return rc_grc_font_generic("werdnasreturn", 8, 12, 33, 0, -4, 11, 6, 1);
 }
 
+static void *rc_font_pixelzim(void)
+{
+  return rc_grc_font_generic("pixelzim", 3, 6, 33, 1, 0, 5, 3, 0);
+}
 
 static void *rc_zicon_item(void)
 {
@@ -249,6 +253,7 @@ static void *(*res_ctor[RES_MAX])(void) =
   rc_font_pressstart2p,
   rc_font_smwtextnc,
   rc_font_werdnasreturn,
+  rc_font_pixelzim,
   rc_zicon_item,
   rc_zicon_item_gray,
   rc_zicon_item_24,
@@ -268,6 +273,7 @@ static void *(*res_ctor[RES_MAX])(void) =
 
 static void (*res_dtor[RES_MAX])() =
 {
+  rd_font_generic,
   rd_font_generic,
   rd_font_generic,
   rd_font_generic,

@@ -55,6 +55,13 @@
     "format":       "i4",
     "tile_height":  192
   },
+  "pixelzim.png":
+  {
+    "type":         "texture",
+    "name":         "pixelzim",
+    "format":       "i4",
+    "tile_height":  144
+  },
   "logo.png":
   {
     "type":         "texture",

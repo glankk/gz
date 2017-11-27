@@ -95,7 +95,7 @@ struct watch_info
 
 struct menu_settings
 {
-  uint32_t font_resource : 3;
+  uint32_t font_resource : 4;
   uint32_t drop_shadow   : 1;
   uint32_t input_display : 1;
   uint32_t lag_counter   : 1;

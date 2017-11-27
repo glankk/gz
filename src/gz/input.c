@@ -106,11 +106,14 @@ void input_update(void)
           if (pad & (1 << c))
             continue;
           else {
-            *cs &= ~csm;
+            if (*cs & ~((1 << (j + 1)) - 1))
+              *cs = 0;
+            else
+              *cs &= ~csm;
             break;
           }
         }
-        if ((pad_released & (1 << c)) || pad_pressed_raw & ~bind_pad[i]) {
+        if ((pad_released & (1 << c)) || (pad_pressed_raw & ~bind_pad[i])) {
           *cs = 0;
           break;
         }

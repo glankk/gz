@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "input.h"
 #include "menu.h"
 
 struct item_data
@@ -110,10 +111,11 @@ static int char_navigate_proc(struct menu_item *item,
                               enum menu_navigation nav)
 {
   int n = strchr(charset, item->text[0]) - charset;
+  int d = (input_pad() & BUTTON_Z) ? 3 : 1;
   if (nav == MENU_NAVIGATE_UP)
-    ++n;
+    n += d;
   else if (nav == MENU_NAVIGATE_DOWN)
-    --n;
+    n -= d;
   else
     return 0;
   n = (n + charset_size) % charset_size;

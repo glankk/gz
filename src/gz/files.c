@@ -83,8 +83,11 @@ static _Bool update_list(void)
   /* enumerate and sort entries */
   struct dirent *dirent;
   while ((dirent = readdir(dir))) {
-    if (strcmp(dirent->d_name, ".") == 0 || !(dirent->mode & S_IRUSR))
+    if ((dirent->d_name[0] == '.' && strcmp(dirent->d_name, "..") != 0) ||
+        !(dirent->mode & S_IRUSR))
+    {
       continue;
+    }
     _Bool dir = ((dirent->mode & S_IFMT) == S_IFDIR);
     int nl = strlen(dirent->d_name);
     int sl = gf_suffix_length;

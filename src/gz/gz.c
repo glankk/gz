@@ -205,6 +205,7 @@ static uint16_t menu_font_options[] =
   RES_FONT_PRESSSTART2P,
   RES_FONT_SMWTEXTNC,
   RES_FONT_WERDNASRETURN,
+  RES_FONT_PIXELZIM,
 };
 
 static struct equipment_item_option equipment_item_list[] =
@@ -3229,7 +3230,8 @@ static void init(void)
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
-                                       "smw text nc\0""werdna's return\0",
+                                       "smw text nc\0""werdna's return\0"
+                                       "pixelzim\0",
                                        menu_font_option_proc, NULL);
     menu_add_static(&menu_settings, 0, 3, "drop shadow", 0xC0C0C0);
     menu_add_checkbox(&menu_settings, 14, 3,
