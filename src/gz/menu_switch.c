@@ -59,8 +59,9 @@ static int draw_proc(struct menu_item *item,
   int x = draw_params->x + (cw - w) / 2;
   int y = draw_params->y - (gfx_font_xheight(draw_params->font) + h) / 2;
   if (item->owner->selector == item) {
-    gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
-                 (draw_params->alpha * 0x80 / 0xFF));
+    gfx_mode_set(GFX_MODE_COLOR,
+                 GPACK_RGB24A8(draw_params->color,
+                               draw_params->alpha * 0x80 / 0xFF));
     gfx_mode_replace(GFX_MODE_COMBINE, G_CC_MODE(G_CC_PRIMITIVE,
                                                  G_CC_PRIMITIVE));
     gfx_disp(gsSPScisTextureRectangle(qs102(x - 1), qs102(y - 1),

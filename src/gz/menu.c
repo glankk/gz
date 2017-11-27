@@ -244,7 +244,8 @@ void menu_draw(struct menu *menu)
       menu_draw(item->imenu);
     if (!draw_params.text || !draw_params.font)
       continue;
-    gfx_mode_set(GFX_MODE_COLOR, (draw_params.color << 8) | draw_params.alpha);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params.color,
+                                               draw_params.alpha));
     gfx_printf(draw_params.font, draw_params.x, draw_params.y,
                "%s", draw_params.text);
   }

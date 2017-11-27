@@ -624,6 +624,7 @@ void command_reload(void)
 
 void command_void(void)
 {
+  z64_file.link_age = z64_game.link_age;
   zu_void();
 }
 
@@ -1697,7 +1698,8 @@ static void clear_csp_proc(struct menu_item *item, void *data)
 static int warp_info_draw_proc(struct menu_item *item,
                                struct menu_draw_params *draw_params)
 {
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
   struct gfx_font *font = draw_params->font;
   int ch = menu_get_cell_height(item->owner, 1);
   int x = draw_params->x;
@@ -1795,7 +1797,7 @@ static int heap_draw_proc(struct menu_item *item,
     p = p->next;
   }
   /* show heap data */
-  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
   gfx_printf(font, x, y + ch * 0, "node count     %i (%i free)",
              node_count_total, node_count_free);
   gfx_printf(font, x, y + ch * 1, "allocated      0x%8" PRIx32, total_alloc);
@@ -1887,7 +1889,7 @@ static int disp_draw_proc(struct menu_item *item,
       d[j] = c;
     }
     /* display info */
-    gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
     static const char *disp_name[4] =
     {
       "work",
@@ -1946,7 +1948,7 @@ static int objects_draw_proc(struct menu_item *item,
   uint8_t alpha = draw_params->alpha;
   int cw = menu_get_cell_width(item->owner, 1);
   int ch = menu_get_cell_height(item->owner, 1);
-  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
   char *s = z64_game.obj_ctxt.obj_space_start;
   char *e = z64_game.obj_ctxt.obj_space_end;
   char *p = z64_game.obj_ctxt.objects[z64_game.obj_ctxt.no_objects].object;
@@ -1993,7 +1995,7 @@ static int actor_draw_proc(struct menu_item *item,
   uint32_t color = draw_params->color;
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
-  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
   uint32_t max = z64_game.actor_list[info->group].length;
   if (info->index >= max) {
     if (max > 0)
@@ -2280,7 +2282,8 @@ static void main_hook(void)
         settings->input_display_x + cw * 10 + x, settings->input_display_y + y,
         1.f, 1.f,
       };
-      gfx_mode_set(GFX_MODE_COLOR, (input_button_color[b] << 8) | alpha);
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(input_button_color[b],
+                                                 alpha));
       gfx_sprite_draw(&sprite);
     }
   }
@@ -2466,7 +2469,7 @@ static _Noreturn void stack_thunk(void *func)
                     "lw $ra, 0($sp)     \n"
                     "lw $sp, 4($sp)     \n"
                     "jr $ra             \n"
-                    :: "i" (&stack[sizeof(stack)]));
+                    :: "i"(&stack[sizeof(stack)]));
   __builtin_unreachable();
 }
 
@@ -3324,7 +3327,7 @@ ENTRY _Noreturn void _start()
 {
   __asm__ volatile ("la $t0, %0 \n"
                     "la $a0, %1 \n"
-                    "jr $t0     \n" :: "i" (stack_thunk), "i" (init));
+                    "jr $t0     \n" :: "i"(stack_thunk), "i"(init));
   __builtin_unreachable();
 }
 

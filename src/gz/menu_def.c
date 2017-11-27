@@ -34,7 +34,8 @@ static int static_icon_draw_proc(struct menu_item *item,
   };
   gfx_mode_replace(GFX_MODE_FILTER, G_TF_BILERP);
   gfx_mode_replace(GFX_MODE_DROPSHADOW, 0);
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
   gfx_sprite_draw(&sprite);
   gfx_mode_pop(GFX_MODE_FILTER);
   gfx_mode_pop(GFX_MODE_DROPSHADOW);
@@ -76,8 +77,8 @@ static int tooltip_draw_proc(struct menu_item *item,
   while (tool_menu->child)
     tool_menu = tool_menu->child;
   if (tool_menu->selector && tool_menu->selector->tooltip) {
-    gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
-                 draw_params->alpha);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                               draw_params->alpha));
     gfx_printf(draw_params->font, draw_params->x, draw_params->y,
                "%s", tool_menu->selector->tooltip);
   }

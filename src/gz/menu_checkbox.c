@@ -30,7 +30,8 @@ static int draw_proc(struct menu_item *item,
                      struct menu_draw_params *draw_params)
 {
   struct item_data *data = item->data;
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
   static struct gfx_texture *texture = NULL;
   if (!texture)
     texture = resource_load_grc_texture("checkbox");

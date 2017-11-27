@@ -260,7 +260,8 @@ static int file_draw_proc(struct menu_item *item,
   gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF,
                                               draw_params->alpha));
   gfx_sprite_draw(&sprite);
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
   gfx_printf(draw_params->font, draw_params->x + cw * 2, draw_params->y,
              "%s", entry->text);
   return 1;

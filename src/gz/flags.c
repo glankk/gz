@@ -135,7 +135,7 @@ static int log_draw_proc(struct menu_item *item,
   uint32_t color = draw_params->color;
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
-  gfx_mode_set(GFX_MODE_COLOR, (color << 8) | alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
   for (int i = 0; i < events.size && i < FLAG_LOG_LENGTH; ++i) {
     struct flag_event *e = vector_at(&events, events.size - i - 1);
     gfx_printf(font, x, y + ch * i, "%s", e->description);

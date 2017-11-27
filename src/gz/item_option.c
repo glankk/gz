@@ -275,8 +275,8 @@ static int draw_proc(struct menu_item *item,
       draw_params->y - (gfx_font_xheight(draw_params->font) + h + 1) / 2,
       data->bg_scale, data->bg_scale,
     };
-    gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) |
-                 draw_params->alpha);
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                               draw_params->alpha));
     gfx_sprite_draw(&sprite);
   }
   /* draw item */
@@ -292,7 +292,7 @@ static int draw_proc(struct menu_item *item,
     if (item_id == Z64_ITEM_NULL) {
       texture = data->empty_texture;
       texture_tile = data->empty_texture_tile;
-      color = (draw_params->color << 8) | draw_params->alpha;
+      color = GPACK_RGB24A8(draw_params->color, draw_params->alpha);
       scale = data->empty_scale;
     }
     else {
