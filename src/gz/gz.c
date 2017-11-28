@@ -2459,8 +2459,8 @@ static void disp_hook(void *p_size, Gfx *buf, size_t size)
 
 static _Noreturn void stack_thunk(void *func)
 {
-  static __attribute__((section(".stack")))
-    _Alignas(uint64_t) char stack[0x2000];
+  static __attribute__((section(".stack"))) _Alignas(8)
+  char stack[0x2000];
   __asm__ volatile ("la $t0, %0         \n"
                     "sw $sp, -4($t0)    \n"
                     "sw $ra, -8($t0)    \n"
@@ -3327,7 +3327,8 @@ ENTRY _Noreturn void _start()
 {
   __asm__ volatile ("la $t0, %0 \n"
                     "la $a0, %1 \n"
-                    "jr $t0     \n" :: "i"(stack_thunk), "i"(init));
+                    "jr $t0     \n"
+                    "nop        \n" :: "i"(stack_thunk), "i"(init));
   __builtin_unreachable();
 }
 
