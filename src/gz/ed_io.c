@@ -11,20 +11,18 @@
 static uint32_t card_type;
 static uint32_t spi_cfg;
 
-/* enable interrupts */
-static inline void set_int(void)
+/* set interrupt enable bit and return previous value */
+static inline _Bool set_int(_Bool enable)
 {
-  __asm__ volatile ("mfc0 $t0, $12  \n"
-                    "or   $t0, %0   \n"
-                    "mtc0 $t0, $12  \n" :: "r"(MIPS_STATUS_IE));
-}
-
-/* disable interrupts */
-static inline void clr_int(void)
-{
-  __asm__ volatile ("mfc0 $t0, $12  \n"
-                    "and  $t0, %0   \n"
-                    "mtc0 $t0, $12  \n" :: "r"(~MIPS_STATUS_IE));
+  uint32_t sr;
+  __asm__ volatile ("mfc0 %0, $12" : "=r"(sr));
+  _Bool ie = sr & MIPS_STATUS_IE;
+  if (enable)
+    sr |= MIPS_STATUS_IE;
+  else
+    sr &= ~MIPS_STATUS_IE;
+  __asm__ volatile ("mtc0 %0, $12" :: "r"(sr));
+  return ie;
 }
 
 static uint16_t *crc16_table()
@@ -183,7 +181,7 @@ enum ed_error ed_sd_init(void)
   ed_spi_mode(0, 1, 1);
   ed_spi_speed(ED_SPI_SPEED_INIT);
   /* disable interrupts */
-  clr_int();
+  _Bool ie = set_int(0);
   /* reset card */
   card_type = 0;
   for (int i = 0; i < 40; ++i)
@@ -265,8 +263,8 @@ enum ed_error ed_sd_init(void)
     goto exit;
   ed_spi_speed(ED_SPI_SPEED_50);
 exit:
-  /* enable interrupts */
-  set_int();
+  /* restore interrupts */
+  set_int(ie);
   return e;
 }
 
@@ -282,7 +280,7 @@ enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
   enum ed_error e;
   uint8_t *p = dst;
   /* disable interrupts */
-  clr_int();
+  _Bool ie = set_int(0);
   /* send read command */
   if (!(card_type & SD_HC))
     lba *= 0x200;
@@ -335,8 +333,8 @@ enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
   /* stop data transmission */
   e = ed_sd_stop_rw();
 exit:
-  /* enable interrupts */
-  set_int();
+  /* restore interrupts */
+  set_int(ie);
   return e;
 }
 
@@ -346,7 +344,7 @@ enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
   enum ed_error e;
   uint8_t *p = src;
   /* disable interrupts */
-  clr_int();
+  _Bool ie = set_int(0);
   /* send write command */
   if (!(card_type & SD_HC))
     lba *= 0x200;
@@ -427,8 +425,8 @@ enum ed_error ed_sd_write_r(uint32_t lba, uint32_t n_blocks,
   /* stop data transmission */
   e = ed_sd_stop_rw();
 exit:
-  /* enable interrupts */
-  set_int();
+  /* restore interrupts */
+  set_int(ie);
   return e;
 }
 
@@ -500,7 +498,7 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
   if (ed_regs.status & ED_STATE_DMA_TOUT)
     return ED_ERROR_SD_RD_TIMEOUT;
   /* disable interrupts */
-  clr_int();
+  _Bool ie = set_int(0);
   /* wait for dma busy */
   while (pi_regs.status & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
     ;
@@ -512,11 +510,14 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
   while (pi_regs.status & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
     ;
   pi_regs.status = PI_STATUS_RESET | PI_STATUS_CLR_INTR;
-  /* enable interrupts */
-  set_int();
   /* invalidate cache */
-  for (uint32_t i = 0; i < n_blocks * 0x200; i += 0x10)
-    __asm__ volatile ("cache %0, 0(%1)" :: "i"(0x11), "r"((uint32_t)dst + i));
+  for (uint32_t i = 0; i < n_blocks * 0x200; i += 0x20) {
+    __asm__ volatile ("cache 0x10, 0x0000(%0) \n"
+                      "cache 0x11, 0x0000(%0) \n"
+                      "cache 0x11, 0x0010(%0) \n" :: "r"((uint32_t)dst + i));
+  }
+  /* restore interrupts */
+  set_int(ie);
   return ED_ERROR_SUCCESS;
 }
 
