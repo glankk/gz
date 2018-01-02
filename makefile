@@ -4,8 +4,7 @@ LD                  = mips64-g++
 OBJCOPY             = mips64-objcopy
 LUAPATCH            = luapatch
 GRC                 = grc
-INCLUDE             = -I $(N64ROOT)/include
-LDSCRIPT            = $(N64ROOT)/ldscripts/gl-n64.ld
+LDSCRIPT            = gl-n64.ld
 CFLAGS              = -std=gnu11 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
 CXXFLAGS            = -std=gnu++14 -Wall -O3 -ffunction-sections -fdata-sections -flto -ffat-lto-objects
 CPPFLAGS            =
@@ -39,11 +38,11 @@ gz-oot-1.2-debug    : CPPFLAGS_DEBUG += -DZ64_VERSION=Z64_OOT12
 GZ                  = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 GZ-DEBUG            = $(foreach v,$(GZ_VERSIONS),gz-$(v)-debug)
 all                 : $(GZ)
-cleanall            :
+clean               :
 	rm -rf $(OBJDIR) $(BINDIR)
-.PHONY              : all cleanall
+.PHONY              : all clean
 
-.SECONDEXPANSION:
+.SECONDEXPANSION    :
 
 define bin_template =
  NAME-$(1)          = $(2)
@@ -82,9 +81,9 @@ define bin_template =
  $$(ELF-$(1))       : $$(OBJ-$(1)) | $$$$(dir $$$$@)
 	$$(LD) $$(LDFLAGS) $$^ $$(LDLIBS) -o $$@
  $$(COBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CC) -c -MMD -MP $$(CFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
+	$$(CC) -c -MMD -MP $$(CPPFLAGS) $$(CFLAGS) $$< -o $$@
  $$(CXXOBJ-$(1))    : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CXX) -c -MMD -MP $$(CXXFLAGS) $$(CPPFLAGS) $$(INCLUDE) $$< -o $$@
+	$$(CXX) -c -MMD -MP $$(CPPFLAGS) $$(CXXFLAGS) $$< -o $$@
  $$(RESOBJ-$(1))    : $$(OBJDIR-$(1))/$$(RESDIR)/%.o: $$(RESDIR-$(1))/% $$(RESDESC) | $$$$(dir $$$$@)
 	$$(GRC) $$< -d $$(RESDESC) -o $$@
 

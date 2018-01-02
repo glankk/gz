@@ -72,10 +72,10 @@ void *zu_sr_header(void *sr, int header_index, const z64_stab_t *stab)
 }
 
 void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,
-                    int *no_rooms, const z64_stab_t *stab)
+                    int *n_rooms, const z64_stab_t *stab)
 {
-  if (no_rooms)
-    *no_rooms = 0;
+  if (n_rooms)
+    *n_rooms = 0;
   const uint32_t *scene_command = scene;
   _Bool eof = 0;
   while (!eof) {
@@ -88,8 +88,8 @@ void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,
       }
       case 0x04: {
         int room_list_size = (c_hi >> 16) & 0x000000FF;
-        if (no_rooms)
-          *no_rooms = room_list_size;
+        if (n_rooms)
+          *n_rooms = room_list_size;
         uint32_t *room_list = zu_seg_locate(stab, c_lo);
         for (int i = 0; i < room_list_size && i < ftab_size; ++i) {
           ftab[i].vrom_start = *room_list++;
@@ -122,12 +122,12 @@ void zu_room_mesh(const void *room, struct zu_mesh *mesh,
         struct
         {
           uint8_t   type;
-          uint8_t   no_entries;
+          uint8_t   n_entries;
           uint32_t  start;
           uint32_t  end;
         } *mesh_header = zu_seg_locate(stab, c_lo);
         uint32_t *dl = zu_seg_locate(stab, mesh_header->start);
-        for (int i = 0; i < mesh_header->no_entries; ++i) {
+        for (int i = 0; i < mesh_header->n_entries; ++i) {
           if (mesh_header->type == 0x02) {
             dl += 2;
             uint32_t near_dl = *dl++;
@@ -340,8 +340,8 @@ void zu_reset(void)
 
 void zu_void(void)
 {
-  z64_file.temp_switch_flags = z64_game.temp_switch_flags;
-  z64_file.unk_flags_4 = z64_game.unk_flags_4;
+  z64_file.temp_swch_flags = z64_game.temp_swch_flags;
+  z64_file.temp_collect_flags = z64_game.temp_collect_flags;
   z64_file.void_flag = 1;
   zu_execute_game(z64_file.void_entrance, 0x0000);
 }

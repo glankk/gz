@@ -152,7 +152,7 @@ struct menu_item *menu_add_imenu(struct menu *menu, int x, int y,
 struct tab_data
 {
   struct menu  *tabs;
-  int           no_tabs;
+  int           n_tabs;
   int           current_tab;
 };
 
@@ -163,11 +163,11 @@ static int tab_destroy_proc(struct menu_item *item)
 }
 
 struct menu_item *menu_add_tab(struct menu *menu, int x, int y,
-                               struct menu *tabs, int no_tabs)
+                               struct menu *tabs, int n_tabs)
 {
   struct tab_data *data = malloc(sizeof(*data));
   data->tabs = tabs;
-  data->no_tabs = no_tabs;
+  data->n_tabs = n_tabs;
   data->current_tab = -1;
   struct menu_item *item = menu_item_add(menu, x, y, NULL, 0);
   item->data = data;
@@ -203,8 +203,8 @@ void menu_tab_goto(struct menu_item *item, int tab_index)
 void menu_tab_previous(struct menu_item *item)
 {
   struct tab_data *data = item->data;
-  if (data->no_tabs >= 0) {
-    int tab_index = (data->current_tab + data->no_tabs - 1) % data->no_tabs;
+  if (data->n_tabs >= 0) {
+    int tab_index = (data->current_tab + data->n_tabs - 1) % data->n_tabs;
     menu_tab_goto(item, tab_index);
   }
 }
@@ -212,8 +212,8 @@ void menu_tab_previous(struct menu_item *item)
 void menu_tab_next(struct menu_item *item)
 {
   struct tab_data *data = item->data;
-  if (data->no_tabs >= 0) {
-    int tab_index = (data->current_tab + 1) % data->no_tabs;
+  if (data->n_tabs >= 0) {
+    int tab_index = (data->current_tab + 1) % data->n_tabs;
     menu_tab_goto(item, tab_index);
   }
 }

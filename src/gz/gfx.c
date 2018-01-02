@@ -469,9 +469,9 @@ static void draw_chars(const struct gfx_font *font, int x, int y,
   y -= font->baseline;
   struct gfx_texture *texture = font->texture;
   int chars_per_tile = font->chars_xtile * font->chars_ytile;
-  int no_tiles = texture->tiles_x * texture->tiles_y;
-  int no_chars = chars_per_tile * no_tiles;
-  for (int i = 0; i < no_tiles; ++i) {
+  int n_tiles = texture->tiles_x * texture->tiles_y;
+  int n_chars = chars_per_tile * n_tiles;
+  for (int i = 0; i < n_tiles; ++i) {
     int tile_begin = chars_per_tile * i;
     int tile_end = tile_begin + chars_per_tile;
     _Bool tile_loaded = 0;
@@ -481,7 +481,7 @@ static void draw_chars(const struct gfx_font *font, int x, int y,
          ++j, cx += font->char_width + font->letter_spacing)
     {
       uint8_t c = string[j];
-      if (c < font->code_start || c >= font->code_start + no_chars)
+      if (c < font->code_start || c >= font->code_start + n_chars)
         continue;
       c -= font->code_start;
       if (c < tile_begin || c >= tile_end)

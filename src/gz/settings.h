@@ -132,7 +132,7 @@ struct settings_data
   uint16_t              binds[SETTINGS_BIND_MAX];
   struct watch_info     watch_info[SETTINGS_WATCHES_MAX];
   uint8_t               teleport_slot;
-  uint8_t               no_watches;
+  uint8_t               n_watches;
 };
 
 struct settings_header

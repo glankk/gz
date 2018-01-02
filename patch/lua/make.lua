@@ -15,7 +15,11 @@ fs:replace(rom_info.code_ind, code_file, fs:compressed(rom_info.code_ind))
 print("reassembling rom")
 local patched_rom = fs:assemble_rom()
 print("building dependencies")
-local _,_,make_result = os.execute("make gz-" .. rom_id)
+local make = os.getenv("MAKE")
+if make == nil or make == "" then
+  make = "make"
+end
+local _,_,make_result = os.execute(make .. " gz-" .. rom_id)
 if make_result ~= 0 then
   error("failed to build gz", 0)
 end
@@ -23,7 +27,7 @@ local gz = gru.blob_load("bin/gz/" .. rom_id .. "/gz.bin")
 local payload_rom = fs:prom_tail()
 local payload_ram = 0x80400060 - 0x60
 local payload_size = gz:size() + 0x60
-local _,_,make_result = os.execute(string.format("make cleanldr && make ldr " .. 
+local _,_,make_result = os.execute(string.format(make .. " cleanldr && " .. make ..  " ldr " .. 
                                                  "CPPFLAGS='-DDMA_ROM=0x%08X -DDMA_RAM=0x%08X -DDMA_SIZE=0x%08X'",
                                                  payload_rom, payload_ram, payload_size))
 if make_result ~= 0 then

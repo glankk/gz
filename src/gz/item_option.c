@@ -10,7 +10,7 @@
 
 struct item_data
 {
-  int                   no_items;
+  int                   n_items;
   const int8_t         *item_list;
   int8_t               *value;
   struct gfx_texture   *texture;
@@ -34,13 +34,13 @@ static int find_item_index(struct item_data *data, int item_id)
 {
   int item_index = 0;
   if (data->item_list) {
-    for (int i = 0; i < data->no_items; ++i)
+    for (int i = 0; i < data->n_items; ++i)
       if (data->item_list[i] == item_id) {
         item_index = i;
         break;
       }
   }
-  else if (item_id >= 0 && item_id + 1 < data->no_items)
+  else if (item_id >= 0 && item_id + 1 < data->n_items)
     item_index = item_id + 1;
   return item_index;
 }
@@ -56,7 +56,7 @@ static int get_item_id(struct item_data *data, int item_index)
 static void animate_wheel(struct item_data *data, float speed)
 {
   if (data->wheel_item) {
-    float dest = M_PI * 2.f * -data->wheel_index / data->no_items;
+    float dest = M_PI * 2.f * -data->wheel_index / data->n_items;
     float diff = dest - data->wheel_rot;
     if (fabsf(diff) < .001f)
       data->wheel_rot = dest;
@@ -83,7 +83,7 @@ static void wheel_draw_item(struct item_data *data, int item_id,
     guRotateF(&mf, rot, 0.f, 1.f, 0.f);
   }
   {
-    guTranslateF(&mt, 0.f, 0.f, data->no_items / M_PI);
+    guTranslateF(&mt, 0.f, 0.f, data->n_items / M_PI);
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
@@ -155,7 +155,7 @@ static int wheel_draw_proc(struct menu_item *item,
     }
     {
       guTranslateF(&mt, 0.f, 0.f, 1.f - (Z64_SCREEN_WIDTH / 32.f * 2.f +
-                                         data->no_items / M_PI));
+                                         data->n_items / M_PI));
       guMtxCatF(&mt, &mf, &mf);
     }
     guMtxF2L(&mf, &m);
@@ -164,13 +164,13 @@ static int wheel_draw_proc(struct menu_item *item,
   }
   /* draw items */
   animate_wheel(data, 1.f / 3.f);
-  int n = (lroundf(-data->wheel_rot / (M_PI * 2.f) * data->no_items) +
-           (data->no_items + 3) / 4) % data->no_items;
+  int n = (lroundf(-data->wheel_rot / (M_PI * 2.f) * data->n_items) +
+           (data->n_items + 3) / 4) % data->n_items;
   if (n < 0)
-    n += data->no_items;
+    n += data->n_items;
   uint32_t color = -1;
-  for (int i = 0; i < data->no_items; ++i) {
-    float rot = data->wheel_rot + M_PI * 2.f / data->no_items * n;
+  for (int i = 0; i < data->n_items; ++i) {
+    float rot = data->wheel_rot + M_PI * 2.f / data->n_items * n;
     int item_id = get_item_id(data, n);
     uint8_t r = item_id == Z64_ITEM_NULL ? (data->color >> 16) & 0xFF : 0xFF;
     uint8_t g = item_id == Z64_ITEM_NULL ? (data->color >> 8)  & 0xFF : 0xFF;
@@ -187,7 +187,7 @@ static int wheel_draw_proc(struct menu_item *item,
                gsDPSetPrimColor(0, 0, r, g, b, draw_params->alpha));
     }
     wheel_draw_item(data, item_id, rot);
-    n = (n + 1) % data->no_items;
+    n = (n + 1) % data->n_items;
   }
   /* restore rcp modes */
   gfx_mode_init();
@@ -206,12 +206,12 @@ static int wheel_navigate_proc(struct menu_item *item,
     case MENU_NAVIGATE_RIGHT: n = 1;  break;
   }
   data->wheel_index += n;
-  while (data->wheel_index >= data->no_items) {
-    data->wheel_index -= data->no_items;
+  while (data->wheel_index >= data->n_items) {
+    data->wheel_index -= data->n_items;
     data->wheel_rot += M_PI * 2.f;
   }
   while (data->wheel_index < 0) {
-    data->wheel_index += data->no_items;
+    data->wheel_index += data->n_items;
     data->wheel_rot -= M_PI * 2.f;
   }
   return 1;
@@ -354,7 +354,7 @@ static int destroy_proc(struct menu_item *item)
 }
 
 struct menu_item *item_option_create(struct menu *menu, int x, int y,
-                                     int no_items, const int8_t *item_list,
+                                     int n_items, const int8_t *item_list,
                                      int8_t *value,
                                      struct gfx_texture *texture,
                                      struct gfx_texture *bg_texture,
@@ -367,7 +367,7 @@ struct menu_item *item_option_create(struct menu *menu, int x, int y,
                                      void *callback_data)
 {
   struct item_data *data = malloc(sizeof(*data));
-  data->no_items = no_items;
+  data->n_items = n_items;
   data->item_list = item_list;
   data->value = value;
   data->texture = (texture ? texture : resource_get(RES_ZICON_ITEM));

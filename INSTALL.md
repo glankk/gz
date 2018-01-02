@@ -6,8 +6,21 @@ The currently supported games are:
 
 There are two methods of using this software, described below.
 
+### Using gz with an emulator / flash cart
+**Windows:** Drag and drop the rom you wish to patch onto the `patch.bat` script.
+
+**GNU/Linux:** Run `./patch <rom-file>`.
+
+A patched rom will be created in the same directory as the patch script.
+The patched rom can be played with an emulator or transferred to a flash cart.
+For emulator usage, you will need to enable Expansion Pak emulation.
+On some emulators, you may need to change CPU Core Style to Interpreter.
+For use with a flash cart, your N64 will need an Expansion Pak.
+
 ### Using gz with a Gameshark
 *Note: Gameshark support has been deprecated. It is still provided, but without guarantees.*
+
+*Note: These instructions only cover Windows users.*
 
 You will need:
 - An N64 with a supported game cartridge, and an Expansion Pak.
@@ -15,6 +28,7 @@ You will need:
 - A Parallel to USB adapter cable with bidirectional communication support.
   The included Gameshark utility is designed to function with a Moschip MCS7705 cable,
   and has only been tested with a version 3.3 Gameshark.
+- [Zadig](http://zadig.akeo.ie/), a usb driver tool.
 
 Follow these steps;
 
@@ -28,13 +42,5 @@ Follow these steps;
 6.  Select libusbK in the driver list and click Replace Driver.
 7.  Navigate to the directory that corresponds to your game and run the `upload.bat` script.
     This will instruct the Gameshark utility to upload gz to the game's memory,
-    and then disconnect the Gameshark. The operation will take a little while.
+    and then disconnect the Gameshark. The operation will take a while.
 8.  When the upload is completed, you can disconnect the USB cable and start playing.
-
-### Using gz with an emulator / flash cart
-Drag and drop the rom you wish to patch onto the `patch.bat` script.
-A patched rom will be created in the same directory as the script.
-The patched rom can be played with an emulator or transferred to a flash cart.
-For emulator usage, you will need to enable Expansion Pak emulation.
-On some emulators, you may need to change CPU Core Style to Interpreter.
-For use with a flash cart, your N64 will need an Expansion Pak.

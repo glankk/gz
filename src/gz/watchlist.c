@@ -269,7 +269,7 @@ struct menu_item *watchlist_create(struct menu *menu,
   data->add_button = menu_add_button_icon(imenu, 0, 0,
                                           list_icons, 0, 0x00FF00,
                                           add_button_proc, data);
-  struct gfx_texture *file_icons = resource_load_grc_texture("file_icons");
+  struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
   data->import_button = menu_add_button_icon(imenu, 2, 0,
                                              file_icons, 1, 0xFFFFFF,
                                              import_button_proc, data);
@@ -281,7 +281,7 @@ struct menu_item *watchlist_create(struct menu *menu,
 void watchlist_store(struct menu_item *item)
 {
   struct item_data *data = item->data;
-  settings->no_watches = data->members.size;
+  settings->n_watches = data->members.size;
   for (int i = 0; i < data->members.size; ++i) {
     struct member_data *member_data = get_member(data, i);
     struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
@@ -299,7 +299,7 @@ void watchlist_fetch(struct menu_item *item)
   struct item_data *data = item->data;
   for (int i = data->members.size - 1; i >= 0; --i)
     remove_member(data, i);
-  for (int i = 0; i < settings->no_watches; ++i)
+  for (int i = 0; i < settings->n_watches; ++i)
     add_member(data, settings->watch_address[i], settings->watch_info[i].type,
                i, settings->watch_info[i].anchored,
                settings->watch_x[i], settings->watch_y[i],

@@ -55,7 +55,7 @@ void settings_load_default(void)
   d->lag_counter_y = 20;
   d->timer_x = 16;
   d->timer_y = 20;
-  d->no_watches = 0;
+  d->n_watches = 0;
   d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
     d->teleport_pos[i].x = 0.f;

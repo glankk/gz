@@ -101,7 +101,7 @@ struct dungeon_items
 struct scene_category
 {
   const char     *category_name;
-  int             no_scenes;
+  int             n_scenes;
   const uint8_t  *scenes;
 };
 
@@ -139,7 +139,13 @@ struct heap_node
   size_t            size;
   struct heap_node *next;
   struct heap_node *prev;
-  char              _unk_00[0x0020];
+  char              unk_00_[0x0008];
+  OSId              thread_id;
+  void             *arena;
+  uint32_t          count_hi;
+  uint32_t          count_lo;
+  char              pad_00_[0x0008];
+  char              data[];
 };
 
 struct actor_debug_info
@@ -436,14 +442,14 @@ void save_memfile(struct memory_file *file)
   file->scene_index = z64_game.scene_index;
   uint32_t f;
   f = z64_game.chest_flags;
-  file->z_file.scene_flags[z64_game.scene_index].chests = f;
-  f = z64_game.switch_flags;
-  file->z_file.scene_flags[z64_game.scene_index].switches = f;
-  f = z64_game.room_clear_flags;
-  file->z_file.scene_flags[z64_game.scene_index].rooms_cleared = f;
-  f = z64_game.collectible_flags;
-  file->z_file.scene_flags[z64_game.scene_index].collectibles = f;
-  memcpy(&file->scene_flags, &z64_game.switch_flags,
+  file->z_file.scene_flags[z64_game.scene_index].chest = f;
+  f = z64_game.swch_flags;
+  file->z_file.scene_flags[z64_game.scene_index].swch = f;
+  f = z64_game.clear_flags;
+  file->z_file.scene_flags[z64_game.scene_index].clear = f;
+  f = z64_game.collect_flags;
+  file->z_file.scene_flags[z64_game.scene_index].collect = f;
+  memcpy(&file->scene_flags, &z64_game.swch_flags,
          sizeof(file->scene_flags));
   /* pause screen stuff */
   {
@@ -472,30 +478,32 @@ void load_memfile(struct memory_file *file)
   int8_t seq_index = z64_file.seq_index;
   int8_t night_sfx = z64_file.night_sfx;
   uint8_t minimap_index = z64_file.minimap_index;
+  z64_gameinfo_t *gameinfo = z64_file.gameinfo;
   memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
   z64_game.link_age = z64_file.link_age;
   z64_file.entrance_index = entrance_index;
   z64_file.seq_index = seq_index;
   z64_file.night_sfx = night_sfx;
   z64_file.minimap_index = minimap_index;
+  z64_file.gameinfo = gameinfo;
   z64_file.link_age = link_age;
   entrance_override_next = file->entrance_override;
   next_entrance = file->next_entrance;
   if (next_entrance == -1)
     next_entrance = file->z_file.entrance_index;
   if (file->scene_index == z64_game.scene_index)
-    memcpy(&z64_game.switch_flags, &file->scene_flags,
+    memcpy(&z64_game.swch_flags, &file->scene_flags,
            sizeof(file->scene_flags));
   else {
     uint32_t f;
-    f = z64_file.scene_flags[z64_game.scene_index].chests;
+    f = z64_file.scene_flags[z64_game.scene_index].chest;
     z64_game.chest_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].switches;
-    z64_game.switch_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].rooms_cleared;
-    z64_game.room_clear_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].collectibles;
-    z64_game.collectible_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].swch;
+    z64_game.swch_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].clear;
+    z64_game.clear_flags = f;
+    f = z64_file.scene_flags[z64_game.scene_index].collect;
+    z64_game.collect_flags = f;
   }
   /* pause screen stuff */
   {
@@ -645,7 +653,15 @@ void command_fall(void)
 
 void command_age(void)
 {
+  int age = z64_file.link_age;
+  z64_file.link_age = z64_game.link_age;
   z64_game.link_age = !z64_game.link_age;
+  z64_SwitchAgeEquips();
+  z64_file.link_age = age;
+  for (int i = 0; i < 4; ++i)
+    if (z64_file.button_items[i] != Z64_ITEM_NULL)
+      z64_UpdateItemButton(&z64_game, i);
+  z64_UpdateEquipment(&z64_game, &z64_link);
 }
 
 void command_starttimer(void)
@@ -1500,19 +1516,19 @@ static void set_entrance_proc(struct menu_item *item, void *data)
 {
   z64_file.void_pos = z64_link.common.pos_2;
   z64_file.void_yaw = z64_link.common.rot_2.y;
-  z64_file.void_var = z64_link.common.actor_variable;
+  z64_file.void_var = z64_link.common.variable;
   z64_file.void_entrance = z64_file.entrance_index;
   z64_file.void_room_index = z64_game.room_index;
 }
 
 static void clear_scene_flags_proc(struct menu_item *item, void *data)
 {
-  memset(&z64_game.switch_flags, 0x00, 0x24);
+  memset(&z64_game.swch_flags, 0x00, 0x24);
 }
 
 static void set_scene_flags_proc(struct menu_item *item, void *data)
 {
-  memset(&z64_game.switch_flags, 0xFF, 0x24);
+  memset(&z64_game.swch_flags, 0xFF, 0x24);
 }
 
 static void slot_dec_proc(struct menu_item *item, void *data)
@@ -1562,7 +1578,7 @@ static void places_proc(struct menu_item *item, void *data)
         cutscene += 0xFFEF;
       entrance_override_once = 1;
       do_warp(i, cutscene, settings->menu_settings.warp_age);
-      if (zu_scene_info[scene_index].no_entrances > 1)
+      if (zu_scene_info[scene_index].n_entrances > 1)
         menu_return(&menu_main);
       menu_return(&menu_main);
       menu_return(&menu_main);
@@ -1653,9 +1669,9 @@ static void activate_command_proc(struct menu_item *item, void *data)
 
 static void apply_settings()
 {
-  size_t no_font_options = sizeof(menu_font_options) /
-                           sizeof(*menu_font_options);
-  for (int i = 0; i < no_font_options; ++i)
+  size_t n_font_options = sizeof(menu_font_options) /
+                          sizeof(*menu_font_options);
+  for (int i = 0; i < n_font_options; ++i)
     if (menu_font_options[i] == settings->menu_settings.font_resource) {
       menu_option_set(menu_font_option, i);
       break;
@@ -1721,7 +1737,7 @@ static int warp_info_draw_proc(struct menu_item *item,
 static void load_room_proc(struct menu_item *item, void *data)
 {
   uint8_t new_room_index = menu_intinput_get(data);
-  if (new_room_index < z64_game.no_rooms) {
+  if (new_room_index < z64_game.n_rooms) {
     if (new_room_index == z64_game.room_index) {
       z64_game.room_index = -1;
       z64_UnloadRoom(&z64_game, &z64_game.room_index);
@@ -1920,22 +1936,22 @@ static int disp_draw_proc(struct menu_item *item,
 
 static void push_object_proc(struct menu_item *item, void *data)
 {
-  int16_t object_no = menu_intinput_get(data);
-  if (object_no == 0)
+  int16_t object_id = menu_intinput_get(data);
+  if (object_id == 0)
     return;
-  int n = z64_game.obj_ctxt.no_objects++;
+  int n = z64_game.obj_ctxt.n_objects++;
   z64_mem_obj_t *obj = z64_game.obj_ctxt.objects;
-  obj[n].object_no = -object_no;
+  obj[n].id = -object_id;
   obj[n].getfile.vrom_addr = 0;
-  size_t size = z64_object_table[object_no].vrom_end -
-                z64_object_table[object_no].vrom_start;
-  obj[n + 1].object = (char*)obj[n].object + size;
+  size_t size = z64_object_table[object_id].vrom_end -
+                z64_object_table[object_id].vrom_start;
+  obj[n + 1].data = (char*)obj[n].data + size;
 }
 
 static void pop_object_proc(struct menu_item *item, void *data)
 {
-  if (z64_game.obj_ctxt.no_objects > 0)
-    z64_game.obj_ctxt.objects[--z64_game.obj_ctxt.no_objects].object_no = 0;
+  if (z64_game.obj_ctxt.n_objects > 0)
+    z64_game.obj_ctxt.objects[--z64_game.obj_ctxt.n_objects].id = 0;
 }
 
 static int objects_draw_proc(struct menu_item *item,
@@ -1951,19 +1967,19 @@ static int objects_draw_proc(struct menu_item *item,
   gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
   char *s = z64_game.obj_ctxt.obj_space_start;
   char *e = z64_game.obj_ctxt.obj_space_end;
-  char *p = z64_game.obj_ctxt.objects[z64_game.obj_ctxt.no_objects].object;
+  char *p = z64_game.obj_ctxt.objects[z64_game.obj_ctxt.n_objects].data;
   size_t max_objects = sizeof(z64_game.obj_ctxt.objects) /
                        sizeof(*z64_game.obj_ctxt.objects) - 1;
   gfx_printf(font, x, y + ch * 0, "objects   %i / %i",
-             z64_game.obj_ctxt.no_objects, max_objects);
+             z64_game.obj_ctxt.n_objects, max_objects);
   gfx_printf(font, x, y + ch * 1, "allocated %08" PRIx32, p - s);
   gfx_printf(font, x, y + ch * 2, "available %08" PRIx32, e - p);
   gfx_printf(font, x, y + ch * 3, "total     %08" PRIx32, e - s);
-  for (int i = 0; i < z64_game.obj_ctxt.no_objects; ++i)
+  for (int i = 0; i < z64_game.obj_ctxt.n_objects; ++i)
     gfx_printf(font, x + cw * (i % 2) * 16, y + ch * (i / 2 + 5),
                "%08" PRIx32 " %04" PRIx16,
-               z64_game.obj_ctxt.objects[i].object,
-               z64_game.obj_ctxt.objects[i].object_no);
+               z64_game.obj_ctxt.objects[i].data,
+               z64_game.obj_ctxt.objects[i].id);
   return 1;
 }
 
@@ -2006,10 +2022,10 @@ static int actor_draw_proc(struct menu_item *item,
   if (info->index < max) {
     z64_actor_t *actor = z64_game.actor_list[info->group].first;
     for (int i = 0; i < info->index; ++i)
-      actor = actor->actor_next;
+      actor = actor->next;
     gfx_printf(font, x, y, "%08" PRIx32 " %04" PRIx16,
-               actor, actor->actor_index);
-    gfx_printf(font, x, y + ch, "variable %04" PRIx16, actor->actor_variable);
+               actor, actor->actor_id);
+    gfx_printf(font, x, y + ch, "variable %04" PRIx16, actor->variable);
   }
   else
     gfx_printf(font, x, y, "<none>");
@@ -2022,7 +2038,7 @@ static void delete_actor_proc(struct menu_item *item, void *data)
   if (info->index < z64_game.actor_list[info->group].length) {
     z64_actor_t *actor = z64_game.actor_list[info->group].first;
     for (int i = 0; i < info->index; ++i)
-      actor = actor->actor_next;
+      actor = actor->next;
     z64_DeleteActor(&z64_game, &z64_game.actor_ctxt, actor);
   }
 }
@@ -2033,7 +2049,7 @@ static void goto_actor_proc(struct menu_item *item, void *data)
   if (info->index < z64_game.actor_list[info->group].length) {
     z64_actor_t *actor = z64_game.actor_list[info->group].first;
     for (int i = 0; i < info->index; ++i)
-      actor = actor->actor_next;
+      actor = actor->next;
     z64_link.common.pos_1 = actor->pos_2;
     z64_link.common.pos_2 = actor->pos_2;
   }
@@ -2178,6 +2194,7 @@ static void main_hook(void)
     zu_setmusic(0x110000FF);
     zu_setmusic(0x130000FF);
     z64_file.seq_index = -1;
+    z64_file.night_sfx = -1;
   }
   if (settings->cheats & (1 << CHEAT_USEITEMS))
     memset(&z64_game.restriction_flags, 0, sizeof(z64_game.restriction_flags));
@@ -2557,22 +2574,22 @@ static void init(void)
     static struct menu places;
     menu_init(&places, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     places.selector = menu_add_submenu(&places, 0, 0, NULL, "return");
-    size_t no_scene_categories = sizeof(scene_categories) /
-                                 sizeof(*scene_categories);
-    for (int i = 0; i < no_scene_categories; ++i) {
+    size_t n_scene_categories = sizeof(scene_categories) /
+                                sizeof(*scene_categories);
+    for (int i = 0; i < n_scene_categories; ++i) {
       struct scene_category *cat = &scene_categories[i];
       struct menu *cat_menu = malloc(sizeof(*cat_menu));
       menu_init(cat_menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
       cat_menu->selector = menu_add_submenu(cat_menu, 0, 0, NULL, "return");
-      for (int j = 0; j < cat->no_scenes; ++j) {
+      for (int j = 0; j < cat->n_scenes; ++j) {
         uint8_t scene_index = cat->scenes[j];
         struct zu_scene_info *scene = &zu_scene_info[scene_index];
-        if (scene->no_entrances > 1) {
+        if (scene->n_entrances > 1) {
           struct menu *scene_menu = malloc(sizeof(*scene_menu));
           menu_init(scene_menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
           scene_menu->selector = menu_add_submenu(scene_menu, 0, 0, NULL,
                                                   "return");
-          for (uint8_t k = 0; k < scene->no_entrances; ++k)
+          for (uint8_t k = 0; k < scene->n_entrances; ++k)
             menu_add_button(scene_menu, 0, 1 + k, scene->entrance_names[k],
                             places_proc, (void*)((scene_index << 8) | k));
           menu_add_submenu(cat_menu, 0, 1 + j, scene_menu,
@@ -2641,7 +2658,7 @@ static void init(void)
                    (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
     menu_add_static(&menu_scene, 0, 10, "no. rooms", 0xC0C0C0);
     menu_add_watch(&menu_scene, 14, 10,
-                   (uint32_t)&z64_game.no_rooms, WATCH_TYPE_U8);
+                   (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
     /* cheats */
     menu_init(&menu_cheats, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -2703,16 +2720,16 @@ static void init(void)
                                          sizeof(*capacity_item_list);
       for (int i = 0; i < capacity_item_list_length; ++i) {
         struct capacity_item_option *option = &capacity_item_list[i];
-        int no_tiles = option->multi_tile ? 7 : 8;
+        int n_tiles = option->multi_tile ? 7 : 8;
         struct gfx_texture *t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_32b,
-                                                   32, 32, 1, no_tiles);
-        for (int j = 0; j < no_tiles; ++j) {
+                                                   32, 32, 1, n_tiles);
+        for (int j = 0; j < n_tiles; ++j) {
           if (option->multi_tile)
             gfx_texture_copy_tile(t, j, t_on, option->item_tile + j, 0);
           else
             gfx_texture_copy_tile(t, j, t_on, option->item_tile, 0);
           gfx_texture_copy_tile(t, j, t_am,
-                                option->amount_tiles[8 - no_tiles + j], 1);
+                                option->amount_tiles[8 - n_tiles + j], 1);
         }
         struct capacity_item_data *data = malloc(sizeof(*data));
         data->shift = option->shift;
@@ -3275,11 +3292,11 @@ static void init(void)
                                               NULL, "return");
     {
       const int page_length = 16;
-      int no_pages = (COMMAND_MAX + page_length - 1) / page_length;
-      struct menu *pages = malloc(sizeof(*pages) * no_pages);
+      int n_pages = (COMMAND_MAX + page_length - 1) / page_length;
+      struct menu *pages = malloc(sizeof(*pages) * n_pages);
       struct menu_item *tab = menu_add_tab(&menu_commands, 0, 1,
-                                           pages, no_pages);
-      for (int i = 0; i < no_pages; ++i) {
+                                           pages, n_pages);
+      for (int i = 0; i < n_pages; ++i) {
         struct menu *page = &pages[i];
         menu_init(page, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
         for (int j = 0; j < page_length; ++j) {
@@ -3294,7 +3311,7 @@ static void init(void)
           binder_create(page, 18, j, n);
         }
       }
-      if (no_pages > 0)
+      if (n_pages > 0)
         menu_tab_goto(tab, 0);
       menu_add_button(&menu_commands, 8, 0, "<", tab_prev_proc, tab);
       menu_add_button(&menu_commands, 10, 0, ">", tab_next_proc, tab);

@@ -63,7 +63,7 @@ struct zu_bbox
 struct zu_scene_info
 {
   const char   *scene_name;
-  int           no_entrances;
+  int           n_entrances;
   const char  **entrance_names;
 };
 
@@ -101,7 +101,7 @@ void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size);
 
 void *zu_sr_header(void *sr, int header_index, const z64_stab_t *stab);
 void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,
-                    int *no_rooms, const z64_stab_t *stab);
+                    int *n_rooms, const z64_stab_t *stab);
 void zu_room_mesh(const void *room, struct zu_mesh *mesh,
                   const z64_stab_t *stab);
 void zu_mesh_destroy(struct zu_mesh *mesh);

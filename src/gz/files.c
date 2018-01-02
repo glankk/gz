@@ -245,9 +245,7 @@ static int file_draw_proc(struct menu_item *item,
     entry->anim_state = (entry->anim_state + 1) % 3;
   }
   int cw = menu_get_cell_width(item->owner, 1);
-  static struct gfx_texture *texture = NULL;
-  if (!texture)
-    texture = resource_load_grc_texture("file_icons");
+  struct gfx_texture *texture = resource_get(RES_ICON_FILE);
   struct gfx_sprite sprite =
   {
     texture,
@@ -458,11 +456,11 @@ static void gf_menu_init(void)
     }
     struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
     gf_scroll_up = menu_add_button_icon(menu, 0, 5,
-                                     t_arrow, 0, 0xFFFFFF,
-                                     scroll_up_proc, NULL);
+                                        t_arrow, 0, 0xFFFFFF,
+                                        scroll_up_proc, NULL);
     gf_scroll_down = menu_add_button_icon(menu, 0, 5 + FILE_VIEW_ROWS - 1,
-                                       t_arrow, 1, 0xFFFFFF,
-                                       scroll_down_proc, NULL);
+                                          t_arrow, 1, 0xFFFFFF,
+                                          scroll_down_proc, NULL);
   }
   update_view(update_list(), 1);
 }

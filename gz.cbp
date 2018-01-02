@@ -23,7 +23,7 @@
 				<Option object_output="obj" />
 				<Option type="3" />
 				<Option compiler="n64" />
-				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.0-test.State&quot;' />
@@ -36,7 +36,7 @@
 				<Option object_output="obj" />
 				<Option type="3" />
 				<Option compiler="n64" />
-				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.1-test.State&quot;' />
@@ -49,13 +49,16 @@
 				<Option object_output="obj" />
 				<Option type="3" />
 				<Option compiler="n64" />
-				<Option host_application='$(EMUNAME)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.2-test.State&quot;' />
 					<Variable name="emurom" value="..\n64\roms\oot-1.2-j.z64" />
 				</Environment>
 			</Target>
+			<Environment>
+				<Variable name="emuname" value="EmuHawk" />
+			</Environment>
 		</Build>
 		<Unit filename="res/resources.json" />
 		<Unit filename="src/gz/adex.c">

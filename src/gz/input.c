@@ -271,13 +271,13 @@ static int think_proc(struct menu_item *item)
   }
   if (data->state == 3) {
     uint16_t p = bind_get_bitmask(*b);
-    if (pad_released & p) {
+    if (pad == 0) {
       item->animate_highlight = 0;
       data->state = 0;
       input_enabled = 1;
     }
     else {
-      uint16_t pp = pad_pressed_raw;
+      uint16_t pp = pad_pressed_raw & ~p;
       for (int i = 0; pp && i < 4; ++i) {
         int c = bind_get_component(*b, i);
         if (c != BIND_END)

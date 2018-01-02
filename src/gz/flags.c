@@ -51,8 +51,8 @@ static void add_record(size_t word_size, size_t length, void *data,
   record->data = data;
   record->name = name;
   record->comp = calloc(length, word_size);
-  int no_flags = word_size * 8 * length;
-  record->index_length = ((int)(ceilf(log2f(no_flags))) + 3) / 4;
+  int n_flags = word_size * 8 * length;
+  record->index_length = ((int)(ceilf(log2f(n_flags))) + 3) / 4;
   record->view_offset = 0;
 }
 
@@ -163,18 +163,18 @@ static void update_view(void)
 {
   struct flag_record *r = vector_at(&records, view_record_index);
   strcpy(view_record_name->text, r->name);
-  int no_flags = r->word_size * 8 * r->length;
-  view_pageup->enabled = view_pagedown->enabled = (no_flags >
+  int n_flags = r->word_size * 8 * r->length;
+  view_pageup->enabled = view_pagedown->enabled = (n_flags >
                                                    FLAG_VIEW_ROWS * 0x10);
   for (int y = 0; y < FLAG_VIEW_ROWS; ++y) {
     struct menu_item *row = view_rows[y];
-    row->enabled = (r->view_offset + y * 0x10 < no_flags);
+    row->enabled = (r->view_offset + y * 0x10 < n_flags);
     if (row->enabled)
       sprintf(view_rows[y]->text, "%04x", r->view_offset + y * 0x10);
     for (int x = 0; x < 0x10; ++x) {
       int n = y * 0x10 + x;
       struct menu_item *cell = view_cells[n];
-      cell->enabled = (r->view_offset + n < no_flags);
+      cell->enabled = (r->view_offset + n < n_flags);
       if (cell->enabled)
         cell->think_proc(cell);
     }
@@ -209,8 +209,8 @@ static void page_up_proc(struct menu_item *item, void *data)
 static void page_down_proc(struct menu_item *item, void *data)
 {
   struct flag_record *r = vector_at(&records, view_record_index);
-  int no_flags = r->word_size * 8 * r->length;
-  if (r->view_offset + FLAG_VIEW_ROWS * 0x10 < no_flags) {
+  int n_flags = r->word_size * 8 * r->length;
+  if (r->view_offset + FLAG_VIEW_ROWS * 0x10 < n_flags) {
     r->view_offset += 0x10;
     update_view();
   }
@@ -246,11 +246,13 @@ void flag_menu_create(struct menu *menu)
   add_record(2, 4, z64_file.item_get_inf, "item_get_inf");
   add_record(2, 30, z64_file.inf_table, "inf_table");
   add_record(2, 4, z64_file.event_inf, "event_inf");
-  add_record(4, 1, &z64_game.switch_flags, "switch");
-  add_record(4, 1, &z64_game.temp_switch_flags, "temp_switch");
+  add_record(4, 1, &z64_game.swch_flags, "switch");
+  add_record(4, 1, &z64_game.temp_swch_flags, "temp_switch");
   add_record(4, 1, &z64_game.chest_flags, "chest");
-  add_record(4, 1, &z64_game.room_clear_flags, "clear");
-  add_record(4, 1, &z64_game.collectible_flags, "collect");
+  add_record(4, 1, &z64_game.clear_flags, "clear");
+  add_record(4, 1, &z64_game.temp_clear_flags, "temp_clear");
+  add_record(4, 1, &z64_game.collect_flags, "collect");
+  add_record(4, 1, &z64_game.temp_collect_flags, "temp_collect");
   /* initialize menus */
   menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");

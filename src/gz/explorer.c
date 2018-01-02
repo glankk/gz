@@ -27,7 +27,7 @@ struct item_data
   int             scene_next;
   int             room_index;
   int             room_next;
-  int             no_rooms;
+  int             n_rooms;
   void           *scene_file;
   void           *room_file;
   struct zu_mesh  room_mesh;
@@ -274,7 +274,7 @@ static int draw_proc(struct menu_item *item,
     struct zu_file room_files[0x100];
     zu_scene_rooms(zu_sr_header(data->scene_file,
                                 z64_file.scene_setup_index, &stab),
-                   room_files, 0x100, &data->no_rooms, &stab);
+                   room_files, 0x100, &data->n_rooms, &stab);
     /* load room */
     if (data->room_index != data->room_next || !data->room_file) {
       if (data->room_file) {
@@ -503,7 +503,7 @@ void explorer_room_prev(struct menu *menu)
   struct menu_item *item = menu->items.first;
   struct item_data *data = item->data;
   if (data->state == STATE_RENDER)
-    data->room_next = (data->room_next + data->no_rooms - 1) % data->no_rooms;
+    data->room_next = (data->room_next + data->n_rooms - 1) % data->n_rooms;
 }
 
 void explorer_room_next(struct menu *menu)
@@ -511,5 +511,5 @@ void explorer_room_next(struct menu *menu)
   struct menu_item *item = menu->items.first;
   struct item_data *data = item->data;
   if (data->state == STATE_RENDER)
-    data->room_next = (data->room_next + 1) % data->no_rooms;
+    data->room_next = (data->room_next + 1) % data->n_rooms;
 }

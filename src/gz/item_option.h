@@ -3,7 +3,7 @@
 #include "menu.h"
 
 struct menu_item *item_option_create(struct menu *menu, int x, int y,
-                                     int no_items, const int8_t *item_list,
+                                     int n_items, const int8_t *item_list,
                                      int8_t *value,
                                      struct gfx_texture *texture,
                                      struct gfx_texture *bg_texture,

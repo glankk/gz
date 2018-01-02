@@ -195,7 +195,7 @@ struct menu_item   *menu_add_tooltip(struct menu *menu, int x, int y,
 struct menu_item   *menu_add_imenu(struct menu *menu, int x, int y,
                                    struct menu **p_imenu);
 struct menu_item   *menu_add_tab(struct menu *menu, int x, int y,
-                                 struct menu *tabs, int no_tabs);
+                                 struct menu *tabs, int n_tabs);
 void                menu_tab_goto(struct menu_item *item, int tab_index);
 void                menu_tab_previous(struct menu_item *item);
 void                menu_tab_next(struct menu_item *item);

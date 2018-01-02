@@ -439,13 +439,13 @@ typedef struct
   char            unk_09_[0x0002];          /* 0x00D2 */
   struct
   {
-    uint32_t      chests;
-    uint32_t      switches;
-    uint32_t      rooms_cleared;
-    uint32_t      collectibles;
+    uint32_t      chest;
+    uint32_t      swch;
+    uint32_t      clear;
+    uint32_t      collect;
     uint32_t      unk_00_;
-    uint32_t      rooms_visited_1;
-    uint32_t      rooms_visited_2;
+    uint32_t      rooms_1;
+    uint32_t      rooms_2;
   }               scene_flags[101];         /* 0x00D4 */
   char            unk_0A_[0x0284];          /* 0x0BE0 */
   z64_xyz_t       fw_pos;                   /* 0x0E64 */
@@ -473,8 +473,8 @@ typedef struct
   int16_t         void_entrance;            /* 0x1378 */
   int8_t          void_room_index;          /* 0x137A */
   int8_t          unk_10_;                  /* 0x137B */
-  uint32_t        temp_switch_flags;        /* 0x137C */
-  uint32_t        unk_flags_4;              /* 0x1380 */
+  uint32_t        temp_swch_flags;          /* 0x137C */
+  uint32_t        temp_collect_flags;       /* 0x1380 */
   char            unk_11_[0x0044];          /* 0x1384 */
   uint16_t        nayrus_love_timer;        /* 0x13C8 */
   char            unk_12_[0x0004];          /* 0x13CA */
@@ -602,14 +602,14 @@ typedef struct
 typedef struct z64_actor_s z64_actor_t;
 struct z64_actor_s
 {
-  uint16_t      actor_index;      /* 0x0000 */
+  int16_t       actor_id;         /* 0x0000 */
   uint8_t       actor_type;       /* 0x0002 */
   int8_t        room_index;       /* 0x0003 */
-  char          unk_00_[0x0004];  /* 0x0004 */
+  uint32_t      flags;            /* 0x0004 */
   z64_xyz_t     pos_1;            /* 0x0008 */
   z64_rot_t     rot_init;         /* 0x0014 */
   char          unk_01_[0x0002];  /* 0x001A */
-  uint16_t      actor_variable;   /* 0x001C */
+  uint16_t      variable;         /* 0x001C */
   uint8_t       alloc_index;      /* 0x001E */
   char          unk_02_;          /* 0x001F */
   uint16_t      sound_effect;     /* 0x0020 */
@@ -642,18 +642,18 @@ struct z64_actor_s
   z64_xyz_t     pos_4;            /* 0x0100 */
   uint16_t      unk_0F_;          /* 0x010C */
   uint16_t      text_id;          /* 0x010E */
-  int16_t       actor_frozen;     /* 0x0110 */
+  int16_t       frozen;           /* 0x0110 */
   char          unk_10_[0x0003];  /* 0x0112 */
-  uint8_t       actor_active;     /* 0x0115 */
+  uint8_t       active;           /* 0x0115 */
   char          unk_11_[0x0002];  /* 0x0116 */
   z64_actor_t  *unk_12_;          /* 0x0118 */
   char          unk_13_[0x0004];  /* 0x011C */
-  z64_actor_t  *actor_prev;       /* 0x0120 */
-  z64_actor_t  *actor_next;       /* 0x0124 */
-  void         *unk_14_;          /* 0x0128 */
-  void         *actor_init_proc;  /* 0x012C */
-  void         *actor_main_proc;  /* 0x0130 */
-  void         *actor_draw_proc;  /* 0x0134 */
+  z64_actor_t  *prev;             /* 0x0120 */
+  z64_actor_t  *next;             /* 0x0124 */
+  void         *ctor;             /* 0x0128 */
+  void         *dtor;             /* 0x012C */
+  void         *main_proc;        /* 0x0130 */
+  void         *draw_proc;        /* 0x0134 */
   void         *code_entry;       /* 0x0138 */
                                   /* 0x013C */
 };
@@ -733,8 +733,8 @@ typedef struct
 /* object structs */
 typedef struct
 {
-  int16_t       object_no;
-  void         *object;
+  int16_t       id;
+  void         *data;
   z64_getfile_t getfile;
   OSMesgQueue   load_mq;
   OSMesg        load_m;
@@ -744,7 +744,7 @@ typedef struct
 {
   void         *obj_space_start;
   void         *obj_space_end;
-  uint8_t       no_objects;
+  uint8_t       n_objects;
   char          unk_00_;
   uint8_t       keep_index;
   uint8_t       skeep_index;
@@ -837,7 +837,7 @@ typedef struct
   z64_lighting_t  lighting;               /* 0x007A8 */
   char            unk_07_[0x146C];        /* 0x007B8 */
   char            actor_ctxt[0x0008];     /* 0x01C24 */
-  uint8_t         no_actors_loaded;       /* 0x01C2C */
+  uint8_t         n_actors_loaded;        /* 0x01C2C */
   char            unk_08_[0x0003];        /* 0x01C2D */
   struct
   {
@@ -848,15 +848,15 @@ typedef struct
   z64_actor_t    *arrow_actor;            /* 0x01CC8 */
   z64_actor_t    *target_actor;           /* 0x01CCC */
   char            unk_0A_[0x0058];        /* 0x01CD0 */
-  uint32_t        switch_flags;           /* 0x01D28 */
-  uint32_t        temp_switch_flags;      /* 0x01D2C */
+  uint32_t        swch_flags;             /* 0x01D28 */
+  uint32_t        temp_swch_flags;        /* 0x01D2C */
   uint32_t        unk_flags_0;            /* 0x01D30 */
   uint32_t        unk_flags_1;            /* 0x01D34 */
   uint32_t        chest_flags;            /* 0x01D38 */
-  uint32_t        room_clear_flags;       /* 0x01D3C */
-  uint32_t        unk_flags_2;            /* 0x01D40 */
-  uint32_t        collectible_flags;      /* 0x01D44 */
-  uint32_t        unk_flags_4;            /* 0x01D48 */
+  uint32_t        clear_flags;            /* 0x01D3C */
+  uint32_t        temp_clear_flags;       /* 0x01D40 */
+  uint32_t        collect_flags;          /* 0x01D44 */
+  uint32_t        temp_collect_flags;     /* 0x01D48 */
   void           *title_card_texture;     /* 0x01D4C */
   char            unk_0B_[0x0007];        /* 0x01D50 */
   uint8_t         title_card_delay;       /* 0x01D57 */
@@ -924,8 +924,8 @@ typedef struct
   uint8_t         link_age;               /* 0x11DE8 */
   char            unk_1F_;                /* 0x11DE9 */
   uint8_t         spawn_index;            /* 0x11DEA */
-  uint8_t         no_map_actors;          /* 0x11DEB */
-  uint8_t         no_rooms;               /* 0x11DEC */
+  uint8_t         n_map_actors;           /* 0x11DEB */
+  uint8_t         n_rooms;                /* 0x11DEC */
   char            unk_20_[0x000B];        /* 0x11DED */
   void           *map_actor_list;         /* 0x11DF8 */
   char            unk_21_[0x0008];        /* 0x11DFC */
@@ -952,6 +952,7 @@ typedef struct
 #define z64_SpawnActor_addr                     0x80025110
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
+#define z64_SwitchAgeEquips_addr                0x8006F804
 #define z64_UpdateItemButton_addr               0x8006FB50
 #define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
@@ -1006,6 +1007,7 @@ typedef struct
 #define z64_SpawnActor_addr                     0x80025110
 #define z64_minimap_disable_1_addr              0x8006CD50
 #define z64_minimap_disable_2_addr              0x8006D4E4
+#define z64_SwitchAgeEquips_addr                0x8006F804
 #define z64_UpdateItemButton_addr               0x8006FB50
 #define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
@@ -1060,6 +1062,7 @@ typedef struct
 #define z64_SpawnActor_addr                     0x80025750
 #define z64_minimap_disable_1_addr              0x8006D3B0
 #define z64_minimap_disable_2_addr              0x8006DB44
+#define z64_SwitchAgeEquips_addr                0x8006FE64
 #define z64_UpdateItemButton_addr               0x800701B0
 #define z64_UpdateEquipment_addr                0x80079DF4
 #define z64_LoadRoom_addr                       0x80081064
@@ -1108,9 +1111,10 @@ typedef void (*z64_DrawActors_proc)       (z64_game_t *game, void *actor_ctxt);
 typedef void (*z64_DeleteActor_proc)      (z64_game_t *game, void *actor_ctxt,
                                            z64_actor_t *actor);
 typedef void (*z64_SpawnActor_proc)       (void *actor_ctxt, z64_game_t *game,
-                                           int actor_no, float x, float y,
+                                           int actor_id, float x, float y,
                                            float z, uint16_t rx, uint16_t ry,
                                            uint16_t rz, uint16_t variable);
+typedef void (*z64_SwitchAgeEquips_proc)  (void);
 typedef void (*z64_UpdateItemButton_proc) (z64_game_t *game, int button_index);
 typedef void (*z64_UpdateEquipment_proc)  (z64_game_t *game, z64_link_t *link);
 typedef void (*z64_LoadRoom_proc)         (z64_game_t *game,
@@ -1152,6 +1156,8 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 #define z64_DeleteActor         ((z64_DeleteActor_proc)                       \
                                  z64_DeleteActor_addr)
 #define z64_SpawnActor          ((z64_SpawnActor_proc)z64_SpawnActor_addr)
+#define z64_SwitchAgeEquips     ((z64_SwitchAgeEquips_proc)                   \
+                                                      z64_SwitchAgeEquips_addr)
 #define z64_UpdateItemButton    ((z64_UpdateItemButton_proc)                  \
                                                       z64_UpdateItemButton_addr)
 #define z64_UpdateEquipment     ((z64_UpdateEquipment_proc)                   \
