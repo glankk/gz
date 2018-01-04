@@ -467,7 +467,7 @@ static int activate_proc(struct menu_item *item)
     z64_LoadRoom(&z64_game, &z64_game.room_index, data->room_index);
     z64_UnloadRoom(&z64_game, &z64_game.room_index);
   }
-  z64_xyz_t pos = {data->x, data->y, data->z};
+  z64_xyzf_t pos = {data->x, data->y, data->z};
   z64_link.common.pos_1 = z64_link.common.pos_2 = pos;
   z64_link.common.rot_2.y = z64_link.target_yaw = 0x8000 + data->yaw *
                                                   0x8000 / M_PI;

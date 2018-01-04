@@ -150,7 +150,7 @@ struct heap_node
 
 struct actor_debug_info
 {
-  uint8_t group;
+  uint8_t type;
   uint8_t index;
 };
 
@@ -1986,7 +1986,7 @@ static int objects_draw_proc(struct menu_item *item,
 static void actor_index_dec_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  uint32_t max = z64_game.actor_list[info->group].length;
+  uint32_t max = z64_game.actor_list[info->type].length;
   if (max == 0)
     max = 1;
   info->index = (info->index + max - 1) % max;
@@ -1995,7 +1995,7 @@ static void actor_index_dec_proc(struct menu_item *item, void *data)
 static void actor_index_inc_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  uint32_t max = z64_game.actor_list[info->group].length;
+  uint32_t max = z64_game.actor_list[info->type].length;
   if (max == 0)
     max = 1;
   info->index = (info->index + 1) % max;
@@ -2010,33 +2010,35 @@ static int actor_draw_proc(struct menu_item *item,
   struct gfx_font *font = draw_params->font;
   uint32_t color = draw_params->color;
   uint8_t alpha = draw_params->alpha;
+  int cw = menu_get_cell_width(item->owner, 1);
   int ch = menu_get_cell_height(item->owner, 1);
   gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
-  uint32_t max = z64_game.actor_list[info->group].length;
+  uint32_t max = z64_game.actor_list[info->type].length;
   if (info->index >= max) {
     if (max > 0)
       info->index = max - 1;
     else
       info->index = 0;
   }
+  gfx_printf(font, x + cw * 17, y, "(%i)", max);
   if (info->index < max) {
-    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+    z64_actor_t *actor = z64_game.actor_list[info->type].first;
     for (int i = 0; i < info->index; ++i)
       actor = actor->next;
-    gfx_printf(font, x, y, "%08" PRIx32 " %04" PRIx16,
+    gfx_printf(font, x, y + ch * 1, "%08" PRIx32 "  %04" PRIx16,
                actor, actor->actor_id);
-    gfx_printf(font, x, y + ch, "variable %04" PRIx16, actor->variable);
+    gfx_printf(font, x, y + ch * 2, "variable  %04" PRIx16, actor->variable);
   }
   else
-    gfx_printf(font, x, y, "<none>");
+    gfx_printf(font, x, y + ch * 1, "<none>");
   return 1;
 }
 
 static void delete_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  if (info->index < z64_game.actor_list[info->group].length) {
-    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+  if (info->index < z64_game.actor_list[info->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[info->type].first;
     for (int i = 0; i < info->index; ++i)
       actor = actor->next;
     z64_DeleteActor(&z64_game, &z64_game.actor_ctxt, actor);
@@ -2046,8 +2048,8 @@ static void delete_actor_proc(struct menu_item *item, void *data)
 static void goto_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  if (info->index < z64_game.actor_list[info->group].length) {
-    z64_actor_t *actor = z64_game.actor_list[info->group].first;
+  if (info->index < z64_game.actor_list[info->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[info->type].first;
     for (int i = 0; i < info->index; ++i)
       actor = actor->next;
     z64_link.common.pos_1 = actor->pos_2;
@@ -3182,42 +3184,41 @@ static void init(void)
       actors.selector = menu_add_submenu(&actors, 0, 0, NULL, "return");
       {
         static struct actor_debug_info data;
-        menu_add_static(&actors, 0, 1, "group", 0xC0C0C0);
+        menu_add_static(&actors, 0, 1, "type", 0xC0C0C0);
         menu_add_option(&actors, 10, 1,
                         "switch\0""prop (1)\0""player\0""bomb\0""npc\0"
                         "enemy\0""prop (2)\0""item/action\0""misc\0""boss\0"
                         "door\0""chest\0",
-                        byte_optionmod_proc, &data.group);
-        menu_add_static(&actors, 0, 2, "index", 0xC0C0C0);
-        menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, &data);
-        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
-        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
-        menu_add_button(&actors, 15, 2, ">", actor_index_inc_proc, &data);
-        struct menu_item *item = menu_add_static_custom(&actors, 0, 3,
+                        byte_optionmod_proc, &data.type);
+        struct menu_item *item = menu_add_static_custom(&actors, 0, 2,
                                                         actor_draw_proc,
                                                         NULL, 0xC0C0C0);
         item->data = &data;
+        menu_add_static(&actors, 0, 2, "index", 0xC0C0C0);
+        menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, &data);
+        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
+        menu_add_button(&actors, 15, 2, ">", actor_index_inc_proc, &data);
         menu_add_button(&actors, 0, 5, "delete", &delete_actor_proc, &data);
         menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &data);
       }
       {
         static struct actor_spawn_info data;
-        menu_add_static(&actors, 0, 6, "actor id", 0xC0C0C0);
-        menu_add_intinput(&actors, 10, 6, 16, 4,
-                          halfword_mod_proc, &data.actor_no);
-        menu_add_static(&actors, 0, 7, "variable", 0xC0C0C0);
+        menu_add_static(&actors, 0, 7, "actor id", 0xC0C0C0);
         menu_add_intinput(&actors, 10, 7, 16, 4,
+                          halfword_mod_proc, &data.actor_no);
+        menu_add_static(&actors, 0, 8, "variable", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 8, 16, 4,
                           halfword_mod_proc, &data.variable);
-        menu_add_static(&actors, 0, 8, "position", 0xC0C0C0);
-        menu_add_intinput(&actors, 10, 8, -10, 6, word_mod_proc, &data.x);
-        menu_add_intinput(&actors, 17, 8, -10, 6, word_mod_proc, &data.y);
-        menu_add_intinput(&actors, 24, 8, -10, 6, word_mod_proc, &data.z);
-        menu_add_static(&actors, 0, 9, "rotation", 0xC0C0C0);
-        menu_add_intinput(&actors, 10, 9, 10, 5, halfword_mod_proc, &data.rx);
-        menu_add_intinput(&actors, 17, 9, 10, 5, halfword_mod_proc, &data.ry);
-        menu_add_intinput(&actors, 24, 9, 10, 5, halfword_mod_proc, &data.rz);
-        menu_add_button(&actors, 0, 10, "spawn", spawn_actor_proc, &data);
-        menu_add_button(&actors, 10, 10,"fetch from link",
+        menu_add_static(&actors, 0, 9, "position", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 9, -10, 6, word_mod_proc, &data.x);
+        menu_add_intinput(&actors, 17, 9, -10, 6, word_mod_proc, &data.y);
+        menu_add_intinput(&actors, 24, 9, -10, 6, word_mod_proc, &data.z);
+        menu_add_static(&actors, 0, 10, "rotation", 0xC0C0C0);
+        menu_add_intinput(&actors, 10, 10, 10, 5, halfword_mod_proc, &data.rx);
+        menu_add_intinput(&actors, 17, 10, 10, 5, halfword_mod_proc, &data.ry);
+        menu_add_intinput(&actors, 24, 10, 10, 5, halfword_mod_proc, &data.rz);
+        menu_add_button(&actors, 0, 11, "spawn", spawn_actor_proc, &data);
+        menu_add_button(&actors, 10, 11,"fetch from link",
                         &fetch_actor_info_proc, &data);
       }
     }

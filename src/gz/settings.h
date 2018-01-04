@@ -113,7 +113,7 @@ struct menu_settings
 struct settings_data
 {
   /* order elements by size for space-efficient packing */
-  z64_xyz_t             teleport_pos[SETTINGS_TELEPORT_MAX];
+  z64_xyzf_t            teleport_pos[SETTINGS_TELEPORT_MAX];
   uint32_t              watch_address[SETTINGS_WATCHES_MAX];
   uint32_t              cheats;
   z64_angle_t           teleport_rot[SETTINGS_TELEPORT_MAX];
