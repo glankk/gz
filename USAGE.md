@@ -52,6 +52,7 @@ Use the `explore prev room` and `explore next room` commands
 to cycle through the rooms of the scene (bound to `R + D-Down` and `R + D-Up` by default).
 Pressing L will teleport link to the location and orientation of the crosshair and close the scene explorer.
 
+**set entrance point** sets link's current position and orientation as the point where he will respawn after voiding out.
 **clear flags** and **set flags** modifies the temporary and permanent flags for the current scene,
 which keep track of things such as which chests have been opened,
 which items have been collected, which enemies have been defeated, etc.
@@ -80,6 +81,7 @@ Does not affect sun's song or the time of day modifiers in the file menu.
 - **items usable:** Clears all item restriction flags,
 allowing all items to be used regardless of location.
 - **no minimap:** Keeps the minimap hidden at all times.
+- **isg:** Permanently activates the *infinite sword glitch*.
 
 To undo the effects of the *no music*, *items usable*, and *no minimap* cheats,
 turn the cheat off and enter a new scene, or reload the current scene.
@@ -102,7 +104,8 @@ There are also options to modify the dungeon items and small key amount of a spe
 **energy cap.**, **defense**, **magic cap.**, and **heart pieces** are specified in
 hexadecimal for simplicity (from here on denoted with an *h*).
 For energy capacity, 10h corresponds to one heart container.
-The defense hearts is specified in number of heart containers.
+The defense checkbox enables or disables double defense damage reduction,
+and the field next to it modifies the number of defense heart containers.
 For magic capacity, 0h is the normal capacity, 1h is double magic, 2h is what would be triple magic etc.
 For heart pieces, 10h corresponds to one heart piece.
 
@@ -155,6 +158,19 @@ When the file index is set to FFh, as it is by default on the title screen,
 saving will have no effect.
 There's also a **language** and **z targeting** option, which apply to the current file.
 
+Save files can be saved to and and loaded from an ED64 SD card with the **save to disk** and **load from disk** options.
+Pressing _load from disk_ will bring up the file browser. Pressing the name of a save file will load it and return to the file menu.
+The **load file to** and **after loading** options decide where in memory the file will be loaded to
+(the current zelda file, the currently selected memfile slot, or both),
+and what should happen when the loading is completed (reload scene, void out, or nothing).
+The file extension used for save files on disk is `.ootsave`, and the default filename is `file`.
+The filename can be changed by pressing the name field. Select the position you want to change with the D-Pad left and D-Pad right,
+and use the D-Pad up and D-Pad down to cycle between characters. Holding Z will cycle 3 characters at a time.
+Pressing **clear** will set the name field to be empty. When the name field is empty, the default filename is `untitled`.
+When saving, pressing the name of a save file in the file browser will copy that name to the name field.
+Pressing accept will save the file to the current folder in the file browser with the specified file name.
+If the file exists, you will be prompted to overwrite it.
+
 ### Watches menu
 This menu lets you add custom RAM watches to observe arbitrary parts of game's memory in real-time.
 Pressing the plus icon will add a new watch,
@@ -178,6 +194,38 @@ When a watch is released, a positioning button will appear which lets you change
 of the watch on the screen.
 Holding Z when positioning the watch will move it faster.
 
+Watches can be imported from text files on an ED64 SD card by pressing the folder icon.
+Press a watch file to bring up a list of all watches contained in that file. Press a watch to import it to your watch list.
+When you've imported all the watches you need, press **return** to go back to the watches menu.
+The format of watch files is described in the wiki, [here](https://github.com/glankk/gz/wiki/Watch-File-Syntax).
+
+### Debug menu
+_Note: These features are for advanced users. Be careful._
+
+This menu contains various debug features to use for testing;
+- **heap:** Displays information about the game's dynamic memory arena.
+- **display lists:** Displays information about display list usage.
+- **objects:** Shows a list of currently loaded objects, which contain graphical assets.
+The **push** option loads the object file of the given id at the end of the list, and the **pop** option unloads the last object in the list.
+- **actors:** Browse the currently loaded actors, and spawn new actors.
+Select an actor type and use the arrows to scroll between all the loaded actors of that type.
+The address and id of the selected actor is displayed below, as well as the actor variable in that actor instance.
+The **delete** option deletes the currently selected actor, and the **go to** option teleports link to the location of that actor.
+To spawn a new actor, enter an actor id, variable, the x, y, and z components of the position and rotation to spawn the actor at, and press **spawn**.
+The **fetch from link** option loads link's current position and rotation into the position and rotation fields.
+- **flags:** Display and edit saved game flags. The flags are grouped by the records they are kept in.
+Use the arrows to cycle between flag records. Press a flag to toggle its state. A red flag is "off", and a green flag is "on".
+The **log** menu displays a list of recent flag events. When a flag changes, its record, id, and new value is inserted at the top off the list.
+The **undo** option reverts the effect of the most recent flag event and removes it from the log.
+The **clear** option removes all flag events from the log, but does not affect the state of the given flags.
+_Note:_ The flag log only records changes when the log menu is open. If a flag changes and then changes back while the log is closed,
+these changes will not be recorded.
+_Note:_ Scene-related flags only affect the currently loaded scene. If a scene flag event that occurred in one scene is undone in a different scene,
+it will not have the desired effect.
+- **memory:** Memory editor. Use the horizontal arrows to cycle between memory domains,
+and the vertical arrows to scroll up and down between addresses. Holding Z while scrolling will scroll faster.
+You can also enter an address manually in the address field. To edit memory, select the desired word size and press a memory cell to modify it.
+
 ### Settings menu
 This is where most of the functionality of gz is configured.
 The **profile** option selects which profile to save and load settings to and from.
@@ -190,6 +238,7 @@ The screen position of the utility menu, input display, lag counter, and timer c
 by their respective positioning buttons.
 Holding Z when positioning an element will move it faster.
 The display unit of the lag counter can be set to *frames* or *seconds*.
+**macro input** enables or disables controller input when macro playback is active.
 The **break type** option decides how the *break free* command will function.
 When the break type is *normal*, the command will end textboxes, certain events and traditional cutscenes.
 The *aggressive* break type will cause the command to also try to reset the camera and some of Link's state flags.
@@ -205,6 +254,7 @@ The following settings are saved:
 - Command button binds.
 - Activated cheats.
 - Warp menu age, cutscene index, and entrance index.
+- Disk file loading settings.
 
 The **commands** menu lets you bind commands to custom button combinations and/or activate them manually.
 Pressing the name of a command will activate that command,
@@ -261,6 +311,8 @@ Otherwise, freezes the game as if the pause command was activated.
 - **void out:** Reloads the current scene,
 starting from the last room entrance as if Link voided out.
 *Default: `A + B + L`*
+- **reset:** Reset the game, as if the reset button had been pressed. All unsaved settings will be lost.
+*Default: `unbound`*
 - **turbo:** Sets Link's linear velocity to 27.
 *Default: `unbound`*
 - **fall:** Makes Link fall through the floor, as if there was no floor.
@@ -278,6 +330,12 @@ starting from the last room entrance as if Link voided out.
 - **previous memfile:** Selects the previous memory file slot.
 *Default: `unbound`*
 - **next memfile:** Selects the next memory file slot.
+*Default: `unbound`*
+- **record macro:** Record/stop recording input macro. When starting macro recording, any previously recorded macro will be erased.
+Input macros are not saved between resets.
+*Default: `unbound`*
+- **play macro:** Playback input macro. This command can be held down to loop macro playback.
+By default, macro input will override controller input, but this can be changed with the **macro input** setting in the settings menu.
 *Default: `unbound`*
 - **explore prev room:** Loads the previous room while using the scene explorer.
 *Default: `R + D-Down`*

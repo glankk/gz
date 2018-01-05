@@ -2353,7 +2353,7 @@ static void main_hook(void)
       --splash_time;
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
-                 "gz-0.3.1 github.com/glankk/gz");
+                 "gz-0.3.2 github.com/glankk/gz");
       static struct gfx_texture *logo_texture = NULL;
       if (!logo_texture)
         logo_texture = resource_load_grc_texture("logo");
