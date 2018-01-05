@@ -163,6 +163,7 @@ Pressing _load from disk_ will bring up the file browser. Pressing the name of a
 The **load file to** and **after loading** options decide where in memory the file will be loaded to
 (the current zelda file, the currently selected memfile slot, or both),
 and what should happen when the loading is completed (reload scene, void out, or nothing).
+The _after loading_ option will have no effect when loading only to the current memfile.
 The file extension used for save files on disk is `.ootsave`, and the default filename is `file`.
 The filename can be changed by pressing the name field. Select the position you want to change with the D-Pad left and D-Pad right,
 and use the D-Pad up and D-Pad down to cycle between characters. Holding Z will cycle 3 characters at a time.
