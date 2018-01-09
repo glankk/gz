@@ -4,30 +4,33 @@
 #include "input.h"
 #include "z64.h"
 
-#define SETTINGS_ADDRESS          0x7A00
-#define SETTINGS_MAXSIZE          (0x8000-(SETTINGS_ADDRESS))
-#define SETTINGS_PADSIZE          ((sizeof(struct settings)+1)/2*2)
-#define SETTINGS_PROFILE_MAX      ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION          0x0001
+#define SETTINGS_ADDRESS            0x7A00
+#define SETTINGS_MAXSIZE            (0x8000-(SETTINGS_ADDRESS))
+#define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
+#define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
+#define SETTINGS_VERSION            0x0001
 
-#define SETTINGS_WATCHES_MAX      18
-#define SETTINGS_TELEPORT_MAX     9
-#define SETTINGS_MEMFILE_MAX      10
-#define SETTINGS_BIND_MAX         COMMAND_MAX
+#define SETTINGS_WATCHES_MAX        18
+#define SETTINGS_TELEPORT_MAX       9
+#define SETTINGS_MEMFILE_MAX        10
+#define SETTINGS_BIND_MAX           COMMAND_MAX
 
-#define SETTINGS_LAG_FRAMES       0
-#define SETTINGS_LAG_SECONDS      1
+#define SETTINGS_LAG_FRAMES         0
+#define SETTINGS_LAG_SECONDS        1
 
-#define SETTINGS_BREAK_NORMAL     0
-#define SETTINGS_BREAK_AGGRESSIVE 1
+#define SETTINGS_BREAK_NORMAL       0
+#define SETTINGS_BREAK_AGGRESSIVE   1
 
-#define SETTINGS_LOADTO_ZFILE     0
-#define SETTINGS_LOADTO_MEMFILE   1
-#define SETTINGS_LOADTO_BOTH      2
+#define SETTINGS_LOADTO_ZFILE       0
+#define SETTINGS_LOADTO_MEMFILE     1
+#define SETTINGS_LOADTO_BOTH        2
 
-#define SETTINGS_ONLOAD_NOTHING   0
-#define SETTINGS_ONLOAD_RELOAD    1
-#define SETTINGS_ONLOAD_VOID      2
+#define SETTINGS_ONLOAD_NOTHING     0
+#define SETTINGS_ONLOAD_RELOAD      1
+#define SETTINGS_ONLOAD_VOID        2
+
+#define SETTINGS_COLVIEW_DECAL      0
+#define SETTINGS_COLVIEW_SURFACE    1
 
 enum cheats
 {
@@ -95,19 +98,20 @@ struct watch_info
 
 struct menu_settings
 {
-  uint32_t font_resource : 4;
-  uint32_t drop_shadow   : 1;
-  uint32_t input_display : 1;
-  uint32_t lag_counter   : 1;
-  uint32_t lag_unit      : 1;
-  uint32_t timer         : 1;
-  uint32_t pause_display : 1;
-  uint32_t macro_input   : 1;
-  uint32_t break_type    : 1;
-  uint32_t warp_age      : 2;
-  uint32_t warp_cutscene : 5;
-  uint32_t load_to       : 2;
-  uint32_t on_load       : 2;
+  uint32_t font_resource  : 4;
+  uint32_t drop_shadow    : 1;
+  uint32_t input_display  : 1;
+  uint32_t lag_counter    : 1;
+  uint32_t lag_unit       : 1;
+  uint32_t timer          : 1;
+  uint32_t pause_display  : 1;
+  uint32_t macro_input    : 1;
+  uint32_t break_type     : 1;
+  uint32_t warp_age       : 2;
+  uint32_t warp_cutscene  : 5;
+  uint32_t load_to        : 2;
+  uint32_t on_load        : 2;
+  uint32_t col_view_mode  : 1;
 };
 
 struct settings_data

@@ -200,6 +200,7 @@ static int32_t              next_entrance = -1;
 static enum movie_state     movie_state = MOVIE_IDLE;
 static struct vector        movie_inputs;
 static int                  movie_frame;
+static int                  col_view_state = 0;
 
 static uint16_t menu_font_options[] =
 {
@@ -506,7 +507,7 @@ void load_memfile(struct memory_file *file)
     z64_game.collect_flags = f;
   }
   /* pause screen stuff */
-  {
+  if (z64_game.pause_state == 0) {
     z64_gameinfo.start_icon_dd = file->start_icon_dd;
     z64_game.pause_screen = file->pause_screen;
     z64_game.item_screen_cursor = file->item_screen_cursor;
@@ -1750,6 +1751,40 @@ static void load_room_proc(struct menu_item *item, void *data)
   }
 }
 
+static int col_view_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    if (col_view_state == 0)
+      col_view_state = 1;
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    if (col_view_state == 2)
+      col_view_state = 3;
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = col_view_state == 1 || col_view_state == 2;
+    if (menu_checkbox_get(item) != state)
+      menu_checkbox_set(item, state);
+  }
+  return 0;
+}
+
+static int col_view_mode_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->menu_settings.col_view_mode)
+      menu_option_set(item, settings->menu_settings.col_view_mode);
+  }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->menu_settings.col_view_mode = menu_option_get(item);
+  return 0;
+}
+
+
 static _Bool heap_node_validate(struct heap_node *node)
 {
   return node->magic == 0x7373 &&
@@ -2348,6 +2383,91 @@ static void main_hook(void)
   menu_draw(&menu_global_watches);
 
   {
+    static Gfx *col_view_disp;
+    /* build collision view display list */
+    if (col_view_state == 1) {
+      z64_col_hdr_t *col_hdr = z64_game.col_hdr;
+      size_t size = 0x10 + 9 * col_hdr->n_poly;
+      if (col_view_disp)
+        free(col_view_disp);
+      col_view_disp = malloc(sizeof(*col_view_disp) * size);
+      Gfx *p = col_view_disp;
+      Gfx *d = col_view_disp + size;
+      gDPPipeSync(p++);
+      gDPSetCycleType(p++, G_CYC_2CYCLE);
+      uint32_t rm;
+      uint8_t alpha;
+      uint32_t blc1 = GBL_c1(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
+      uint32_t blc2 = GBL_c2(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
+      if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL) {
+        rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | ZMODE_DEC | FORCE_BL;
+        alpha = 0x80;
+      }
+      else {
+        rm = Z_CMP | Z_UPD | CVG_DST_FULL | ZMODE_OPA;
+        alpha = 0xFF;
+      }
+      gDPSetRenderMode(p++, rm | blc1, rm | blc2);
+      gDPSetCombineMode(p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
+      gSPTexture(p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
+      gSPLoadGeometryMode(p++, G_SHADE | G_LIGHTING | G_ZBUFFER | G_CULL_BACK);
+      {
+        Mtx m;
+        guMtxIdent(&m);
+        gSPMatrix(p++, gDisplayListData(&d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
+      }
+      for (int i = 0; i < col_hdr->n_poly; ++i) {
+        z64_col_poly_t *poly = &col_hdr->poly[i];
+        z64_xyz_t *va = &col_hdr->vtx[poly->va];
+        z64_xyz_t *vb = &col_hdr->vtx[poly->vb];
+        z64_xyz_t *vc = &col_hdr->vtx[poly->vc];
+        Vtx vg[3] =
+        {
+          gdSPDefVtxN(va->x, va->y, va->z, 0, 0,
+                      poly->norm.x / 0x100, poly->norm.y / 0x100,
+                      poly->norm.z / 0x100, 0xFF),
+          gdSPDefVtxN(vb->x, vb->y, vb->z, 0, 0,
+                      poly->norm.x / 0x100, poly->norm.y / 0x100,
+                      poly->norm.z / 0x100, 0xFF),
+          gdSPDefVtxN(vc->x, vc->y, vc->z, 0, 0,
+                      poly->norm.x / 0x100, poly->norm.y / 0x100,
+                      poly->norm.z / 0x100, 0xFF),
+        };
+        gSPVertex(p++, gDisplayListData(&d, vg), 3, 0);
+        z64_col_type_t *type = &col_hdr->type[poly->type];
+        if (type->flags_2.hookshot)
+          gDPSetPrimColor(p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
+        else if (type->flags_1.interaction > 0x01)
+          gDPSetPrimColor(p++, 0, 0, 0xC0, 0x00, 0xC0, alpha);
+        else if (type->flags_1.special == 0x0C)
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0x00, 0x00, alpha);
+        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+          gDPSetPrimColor(p++, 0, 0, 0x00, 0xFF, 0x00, alpha);
+        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+          gDPSetPrimColor(p++, 0, 0, 0xC0, 0xFF, 0xC0, alpha);
+        else if (type->flags_2.terrain == 0x01)
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
+        else
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
+        gSP1Triangle(p++, 0, 1, 2, 0);
+      }
+      gSPEndDisplayList(p++);
+      col_view_state = 2;
+    }
+    if (col_view_state == 2 && col_view_disp && z64_game.pause_state == 0)
+      gSPDisplayList(z64_ctxt.gfx->poly_xlu_p++, col_view_disp);
+    if (col_view_state == 3)
+      col_view_state = 4;
+    else if (col_view_state == 4) {
+      if (col_view_disp) {
+        free(col_view_disp);
+        col_view_disp = NULL;
+      }
+      col_view_state = 0;
+    }
+  }
+
+  {
     static int splash_time = 230;
     if (splash_time > 0) {
       --splash_time;
@@ -2640,26 +2760,30 @@ static void init(void)
       item = menu_add_intinput(&menu_scene, 5, 5, 10, 2, NULL, NULL);
       menu_add_button(&menu_scene, 0, 6, "load room", load_room_proc, item);
     }
+    menu_add_static(&menu_scene, 0, 7, "collision view", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 7, col_view_proc, NULL);
+    menu_add_option(&menu_scene, 18, 7, "decal\0""surface\0",
+                    col_view_mode_proc, NULL);
     {
       static struct slot_info teleport_slot_info;
       teleport_slot_info.data = &settings->teleport_slot;
       teleport_slot_info.max = SETTINGS_TELEPORT_MAX;
-      menu_add_static(&menu_scene, 0, 7, "teleport slot", 0xC0C0C0);
-      menu_add_watch(&menu_scene, 16, 7,
+      menu_add_static(&menu_scene, 0, 8, "teleport slot", 0xC0C0C0);
+      menu_add_watch(&menu_scene, 18, 8,
                      (uint32_t)teleport_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_scene, 14, 7, "-",
+      menu_add_button(&menu_scene, 16, 8, "-",
                       slot_dec_proc, &teleport_slot_info);
-      menu_add_button(&menu_scene, 18, 7, "+",
+      menu_add_button(&menu_scene, 20, 8, "+",
                       slot_inc_proc, &teleport_slot_info);
     }
-    menu_add_static(&menu_scene, 0, 8, "current scene", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 14, 8,
+    menu_add_static(&menu_scene, 0, 9, "current scene", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 9,
                    (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-    menu_add_static(&menu_scene, 0, 9, "current room", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 14, 9,
+    menu_add_static(&menu_scene, 0, 10, "current room", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 10,
                    (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
-    menu_add_static(&menu_scene, 0, 10, "no. rooms", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 14, 10,
+    menu_add_static(&menu_scene, 0, 11, "no. rooms", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 11,
                    (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
     /* cheats */
@@ -3239,15 +3363,15 @@ static void init(void)
         &profile, SETTINGS_PROFILE_MAX,
       };
       menu_add_static(&menu_settings, 0, 1, "profile", 0xC0C0C0);
-      menu_add_watch(&menu_settings, 16, 1,
+      menu_add_watch(&menu_settings, 18, 1,
                      (uint32_t)profile_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_settings, 14, 1, "-",
+      menu_add_button(&menu_settings, 16, 1, "-",
                       slot_dec_proc, &profile_slot_info);
-      menu_add_button(&menu_settings, 18, 1, "+",
+      menu_add_button(&menu_settings, 20, 1, "+",
                       slot_inc_proc, &profile_slot_info);
     }
     menu_add_static(&menu_settings, 0, 2, "font", 0xC0C0C0);
-    menu_font_option = menu_add_option(&menu_settings, 14, 2,
+    menu_font_option = menu_add_option(&menu_settings, 16, 2,
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
@@ -3255,30 +3379,30 @@ static void init(void)
                                        "pixelzim\0",
                                        menu_font_option_proc, NULL);
     menu_add_static(&menu_settings, 0, 3, "drop shadow", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 3,
+    menu_add_checkbox(&menu_settings, 16, 3,
                       menu_drop_shadow_proc, NULL);
     menu_add_static(&menu_settings, 0, 4, "menu position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 14, 4, menu_position_proc, NULL);
+    menu_add_positioning(&menu_settings, 16, 4, menu_position_proc, NULL);
     menu_add_static(&menu_settings, 0, 5, "input display", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 5, input_display_proc, NULL);
-    menu_add_positioning(&menu_settings, 16, 5,
+    menu_add_checkbox(&menu_settings, 16, 5, input_display_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, 5,
                          generic_position_proc, &settings->input_display_x);
     menu_add_static(&menu_settings, 0, 6, "lag counter", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 6, lag_counter_proc, NULL);
-    menu_add_positioning(&menu_settings, 16, 6,
+    menu_add_checkbox(&menu_settings, 16, 6, lag_counter_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, 6,
                          generic_position_proc, &settings->lag_counter_x);
-    menu_add_option(&menu_settings, 18, 6, "frames\0""seconds\0",
+    menu_add_option(&menu_settings, 20, 6, "frames\0""seconds\0",
                     lag_unit_proc, NULL);
     menu_add_static(&menu_settings, 0, 7, "timer", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 7, timer_proc, NULL);
-    menu_add_positioning(&menu_settings, 16, 7,
+    menu_add_checkbox(&menu_settings, 16, 7, timer_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, 7,
                          generic_position_proc, &settings->timer_x);
     menu_add_static(&menu_settings, 0, 8, "pause display", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 8, pause_display_proc, NULL);
+    menu_add_checkbox(&menu_settings, 16, 8, pause_display_proc, NULL);
     menu_add_static(&menu_settings, 0, 9, "macro input", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 14, 9, macro_input_proc, NULL);
+    menu_add_checkbox(&menu_settings, 16, 9, macro_input_proc, NULL);
     menu_add_static(&menu_settings, 0, 10, "break type", 0xC0C0C0);
-    menu_add_option(&menu_settings, 14, 10, "normal\0""aggressive\0",
+    menu_add_option(&menu_settings, 16, 10, "normal\0""aggressive\0",
                     break_type_proc, NULL);
     static struct menu menu_commands;
     menu_add_submenu(&menu_settings, 0, 11, &menu_commands, "commands");

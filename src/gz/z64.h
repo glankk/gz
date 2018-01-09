@@ -50,16 +50,24 @@ typedef struct
 
 typedef struct
 {
-  /* index of z64_col_type_t in scene file */
-  uint16_t  type;
-  /* vertex indices */
-  uint16_t  va;
-  uint16_t  vb;
-  uint16_t  vc;
+  /* index of z64_col_type in scene file */
+  uint16_t    type;
+  /* vertex indices, a and b are bitmasked for some reason */
+  struct
+  {
+    uint16_t  unk_00_ : 3;
+    uint16_t  va      : 13;
+  };
+  struct
+  {
+    uint16_t  unk_01_ : 3;
+    uint16_t  vb      : 13;
+  };
+  uint16_t    vc;
   /* normal vector */
-  z64_xyz_t norm;
+  z64_xyz_t   norm;
   /* plane distance from origin */
-  int16_t   dist;
+  int16_t     dist;
 } z64_col_poly_t;
 
 typedef struct
