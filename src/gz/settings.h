@@ -112,6 +112,8 @@ struct menu_settings
   uint32_t load_to        : 2;
   uint32_t on_load        : 2;
   uint32_t col_view_mode  : 1;
+  uint32_t col_view_xlu   : 1;
+  uint32_t col_view_rd    : 1;
 };
 
 struct settings_data

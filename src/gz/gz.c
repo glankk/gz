@@ -1784,6 +1784,31 @@ static int col_view_mode_proc(struct menu_item *item,
   return 0;
 }
 
+static int col_view_xlu_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.col_view_xlu = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.col_view_xlu = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.col_view_xlu);
+  return 0;
+}
+
+static int col_view_rd_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.col_view_rd = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.col_view_rd = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.col_view_rd);
+  return 0;
+}
 
 static _Bool heap_node_validate(struct heap_node *node)
 {
@@ -2384,8 +2409,10 @@ static void main_hook(void)
 
   {
     static Gfx *col_view_disp;
+    static _Bool xlu;
     /* build collision view display list */
     if (col_view_state == 1) {
+      xlu = settings->menu_settings.col_view_xlu;
       z64_col_hdr_t *col_hdr = z64_game.col_hdr;
       size_t size = 0x10 + 9 * col_hdr->n_poly;
       if (col_view_disp)
@@ -2396,17 +2423,27 @@ static void main_hook(void)
       gDPPipeSync(p++);
       gDPSetCycleType(p++, G_CYC_2CYCLE);
       uint32_t rm;
+      uint32_t blc1;
+      uint32_t blc2;
       uint8_t alpha;
-      uint32_t blc1 = GBL_c1(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
-      uint32_t blc2 = GBL_c2(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
-      if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL) {
-        rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | ZMODE_DEC | FORCE_BL;
+      if (xlu) {
+        rm = Z_CMP | IM_RD | CVG_DST_FULL | FORCE_BL;
+        blc1 = GBL_c1(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
+        blc2 = GBL_c2(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
         alpha = 0x80;
       }
       else {
-        rm = Z_CMP | Z_UPD | CVG_DST_FULL | ZMODE_OPA;
+        rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | FORCE_BL;
+        blc1 = GBL_c1(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
+        blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
         alpha = 0xFF;
       }
+      if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL)
+        rm |= ZMODE_DEC;
+      else if (xlu)
+        rm |= ZMODE_XLU;
+      else
+        rm |= ZMODE_OPA;
       gDPSetRenderMode(p++, rm | blc1, rm | blc2);
       gDPSetCombineMode(p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
       gSPTexture(p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
@@ -2418,6 +2455,23 @@ static void main_hook(void)
       }
       for (int i = 0; i < col_hdr->n_poly; ++i) {
         z64_col_poly_t *poly = &col_hdr->poly[i];
+        z64_col_type_t *type = &col_hdr->type[poly->type];
+        if (type->flags_2.hookshot)
+          gDPSetPrimColor(p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
+        else if (type->flags_1.interaction > 0x01)
+          gDPSetPrimColor(p++, 0, 0, 0xC0, 0x00, 0xC0, alpha);
+        else if (type->flags_1.special == 0x0C)
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0x00, 0x00, alpha);
+        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+          gDPSetPrimColor(p++, 0, 0, 0x00, 0xFF, 0x00, alpha);
+        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+          gDPSetPrimColor(p++, 0, 0, 0xC0, 0xFF, 0xC0, alpha);
+        else if (type->flags_2.terrain == 0x01)
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
+        else if (settings->menu_settings.col_view_rd)
+          continue;
+        else
+          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
         z64_xyz_t *va = &col_hdr->vtx[poly->va];
         z64_xyz_t *vb = &col_hdr->vtx[poly->vb];
         z64_xyz_t *vc = &col_hdr->vtx[poly->vc];
@@ -2434,28 +2488,17 @@ static void main_hook(void)
                       poly->norm.z / 0x100, 0xFF),
         };
         gSPVertex(p++, gDisplayListData(&d, vg), 3, 0);
-        z64_col_type_t *type = &col_hdr->type[poly->type];
-        if (type->flags_2.hookshot)
-          gDPSetPrimColor(p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
-        else if (type->flags_1.interaction > 0x01)
-          gDPSetPrimColor(p++, 0, 0, 0xC0, 0x00, 0xC0, alpha);
-        else if (type->flags_1.special == 0x0C)
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0x00, 0x00, alpha);
-        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
-          gDPSetPrimColor(p++, 0, 0, 0x00, 0xFF, 0x00, alpha);
-        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
-          gDPSetPrimColor(p++, 0, 0, 0xC0, 0xFF, 0xC0, alpha);
-        else if (type->flags_2.terrain == 0x01)
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
-        else
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
         gSP1Triangle(p++, 0, 1, 2, 0);
       }
       gSPEndDisplayList(p++);
       col_view_state = 2;
     }
-    if (col_view_state == 2 && col_view_disp && z64_game.pause_state == 0)
-      gSPDisplayList(z64_ctxt.gfx->poly_xlu_p++, col_view_disp);
+    if (col_view_state == 2 && col_view_disp && z64_game.pause_state == 0) {
+      if (xlu)
+        gSPDisplayList(z64_ctxt.gfx->poly_xlu_p++, col_view_disp);
+      else
+        gSPDisplayList(z64_ctxt.gfx->poly_opa_p++, col_view_disp);
+    }
     if (col_view_state == 3)
       col_view_state = 4;
     else if (col_view_state == 4) {
@@ -2754,36 +2797,40 @@ static void init(void)
                     clear_scene_flags_proc, NULL);
     menu_add_button(&menu_scene, 0, 4, "set flags",
                     set_scene_flags_proc, NULL);
-    menu_add_static(&menu_scene, 0, 5, "room", 0xC0C0C0);
     {
       struct menu_item *item;
-      item = menu_add_intinput(&menu_scene, 5, 5, 10, 2, NULL, NULL);
-      menu_add_button(&menu_scene, 0, 6, "load room", load_room_proc, item);
+      item = menu_add_intinput(&menu_scene, 16, 5, 10, 2, NULL, NULL);
+      menu_add_button(&menu_scene, 0, 5, "load room", load_room_proc, item);
     }
-    menu_add_static(&menu_scene, 0, 7, "collision view", 0xC0C0C0);
-    menu_add_checkbox(&menu_scene, 16, 7, col_view_proc, NULL);
-    menu_add_option(&menu_scene, 18, 7, "decal\0""surface\0",
+    menu_add_static(&menu_scene, 0, 6, "collision view", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 6, col_view_proc, NULL);
+    menu_add_static(&menu_scene, 2, 7, "mode", 0xC0C0C0);
+    menu_add_option(&menu_scene, 16, 7, "decal\0""surface\0",
                     col_view_mode_proc, NULL);
+    menu_add_static(&menu_scene, 2, 8, "translucent", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 8, col_view_xlu_proc, NULL);
+    menu_add_static(&menu_scene, 2, 9, "reduced", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 9, col_view_rd_proc, NULL);
     {
       static struct slot_info teleport_slot_info;
       teleport_slot_info.data = &settings->teleport_slot;
       teleport_slot_info.max = SETTINGS_TELEPORT_MAX;
-      menu_add_static(&menu_scene, 0, 8, "teleport slot", 0xC0C0C0);
-      menu_add_watch(&menu_scene, 18, 8,
+      menu_add_static(&menu_scene, 0, 10, "teleport slot", 0xC0C0C0);
+      menu_add_watch(&menu_scene, 18, 10,
                      (uint32_t)teleport_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_scene, 16, 8, "-",
+      menu_add_button(&menu_scene, 16, 10, "-",
                       slot_dec_proc, &teleport_slot_info);
-      menu_add_button(&menu_scene, 20, 8, "+",
+      menu_add_button(&menu_scene, 20, 10, "+",
                       slot_inc_proc, &teleport_slot_info);
     }
-    menu_add_static(&menu_scene, 0, 9, "current scene", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 16, 9,
-                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-    menu_add_static(&menu_scene, 0, 10, "current room", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 16, 10,
-                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
-    menu_add_static(&menu_scene, 0, 11, "no. rooms", 0xC0C0C0);
+    menu_add_static(&menu_scene, 0, 11, "current scene", 0xC0C0C0);
     menu_add_watch(&menu_scene, 16, 11,
+                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+    menu_add_static(&menu_scene, 0, 12, "current room", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 12,
+                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
+    menu_add_static(&menu_scene, 0, 13, "no. rooms", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 13,
                    (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
     /* cheats */

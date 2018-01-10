@@ -3,4 +3,4 @@ set -e
 
 cd $(dirname $(readlink -f $0))
 export PATH="$(readlink -f ../bin):$PATH"
-gs -w bin 0x80400060 1024 ../bin/gz/oot-1.2/gz.bin -w text text_hook.gsc -u
+gs -w bin 0x80400060 1024 ../bin/gz/oot-1.2/gz.bin -w text main_hook.gsc -u

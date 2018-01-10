@@ -48,6 +48,8 @@ void settings_load_default(void)
   d->menu_settings.load_to = SETTINGS_LOADTO_ZFILE;
   d->menu_settings.on_load = SETTINGS_ONLOAD_NOTHING;
   d->menu_settings.col_view_mode = SETTINGS_COLVIEW_DECAL;
+  d->menu_settings.col_view_xlu = 1;
+  d->menu_settings.col_view_rd = 0;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;
