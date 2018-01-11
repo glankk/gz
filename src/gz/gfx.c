@@ -48,15 +48,22 @@ void gfx_mode_init(void)
   gfx_sync();
   gSPClearGeometryMode(gfx_disp_p++, G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
                        G_CULL_BOTH | G_FOG | G_LIGHTING);
+  gDPSetCycleType(gfx_disp_p++, G_CYC_1CYCLE);
+  gDPSetRenderMode(gfx_disp_p++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
   gDPSetScissor(gfx_disp_p++, G_SC_NON_INTERLACE,
                 0, 0, Z64_SCREEN_WIDTH, Z64_SCREEN_HEIGHT);
+  gDPSetAlphaDither(gfx_disp_p++, G_AD_DISABLE);
   gDPSetColorDither(gfx_disp_p++, G_CD_DISABLE);
-  gDPSetCycleType(gfx_disp_p++, G_CYC_1CYCLE);
+  gDPSetAlphaCompare(gfx_disp_p++, G_AC_NONE);
+  gDPSetDepthSource(gfx_disp_p++, G_ZS_PRIM);
+  gDPSetCombineKey(gfx_disp_p++, G_CK_NONE);
   gDPSetTextureConvert(gfx_disp_p++, G_TC_FILT);
+  gDPSetTextureFilter(gfx_disp_p++, G_TF_BILERP);
+  gDPSetTextureDetail(gfx_disp_p++, G_TD_CLAMP);
   gDPSetTexturePersp(gfx_disp_p++, G_TP_NONE);
   gDPSetTextureLOD(gfx_disp_p++, G_TL_TILE);
   gDPSetTextureLUT(gfx_disp_p++, G_TT_NONE);
-  gDPSetRenderMode(gfx_disp_p++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+  gDPPipelineMode(gfx_disp_p++, G_PM_NPRIMITIVE);
   gfx_mode_apply(GFX_MODE_ALL);
 }
 
