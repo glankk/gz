@@ -69,30 +69,18 @@ struct zu_scene_info
 
 struct zu_gfx
 {
-  Gfx *work;
-  Gfx *work_p;
-  Gfx *work_d;
-  Gfx *work_w;
-  Gfx *z_work_p;
-  Gfx *z_work_d;
-  Gfx *poly_opa;
-  Gfx *poly_opa_p;
-  Gfx *poly_opa_d;
-  Gfx *poly_opa_w;
-  Gfx *z_poly_opa_p;
-  Gfx *z_poly_opa_d;
-  Gfx *poly_xlu;
-  Gfx *poly_xlu_p;
-  Gfx *poly_xlu_d;
-  Gfx *poly_xlu_w;
-  Gfx *z_poly_xlu_p;
-  Gfx *z_poly_xlu_d;
-  Gfx *overlay;
-  Gfx *overlay_p;
-  Gfx *overlay_d;
-  Gfx *overlay_w;
-  Gfx *z_overlay_p;
-  Gfx *z_overlay_d;
+  Gfx            *work_w;
+  Gfx            *poly_opa_w;
+  Gfx            *poly_xlu_w;
+  Gfx            *overlay_w;
+  z64_disp_buf_t  work;
+  z64_disp_buf_t  poly_opa;
+  z64_disp_buf_t  poly_xlu;
+  z64_disp_buf_t  overlay;
+  z64_disp_buf_t  z_work;
+  z64_disp_buf_t  z_poly_opa;
+  z64_disp_buf_t  z_poly_xlu;
+  z64_disp_buf_t  z_overlay;
 };
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);

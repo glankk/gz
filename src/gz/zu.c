@@ -411,123 +411,119 @@ void zu_clear_event_flag(int flag_index)
 void zu_gfx_init(struct zu_gfx *gfx)
 {
   /* allocate buffers */
-  gfx->work = malloc(sizeof(Gfx) * work_length);
-  gfx->work_w = malloc(sizeof(Gfx) * work_length);
-  gfx->poly_opa = malloc(sizeof(Gfx) * poly_opa_length);
-  gfx->poly_opa_w = malloc(sizeof(Gfx) * poly_opa_length);
-  gfx->poly_xlu = malloc(sizeof(Gfx) * poly_xlu_length);
-  gfx->poly_xlu_w = malloc(sizeof(Gfx) * poly_xlu_length);
-  gfx->overlay = malloc(sizeof(Gfx) * overlay_length);
-  gfx->overlay_w = malloc(sizeof(Gfx) * overlay_length);
+  gfx->work.size = sizeof(Gfx) * work_length;
+  gfx->work.buf = malloc(gfx->work.size);
+  gfx->work_w = malloc(gfx->work.size);
+  gfx->poly_opa.size = sizeof(Gfx) * poly_opa_length;
+  gfx->poly_opa.buf = malloc(gfx->poly_opa.size);
+  gfx->poly_opa_w = malloc(gfx->poly_opa.size);
+  gfx->poly_xlu.size = sizeof(Gfx) * poly_xlu_length;
+  gfx->poly_xlu.buf = malloc(gfx->poly_xlu.size);
+  gfx->poly_xlu_w = malloc(gfx->poly_xlu.size);
+  gfx->overlay.size = sizeof(Gfx) * overlay_length;
+  gfx->overlay.buf = malloc(gfx->overlay.size);
+  gfx->overlay_w = malloc(gfx->overlay.size);
+  gfx->z_work.size = 0;
+  gfx->z_work.buf = NULL;
+  gfx->z_poly_opa.size = 0;
+  gfx->z_poly_opa.buf = NULL;
+  gfx->z_poly_xlu.size = 0;
+  gfx->z_poly_xlu.buf = NULL;
+  gfx->z_overlay.size = 0;
+  gfx->z_overlay.buf = NULL;
   /* set pointers */
-  gfx->work_p = &gfx->work[0];
-  gfx->work_d = &gfx->work[work_length];
-  gfx->poly_opa_p = &gfx->poly_opa[0];
-  gfx->poly_opa_d = &gfx->poly_opa[poly_opa_length];
-  gfx->poly_xlu_p = &gfx->poly_xlu[0];
-  gfx->poly_xlu_d = &gfx->poly_xlu[poly_xlu_length];
-  gfx->overlay_p = &gfx->overlay[0];
-  gfx->overlay_d = &gfx->overlay[overlay_length];
-  gfx->z_work_p = NULL;
-  gfx->z_work_d = NULL;
-  gfx->z_poly_opa_p = NULL;
-  gfx->z_poly_opa_d = NULL;
-  gfx->z_poly_xlu_p = NULL;
-  gfx->z_poly_xlu_d = NULL;
-  gfx->z_overlay_p = NULL;
-  gfx->z_overlay_d = NULL;
+  gfx->work.p = &gfx->work.buf[0];
+  gfx->work.d = &gfx->work.buf[work_length];
+  gfx->poly_opa.p = &gfx->poly_opa.buf[0];
+  gfx->poly_opa.d = &gfx->poly_opa.buf[poly_opa_length];
+  gfx->poly_xlu.p = &gfx->poly_xlu.buf[0];
+  gfx->poly_xlu.d = &gfx->poly_xlu.buf[poly_xlu_length];
+  gfx->overlay.p = &gfx->overlay.buf[0];
+  gfx->overlay.d = &gfx->overlay.buf[overlay_length];
+  gfx->z_work.p = NULL;
+  gfx->z_work.d = NULL;
+  gfx->z_poly_opa.p = NULL;
+  gfx->z_poly_opa.d = NULL;
+  gfx->z_poly_xlu.p = NULL;
+  gfx->z_poly_xlu.d = NULL;
+  gfx->z_overlay.p = NULL;
+  gfx->z_overlay.d = NULL;
 }
 
 void zu_gfx_destroy(struct zu_gfx *gfx)
 {
   /* deallocate buffers */
-  free(gfx->work );
+  free(gfx->work.buf);
   free(gfx->work_w);
-  free(gfx->poly_opa);
+  free(gfx->poly_opa.buf);
   free(gfx->poly_opa_w);
-  free(gfx->poly_xlu);
+  free(gfx->poly_xlu.buf);
   free(gfx->poly_xlu_w);
-  free(gfx->overlay);
+  free(gfx->overlay.buf);
   free(gfx->overlay_w);
 }
 
 void zu_gfx_inject(struct zu_gfx *gfx)
 {
   /* save graphics context */
-  gfx->z_work_p = z64_ctxt.gfx->work_p;
-  gfx->z_work_d = z64_ctxt.gfx->work_d;
-  gfx->z_poly_opa_p = z64_ctxt.gfx->poly_opa_p;
-  gfx->z_poly_opa_d = z64_ctxt.gfx->poly_opa_d;
-  gfx->z_poly_xlu_p = z64_ctxt.gfx->poly_xlu_p;
-  gfx->z_poly_xlu_d = z64_ctxt.gfx->poly_xlu_d;
-  gfx->z_overlay_p = z64_ctxt.gfx->overlay_p;
-  gfx->z_overlay_d = z64_ctxt.gfx->overlay_d;
+  gfx->z_work = z64_ctxt.gfx->work;
+  gfx->z_poly_opa = z64_ctxt.gfx->poly_opa;
+  gfx->z_poly_xlu = z64_ctxt.gfx->poly_xlu;
+  gfx->z_overlay = z64_ctxt.gfx->overlay;
   /* inject context variables */
-  z64_ctxt.gfx->work_p = gfx->work_p;
-  z64_ctxt.gfx->work_d = gfx->work_d;
-  z64_ctxt.gfx->poly_opa_p = gfx->poly_opa_p;
-  z64_ctxt.gfx->poly_opa_d = gfx->poly_opa_d;
-  z64_ctxt.gfx->poly_xlu_p = gfx->poly_xlu_p;
-  z64_ctxt.gfx->poly_xlu_d = gfx->poly_xlu_d;
-  z64_ctxt.gfx->overlay_p = gfx->overlay_p;
-  z64_ctxt.gfx->overlay_d = gfx->overlay_d;
+  z64_ctxt.gfx->work = gfx->work;
+  z64_ctxt.gfx->poly_opa = gfx->poly_opa;
+  z64_ctxt.gfx->poly_xlu = gfx->poly_xlu;
+  z64_ctxt.gfx->overlay = gfx->overlay;
 }
 
 void zu_gfx_restore(struct zu_gfx *gfx)
 {
   /* retrieve updated pointers */
-  gfx->work_p = z64_ctxt.gfx->work_p;
-  gfx->work_d = z64_ctxt.gfx->work_d;
-  gfx->poly_opa_p = z64_ctxt.gfx->poly_opa_p;
-  gfx->poly_opa_d = z64_ctxt.gfx->poly_opa_d;
-  gfx->poly_xlu_p = z64_ctxt.gfx->poly_xlu_p;
-  gfx->poly_xlu_d = z64_ctxt.gfx->poly_xlu_d;
-  gfx->overlay_p = z64_ctxt.gfx->overlay_p;
-  gfx->overlay_d = z64_ctxt.gfx->overlay_d;
+  gfx->work = z64_ctxt.gfx->work;
+  gfx->poly_opa = z64_ctxt.gfx->poly_opa;
+  gfx->poly_xlu = z64_ctxt.gfx->poly_xlu;
+  gfx->overlay = z64_ctxt.gfx->overlay;
   /* restore graphics context */
-  z64_ctxt.gfx->work_p = gfx->z_work_p;
-  z64_ctxt.gfx->work_d = gfx->z_work_d;
-  z64_ctxt.gfx->poly_opa_p = gfx->z_poly_opa_p;
-  z64_ctxt.gfx->poly_opa_d = gfx->z_poly_opa_d;
-  z64_ctxt.gfx->poly_xlu_p = gfx->z_poly_xlu_p;
-  z64_ctxt.gfx->poly_xlu_d = gfx->z_poly_xlu_d;
-  z64_ctxt.gfx->overlay_p = gfx->z_overlay_p;
-  z64_ctxt.gfx->overlay_d = gfx->z_overlay_d;
+  z64_ctxt.gfx->work = gfx->z_work;
+  z64_ctxt.gfx->poly_opa = gfx->z_poly_opa;
+  z64_ctxt.gfx->poly_xlu = gfx->z_poly_xlu;
+  z64_ctxt.gfx->overlay = gfx->z_overlay;
 }
 
 Gfx *zu_gfx_flush(struct zu_gfx *gfx)
 {
   /* end dlist buffers and branch */
-  gSPEndDisplayList(gfx->poly_opa_p++);
-  gSPEndDisplayList(gfx->poly_xlu_p++);
-  gSPEndDisplayList(gfx->overlay_p++);
-  gSPDisplayList(gfx->work_p++, gfx->poly_opa);
-  gSPDisplayList(gfx->work_p++, gfx->poly_xlu);
-  gSPDisplayList(gfx->work_p++, gfx->overlay);
-  gSPEndDisplayList(gfx->work_p++);
+  gSPEndDisplayList(gfx->poly_opa.p++);
+  gSPEndDisplayList(gfx->poly_xlu.p++);
+  gSPEndDisplayList(gfx->overlay.p++);
+  gSPDisplayList(gfx->work.p++, gfx->poly_opa.buf);
+  gSPDisplayList(gfx->work.p++, gfx->poly_xlu.buf);
+  gSPDisplayList(gfx->work.p++, gfx->overlay.buf);
+  gSPEndDisplayList(gfx->work.p++);
   /* swap buffers */
   Gfx *p;
-  p = gfx->work;
-  gfx->work = gfx->work_w;
+  p = gfx->work.buf;
+  gfx->work.buf = gfx->work_w;
   gfx->work_w = p;
-  p = gfx->poly_opa;
-  gfx->poly_opa = gfx->poly_opa_w;
+  p = gfx->poly_opa.buf;
+  gfx->poly_opa.buf = gfx->poly_opa_w;
   gfx->poly_opa_w = p;
-  p = gfx->poly_xlu;
-  gfx->poly_xlu = gfx->poly_xlu_w;
+  p = gfx->poly_xlu.buf;
+  gfx->poly_xlu.buf = gfx->poly_xlu_w;
   gfx->poly_xlu_w = p;
-  p = gfx->overlay;
-  gfx->overlay = gfx->overlay_w;
+  p = gfx->overlay.buf;
+  gfx->overlay.buf = gfx->overlay_w;
   gfx->overlay_w = p;
   /* set pointers */
-  gfx->work_p = &gfx->work[0];
-  gfx->work_d = &gfx->work[work_length];
-  gfx->poly_opa_p = &gfx->poly_opa[0];
-  gfx->poly_opa_d = &gfx->poly_opa[poly_opa_length];
-  gfx->poly_xlu_p = &gfx->poly_xlu[0];
-  gfx->poly_xlu_d = &gfx->poly_xlu[poly_xlu_length];
-  gfx->overlay_p = &gfx->overlay[0];
-  gfx->overlay_d = &gfx->overlay[overlay_length];
+  gfx->work.p = &gfx->work.buf[0];
+  gfx->work.d = &gfx->work.buf[work_length];
+  gfx->poly_opa.p = &gfx->poly_opa.buf[0];
+  gfx->poly_opa.d = &gfx->poly_opa.buf[poly_opa_length];
+  gfx->poly_xlu.p = &gfx->poly_xlu.buf[0];
+  gfx->poly_xlu.d = &gfx->poly_xlu.buf[poly_xlu_length];
+  gfx->overlay.p = &gfx->overlay.buf[0];
+  gfx->overlay.d = &gfx->overlay.buf[overlay_length];
   /* flush */
   return gfx->work_w;
 }

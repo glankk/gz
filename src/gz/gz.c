@@ -174,7 +174,8 @@ enum movie_state
 };
 
 #define                     CPU_COUNTER_FREQ 46875000
-static _Bool                first_run = 1;
+__attribute__((section(".data")))
+static _Bool                gz_ready = 0;
 static uint8_t              profile = 0;
 static struct menu          menu_main;
 static struct menu          menu_explorer;
@@ -786,9 +787,9 @@ static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
   uint32_t new_count;
-  __asm__ volatile ("mfc0 $t0, $9\n"
-                    "nop\n"
-                    "sw $t0, %0" : "=m"(new_count) :: "t0");
+  __asm__ volatile ("mfc0 $t0, $9 \n"
+                    "nop          \n"
+                    "sw   $t0, %0 \n" : "=m"(new_count) :: "t0");
   cpu_counter += new_count - count;
   count = new_count;
 }
@@ -2267,8 +2268,6 @@ static void main_hook(void)
 
   for (int i = 0; i < COMMAND_MAX; ++i) {
     /* prevent instant resets */
-    if (first_run && i == COMMAND_RESET)
-      continue;
     _Bool active = 0;
     switch (command_info[i].activation_type) {
       case CMDACT_HOLD:       active = input_bind_held(i);        break;
@@ -2495,9 +2494,9 @@ static void main_hook(void)
     }
     if (col_view_state == 2 && col_view_disp && z64_game.pause_state == 0) {
       if (xlu)
-        gSPDisplayList(z64_ctxt.gfx->poly_xlu_p++, col_view_disp);
+        gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, col_view_disp);
       else
-        gSPDisplayList(z64_ctxt.gfx->poly_opa_p++, col_view_disp);
+        gSPDisplayList(z64_ctxt.gfx->poly_opa.p++, col_view_disp);
     }
     if (col_view_state == 3)
       col_view_state = 4;
@@ -2536,11 +2535,11 @@ static void main_hook(void)
   }
 
   gfx_flush();
-  first_run = 0;
 }
 
-static void entrance_offset_hook()
+HOOK void entrance_offset_hook(void)
 {
+  init_gp();
   uint32_t at;
   uint32_t offset;
   __asm__ volatile (".set noat  \n"
@@ -2561,21 +2560,30 @@ static void entrance_offset_hook()
                     "lw $at, %1 \n" :: "m"(offset), "m"(at));
 }
 
-static void update_hook()
+HOOK void update_hook(z64_ctxt_t *ctxt)
 {
-  if (frames_queued != 0) {
+  init_gp();
+  void (*frame_update_func)(z64_ctxt_t *ctxt);
+  frame_update_func = (void*)z64_frame_update_func_addr;
+  if (!gz_ready)
+    frame_update_func(ctxt);
+  else if (frames_queued != 0) {
     if (frames_queued > 0)
       --frames_queued;
-    ((void(*)())z64_frame_update_func_addr)();
+    frame_update_func(ctxt);
   }
 }
 
-static void input_hook()
+HOOK void input_hook(z64_ctxt_t *ctxt)
 {
-  if (frames_queued != 0) {
+  init_gp();
+  void (*frame_input_func)(z64_ctxt_t *ctxt);
+  frame_input_func = (void*)z64_frame_input_func_addr;
+  if (!gz_ready)
+    frame_input_func(ctxt);
+  else if (frames_queued != 0) {
     z64_input_t input = z64_input_direct;
-    void (*frame_input_func)() = (void*)z64_frame_input_func_addr;
-    frame_input_func();
+    frame_input_func(ctxt);
     if (movie_state == MOVIE_RECORDING)
       vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
     else if (movie_state == MOVIE_PLAYING) {
@@ -2609,59 +2617,47 @@ static void input_hook()
   }
 }
 
-static void disp_hook(void *p_size, Gfx *buf, size_t size)
+HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
 {
-  struct disp
+  init_gp();
+  z64_disp_buf_t *z_disp[4] =
   {
-    size_t size;
-    Gfx *buf;
-    Gfx *p;
-    Gfx *d;
-  };
-  struct disp *d = p_size;
-  size_t *disp_s[4] =
-  {
-    &z64_ctxt.gfx->work_size,
-    &z64_ctxt.gfx->poly_opa_size,
-    &z64_ctxt.gfx->poly_xlu_size,
-    &z64_ctxt.gfx->overlay_size,
+    &z64_ctxt.gfx->work,
+    &z64_ctxt.gfx->poly_opa,
+    &z64_ctxt.gfx->poly_xlu,
+    &z64_ctxt.gfx->overlay,
   };
   for (int i = 0; i < 4; ++i)
-    if (&d->size == disp_s[i]) {
-      disp_size[i] = d->size;
-      disp_p[i] = (char*)d->p - (char*)d->buf;
-      disp_d[i] = (char*)d->d - (char*)d->buf;
+    if (disp_buf == z_disp[i]) {
+      disp_size[i] = disp_buf->size;
+      disp_p[i] = (char*)disp_buf->p - (char*)disp_buf->buf;
+      disp_d[i] = (char*)disp_buf->d - (char*)disp_buf->buf;
       break;
     }
-  d->size = size;
-  d->buf = buf;
-  d->p = buf;
-  d->d = (void*)((char*)buf + size);
+  disp_buf->size = size;
+  disp_buf->buf = buf;
+  disp_buf->p = buf;
+  disp_buf->d = (void*)((char*)buf + size);
 }
 
-static _Noreturn void stack_thunk(void *func)
+static void stack_thunk(void (*func)(void))
 {
   static __attribute__((section(".stack"))) _Alignas(8)
   char stack[0x2000];
-  __asm__ volatile ("la $t0, %0         \n"
-                    "sw $sp, -4($t0)    \n"
-                    "sw $ra, -8($t0)    \n"
-                    "addiu $sp, $t0, -8 \n"
-                    "jalr $a0           \n"
-                    "lw $ra, 0($sp)     \n"
-                    "lw $sp, 4($sp)     \n"
-                    "jr $ra             \n"
-                    :: "i"(&stack[sizeof(stack)]));
-  __builtin_unreachable();
+  __asm__ volatile ("la     $t0, %1       \n"
+                    "sw     $sp, -4($t0)  \n"
+                    "sw     $ra, -8($t0)  \n"
+                    "addiu  $sp, $t0, -8  \n"
+                    "jalr   %0            \n"
+                    "lw     $ra, 0($sp)   \n"
+                    "lw     $sp, 4($sp)   \n"
+                    :: "r"(func), "i"(&stack[sizeof(stack)]));
 }
-
-ENTRY void _start();
 
 static void init(void)
 {
   /* startup */
   {
-    init_gp();
     clear_bss();
     do_global_ctors();
   }
@@ -2669,6 +2665,7 @@ static void init(void)
   /* load settings */
   if (z64_input_direct.raw.pad == BUTTON_START || !settings_load(profile))
     settings_load_default();
+  input_update();
 
   /* initialize gfx */
   {
@@ -2681,24 +2678,6 @@ static void init(void)
   /* disable map toggling */
   *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
-
-  /* install entrance offset hook */
-  *(uint32_t*)z64_entrance_offset_hook_addr = MIPS_JAL(&entrance_offset_hook);
-
-  /* install update hooks */
-  *(uint32_t*)z64_frame_update_call_addr = MIPS_JAL(&update_hook);
-  *(uint32_t*)z64_frame_input_call_addr = MIPS_JAL(&input_hook);
-
-  /* install disp swap hook */
-  {
-    uint32_t hook[] =
-    {
-      MIPS_LA(MIPS_T0, &disp_hook),
-      MIPS_JR(MIPS_T0),
-      MIPS_NOP,
-    };
-    memcpy((void*)z64_disp_swap_addr, &hook, sizeof(hook));
-  }
 
   /* initialize variables */
   update_cpu_counter();
@@ -3499,26 +3478,16 @@ static void init(void)
   /* reflect loaded settings */
   apply_settings();
 
-  /* replace start routine with a jump to main hook */
-  {
-    uint32_t main_jump[] =
-    {
-      MIPS_LA(MIPS_T0, &stack_thunk),
-      MIPS_LA(MIPS_A0, &main_hook),
-      MIPS_JR(MIPS_T0),
-      MIPS_NOP,
-    };
-    memcpy(&_start, &main_jump, sizeof(main_jump));
-  }
+  gz_ready = 1;
 }
 
-ENTRY _Noreturn void _start()
+ENTRY void _start()
 {
-  __asm__ volatile ("la $t0, %0 \n"
-                    "la $a0, %1 \n"
-                    "jr $t0     \n"
-                    "nop        \n" :: "i"(stack_thunk), "i"(init));
-  __builtin_unreachable();
+  init_gp();
+  if (gz_ready)
+    stack_thunk(main_hook);
+  else
+    stack_thunk(init);
 }
 
 /* support libraries */

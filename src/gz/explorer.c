@@ -41,7 +41,7 @@ struct item_data
 static void set_lighting(void)
 {
   /* create light */
-  z64_gbi_lights_t *gbi_lights = gDisplayListAlloc(&z64_ctxt.gfx->poly_opa_d,
+  z64_gbi_lights_t *gbi_lights = gDisplayListAlloc(&z64_ctxt.gfx->poly_opa.d,
                                                    sizeof(z64_gbi_lights_t));
   gbi_lights->numlights = 0;
   Ambient *a = &gbi_lights->lites.a;
@@ -56,15 +56,15 @@ static void set_lighting(void)
     handler(gbi_lights, &light_node->light->lightn, NULL);
   }
   /* set light */
-  gSPNumLights(z64_ctxt.gfx->poly_opa_p++, gbi_lights->numlights);
-  gSPNumLights(z64_ctxt.gfx->poly_xlu_p++, gbi_lights->numlights);
+  gSPNumLights(z64_ctxt.gfx->poly_opa.p++, gbi_lights->numlights);
+  gSPNumLights(z64_ctxt.gfx->poly_xlu.p++, gbi_lights->numlights);
   for (int i = 0; i < gbi_lights->numlights; ++i) {
-    gSPLight(z64_ctxt.gfx->poly_opa_p++, &gbi_lights->lites.l[i], i + 1);
-    gSPLight(z64_ctxt.gfx->poly_xlu_p++, &gbi_lights->lites.l[i], i + 1);
+    gSPLight(z64_ctxt.gfx->poly_opa.p++, &gbi_lights->lites.l[i], i + 1);
+    gSPLight(z64_ctxt.gfx->poly_xlu.p++, &gbi_lights->lites.l[i], i + 1);
   }
-  gSPLight(z64_ctxt.gfx->poly_opa_p++, &gbi_lights->lites.a,
+  gSPLight(z64_ctxt.gfx->poly_opa.p++, &gbi_lights->lites.a,
            gbi_lights->numlights + 1);
-  gSPLight(z64_ctxt.gfx->poly_xlu_p++, &gbi_lights->lites.a,
+  gSPLight(z64_ctxt.gfx->poly_xlu.p++, &gbi_lights->lites.a,
            gbi_lights->numlights + 1);
 }
 
@@ -102,13 +102,13 @@ static void draw_crosshair(struct menu_item *item)
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_latz_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
+  Mtx *p_latz_mtx = gDisplayListData(&data->gfx.poly_xlu.d, m);
   {
     guRotateF(&mt, -M_PI / 2.f, 0.f, 1.f, 0.f);
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_latx_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
+  Mtx *p_latx_mtx = gDisplayListData(&data->gfx.poly_xlu.d, m);
   {
     guTranslateF(&mf, data->x, data->y, data->z);
   }
@@ -121,12 +121,12 @@ static void draw_crosshair(struct menu_item *item)
     guMtxCatF(&mt, &mf, &mf);
   }
   guMtxF2L(&mf, &m);
-  Mtx *p_vert_mtx = gDisplayListData(&data->gfx.poly_xlu_d, m);
+  Mtx *p_vert_mtx = gDisplayListData(&data->gfx.poly_xlu.d, m);
   /* build dlist */
-  gDisplayListAppend(&data->gfx.poly_xlu_p,
+  gDisplayListAppend(&data->gfx.poly_xlu.p,
     gsDPPipeSync(),
     /* rsp state */
-    gsSPGeometryMode(~0, G_ZBUFFER),
+    gsSPLoadGeometryMode(G_ZBUFFER),
     /* rdp state */
     gsDPSetCycleType(G_CYC_1CYCLE),
     /* texture engine */
@@ -155,18 +155,18 @@ static void draw_crosshair(struct menu_item *item)
     gsSPVertex(&lat_mesh, 4, 8),
   );
   /* render navigation indicator primitives */
-  gDPSetPrimColor(data->gfx.poly_xlu_p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x40);
+  gDPSetPrimColor(data->gfx.poly_xlu.p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x40);
   if (input_pad() & BUTTON_Z) {
-    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 2);
-    gSP2Triangles(data->gfx.poly_xlu_p++, 4, 5, 6, 0, 6, 5, 7, 0);
+    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu.p, texture, 2);
+    gSP2Triangles(data->gfx.poly_xlu.p++, 4, 5, 6, 0, 6, 5, 7, 0);
   }
   else {
-    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 1);
-    gSP2Triangles(data->gfx.poly_xlu_p++, 0, 1, 2, 0, 2, 1, 3, 0);
+    gfx_disp_rdp_load_tile(&data->gfx.poly_xlu.p, texture, 1);
+    gSP2Triangles(data->gfx.poly_xlu.p++, 0, 1, 2, 0, 2, 1, 3, 0);
   }
   /* render crosshair primitives */
-  gfx_disp_rdp_load_tile(&data->gfx.poly_xlu_p, texture, 0);
-  gDisplayListAppend(&data->gfx.poly_xlu_p,
+  gfx_disp_rdp_load_tile(&data->gfx.poly_xlu.p, texture, 0);
+  gDisplayListAppend(&data->gfx.poly_xlu.p,
     gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x40),
     gsSP2Triangles(8, 9, 10, 0, 10, 9, 11, 0),
     gsDPPipeSync(),
@@ -327,7 +327,7 @@ static int draw_proc(struct menu_item *item,
     static void *zbuf = NULL;
     if (!zbuf)
       zbuf = memalign(64, 2 * Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
-    gDisplayListAppend(&data->gfx.poly_opa_p,
+    gDisplayListAppend(&data->gfx.poly_opa.p,
       /* clear z buffer */
       gsDPPipeSync(),
       gsDPSetCycleType(G_CYC_FILL),
@@ -349,9 +349,8 @@ static int draw_proc(struct menu_item *item,
       gsSPSegment(0x0B, &null_dl),
       gsSPSegment(0x0C, &null_dl),
       gsSPSegment(0x0D, &null_dl),
-      gsSPGeometryMode(~0,
-                       G_ZBUFFER | G_SHADE | G_CULL_BACK | G_LIGHTING |
-                       G_SHADING_SMOOTH),
+      gsSPLoadGeometryMode(G_ZBUFFER | G_SHADE | G_CULL_BACK | G_LIGHTING |
+                           G_SHADING_SMOOTH),
       /* rdp settings */
       gsDPSetAlphaCompare(G_AC_NONE),
       gsDPSetDepthSource(G_ZS_PIXEL),
@@ -398,22 +397,22 @@ static int draw_proc(struct menu_item *item,
         guMtxCatF(&mt, &mf, &mf);
       }
       guMtxF2L(&mf, &m);
-      gSPMatrix(data->gfx.poly_opa_p++,
-                gDisplayListData(&data->gfx.poly_opa_d, m),
+      gSPMatrix(data->gfx.poly_opa.p++,
+                gDisplayListData(&data->gfx.poly_opa.d, m),
                 G_MTX_PROJECTION | G_MTX_LOAD);
-      gSPMatrix(data->gfx.poly_xlu_p++,
-                gDisplayListData(&data->gfx.poly_xlu_d, m),
+      gSPMatrix(data->gfx.poly_xlu.p++,
+                gDisplayListData(&data->gfx.poly_xlu.d, m),
                 G_MTX_PROJECTION | G_MTX_LOAD);
     }
     /* create modelview matrix */
     {
       Mtx m;
       guMtxIdent(&m);
-      gSPMatrix(data->gfx.poly_opa_p++,
-                gDisplayListData(&data->gfx.poly_opa_d, m),
+      gSPMatrix(data->gfx.poly_opa.p++,
+                gDisplayListData(&data->gfx.poly_opa.d, m),
                 G_MTX_MODELVIEW | G_MTX_LOAD);
-      gSPMatrix(data->gfx.poly_xlu_p++,
-                gDisplayListData(&data->gfx.poly_xlu_d, m),
+      gSPMatrix(data->gfx.poly_xlu.p++,
+                gDisplayListData(&data->gfx.poly_xlu.d, m),
                 G_MTX_MODELVIEW | G_MTX_LOAD);
     }
     /* configure lights */
@@ -427,11 +426,11 @@ static int draw_proc(struct menu_item *item,
     for (int i = 0; i < ZU_MESH_TYPES; ++i)
       for (int j = 0; j < data->room_mesh.all[i].size; ++j) {
         if (i == ZU_MESH_OPA || i == ZU_MESH_NEAR) {
-          gSPDisplayList(data->gfx.poly_opa_p++,
+          gSPDisplayList(data->gfx.poly_opa.p++,
                          data->room_mesh.all[i].dlists[j]);
         }
         else if (i == ZU_MESH_XLU || i == ZU_MESH_FAR) {
-          gSPDisplayList(data->gfx.poly_xlu_p++,
+          gSPDisplayList(data->gfx.poly_xlu.p++,
                          data->room_mesh.all[i].dlists[j]);
         }
       }

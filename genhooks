@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+
+if [ -z "$AS" ];      then AS="mips64-gcc";           fi
+if [ -z "$CC" ];      then CC="mips64-gcc";           fi
+if [ -z "$NM" ];      then NM="mips64-nm";            fi
+if [ -z "$READELF" ]; then READELF="mips64-readelf";  fi
+
+elf="$1"
+if [ -z "$elf" ]; then
+  echo usage: \`genhooks \<elf-file\>\`
+  exit
+fi
+
+z64def()
+{
+  echo -e "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 -
+}
+
+gzsym()
+{
+  echo "0x`$NM "$elf" | grep " $1\$" | sed -e "s/\([0-9A-Fa-f]\{8\}\).*/\1/"`"
+}
+
+asmgsc()
+{
+  addr="$(printf "%d" "$1")"
+  addr="$(expr "$addr" % 536870912 + 2164260864)" # addr = addr & 0x1FFFFFFF | 0x81000000
+  tmpfile="$(mktemp)"
+  echo ".set noreorder; .set noat; $2" | $AS -x assembler -c - -o "$tmpfile"
+  $READELF -x .text "$tmpfile" | grep "0x[0-9A-Fa-f]\{8\}" | grep -o " [0-9A-Fa-f]\{8\}" |
+  while read -r line; do
+    printf "%08X %04X\n" "$addr" "0x`echo "$line" | sed -s "s/\(....\)..../\1/"`"
+    addr="$(expr "$addr" + 2)"
+    printf "%08X %04X\n" "$addr" "0x`echo "$line" | sed -s "s/....\(....\)/\1/"`"
+    addr="$(expr "$addr" + 2)"
+  done
+  rm -f "$tmpfile"
+}
+
+asmgsc "$(z64def z64_main_hook_addr)"             "jal $(gzsym _start);"
+asmgsc "$(z64def z64_entrance_offset_hook_addr)"  "jal $(gzsym entrance_offset_hook);"
+asmgsc "$(z64def z64_frame_update_call_addr)"     "jal $(gzsym update_hook);"
+asmgsc "$(z64def z64_frame_input_call_addr)"      "jal $(gzsym input_hook);"
+asmgsc "$(z64def z64_disp_swap_addr)"             "la \$t0, $(gzsym disp_hook); jr \$t0; nop;"

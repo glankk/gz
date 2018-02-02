@@ -638,37 +638,33 @@ typedef struct
 
 typedef struct
 {
-  Gfx      *poly_opa_w;           /* 0x0000 */
-  Gfx      *poly_xlu_w;           /* 0x0004 */
-  char      unk_00_[0x0008];      /* 0x0008 */
-  Gfx      *overlay_w;            /* 0x0010 */
-  char      unk_01_[0x00A4];      /* 0x0014 */
-  Gfx      *work_c;               /* 0x00B8 */
-  size_t    work_c_size;          /* 0x00BC */
-  char      unk_02_[0x00F0];      /* 0x00C0 */
-  Gfx      *work_w;               /* 0x01B0 */
-  size_t    work_size;            /* 0x01B4 */
-  Gfx      *work;                 /* 0x01B8 */
-  Gfx      *work_p;               /* 0x01BC */
-  Gfx      *work_d;               /* 0x01C0 */
-  char      unk_03_[0x00E4];      /* 0x01C4 */
-  size_t    overlay_size;         /* 0x02A8 */
-  Gfx      *overlay;              /* 0x02AC */
-  Gfx      *overlay_p;            /* 0x02B0 */
-  Gfx      *overlay_d;            /* 0x02B4 */
-  size_t    poly_opa_size;        /* 0x02B8 */
-  Gfx      *poly_opa;             /* 0x02BC */
-  Gfx      *poly_opa_p;           /* 0x02C0 */
-  Gfx      *poly_opa_d;           /* 0x02C4 */
-  size_t    poly_xlu_size;        /* 0x02C8 */
-  Gfx      *poly_xlu;             /* 0x02CC */
-  Gfx      *poly_xlu_p;           /* 0x02D0 */
-  Gfx      *poly_xlu_d;           /* 0x02D4 */
-  size_t    frame_count_1;        /* 0x02D8 */
-  void     *frame_buffer;         /* 0x02DC */
-  char      unk_04_[0x0008];      /* 0x02E0 */
-  size_t    frame_count_2;        /* 0x02E8 */
-                                  /* 0x02EC */
+  uint32_t        size;                 /* 0x0000 */
+  Gfx            *buf;                  /* 0x0004 */
+  Gfx            *p;                    /* 0x0008 */
+  Gfx            *d;                    /* 0x000C */
+} z64_disp_buf_t;
+
+typedef struct
+{
+  Gfx            *poly_opa_w;           /* 0x0000 */
+  Gfx            *poly_xlu_w;           /* 0x0004 */
+  char            unk_00_[0x0008];      /* 0x0008 */
+  Gfx            *overlay_w;            /* 0x0010 */
+  char            unk_01_[0x00A4];      /* 0x0014 */
+  Gfx            *work_c;               /* 0x00B8 */
+  uint32_t        work_c_size;          /* 0x00BC */
+  char            unk_02_[0x00F0];      /* 0x00C0 */
+  Gfx            *work_w;               /* 0x01B0 */
+  z64_disp_buf_t  work;                 /* 0x01B4 */
+  char            unk_03_[0x00E4];      /* 0x01C4 */
+  z64_disp_buf_t  overlay;              /* 0x02A8 */
+  z64_disp_buf_t  poly_opa;             /* 0x02B8 */
+  z64_disp_buf_t  poly_xlu;             /* 0x02C8 */
+  uint32_t        frame_count_1;        /* 0x02D8 */
+  void           *frame_buffer;         /* 0x02DC */
+  char            unk_04_[0x0008];      /* 0x02E0 */
+  uint32_t        frame_count_2;        /* 0x02E8 */
+                                        /* 0x02EC */
 } z64_gfx_t;
 
 typedef struct
@@ -803,7 +799,7 @@ typedef struct
   void           *next_ctor;              /* 0x000C */
   uint32_t        next_size;              /* 0x0010 */
   z64_input_t     input[4];               /* 0x0014 */
-  size_t          state_heap_size;        /* 0x0074 */
+  uint32_t        state_heap_size;        /* 0x0074 */
   void           *state_heap;             /* 0x0078 */
   void           *heap_start;             /* 0x007C */
   void           *heap_end;               /* 0x0080 */
@@ -820,7 +816,7 @@ typedef struct
   /* file loading params */
   uint32_t      vrom_addr;
   void         *dram_addr;
-  size_t        size;
+  uint32_t      size;
   /* unknown, seem to be unused */
   void         *unk_00_;
   uint32_t      unk_01_;
@@ -1065,6 +1061,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAE8
 #define z64_disp_swap_addr                      0x8009FEC0
 #define z64_frame_input_func_addr               0x800A0BA0
+#define z64_main_hook_addr                      0x800A0C3C
 #define z64_frame_input_call_addr               0x800A16AC
 #define z64_day_speed_addr                      0x800F1650
 #define z64_light_handlers_addr                 0x800F1B40
@@ -1120,6 +1117,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009CAF8
 #define z64_disp_swap_addr                      0x8009FED0
 #define z64_frame_input_func_addr               0x800A0BB0
+#define z64_main_hook_addr                      0x800A0C4C
 #define z64_frame_input_call_addr               0x800A16BC
 #define z64_day_speed_addr                      0x800F1810
 #define z64_light_handlers_addr                 0x800F1D00
@@ -1175,6 +1173,7 @@ typedef struct
 #define z64_frame_update_call_addr              0x8009D1D8
 #define z64_disp_swap_addr                      0x800A05B0
 #define z64_frame_input_func_addr               0x800A1290
+#define z64_main_hook_addr                      0x800A1328
 #define z64_frame_input_call_addr               0x800A1D8C
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_light_handlers_addr                 0x800F2180
@@ -1225,7 +1224,7 @@ typedef void (*z64_LoadRoom_proc)         (z64_game_t *game,
 typedef void (*z64_UnloadRoom_proc)       (z64_game_t *game,
                                            void *p_ctxt_room_index);
 typedef void (*z64_Io_proc)               (uint32_t dev_addr, void *dram_addr,
-                                           size_t size, int32_t direction);
+                                           uint32_t size, int32_t direction);
 typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 
 /* data */

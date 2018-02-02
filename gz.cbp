@@ -29,6 +29,14 @@
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.0-test.State&quot;' />
 					<Variable name="emurom" value="..\n64\roms\oot-1.0-j.z64" />
 				</Environment>
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean-$target" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+				</MakeCommands>
 			</Target>
 			<Target title="gz-oot-1.1-lua">
 				<Option output="bin/gz/oot-1.1/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
@@ -42,6 +50,14 @@
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.1-test.State&quot;' />
 					<Variable name="emurom" value="..\n64\roms\oot-1.1-j.z64" />
 				</Environment>
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean-$target" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+				</MakeCommands>
 			</Target>
 			<Target title="gz-oot-1.2-lua">
 				<Option output="bin/gz/oot-1.2/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
@@ -55,6 +71,14 @@
 					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.2-test.State&quot;' />
 					<Variable name="emurom" value="..\n64\roms\oot-1.2-j.z64" />
 				</Environment>
+				<MakeCommands>
+					<Build command="$make -f $makefile $target" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean-$target" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+				</MakeCommands>
 			</Target>
 			<Environment>
 				<Variable name="emuname" value="EmuHawk" />
@@ -173,9 +197,5 @@
 		<Unit filename="src/gz/zu_scenes.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Extensions>
-			<code_completion />
-			<debugger />
-		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
