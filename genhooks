@@ -13,12 +13,12 @@ fi
 
 z64def()
 {
-  echo -e "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 -
+  printf "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 -
 }
 
 gzsym()
 {
-  echo "0x`$NM "$elf" | grep " $1\$" | sed -e "s/\([0-9A-Fa-f]\{8\}\).*/\1/"`"
+  echo "0x`$NM "$elf" | grep " $1\$" | sed -e "s/[0-9A-Fa-f]\{8\}\?\([0-9A-Fa-f]\{8\}\).*/\1/"`"
 }
 
 asmgsc()
