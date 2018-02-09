@@ -65,19 +65,25 @@ enum commands
   COMMAND_SAVEMEMFILE,
   COMMAND_LOADMEMFILE,
   COMMAND_RESETLAG,
+#ifndef WIIVC
   COMMAND_TIMER,
   COMMAND_RESETTIMER,
+#endif
   COMMAND_PAUSE,
   COMMAND_ADVANCE,
   COMMAND_FILESELECT,
   COMMAND_RELOAD,
   COMMAND_VOID,
+#ifndef WIIVC
   COMMAND_RESET,
+#endif
   COMMAND_TURBO,
   COMMAND_FALL,
   COMMAND_AGE,
+#ifndef WIIVC
   COMMAND_STARTTIMER,
   COMMAND_STOPTIMER,
+#endif
   COMMAND_PREVPOS,
   COMMAND_NEXTPOS,
   COMMAND_PREVFILE,
@@ -103,14 +109,18 @@ struct menu_settings
   uint32_t input_display  : 1;
   uint32_t lag_counter    : 1;
   uint32_t lag_unit       : 1;
+#ifndef WIIVC
   uint32_t timer          : 1;
+#endif
   uint32_t pause_display  : 1;
   uint32_t macro_input    : 1;
   uint32_t break_type     : 1;
   uint32_t warp_age       : 2;
   uint32_t warp_cutscene  : 5;
+#ifndef WIIVC
   uint32_t load_to        : 2;
   uint32_t on_load        : 2;
+#endif
   uint32_t col_view_mode  : 1;
   uint32_t col_view_xlu   : 1;
   uint32_t col_view_rd    : 1;
@@ -130,8 +140,10 @@ struct settings_data
   int16_t               input_display_y;
   int16_t               lag_counter_x;
   int16_t               lag_counter_y;
+#ifndef WIIVC
   int16_t               timer_x;
   int16_t               timer_y;
+#endif
   int16_t               watch_x[SETTINGS_WATCHES_MAX];
   int16_t               watch_y[SETTINGS_WATCHES_MAX];
   uint16_t              warp_entrance;

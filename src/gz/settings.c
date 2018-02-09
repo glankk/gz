@@ -39,14 +39,18 @@ void settings_load_default(void)
   d->menu_settings.input_display = 1;
   d->menu_settings.lag_counter = 0;
   d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
+#ifndef WIIVC
   d->menu_settings.timer = 0;
+#endif
   d->menu_settings.pause_display = 1;
   d->menu_settings.macro_input = 0;
   d->menu_settings.break_type = SETTINGS_BREAK_NORMAL;
   d->menu_settings.warp_age = 0;
   d->menu_settings.warp_cutscene = 0;
+#ifndef WIIVC
   d->menu_settings.load_to = SETTINGS_LOADTO_ZFILE;
   d->menu_settings.on_load = SETTINGS_ONLOAD_NOTHING;
+#endif
   d->menu_settings.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->menu_settings.col_view_xlu = 1;
   d->menu_settings.col_view_rd = 0;
@@ -56,8 +60,10 @@ void settings_load_default(void)
   d->input_display_y = Z64_SCREEN_HEIGHT - 6;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
   d->lag_counter_y = 20;
+#ifndef WIIVC
   d->timer_x = 16;
   d->timer_y = 20;
+#endif
   d->n_watches = 0;
   d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
@@ -78,21 +84,27 @@ void settings_load_default(void)
   d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                BUTTON_D_RIGHT);
+#ifndef WIIVC
   d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
                                             BUTTON_D_LEFT);
   d->binds[COMMAND_RESETTIMER] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                  BUTTON_D_LEFT);
+#endif
   d->binds[COMMAND_PAUSE] = input_bind_make(1, BUTTON_D_DOWN);
   d->binds[COMMAND_ADVANCE] = input_bind_make(1, BUTTON_D_UP);
   d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
   d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
+#ifndef WIIVC
   d->binds[COMMAND_RESET] = input_bind_make(0);
+#endif
   d->binds[COMMAND_TURBO] = input_bind_make(0);
   d->binds[COMMAND_FALL] = input_bind_make(0);
   d->binds[COMMAND_AGE] = input_bind_make(0);
+#ifndef WIIVC
   d->binds[COMMAND_STARTTIMER] = input_bind_make(0);
   d->binds[COMMAND_STOPTIMER] = input_bind_make(0);
+#endif
   d->binds[COMMAND_PREVPOS] = input_bind_make(0);
   d->binds[COMMAND_NEXTPOS] = input_bind_make(0);
   d->binds[COMMAND_PREVFILE] = input_bind_make(0);

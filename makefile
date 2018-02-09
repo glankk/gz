@@ -40,12 +40,9 @@ ASMFILES              = *.S
 CFILES                = *.c
 CXXFILES              = *.cpp *.cxx *.cc *.c++
 
-OOT-1.0               = gz-oot-1.0 gz-oot-1.0-debug gz-oot-1.0-hooks
-OOT-1.1               = gz-oot-1.1 gz-oot-1.1-debug gz-oot-1.1-hooks
-OOT-1.2               = gz-oot-1.2 gz-oot-1.2-debug gz-oot-1.2-hooks
-$(OOT-1.0)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT10
-$(OOT-1.1)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT11
-$(OOT-1.2)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT12
+OOT-1.0               = $(OBJ-gz-oot-1.0) gz-oot-1.0-hooks
+OOT-1.1               = $(OBJ-gz-oot-1.1) gz-oot-1.1-hooks
+OOT-1.2               = $(OBJ-gz-oot-1.2) gz-oot-1.2-hooks
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 GZ-DEBUG              = $(foreach v,$(GZ_VERSIONS),gz-$(v)-debug)
@@ -64,7 +61,7 @@ define bin_template   =
  OBJDIR-$(1)          = $(6)
  BINDIR-$(1)          = $(7)
  ADDRESS-$(1)         = $(8)
- ASMSRC-$(1)          = $$(foreach s,$$(ASMFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
+ ASMSRC-$(1)         := $$(foreach s,$$(ASMFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
  CSRC-$(1)           := $$(foreach s,$$(CFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
  CXXSRC-$(1)         := $$(foreach s,$$(CXXFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
  RESSRC-$(1)         := $$(wildcard $$(RESDIR-$(1))/*)
@@ -134,6 +131,10 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
  $(call hooks_template,gz-$(v)) \
  $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
+
+$(OOT-1.0)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT10
+$(OOT-1.1)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT11
+$(OOT-1.2)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT12
 
 $(eval $(call bin_template,ldr,ldr,,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(LDR_ADDRESS)))
 

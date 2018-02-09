@@ -186,10 +186,12 @@ static _Bool                menu_active = 0;
 static int32_t              frames_queued = -1;
 static int32_t              frame_counter = 0;
 static int32_t              lag_vi_offset;
+#ifndef WIIVC
 static int64_t              cpu_counter = 0;
 static _Bool                timer_active = 0;
 static int64_t              timer_counter_offset;
 static int64_t              timer_counter_prev;
+#endif
 static uint16_t             day_time_prev;
 static int                  target_day_time = -1;
 static struct memory_file  *memfile;
@@ -591,6 +593,7 @@ void command_resetlag(void)
   lag_vi_offset = -(int32_t)z64_vi_counter;
 }
 
+#ifndef WIIVC
 void command_timer(void)
 {
   timer_active = !timer_active;
@@ -601,6 +604,7 @@ void command_resettimer(void)
   timer_counter_offset = -cpu_counter;
   timer_counter_prev = cpu_counter;
 }
+#endif
 
 void command_pause(void)
 {
@@ -666,6 +670,7 @@ void command_age(void)
   z64_UpdateEquipment(&z64_game, &z64_link);
 }
 
+#ifndef WIIVC
 void command_starttimer(void)
 {
   if (!timer_active)
@@ -677,6 +682,7 @@ void command_stoptimer(void)
   if (timer_active)
     command_timer();
 }
+#endif
 
 void command_prevpos(void)
 {
@@ -732,19 +738,25 @@ static struct command_info command_info[] =
   {"save memfile",      command_savememfile,  CMDACT_PRESS_ONCE},
   {"load memfile",      command_loadmemfile,  CMDACT_PRESS_ONCE},
   {"reset lag counter", command_resetlag,     CMDACT_HOLD},
+#ifndef WIIVC
   {"start/stop timer",  command_timer,        CMDACT_PRESS_ONCE},
   {"reset timer",       command_resettimer,   CMDACT_HOLD},
+#endif
   {"pause/unpause",     command_pause,        CMDACT_PRESS_ONCE},
   {"frame advance",     command_advance,      CMDACT_PRESS},
   {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
   {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
   {"void out",          command_void,         CMDACT_PRESS_ONCE},
+#ifndef WIIVC
   {"reset",             command_reset,        CMDACT_PRESS_ONCE},
+#endif
   {"turbo",             command_turbo,        CMDACT_HOLD},
   {"fall",              command_fall,         CMDACT_HOLD},
   {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
+#ifndef WIIVC
   {"start timer",       command_starttimer,   CMDACT_PRESS_ONCE},
   {"stop timer",        command_stoptimer,    CMDACT_PRESS_ONCE},
+#endif
   {"previous position", command_prevpos,      CMDACT_PRESS_ONCE},
   {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
   {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
@@ -783,6 +795,7 @@ static int8_t child_trade_options[] =
   Z64_ITEM_SOLD_OUT,
 };
 
+#ifndef WIIVC
 static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
@@ -793,6 +806,7 @@ static void update_cpu_counter(void)
   cpu_counter += new_count - count;
   count = new_count;
 }
+#endif
 
 static int cheat_proc(struct menu_item *item,
                       enum menu_callback_reason reason,
@@ -860,6 +874,7 @@ static int lag_counter_proc(struct menu_item *item,
   return 0;
 }
 
+#ifndef WIIVC
 static int timer_proc(struct menu_item *item,
                       enum menu_callback_reason reason,
                       void *data)
@@ -872,6 +887,7 @@ static int timer_proc(struct menu_item *item,
     menu_checkbox_set(item, settings->menu_settings.timer);
   return 0;
 }
+#endif
 
 static void show_menu(void)
 {
@@ -1394,6 +1410,7 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
   zu_clear_event_flag(0xC8);
 }
 
+#ifndef WIIVC
 static int do_save_file(const char *path, void *data)
 {
   const char *err_str = NULL;
@@ -1513,6 +1530,7 @@ static int on_file_load_proc(struct menu_item *item,
     settings->menu_settings.on_load = menu_option_get(item);
   return 0;
 }
+#endif
 
 static void set_entrance_proc(struct menu_item *item, void *data)
 {
@@ -2149,7 +2167,9 @@ static void tab_next_proc(struct menu_item *item, void *data)
 
 static void main_hook(void)
 {
+#ifndef WIIVC
   update_cpu_counter();
+#endif
   input_update();
   gfx_mode_init();
 
@@ -2378,6 +2398,7 @@ static void main_hook(void)
   }
   frame_counter += z64_gameinfo.update_rate;
 
+#ifndef WIIVC
   if (!timer_active)
     timer_counter_offset -= cpu_counter - timer_counter_prev;
   timer_counter_prev = cpu_counter;
@@ -2401,6 +2422,7 @@ static void main_hook(void)
     else
       gfx_printf(font, x, y, "%d.%d", seconds, tenths);
   }
+#endif
 
   if (menu_active)
     menu_draw(&menu_main);
@@ -2680,10 +2702,12 @@ static void init(void)
   *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
   /* initialize variables */
+#ifndef WIIVC
   update_cpu_counter();
-  lag_vi_offset = -(int32_t)z64_vi_counter;
   timer_counter_offset = -cpu_counter;
   timer_counter_prev = cpu_counter;
+#endif
+  lag_vi_offset = -(int32_t)z64_vi_counter;
   day_time_prev = z64_file.day_time;
   vector_init(&movie_inputs, sizeof(z64_input_t));
 
@@ -3278,18 +3302,20 @@ static void init(void)
       menu_add_static(&menu_file, 0, 12, "z targeting", 0xC0C0C0);
       menu_add_option(&menu_file, 17, 12, "switch\0""hold\0",
                       byte_option_proc, &target_option_data);
+#ifndef WIIVC
       menu_add_static(&menu_file, 0, 13, "load file to", 0xC0C0C0);
       menu_add_option(&menu_file, 17, 13,
                       "zelda file\0""current memfile\0""both\0",
-                      load_file_to_proc, &target_option_data);
+                      load_file_to_proc, NULL);
       menu_add_static(&menu_file, 0, 14, "after loading", 0xC0C0C0);
       menu_add_option(&menu_file, 17, 14,
                       "do nothing\0""reload scene\0""void out\0",
-                      on_file_load_proc, &target_option_data);
+                      on_file_load_proc, NULL);
       menu_add_button(&menu_file, 0, 15, "save to disk",
                       save_file_proc, NULL);
       menu_add_button(&menu_file, 0, 16, "load from disk",
                       load_file_proc, NULL);
+#endif
     }
 
     menu_init(&menu_watches, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
@@ -3381,62 +3407,65 @@ static void init(void)
 
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-    menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
+    int y = 0;
+    menu_settings.selector = menu_add_submenu(&menu_settings, 0, y, NULL,
                                               "return");
     {
       static struct slot_info profile_slot_info =
       {
         &profile, SETTINGS_PROFILE_MAX,
       };
-      menu_add_static(&menu_settings, 0, 1, "profile", 0xC0C0C0);
-      menu_add_watch(&menu_settings, 18, 1,
+      menu_add_static(&menu_settings, 0, ++y, "profile", 0xC0C0C0);
+      menu_add_watch(&menu_settings, 18, y,
                      (uint32_t)profile_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_settings, 16, 1, "-",
+      menu_add_button(&menu_settings, 16, y, "-",
                       slot_dec_proc, &profile_slot_info);
-      menu_add_button(&menu_settings, 20, 1, "+",
+      menu_add_button(&menu_settings, 20, y, "+",
                       slot_inc_proc, &profile_slot_info);
     }
-    menu_add_static(&menu_settings, 0, 2, "font", 0xC0C0C0);
-    menu_font_option = menu_add_option(&menu_settings, 16, 2,
+    menu_add_static(&menu_settings, 0, ++y, "font", 0xC0C0C0);
+    menu_font_option = menu_add_option(&menu_settings, 16, y,
                                        "fipps\0""notalot35\0"
                                        "origami mommy\0""pc senior\0"
                                        "pixel intv\0""press start 2p\0"
                                        "smw text nc\0""werdna's return\0"
                                        "pixelzim\0",
                                        menu_font_option_proc, NULL);
-    menu_add_static(&menu_settings, 0, 3, "drop shadow", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 3,
+    menu_add_static(&menu_settings, 0, ++y, "drop shadow", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y,
                       menu_drop_shadow_proc, NULL);
-    menu_add_static(&menu_settings, 0, 4, "menu position", 0xC0C0C0);
-    menu_add_positioning(&menu_settings, 16, 4, menu_position_proc, NULL);
-    menu_add_static(&menu_settings, 0, 5, "input display", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 5, input_display_proc, NULL);
-    menu_add_positioning(&menu_settings, 18, 5,
+    menu_add_static(&menu_settings, 0, ++y, "menu position", 0xC0C0C0);
+    menu_add_positioning(&menu_settings, 16, y, menu_position_proc, NULL);
+    menu_add_static(&menu_settings, 0, ++y, "input display", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y, input_display_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, y,
                          generic_position_proc, &settings->input_display_x);
-    menu_add_static(&menu_settings, 0, 6, "lag counter", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 6, lag_counter_proc, NULL);
-    menu_add_positioning(&menu_settings, 18, 6,
+    menu_add_static(&menu_settings, 0, ++y, "lag counter", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y, lag_counter_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, y,
                          generic_position_proc, &settings->lag_counter_x);
-    menu_add_option(&menu_settings, 20, 6, "frames\0""seconds\0",
+    menu_add_option(&menu_settings, 20, y, "frames\0""seconds\0",
                     lag_unit_proc, NULL);
-    menu_add_static(&menu_settings, 0, 7, "timer", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 7, timer_proc, NULL);
-    menu_add_positioning(&menu_settings, 18, 7,
+#ifndef WIIVC
+    menu_add_static(&menu_settings, 0, ++y, "timer", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y, timer_proc, NULL);
+    menu_add_positioning(&menu_settings, 18, y,
                          generic_position_proc, &settings->timer_x);
-    menu_add_static(&menu_settings, 0, 8, "pause display", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 8, pause_display_proc, NULL);
-    menu_add_static(&menu_settings, 0, 9, "macro input", 0xC0C0C0);
-    menu_add_checkbox(&menu_settings, 16, 9, macro_input_proc, NULL);
-    menu_add_static(&menu_settings, 0, 10, "break type", 0xC0C0C0);
-    menu_add_option(&menu_settings, 16, 10, "normal\0""aggressive\0",
+#endif
+    menu_add_static(&menu_settings, 0, ++y, "pause display", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y, pause_display_proc, NULL);
+    menu_add_static(&menu_settings, 0, ++y, "macro input", 0xC0C0C0);
+    menu_add_checkbox(&menu_settings, 16, y, macro_input_proc, NULL);
+    menu_add_static(&menu_settings, 0, ++y, "break type", 0xC0C0C0);
+    menu_add_option(&menu_settings, 16, y, "normal\0""aggressive\0",
                     break_type_proc, NULL);
     static struct menu menu_commands;
-    menu_add_submenu(&menu_settings, 0, 11, &menu_commands, "commands");
-    menu_add_button(&menu_settings, 0, 12, "save settings",
+    menu_add_submenu(&menu_settings, 0, ++y, &menu_commands, "commands");
+    menu_add_button(&menu_settings, 0, ++y, "save settings",
                     save_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 13, "load settings",
+    menu_add_button(&menu_settings, 0, ++y, "load settings",
                     load_settings_proc, NULL);
-    menu_add_button(&menu_settings, 0, 14, "restore defaults",
+    menu_add_button(&menu_settings, 0, ++y, "restore defaults",
                     restore_settings_proc, NULL);
     menu_init(&menu_commands, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     menu_commands.selector = menu_add_submenu(&menu_commands, 0, 0,

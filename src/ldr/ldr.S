@@ -1,10 +1,9 @@
-
 .section  .text, "ax", @progbits
-.set	    nomips16
-.set	    nomicromips
+.set      nomips16
+.set      nomicromips
 
 .global   _start
-.ent	    _start
+.ent      _start
 .type     _start, @function
 _start:
   /* begin dma transfer */
@@ -24,5 +23,5 @@ _start:
   sw      $v1, 0x0010($v0)
   /* jump to preamble */
   j       (DMA_RAM)
-.end	    _start
-.size	    _start, . - _start
+.end      _start
+.size     _start, . - _start
