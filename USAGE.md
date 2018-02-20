@@ -1,4 +1,17 @@
 ## User manual
+- [Introduction](#introduction)
+- [Warps menu](#warps-menu)
+- [Scene menu](#scene-menu)
+- [Cheats menu](#cheats-menu)
+- [Inventory menu](#inventory-menu)
+- [Equips menu](#equips-menu)
+- [File menu](#file-menu)
+- [Watches menu](#watches-menu)
+- [Debug menu](#debug-menu)
+- [Settings menu](#settings-menu)
+- [Issues](#issues)
+
+### Introduction
 The main interface for accessing the provided tools is the utility menu.
 By default, this menu is brought up by pressing `R + L`,
 but this button combination can be changed (see [Settings](#settings-menu)).
@@ -278,6 +291,7 @@ The following commands are available:
 *Default: `R + D-Left`*
 - **break free:** Attempts to break any effect that removes control of Link.
 *Default: `C-Up + L`*
+*VC Default: `Start + L`*
 - **levitate:** The classic L to levitate command.
 *Default: `L`*
 - **save position:** Saves Link's current position and orientation to the current position slot.
@@ -351,3 +365,10 @@ If this happens, you can restore the default settings by entering the following 
 
 _Note:_ Button combos that interfere with menu navigation for commands that aren't related to
 menuing are disabled while the utility menu is active.
+
+### Issues
+There some known issues with the Wii VC version of gz;
+- Disk features rely on the presence of the ED64 which does not exist on the Wii, and are therefore unavailable.
+- The scene explorer has graphical glitches due to poor emulation.
+- The reset command is not emulated correctly and has been removed.
+- The timer function is not emulated correctly and has been removed.

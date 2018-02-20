@@ -1760,12 +1760,18 @@ static void load_room_proc(struct menu_item *item, void *data)
   if (new_room_index < z64_game.n_rooms) {
     if (new_room_index == z64_game.room_index) {
       z64_game.room_index = -1;
+      z64_game.room_ptr = NULL;
       z64_UnloadRoom(&z64_game, &z64_game.room_index);
+      z64_game.room_index = -1;
       z64_game.room_ptr = NULL;
     }
     else {
-      z64_LoadRoom(&z64_game, &z64_game.room_index, new_room_index);
+      z64_game.room_index = -1;
+      z64_game.room_ptr = NULL;
       z64_UnloadRoom(&z64_game, &z64_game.room_index);
+      z64_game.room_index = -1;
+      z64_game.room_ptr = NULL;
+      z64_LoadRoom(&z64_game, &z64_game.room_index, new_room_index);
     }
   }
 }

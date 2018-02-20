@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -e
+
+cd $(dirname $(readlink -f $0))/..
+if [ ! -d patch/ups ] ; then mkdir patch/ups ; fi
+gru patch/lua/make-patch-vc.lua "$@"

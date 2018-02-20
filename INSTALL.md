@@ -1,21 +1,31 @@
 ## Installing gz
 The currently supported games are:
-- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.0)
-- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.1)
-- The Legend of Zelda: Ocarina of Time (NTSC-U/J 1.2)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J version 1.0)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J version 1.1)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J version 1.2)
+- The Legend of Zelda: Ocarina of Time (NTSC-U/J Wii VC release)
 
-There are two methods of using this software, described below.
+There are a few methods of using this software, described below.
 
 ### Using gz with an emulator / flash cart
-**Windows:** Drag and drop the rom you wish to patch onto the `patch.bat` script.
+**Windows:** Drag and drop a compatible rom onto the `patch.bat` script.
 
 **GNU/Linux:** Run `./patch <rom-file>`.
 
-A patched rom will be created in the same directory as the patch script.
-The patched rom can be played with an emulator or transferred to a flash cart.
+A patched rom will be created.
+It can be played with an emulator or transferred to a flash cart.
 For emulator usage, you will need to enable Expansion Pak emulation.
 On some emulators, you may need to change CPU Core Style to Interpreter.
 For use with a flash cart, your N64 will need an Expansion Pak.
+
+### Using gz on the Wii VC
+**Windows:** Drag and drop a compatible Wii WAD onto the `patch-wad.bat` script.
+
+**GNU/Linux:** Run `./patch-wad <wad-file>`.
+
+A patched WAD file will be created.
+This WAD can be installed as a channel on an emulated Wii, or on a homebrew Wii Console using a WAD manager.
+Homebrewing a Wii console and using a WAD manager is not covered by this guide.
 
 ### Using gz with a Gameshark
 *Note: Gameshark support has been deprecated. It is still provided, but without guarantees.*

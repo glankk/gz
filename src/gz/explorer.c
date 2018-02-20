@@ -463,8 +463,12 @@ static int activate_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
   if (data->room_index != z64_game.room_index) {
-    z64_LoadRoom(&z64_game, &z64_game.room_index, data->room_index);
+    z64_game.room_index = -1;
+    z64_game.room_ptr = NULL;
     z64_UnloadRoom(&z64_game, &z64_game.room_index);
+    z64_game.room_index = -1;
+    z64_game.room_ptr = NULL;
+    z64_LoadRoom(&z64_game, &z64_game.room_index, data->room_index);
   }
   z64_xyzf_t pos = {data->x, data->y, data->z};
   z64_link.common.pos_1 = z64_link.common.pos_2 = pos;

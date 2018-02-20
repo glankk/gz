@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+set -e
+
+cd $(dirname $(readlink -f $0))/..
+echo 45e | gzinject -a genkey -k patch/common-key.bin > /dev/nul
+gru patch/lua/make-wad.lua "$@" || true
+rm -rf patch/common-key.bin patch/wadextract

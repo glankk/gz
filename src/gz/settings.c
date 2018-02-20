@@ -76,7 +76,11 @@ void settings_load_default(void)
   d->warp_entrance = 0;
   d->binds[COMMAND_MENU] = input_bind_make(2, BUTTON_R, BUTTON_L);
   d->binds[COMMAND_RETURN] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
+#ifndef WIIVC
   d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_C_UP, BUTTON_L);
+#else
+  d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_START, BUTTON_L);
+#endif
   d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
   d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);

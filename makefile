@@ -9,27 +9,14 @@ GENHOOKS              = ./genhooks
 LUAPATCH              = luapatch
 GRC                   = grc
 LDSCRIPT              = gl-n64.ld
-CPPFLAGS              =
-CFLAGS                = -std=gnu11 -Wall -ffunction-sections -fdata-sections
-CXXFLAGS              = -std=gnu++14 -Wall -ffunction-sections -fdata-sections
-LDFLAGS               = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections
+CPPFLAGS              = $(VER_CPPFLAGS)
+CFLAGS                = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(VER_CFLAGS)
+CXXFLAGS              = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(VER_CXXFLAGS)
+LDFLAGS               = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(VER_LDFLAGS)
 LDLIBS                =
-ifdef WIIVC
- CPPFLAGS            += -DWIIVC
- CFLAGS              += -O1 -fno-reorder-blocks
- CXXFLAGS            += -O1 -fno-reorder-blocks
-else
- CFLAGS              += -O3 -flto -ffat-lto-objects
- CXXFLAGS            += -O3 -flto -ffat-lto-objects
- LDFLAGS             += -O3 -flto
-endif
-CFLAGS_DEBUG          = -std=gnu11 -Wall -Og -g -ffunction-sections -fdata-sections
-CXXFLAGS_DEBUG        = -std=gnu++14 -Wall -Og -g -ffunction-sections -fdata-sections
-LDFLAGS_DEBUG         = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections
-LDLIBS_DEBUG          =
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
 RESDESC               = $(RESDIR)/resources.json
-GZ_VERSIONS           = oot-1.0 oot-1.1 oot-1.2
+GZ_VERSIONS           = oot-1.0 oot-1.1 oot-1.2 oot-vc
 GZ_ADDRESS            = 80400060
 LDR_ADDRESS           = 80000400
 SRCDIR                = src
@@ -40,12 +27,13 @@ ASMFILES              = *.S
 CFILES                = *.c
 CXXFILES              = *.cpp *.cxx *.cc *.c++
 
-OOT-1.0               = $(OBJ-gz-oot-1.0) gz-oot-1.0-hooks
-OOT-1.1               = $(OBJ-gz-oot-1.1) gz-oot-1.1-hooks
-OOT-1.2               = $(OBJ-gz-oot-1.2) gz-oot-1.2-hooks
+OOT-1.0               = $(OBJ-gz-oot-1.0) $(ELF-gz-oot-1.0) gz-oot-1.0-hooks
+OOT-1.1               = $(OBJ-gz-oot-1.1) $(ELF-gz-oot-1.0) gz-oot-1.1-hooks
+OOT-1.2               = $(OBJ-gz-oot-1.2) $(ELF-gz-oot-1.0) gz-oot-1.2-hooks
+VC                    = $(OBJ-gz-oot-vc) $(ELF-gz-oot-vc) gz-oot-vc-hooks
+N64                   = $(OOT-1.0) $(OOT-1.1) $(OOT-1.2)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
-GZ-DEBUG              = $(foreach v,$(GZ_VERSIONS),gz-$(v)-debug)
 all                   : $(GZ)
 clean                 : $(foreach v,$(GZ_VERSIONS),clean-gz-$(v)-hooks)
 	rm -rf $(OBJDIR) $(BINDIR)
@@ -73,13 +61,9 @@ define bin_template   =
  DEPS-$(1)            = $$(patsubst %.o,%.d,$$(OBJ-$(1)))
  BIN-$(1)             = $$(BINDIR-$(1))/$$(NAME-$(1)).bin
  ELF-$(1)             = $$(BINDIR-$(1))/$$(NAME-$(1)).elf
- BUILD-$(1)           = $(1) $(1)-debug
- CLEAN-$(1)           = clean-$(1) clean-$(1)-debug
+ BUILD-$(1)           = $(1)
+ CLEAN-$(1)           = clean-$(1)
  -include $$(DEPS-$(1))
- $(1)-debug           : CFLAGS                = $$(CFLAGS_DEBUG)
- $(1)-debug           : CXXFLAGS              = $$(CXXFLAGS_DEBUG)
- $(1)-debug           : LDFLAGS               = $$(LDFLAGS_DEBUG)
- $(1)-debug           : LDLIBS                = $$(LDLIBS_DEBUG)
  $$(ELF-$(1))         : LDFLAGS              += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
  $$(BUILD-$(1))       : $$(BIN-$(1))
  $$(CLEAN-$(1))       :
@@ -112,12 +96,10 @@ define hooks_template =
 endef
 
 define lua_template   =
- BUILD-$(1)-lua       = $(1)-lua $(1)-debug-lua
- CLEAN-$(1)-lua       = clean-$(1)-lua clean-$(1)-debug-lua
+ BUILD-$(1)-lua       = $(1)-lua
+ CLEAN-$(1)-lua       = clean-$(1)-lua
  $(1)-lua             : $(1)
- $(1)-debug-lua       : $(1)-debug
  clean-$(1)-lua       : clean-$(1)
- clean-$(1)-debug-lua : clean-$(1)-debug
  $$(BUILD-$(1)-lua)   : $(1)-hooks
 	$$(LUAPATCH) $(2) -text $$(HOOKS-$(1)) -bin $$(ADDRESS-$(1)) $$(BIN-$(1))
  $$(CLEAN-$(1)-lua)   :
@@ -132,9 +114,15 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
  $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
 
-$(OOT-1.0)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT10
-$(OOT-1.1)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT11
-$(OOT-1.2)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT12
+$(OOT-1.0)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT10
+$(OOT-1.1)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT11
+$(OOT-1.2)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT12
+$(VC)                 : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT12 -DWIIVC
+$(N64)                : VER_CFLAGS            = -O3 -flto -ffat-lto-objects
+$(VC)                 : VER_CFLAGS            = -O1 -fno-reorder-blocks
+$(N64)                : VER_CXXFLAGS          = -O3 -flto -ffat-lto-objects
+$(VC)                 : VER_CXXFLAGS          = -O1 -fno-reorder-blocks
+$(N64)                : VER_LDFLAGS           = -O3 -flto
 
 $(eval $(call bin_template,ldr,ldr,,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(LDR_ADDRESS)))
 

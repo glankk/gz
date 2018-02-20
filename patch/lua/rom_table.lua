@@ -1,48 +1,70 @@
-rom_table =
-{
-  [0xD423E8B0]  = {
-                    game      = "oot",
-                    version   = "1.0",
-                    region    = "j",
-                    code_ind  = 27,
-                    code_ram  = 0x800110A0,
-                  },
-  [0xCD16C529]  = {
-                    game      = "oot",
-                    version   = "1.0",
-                    region    = "u",
-                    code_ind  = 27,
-                    code_ram  = 0x800110A0,
-                  },
-  [0x26E73887]  = {
-                    game      = "oot",
-                    version   = "1.1",
-                    region    = "j",
-                    code_ind  = 27,
-                    code_ram  = 0x800110A0,
-                  },
-  [0x3FD2151E]  = {
-                    game      = "oot",
-                    version   = "1.1",
-                    region    = "u",
-                    code_ind  = 27,
-                    code_ram  = 0x800110A0,
-                  },
-  [0x2B2721BA]  = {
-                    game      = "oot",
-                    version   = "1.2",
-                    region    = "j",
-                    code_ind  = 27,
-                    code_ram  = 0x800116E0,
-                  },
-  [0x32120C23]  = {
-                    game      = "oot",
-                    version   = "1.2",
-                    region    = "u",
-                    code_ind  = 27,
-                    code_ram  = 0x800116E0,
-                  },
-}
+if not wiivc then
+  rom_table =
+  {
+    [0xD423E8B0]  = {
+                      game      = "oot",
+                      version   = "1.0",
+                      region    = "j",
+                      code_ind  = 27,
+                      code_ram  = 0x800110A0,
+                    },
+    [0xCD16C529]  = {
+                      game      = "oot",
+                      version   = "1.0",
+                      region    = "u",
+                      code_ind  = 27,
+                      code_ram  = 0x800110A0,
+                    },
+    [0x26E73887]  = {
+                      game      = "oot",
+                      version   = "1.1",
+                      region    = "j",
+                      code_ind  = 27,
+                      code_ram  = 0x800110A0,
+                    },
+    [0x3FD2151E]  = {
+                      game      = "oot",
+                      version   = "1.1",
+                      region    = "u",
+                      code_ind  = 27,
+                      code_ram  = 0x800110A0,
+                    },
+    [0x2B2721BA]  = {
+                      game      = "oot",
+                      version   = "1.2",
+                      region    = "j",
+                      code_ind  = 27,
+                      code_ram  = 0x800116E0,
+                    },
+    [0x32120C23]  = {
+                      game      = "oot",
+                      version   = "1.2",
+                      region    = "u",
+                      code_ind  = 27,
+                      code_ram  = 0x800116E0,
+                    },
+  }
+else
+  rom_table =
+  {
+    [0x2B2721BA]  = {
+                      game      = "oot",
+                      version   = "vc",
+                      region    = "j",
+                      code_ind  = 27,
+                      code_ram  = 0x800116E0,
+                      title_id  = "NGZJ"
+                    },
+    [0x32120C23]  = {
+                      game      = "oot",
+                      version   = "vc",
+                      region    = "u",
+                      code_ind  = 27,
+                      code_ram  = 0x800116E0,
+                      title_id  = "NGZE"
+                    },
+  }
+end
 setmetatable(rom_table, {__index = function(t)
   io.write("unrecognized rom. select an action;\n  0. quit\n")
   local keys = {}
