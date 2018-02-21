@@ -3,6 +3,9 @@ if #arg < 1 then
   print("usage: `patch <rom-file>` " ..
        "(or drag and drop a rom onto the patch script)")
   local line = io.read()
+  if line ~= nil and line:sub(1, 1) == "\"" and line:sub(-1, -1) == "\"" then
+    line = line:sub(2, -2)
+  end
   if line == nil or line == "" then return end
   arg[1] = line
 end
