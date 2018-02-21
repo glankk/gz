@@ -368,6 +368,8 @@ menuing are disabled while the utility menu is active.
 
 ### Issues
 There some known issues with the Wii VC version of gz;
+- The L button on the Classic Controller is mapped to Z on the Virtual Console, and L on the Virtual Console is left unmapped.
+The WAD patcher remaps C-Down on the Classic Controller to L on the Virtual Console to provide access to the utility menu.
 - Disk features rely on the presence of the ED64 which does not exist on the Wii, and are therefore unavailable.
 - The scene explorer has graphical glitches due to poor emulation.
 - The reset command is not emulated correctly and has been removed.
