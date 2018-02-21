@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdint.h>
 #include "input.h"
 #include "menu.h"
 #include "resource.h"
@@ -71,9 +72,10 @@ const uint32_t input_button_color[] =
 
 void input_update(void)
 {
-  pad_pressed_raw = (pad ^ z64_input_direct.raw.pad) & z64_input_direct.raw.pad;
-  pad_released = (pad ^ z64_input_direct.raw.pad) & ~z64_input_direct.raw.pad;
-  pad = z64_input_direct.raw.pad;
+  uint16_t z_pad = input_z_pad();
+  pad_pressed_raw = (pad ^ z_pad) & z_pad;
+  pad_released = (pad ^ z_pad) & ~z_pad;
+  pad = z_pad;
   pad_pressed = 0;
   for (int i = 0; i < 16; ++i) {
     uint16_t p = 1 << i;
@@ -144,6 +146,11 @@ void input_update(void)
     bind_pressed[i] = (bind_pressed_raw[i] ||
                        bind_time[i] >= INPUT_REPEAT_DELAY);
   }
+}
+
+uint16_t input_z_pad(void)
+{
+  return z64_input_direct.raw.pad | input_sch_pad;
 }
 
 uint16_t input_pad(void)

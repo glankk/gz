@@ -1,6 +1,10 @@
 #ifndef INPUT_H
 #define INPUT_H
+#include <stdint.h>
 #include "menu.h"
+
+#define input_sch_pad_addr    0x8000045E
+#define input_sch_pad         (*(uint16_t*)input_sch_pad_addr)
 
 #define INPUT_REPEAT_DELAY    8
 
@@ -20,6 +24,7 @@
 #define BUTTON_A              0x8000
 
 void      input_update(void);
+uint16_t  input_z_pad(void);
 uint16_t  input_pad(void);
 uint16_t  input_pressed_raw(void);
 uint16_t  input_pressed(void);

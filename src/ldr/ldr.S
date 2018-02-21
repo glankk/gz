@@ -25,3 +25,11 @@ _start:
   j       (DMA_RAM)
 .end      _start
 .size     _start, . - _start
+
+/* input side channel */
+.fill     0x5E - (. - _start)
+.global   input_sch_pad
+.type     input_sch_pad, @object
+.size     input_sch_pad, 2
+input_sch_pad:
+  .hword  0x0000

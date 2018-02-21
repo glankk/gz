@@ -22,8 +22,8 @@
 #include "z64.h"
 #include "zu.h"
 
-#define STRINGIZE(S) #S
-#define VER_STR(NAME, URL) STRINGIZE(NAME) "  " STRINGIZE(URL)
+#define STRINGIZE(S)  STRINGIZE_(S)
+#define STRINGIZE_(S) #S
 
 struct equipment_item_option
 {
@@ -2377,9 +2377,10 @@ static void main_hook(void)
     {
       15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
     };
+    uint16_t z_pad = input_z_pad();
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
       int b = buttons[i];
-      if (!(z64_input_direct.raw.pad & (1 << b)))
+      if (!(z_pad & (1 << b)))
         continue;
       int x = (cw - texture->tile_width) / 2 + i * 10;
       int y = -(gfx_font_xheight(font) + texture->tile_height + 1) / 2;
@@ -2545,8 +2546,11 @@ static void main_hook(void)
     if (splash_time > 0) {
       --splash_time;
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
-      gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch,
-                 VER_STR(PACKAGE_TARNAME, PACKAGE_URL));
+      const char *tarname = STRINGIZE(PACKAGE_TARNAME);
+      const char *url = STRINGIZE(PACKAGE_URL);
+      gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch, tarname);
+      gfx_printf(font, Z64_SCREEN_WIDTH - 12 - cw * strlen(url),
+                 Z64_SCREEN_HEIGHT - 6 - ch, url);
       static struct gfx_texture *logo_texture = NULL;
       if (!logo_texture)
         logo_texture = resource_load_grc_texture("logo");
@@ -2692,7 +2696,7 @@ static void init(void)
   }
 
   /* load settings */
-  if (z64_input_direct.raw.pad == BUTTON_START || !settings_load(profile))
+  if (input_z_pad() == BUTTON_START || !settings_load(profile))
     settings_load_default();
   input_update();
 
