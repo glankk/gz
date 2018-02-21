@@ -1,3 +1,9 @@
+ifndef PACKAGE_TARNAME
+ PACKAGE_TARNAME      = gz
+endif
+ifndef PACKAGE_URL
+ PACKAGE_URL          = github.com/glankk/gz
+endif
 AS                    = mips64-gcc
 CC                    = mips64-gcc
 CXX                   = mips64-g++
@@ -9,7 +15,7 @@ GENHOOKS              = ./genhooks
 LUAPATCH              = luapatch
 GRC                   = grc
 LDSCRIPT              = gl-n64.ld
-CPPFLAGS              = $(VER_CPPFLAGS)
+CPPFLAGS              = -DPACKAGE_TARNAME="$(PACKAGE_TARNAME)" -DPACKAGE_URL="$(PACKAGE_URL)" $(VER_CPPFLAGS)
 CFLAGS                = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(VER_CFLAGS)
 CXXFLAGS              = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(VER_CXXFLAGS)
 LDFLAGS               = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(VER_LDFLAGS)
