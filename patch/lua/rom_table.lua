@@ -66,7 +66,7 @@ else
   }
 end
 setmetatable(rom_table, {__index = function(t)
-  io.write("unrecognized rom. select an action;\n  0. quit\n")
+  io.write("unrecognized rom. select an action;\n  0. skip\n")
   local keys = {}
   for k,v in pairs(t) do
     keys[#keys + 1] = k
@@ -75,7 +75,7 @@ setmetatable(rom_table, {__index = function(t)
   local n = io.read("n")
   local k = keys[n]
   if k == nil then
-    error("operation aborted", 0)
+    return nil
   end
   return t[k]
 end})

@@ -2,6 +2,9 @@ require("patch/lua/rom_table")
 local arg = {...}
 local rom = gru.n64rom_load(arg[1])
 local rom_info = rom_table[rom:crc32()]
+if rom_info == nil then
+  return nil
+end
 local rom_id = rom_info.game .. "-" .. rom_info.version
 print("rom is " .. rom_id .. "-" .. rom_info.region)
 print("building gz")

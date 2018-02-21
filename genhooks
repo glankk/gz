@@ -38,7 +38,11 @@ asmgsc()
 }
 
 asmgsc "$(z64def z64_main_hook_addr)"             "jal $(gzsym _start);"
-asmgsc "$(z64def z64_entrance_offset_hook_addr)"  "jal $(gzsym entrance_offset_hook);"
-asmgsc "$(z64def z64_frame_update_call_addr)"     "jal $(gzsym update_hook);"
-asmgsc "$(z64def z64_frame_input_call_addr)"      "jal $(gzsym input_hook);"
-asmgsc "$(z64def z64_disp_swap_addr)"             "la \$t0, $(gzsym disp_hook); jr \$t0; nop;"
+asmgsc "$(z64def z64_entrance_offset_hook_addr)"  "jal $(gzsym entrance_offset_hook); nop;"
+asmgsc "$(z64def z64_frame_update_call_addr)"     "jal $(gzsym update_hook); nop;"
+asmgsc "$(z64def z64_frame_input_call_addr)"      "jal $(gzsym input_hook); nop;"
+disp_hook="$(gzsym disp_hook)"
+asmgsc "$(z64def z64_disp_swap_1_addr)"           "jal $disp_hook;"
+asmgsc "$(z64def z64_disp_swap_2_addr)"           "jal $disp_hook;"
+asmgsc "$(z64def z64_disp_swap_3_addr)"           "jal $disp_hook;"
+asmgsc "$(z64def z64_disp_swap_4_addr)"           "jal $disp_hook;"

@@ -2568,10 +2568,7 @@ static void main_hook(void)
 HOOK void entrance_offset_hook(void)
 {
   init_gp();
-  uint32_t at;
   uint32_t offset;
-  __asm__ volatile (".set noat  \n"
-                    "sw $at, %0 \n" : "=m"(at));
   if (z64_file.void_flag && z64_file.cutscene_index == 0x0000)
     entrance_override_once = entrance_override_next;
   if (entrance_override_once) {
@@ -2584,34 +2581,35 @@ HOOK void entrance_offset_hook(void)
     entrance_override_next = 0;
   }
   next_entrance = -1;
-  __asm__ volatile ("lw $v1, %0 \n"
-                    "lw $at, %1 \n" :: "m"(offset), "m"(at));
+  __asm__ volatile (".set noat  \n"
+                    "lw $v1, %0 \n"
+                    "la $at, %1 \n" :: "m"(offset), "i"(0x51));
 }
 
-HOOK void update_hook(z64_ctxt_t *ctxt)
+HOOK void update_hook(void)
 {
   init_gp();
   void (*frame_update_func)(z64_ctxt_t *ctxt);
   frame_update_func = (void*)z64_frame_update_func_addr;
   if (!gz_ready)
-    frame_update_func(ctxt);
+    frame_update_func(&z64_ctxt);
   else if (frames_queued != 0) {
     if (frames_queued > 0)
       --frames_queued;
-    frame_update_func(ctxt);
+    frame_update_func(&z64_ctxt);
   }
 }
 
-HOOK void input_hook(z64_ctxt_t *ctxt)
+HOOK void input_hook(void)
 {
   init_gp();
   void (*frame_input_func)(z64_ctxt_t *ctxt);
   frame_input_func = (void*)z64_frame_input_func_addr;
   if (!gz_ready)
-    frame_input_func(ctxt);
+    frame_input_func(&z64_ctxt);
   else if (frames_queued != 0) {
     z64_input_t input = z64_input_direct;
-    frame_input_func(ctxt);
+    frame_input_func(&z64_ctxt);
     if (movie_state == MOVIE_RECORDING)
       vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
     else if (movie_state == MOVIE_PLAYING) {

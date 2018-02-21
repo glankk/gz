@@ -20,15 +20,17 @@ for i = 1, #arg do
   end
   print("making rom")
   local rom_info, rom, patched_rom = make("patch/wadextract/content5/rom")
-  print("saving rom")
-  patched_rom:save_file("patch/wadextract/content5/rom")
-  print("packing wad")
-  local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
-  local _,_,gzinject_result = os.execute(gzinject .. " -a pack -k patch/common-key.bin -w patch/gz-" .. rom_id ..
-                                         ".wad -d patch/wadextract -i " .. rom_info.title_id .. " -t gz-" .. rom_id ..
-                                         " -r 3 --verbose")
-  if gzinject_result ~= 0 then
-    error("packing failed", 0)
+  if rom_info ~= nil then
+    print("saving rom")
+    patched_rom:save_file("patch/wadextract/content5/rom")
+    print("packing wad")
+    local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
+    local _,_,gzinject_result = os.execute(gzinject .. " -a pack -k patch/common-key.bin -w patch/gz-" .. rom_id ..
+                                           ".wad -d patch/wadextract -i " .. rom_info.title_id .. " -t gz-" .. rom_id ..
+                                           " -r 3 --verbose")
+    if gzinject_result ~= 0 then
+      error("packing failed", 0)
+    end
   end
 end
 print("done")
