@@ -93,7 +93,7 @@ endef
 define hooks_template =
  HOOKS-$(1)           = $$(DIR-$(1))/hooks.gsc
  $$(HOOKS-$(1))       : $$(ELF-$(1))
-	AS="$$(AS)" CC="$$(CC)" NM="$$(NM)" READELF="$$(READELF)" CPPFLAGS="$$(CPPFLAGS)" $$(GENHOOKS) $$< > $$@
+	AS="$$(AS)" CC="$$(CC)" NM="$$(NM)" READELF="$$(READELF)" CPPFLAGS="$$(subst ",\",$$(CPPFLAGS))" $$(GENHOOKS) $$< > $$@
  $(1)-hooks           : $$(HOOKS-$(1))
  clean-$(1)-hooks     :
 	rm -f $$(HOOKS-$(1))

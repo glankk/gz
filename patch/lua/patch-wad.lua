@@ -9,11 +9,11 @@ if #arg < 1 then
   if line == nil or line == "" then return end
   arg[1] = line
 end
-wiivc = true
 local gzinject = os.getenv("GZINJECT")
 if gzinject == nil or gzinject == "" then
   gzinject = "gzinject"
 end
+wiivc = true
 require("lua/rom_table")
 local n = 0
 for i = 1, #arg do
