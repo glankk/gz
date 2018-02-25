@@ -12,6 +12,8 @@
 - [Issues](#issues)
 
 ### Introduction
+*Note: If you're using gz on the Wii VC, you should read the [Issues](#issues) section to find out about the differences in the VC version.*
+
 The main interface for accessing the provided tools is the utility menu.
 By default, this menu is brought up by pressing `R + L`,
 but this button combination can be changed (see [Settings](#settings-menu)).
