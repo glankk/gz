@@ -46,8 +46,7 @@ void gfx_start(void)
 void gfx_mode_init(void)
 {
   gfx_sync();
-  gSPClearGeometryMode(gfx_disp_p++, G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH |
-                       G_CULL_BOTH | G_FOG | G_LIGHTING);
+  gSPLoadGeometryMode(gfx_disp_p++, 0);
   gDPSetCycleType(gfx_disp_p++, G_CYC_1CYCLE);
   gDPSetRenderMode(gfx_disp_p++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
   gDPSetScissor(gfx_disp_p++, G_SC_NON_INTERLACE,

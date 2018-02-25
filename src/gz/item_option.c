@@ -119,7 +119,7 @@ static int wheel_draw_proc(struct menu_item *item,
   (
     /* rsp state */
     gsDPPipeSync(),
-    gsSPGeometryMode(~0, 0),
+    gsSPLoadGeometryMode(0),
     /* rdp state */
     gsDPSetCycleType(G_CYC_1CYCLE),
     /* texture engine */
