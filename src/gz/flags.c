@@ -278,7 +278,7 @@ void flag_menu_create(struct menu *menu)
                                        page_up_proc, NULL);
     view_pagedown = menu_add_button_icon(menu, 2, 2, t_arrow, 1, 0xFFFFFF,
                                          page_down_proc, NULL);
-    menu_add_static(menu, 4, 2, "0123456789ABCDEF", 0xC0C0C0);
+    menu_add_static(menu, 4, 2, "0123456789abcdef", 0xC0C0C0);
     static struct gfx_texture *t_flag;
     if (!t_flag)
       t_flag = resource_load_grc_texture("flag_icons");

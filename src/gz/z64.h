@@ -1028,7 +1028,8 @@ typedef struct
   void           *map_actor_list;         /* 0x11DF8 */
   char            unk_22_[0x0008];        /* 0x11DFC */
   void           *scene_exit_list;        /* 0x11E04 */
-  char            unk_23_[0x000D];        /* 0x11E08 */
+  char            unk_23_[0x000C];        /* 0x11E08 */
+  uint8_t         skybox_type;            /* 0x11E14 */
   int8_t          scene_load_flag;        /* 0x11E15 */
   char            unk_24_[0x0004];        /* 0x11E16 */
   int16_t         entrance_index;         /* 0x11E1A */
