@@ -28,6 +28,9 @@ This WAD can be installed as a channel on an emulated Wii, or on a homebrew Wii 
 The original Ocarina of Time channel can be installed alongside the patched WAD, and will not be overwritten.
 Homebrewing a Wii console and using a WAD manager is not covered by this guide.
 
+**Raphnet Adapter Users:** To fix the L and C-Down mapping issues, follow the above instructions,
+but use the `patch-wad-raphnet.bat` or `patch-wad-raphnet` file instead.
+
 ### Using gz with a Gameshark
 *Note: Gameshark support has been deprecated. It is still provided, but without guarantees.*
 
