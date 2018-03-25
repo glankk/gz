@@ -1,4 +1,5 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+set -e
 
 if [ -z "$AS" ];      then AS="mips64-gcc";           fi
 if [ -z "$CC" ];      then CC="mips64-gcc";           fi
