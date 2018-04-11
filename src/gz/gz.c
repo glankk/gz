@@ -3284,14 +3284,17 @@ static void init(void)
                     "inactive\0""heat starting\0""heat initial\0"
                     "heat moving\0""heat active\0""race starting\0"
                     "race initial\0""race moving\0""race active\0"
-                    "race stopped\0""race ending\0",
+                    "race stopped\0""race ending\0""timer starting\0"
+                    "timer initial\0""timer moving\0""timer active\0"
+                    "timer stopped\0",
                     halfword_optionmod_proc, &z64_file.timer_1_state);
     menu_add_static(&menu_file, 0, 9, "timer 2", 0xC0C0C0);
     menu_add_intinput(&menu_file, 17, 9, 10, 5,
                       halfword_mod_proc, &z64_file.timer_2_value);
     menu_add_option(&menu_file, 23, 9,
-                    "inactive\0""starting\0""initial\0"
-                    "moving\0""active\0""stopped\0",
+                    "inactive\0""starting\0""initial\0""moving\0""active\0"
+                    "stopped\0""ending\0""timer starting\0""timer initial\0"
+                    "timer moving\0""timer active\0""timer stopped\0",
                     halfword_optionmod_proc, &z64_file.timer_2_state);
     menu_add_static(&menu_file, 0, 10, "file index", 0xC0C0C0);
     menu_add_intinput(&menu_file, 17, 10, 16, 2,

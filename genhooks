@@ -13,7 +13,7 @@ fi
 
 z64def()
 {
-  printf "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 -
+  printf "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 - | sed s/^M//g
 }
 
 gzsym()
