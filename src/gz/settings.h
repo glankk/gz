@@ -124,6 +124,7 @@ struct menu_settings
   uint32_t col_view_mode  : 1;
   uint32_t col_view_xlu   : 1;
   uint32_t col_view_rd    : 1;
+  uint32_t col_view_line  : 1;
 };
 
 struct settings_data

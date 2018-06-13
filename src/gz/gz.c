@@ -176,6 +176,11 @@ enum movie_state
   MOVIE_PLAYING,
 };
 
+__attribute__((weak))
+char gspL3DEX2_fifoTextStart[0x1190] = "gspL3DEX2_fifoTextStart";
+__attribute__((weak))
+char gspL3DEX2_fifoDataStart[0x03F0] = "gspL3DEX2_fifoDataStart";
+
 #define                     CPU_COUNTER_FREQ 46875000
 __attribute__((section(".data")))
 static _Bool                gz_ready = 0;
@@ -1825,6 +1830,19 @@ static int col_view_xlu_proc(struct menu_item *item,
   return 0;
 }
 
+static int col_view_line_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.col_view_line = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.col_view_line = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.col_view_line);
+  return 0;
+}
+
 static int col_view_rd_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -2439,20 +2457,15 @@ static void main_hook(void)
   menu_draw(&menu_global_watches);
 
   {
-    static Gfx *col_view_disp;
+    static Gfx *poly_disp;
+    static Gfx *line_disp;
     static _Bool xlu;
+    _Bool have_l3dex2 = (gspL3DEX2_fifoTextStart[0] == 'J');
     /* build collision view display list */
     if (col_view_state == 1) {
       xlu = settings->menu_settings.col_view_xlu;
       z64_col_hdr_t *col_hdr = z64_game.col_hdr;
-      size_t size = 0x10 + 9 * col_hdr->n_poly;
-      if (col_view_disp)
-        free(col_view_disp);
-      col_view_disp = malloc(sizeof(*col_view_disp) * size);
-      Gfx *p = col_view_disp;
-      Gfx *d = col_view_disp + size;
-      gDPPipeSync(p++);
-      gDPSetCycleType(p++, G_CYC_2CYCLE);
+
       uint32_t rm;
       uint32_t blc1;
       uint32_t blc2;
@@ -2469,44 +2482,99 @@ static void main_hook(void)
         blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
         alpha = 0xFF;
       }
-      if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL)
-        rm |= ZMODE_DEC;
-      else if (xlu)
-        rm |= ZMODE_XLU;
-      else
-        rm |= ZMODE_OPA;
-      gDPSetRenderMode(p++, rm | blc1, rm | blc2);
-      gDPSetCombineMode(p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
-      gSPTexture(p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
-      gSPLoadGeometryMode(p++, G_SHADE | G_LIGHTING | G_ZBUFFER | G_CULL_BACK);
+
+      Gfx *poly_p = NULL;
+      Gfx *poly_d = NULL;
       {
+        size_t poly_size = 0x10 + 9 * col_hdr->n_poly;
+        if (poly_disp)
+          free(poly_disp);
+        poly_disp = malloc(sizeof(*poly_disp) * poly_size);
+        poly_p = poly_disp;
+        poly_d = poly_disp + poly_size;
+        uint32_t poly_rm = rm;
+        if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL)
+          poly_rm |= ZMODE_DEC;
+        else if (xlu)
+          poly_rm |= ZMODE_XLU;
+        else
+          poly_rm |= ZMODE_OPA;
+        gDPPipeSync(poly_p++);
+        gDPSetCycleType(poly_p++, G_CYC_2CYCLE);
+        gDPSetRenderMode(poly_p++, poly_rm | blc1, poly_rm | blc2);
+        gDPSetCombineMode(poly_p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
+        gSPTexture(poly_p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
+        gSPLoadGeometryMode(poly_p++,
+                            G_SHADE | G_LIGHTING | G_ZBUFFER | G_CULL_BACK);
         Mtx m;
         guMtxIdent(&m);
-        gSPMatrix(p++, gDisplayListData(&d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
+        gSPMatrix(poly_p++,
+                  gDisplayListData(&poly_d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
       }
+
+      struct line
+      {
+        int va;
+        int vb;
+      };
+      struct vector line_set;
+      Gfx *line_p = NULL;
+      Gfx *line_d = NULL;
+      if (settings->menu_settings.col_view_line) {
+        vector_init(&line_set, sizeof(struct line));
+        size_t line_size = 0x15 + 11 * col_hdr->n_poly;
+        if (line_disp)
+          free(line_disp);
+        line_disp = malloc(sizeof(*line_disp) * line_size);
+        line_p = line_disp;
+        line_d = line_disp + line_size;
+        uint32_t line_rm = rm & ~Z_UPD;
+        if (xlu)
+          line_rm |= ZMODE_XLU;
+        else
+          line_rm |= ZMODE_DEC;
+        if (have_l3dex2) {
+          gSPLoadUcode(line_p++,
+                       MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoTextStart),
+                       MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoDataStart));
+        }
+        gDPPipeSync(line_p++);
+        gDPSetCycleType(line_p++, G_CYC_1CYCLE);
+        gDPSetRenderMode(line_p++, line_rm | blc1, line_rm | blc2);
+        gDPSetCombineMode(line_p++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
+        gSPTexture(line_p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
+        gSPLoadGeometryMode(line_p++, G_ZBUFFER | G_CULL_BACK);
+        Mtx m;
+        guMtxIdent(&m);
+        gSPMatrix(line_p++,
+                  gDisplayListData(&line_d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
+        gDPSetPrimColor(line_p++, 0, 0, 0x00, 0x00, 0x00, alpha);
+      }
+
       for (int i = 0; i < col_hdr->n_poly; ++i) {
         z64_col_poly_t *poly = &col_hdr->poly[i];
         z64_col_type_t *type = &col_hdr->type[poly->type];
-        if (type->flags_2.hookshot)
-          gDPSetPrimColor(p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
-        else if (type->flags_1.interaction > 0x01)
-          gDPSetPrimColor(p++, 0, 0, 0xC0, 0x00, 0xC0, alpha);
-        else if (type->flags_1.special == 0x0C)
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0x00, 0x00, alpha);
-        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
-          gDPSetPrimColor(p++, 0, 0, 0x00, 0xFF, 0x00, alpha);
-        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
-          gDPSetPrimColor(p++, 0, 0, 0xC0, 0xFF, 0xC0, alpha);
-        else if (type->flags_2.terrain == 0x01)
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
-        else if (settings->menu_settings.col_view_rd)
-          continue;
-        else
-          gDPSetPrimColor(p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
         z64_xyz_t *va = &col_hdr->vtx[poly->va];
         z64_xyz_t *vb = &col_hdr->vtx[poly->vb];
         z64_xyz_t *vc = &col_hdr->vtx[poly->vc];
-        Vtx vg[3] =
+
+        if (type->flags_2.hookshot)
+          gDPSetPrimColor(poly_p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
+        else if (type->flags_1.interaction > 0x01)
+          gDPSetPrimColor(poly_p++, 0, 0, 0xC0, 0x00, 0xC0, alpha);
+        else if (type->flags_1.special == 0x0C)
+          gDPSetPrimColor(poly_p++, 0, 0, 0xFF, 0x00, 0x00, alpha);
+        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+          gDPSetPrimColor(poly_p++, 0, 0, 0x00, 0xFF, 0x00, alpha);
+        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+          gDPSetPrimColor(poly_p++, 0, 0, 0xC0, 0xFF, 0xC0, alpha);
+        else if (type->flags_2.terrain == 0x01)
+          gDPSetPrimColor(poly_p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
+        else if (settings->menu_settings.col_view_rd)
+          continue;
+        else
+          gDPSetPrimColor(poly_p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
+        Vtx pvg[3] =
         {
           gdSPDefVtxN(va->x, va->y, va->z, 0, 0,
                       poly->norm.x / 0x100, poly->norm.y / 0x100,
@@ -2518,24 +2586,104 @@ static void main_hook(void)
                       poly->norm.x / 0x100, poly->norm.y / 0x100,
                       poly->norm.z / 0x100, 0xFF),
         };
-        gSPVertex(p++, gDisplayListData(&d, vg), 3, 0);
-        gSP1Triangle(p++, 0, 1, 2, 0);
+        gSPVertex(poly_p++, gDisplayListData(&poly_d, pvg), 3, 0);
+        gSP1Triangle(poly_p++, 0, 1, 2, 0);
+
+        if (!settings->menu_settings.col_view_line)
+          continue;
+        if (have_l3dex2) {
+          Vtx lvg[3] =
+          {
+            gdSPDefVtxC(va->x, va->y, va->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+            gdSPDefVtxC(vb->x, vb->y, vb->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+            gdSPDefVtxC(vc->x, vc->y, vc->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+          };
+          gSPVertex(line_p++, gDisplayListData(&line_d, lvg), 3, 0);
+          gSP1Triangle(line_p++, 0, 1, 2, 0);
+        }
+        else {
+          struct line lab = {poly->va, poly->vb};
+          struct line lbc = {poly->vb, poly->vc};
+          struct line lca = {poly->vc, poly->va};
+          _Bool ab = 1;
+          _Bool bc = 1;
+          _Bool ca = 1;
+          for (int i = 0; i < line_set.size; ++i) {
+            struct line *l = vector_at(&line_set, i);
+            if ((l->va == lab.va && l->vb == lab.vb) ||
+                (l->va == lab.vb && l->vb == lab.va))
+              ab = 0;
+            if ((l->va == lbc.va && l->vb == lbc.vb) ||
+                (l->va == lbc.vb && l->vb == lbc.va))
+              bc = 0;
+            if ((l->va == lca.va && l->vb == lca.vb) ||
+                (l->va == lca.vb && l->vb == lca.va))
+              ca = 0;
+          }
+          if (!ab && !bc && !ca)
+            continue;
+          Vtx lvg[3] =
+          {
+            gdSPDefVtxC(va->x, va->y, va->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+            gdSPDefVtxC(vb->x, vb->y, vb->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+            gdSPDefVtxC(vc->x, vc->y, vc->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+          };
+          gSPVertex(line_p++, gDisplayListData(&line_d, lvg), 3, 0);
+          if (ab) {
+            vector_push_back(&line_set, 1, &lab);
+            gSPLine3D(line_p++, 0, 1, 0);
+          }
+          if (bc) {
+            vector_push_back(&line_set, 1, &lbc);
+            gSPLine3D(line_p++, 1, 2, 0);
+          }
+          if (ca) {
+            vector_push_back(&line_set, 1, &lca);
+            gSPLine3D(line_p++, 2, 0, 0);
+          }
+        }
       }
-      gSPEndDisplayList(p++);
+      gSPEndDisplayList(poly_p++);
+      if (settings->menu_settings.col_view_line) {
+        vector_destroy(&line_set);
+        if (have_l3dex2) {
+          gSPLoadUcode(line_p++,
+                       MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoTextStart),
+                       MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoDataStart));
+          Lights0 lites;
+          lites.a.l.col[0] = lites.a.l.colc[0] = z64_game.lighting.ambient[0];
+          lites.a.l.col[1] = lites.a.l.colc[1] = z64_game.lighting.ambient[1];
+          lites.a.l.col[2] = lites.a.l.colc[2] = z64_game.lighting.ambient[2];
+          gSPSetLights0(line_p++, lites);
+        }
+        gSPEndDisplayList(line_p++);
+      }
       col_view_state = 2;
     }
-    if (col_view_state == 2 && col_view_disp && z64_game.pause_state == 0) {
-      if (xlu)
-        gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, col_view_disp);
-      else
-        gSPDisplayList(z64_ctxt.gfx->poly_opa.p++, col_view_disp);
+    if (col_view_state == 2 && z64_game.pause_state == 0) {
+      if (xlu) {
+        if (poly_disp)
+          gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, poly_disp);
+        if (line_disp)
+          gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, line_disp);
+      }
+      else {
+        if (poly_disp)
+          gSPDisplayList(z64_ctxt.gfx->poly_opa.p++, poly_disp);
+        if (line_disp)
+          gSPDisplayList(z64_ctxt.gfx->poly_opa.p++, line_disp);
+      }
     }
     if (col_view_state == 3)
       col_view_state = 4;
     else if (col_view_state == 4) {
-      if (col_view_disp) {
-        free(col_view_disp);
-        col_view_disp = NULL;
+      if (poly_disp) {
+        free(poly_disp);
+        poly_disp = NULL;
+      }
+      if (line_disp) {
+        free(line_disp);
+        line_disp = NULL;
       }
       col_view_state = 0;
     }
@@ -2823,28 +2971,30 @@ static void init(void)
                     col_view_mode_proc, NULL);
     menu_add_static(&menu_scene, 2, 8, "translucent", 0xC0C0C0);
     menu_add_checkbox(&menu_scene, 16, 8, col_view_xlu_proc, NULL);
-    menu_add_static(&menu_scene, 2, 9, "reduced", 0xC0C0C0);
-    menu_add_checkbox(&menu_scene, 16, 9, col_view_rd_proc, NULL);
+    menu_add_static(&menu_scene, 2, 9, "wireframe", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 9, col_view_line_proc, NULL);
+    menu_add_static(&menu_scene, 2, 10, "reduced", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 10, col_view_rd_proc, NULL);
     {
       static struct slot_info teleport_slot_info;
       teleport_slot_info.data = &settings->teleport_slot;
       teleport_slot_info.max = SETTINGS_TELEPORT_MAX;
-      menu_add_static(&menu_scene, 0, 10, "teleport slot", 0xC0C0C0);
-      menu_add_watch(&menu_scene, 18, 10,
+      menu_add_static(&menu_scene, 0, 11, "teleport slot", 0xC0C0C0);
+      menu_add_watch(&menu_scene, 18, 11,
                      (uint32_t)teleport_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_scene, 16, 10, "-",
+      menu_add_button(&menu_scene, 16, 11, "-",
                       slot_dec_proc, &teleport_slot_info);
-      menu_add_button(&menu_scene, 20, 10, "+",
+      menu_add_button(&menu_scene, 20, 11, "+",
                       slot_inc_proc, &teleport_slot_info);
     }
-    menu_add_static(&menu_scene, 0, 11, "current scene", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 16, 11,
-                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-    menu_add_static(&menu_scene, 0, 12, "current room", 0xC0C0C0);
+    menu_add_static(&menu_scene, 0, 12, "current scene", 0xC0C0C0);
     menu_add_watch(&menu_scene, 16, 12,
-                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
-    menu_add_static(&menu_scene, 0, 13, "no. rooms", 0xC0C0C0);
+                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+    menu_add_static(&menu_scene, 0, 13, "current room", 0xC0C0C0);
     menu_add_watch(&menu_scene, 16, 13,
+                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
+    menu_add_static(&menu_scene, 0, 14, "no. rooms", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 14,
                    (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
     /* cheats */
