@@ -176,9 +176,9 @@ enum movie_state
   MOVIE_PLAYING,
 };
 
-__attribute__((weak))
+_Alignas(8) __attribute__((weak))
 char gspL3DEX2_fifoTextStart[0x1190] = "gspL3DEX2_fifoTextStart";
-__attribute__((weak))
+_Alignas(8) __attribute__((weak))
 char gspL3DEX2_fifoDataStart[0x03F0] = "gspL3DEX2_fifoDataStart";
 
 #define                     CPU_COUNTER_FREQ 46875000
@@ -715,6 +715,14 @@ void command_nextfile(void)
   memfile_slot = (memfile_slot + 1) % SETTINGS_MEMFILE_MAX;
 }
 
+void command_colview(void)
+{
+  if (col_view_state == 0)
+    col_view_state = 1;
+  else if (col_view_state == 2)
+    col_view_state = 3;
+}
+
 void command_recordmacro(void)
 {
   if (movie_state == MOVIE_RECORDING)
@@ -769,6 +777,7 @@ static struct command_info command_info[] =
   {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
   {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
   {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
+  {"collision view",    command_colview,      CMDACT_PRESS_ONCE},
   {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
   {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                 CMDACT_PRESS},
@@ -1843,6 +1852,19 @@ static int col_view_line_proc(struct menu_item *item,
   return 0;
 }
 
+static int col_view_shade_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->menu_settings.col_view_shade = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->menu_settings.col_view_shade = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->menu_settings.col_view_shade);
+  return 0;
+}
+
 static int col_view_rd_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -2460,29 +2482,12 @@ static void main_hook(void)
     static Gfx *poly_disp;
     static Gfx *line_disp;
     static _Bool xlu;
-    _Bool have_l3dex2 = (gspL3DEX2_fifoTextStart[0] == 'J');
     /* build collision view display list */
     if (col_view_state == 1) {
       xlu = settings->menu_settings.col_view_xlu;
       z64_col_hdr_t *col_hdr = z64_game.col_hdr;
-
-      uint32_t rm;
-      uint32_t blc1;
-      uint32_t blc2;
-      uint8_t alpha;
-      if (xlu) {
-        rm = Z_CMP | IM_RD | CVG_DST_FULL | FORCE_BL;
-        blc1 = GBL_c1(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
-        blc2 = GBL_c2(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
-        alpha = 0x80;
-      }
-      else {
-        rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | FORCE_BL;
-        blc1 = GBL_c1(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
-        blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
-        alpha = 0xFF;
-      }
-
+      uint8_t alpha = xlu ? 0x80 : 0xFF;
+      /* initialize polygon dlist */
       Gfx *poly_p = NULL;
       Gfx *poly_d = NULL;
       {
@@ -2492,26 +2497,46 @@ static void main_hook(void)
         poly_disp = malloc(sizeof(*poly_disp) * poly_size);
         poly_p = poly_disp;
         poly_d = poly_disp + poly_size;
-        uint32_t poly_rm = rm;
+        uint32_t rm;
+        uint32_t blc1;
+        uint32_t blc2;
+        if (xlu) {
+          rm = Z_CMP | IM_RD | CVG_DST_FULL | FORCE_BL;
+          blc1 = GBL_c1(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
+          blc2 = GBL_c2(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA);
+        }
+        else {
+          rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | FORCE_BL;
+          blc1 = GBL_c1(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
+          blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
+        }
         if (settings->menu_settings.col_view_mode == SETTINGS_COLVIEW_DECAL)
-          poly_rm |= ZMODE_DEC;
+          rm |= ZMODE_DEC;
         else if (xlu)
-          poly_rm |= ZMODE_XLU;
+          rm |= ZMODE_XLU;
         else
-          poly_rm |= ZMODE_OPA;
+          rm |= ZMODE_OPA;
         gDPPipeSync(poly_p++);
-        gDPSetCycleType(poly_p++, G_CYC_2CYCLE);
-        gDPSetRenderMode(poly_p++, poly_rm | blc1, poly_rm | blc2);
-        gDPSetCombineMode(poly_p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
+        gDPSetRenderMode(poly_p++, rm | blc1, rm | blc2);
         gSPTexture(poly_p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
-        gSPLoadGeometryMode(poly_p++,
-                            G_SHADE | G_LIGHTING | G_ZBUFFER | G_CULL_BACK);
+        if (settings->menu_settings.col_view_shade) {
+          gDPSetCycleType(poly_p++, G_CYC_2CYCLE);
+          gDPSetCombineMode(poly_p++, G_CC_PRIMITIVE, G_CC_MODULATERGBA2);
+          gSPLoadGeometryMode(poly_p++,
+                              G_SHADE | G_LIGHTING | G_ZBUFFER | G_CULL_BACK);
+        }
+        else {
+          gDPSetCycleType(poly_p++, G_CYC_1CYCLE);
+          gDPSetCombineMode(poly_p++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
+          gSPLoadGeometryMode(poly_p++, G_ZBUFFER | G_CULL_BACK);
+        }
         Mtx m;
         guMtxIdent(&m);
         gSPMatrix(poly_p++,
                   gDisplayListData(&poly_d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
       }
-
+      /* initialize line dlist */
+      _Bool have_l3dex2 = (gspL3DEX2_fifoTextStart[0] == 'J');
       struct line
       {
         int va;
@@ -2522,42 +2547,41 @@ static void main_hook(void)
       Gfx *line_d = NULL;
       if (settings->menu_settings.col_view_line) {
         vector_init(&line_set, sizeof(struct line));
-        size_t line_size = 0x15 + 11 * col_hdr->n_poly;
+        size_t line_size = 0x18 + 11 * col_hdr->n_poly;
         if (line_disp)
           free(line_disp);
         line_disp = malloc(sizeof(*line_disp) * line_size);
         line_p = line_disp;
         line_d = line_disp + line_size;
-        uint32_t line_rm = rm & ~Z_UPD;
-        if (xlu)
-          line_rm |= ZMODE_XLU;
-        else
-          line_rm |= ZMODE_DEC;
         if (have_l3dex2) {
           gSPLoadUcode(line_p++,
                        MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoTextStart),
                        MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoDataStart));
         }
         gDPPipeSync(line_p++);
-        gDPSetCycleType(line_p++, G_CYC_1CYCLE);
-        gDPSetRenderMode(line_p++, line_rm | blc1, line_rm | blc2);
-        gDPSetCombineMode(line_p++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
+        if (xlu)
+          gDPSetRenderMode(line_p++, G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2);
+        else
+          gDPSetRenderMode(line_p++, G_RM_AA_ZB_DEC_LINE, G_RM_AA_ZB_DEC_LINE2);
         gSPTexture(line_p++, qu016(0.5), qu016(0.5), 0, G_TX_RENDERTILE, G_OFF);
-        gSPLoadGeometryMode(line_p++, G_ZBUFFER | G_CULL_BACK);
+        gDPSetCycleType(line_p++, G_CYC_1CYCLE);
+        gDPSetCombineMode(line_p++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
+        gSPLoadGeometryMode(line_p++, G_ZBUFFER);
         Mtx m;
         guMtxIdent(&m);
         gSPMatrix(line_p++,
                   gDisplayListData(&line_d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
         gDPSetPrimColor(line_p++, 0, 0, 0x00, 0x00, 0x00, alpha);
       }
-
+      /* enumerate collision polys */
       for (int i = 0; i < col_hdr->n_poly; ++i) {
         z64_col_poly_t *poly = &col_hdr->poly[i];
         z64_col_type_t *type = &col_hdr->type[poly->type];
         z64_xyz_t *va = &col_hdr->vtx[poly->va];
         z64_xyz_t *vb = &col_hdr->vtx[poly->vb];
         z64_xyz_t *vc = &col_hdr->vtx[poly->vc];
-
+        /* generate polygon */
+        _Bool skip = 0;
         if (type->flags_2.hookshot)
           gDPSetPrimColor(poly_p++, 0, 0, 0x80, 0x80, 0xFF, alpha);
         else if (type->flags_1.interaction > 0x01)
@@ -2571,37 +2595,27 @@ static void main_hook(void)
         else if (type->flags_2.terrain == 0x01)
           gDPSetPrimColor(poly_p++, 0, 0, 0xFF, 0xFF, 0x80, alpha);
         else if (settings->menu_settings.col_view_rd)
-          continue;
+          skip = 1;
         else
           gDPSetPrimColor(poly_p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
-        Vtx pvg[3] =
-        {
-          gdSPDefVtxN(va->x, va->y, va->z, 0, 0,
-                      poly->norm.x / 0x100, poly->norm.y / 0x100,
-                      poly->norm.z / 0x100, 0xFF),
-          gdSPDefVtxN(vb->x, vb->y, vb->z, 0, 0,
-                      poly->norm.x / 0x100, poly->norm.y / 0x100,
-                      poly->norm.z / 0x100, 0xFF),
-          gdSPDefVtxN(vc->x, vc->y, vc->z, 0, 0,
-                      poly->norm.x / 0x100, poly->norm.y / 0x100,
-                      poly->norm.z / 0x100, 0xFF),
-        };
-        gSPVertex(poly_p++, gDisplayListData(&poly_d, pvg), 3, 0);
-        gSP1Triangle(poly_p++, 0, 1, 2, 0);
-
-        if (!settings->menu_settings.col_view_line)
-          continue;
-        if (have_l3dex2) {
-          Vtx lvg[3] =
+        if (!skip) {
+          Vtx pvg[3] =
           {
-            gdSPDefVtxC(va->x, va->y, va->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
-            gdSPDefVtxC(vb->x, vb->y, vb->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
-            gdSPDefVtxC(vc->x, vc->y, vc->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+            gdSPDefVtxN(va->x, va->y, va->z, 0, 0,
+                        poly->norm.x / 0x100, poly->norm.y / 0x100,
+                        poly->norm.z / 0x100, 0xFF),
+            gdSPDefVtxN(vb->x, vb->y, vb->z, 0, 0,
+                        poly->norm.x / 0x100, poly->norm.y / 0x100,
+                        poly->norm.z / 0x100, 0xFF),
+            gdSPDefVtxN(vc->x, vc->y, vc->z, 0, 0,
+                        poly->norm.x / 0x100, poly->norm.y / 0x100,
+                        poly->norm.z / 0x100, 0xFF),
           };
-          gSPVertex(line_p++, gDisplayListData(&line_d, lvg), 3, 0);
-          gSP1Triangle(line_p++, 0, 1, 2, 0);
+          gSPVertex(poly_p++, gDisplayListData(&poly_d, pvg), 3, 0);
+          gSP1Triangle(poly_p++, 0, 1, 2, 0);
         }
-        else {
+        /* generate lines */
+        if (settings->menu_settings.col_view_line) {
           struct line lab = {poly->va, poly->vb};
           struct line lbc = {poly->vb, poly->vc};
           struct line lca = {poly->vc, poly->va};
@@ -2643,6 +2657,7 @@ static void main_hook(void)
           }
         }
       }
+      /* finalize dlists */
       gSPEndDisplayList(poly_p++);
       if (settings->menu_settings.col_view_line) {
         vector_destroy(&line_set);
@@ -2973,28 +2988,30 @@ static void init(void)
     menu_add_checkbox(&menu_scene, 16, 8, col_view_xlu_proc, NULL);
     menu_add_static(&menu_scene, 2, 9, "wireframe", 0xC0C0C0);
     menu_add_checkbox(&menu_scene, 16, 9, col_view_line_proc, NULL);
-    menu_add_static(&menu_scene, 2, 10, "reduced", 0xC0C0C0);
-    menu_add_checkbox(&menu_scene, 16, 10, col_view_rd_proc, NULL);
+    menu_add_static(&menu_scene, 2, 10, "shaded", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 10, col_view_shade_proc, NULL);
+    menu_add_static(&menu_scene, 2, 11, "reduced", 0xC0C0C0);
+    menu_add_checkbox(&menu_scene, 16, 11, col_view_rd_proc, NULL);
     {
       static struct slot_info teleport_slot_info;
       teleport_slot_info.data = &settings->teleport_slot;
       teleport_slot_info.max = SETTINGS_TELEPORT_MAX;
-      menu_add_static(&menu_scene, 0, 11, "teleport slot", 0xC0C0C0);
-      menu_add_watch(&menu_scene, 18, 11,
+      menu_add_static(&menu_scene, 0, 12, "teleport slot", 0xC0C0C0);
+      menu_add_watch(&menu_scene, 18, 12,
                      (uint32_t)teleport_slot_info.data, WATCH_TYPE_U8);
-      menu_add_button(&menu_scene, 16, 11, "-",
+      menu_add_button(&menu_scene, 16, 12, "-",
                       slot_dec_proc, &teleport_slot_info);
-      menu_add_button(&menu_scene, 20, 11, "+",
+      menu_add_button(&menu_scene, 20, 12, "+",
                       slot_inc_proc, &teleport_slot_info);
     }
-    menu_add_static(&menu_scene, 0, 12, "current scene", 0xC0C0C0);
-    menu_add_watch(&menu_scene, 16, 12,
-                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-    menu_add_static(&menu_scene, 0, 13, "current room", 0xC0C0C0);
+    menu_add_static(&menu_scene, 0, 13, "current scene", 0xC0C0C0);
     menu_add_watch(&menu_scene, 16, 13,
-                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
-    menu_add_static(&menu_scene, 0, 14, "no. rooms", 0xC0C0C0);
+                   (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+    menu_add_static(&menu_scene, 0, 14, "current room", 0xC0C0C0);
     menu_add_watch(&menu_scene, 16, 14,
+                   (uint32_t)&z64_game.room_index, WATCH_TYPE_U8);
+    menu_add_static(&menu_scene, 0, 15, "no. rooms", 0xC0C0C0);
+    menu_add_watch(&menu_scene, 16, 15,
                    (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
     /* cheats */

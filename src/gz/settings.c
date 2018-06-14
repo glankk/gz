@@ -53,8 +53,9 @@ void settings_load_default(void)
 #endif
   d->menu_settings.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->menu_settings.col_view_xlu = 1;
-  d->menu_settings.col_view_rd = 0;
   d->menu_settings.col_view_line = 0;
+  d->menu_settings.col_view_shade = 1;
+  d->menu_settings.col_view_rd = 0;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;
@@ -114,6 +115,7 @@ void settings_load_default(void)
   d->binds[COMMAND_NEXTPOS] = input_bind_make(0);
   d->binds[COMMAND_PREVFILE] = input_bind_make(0);
   d->binds[COMMAND_NEXTFILE] = input_bind_make(0);
+  d->binds[COMMAND_COLVIEW] = input_bind_make(0);
   d->binds[COMMAND_RECORDMACRO] = input_bind_make(0);
   d->binds[COMMAND_PLAYMACRO] = input_bind_make(0);
   d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);
