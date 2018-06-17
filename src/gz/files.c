@@ -105,7 +105,7 @@ static _Bool update_list(void)
         entry.tile = 1;
       else
         entry.tile = 2;
-      strncpy(entry.text, dirent->d_name, 32);
+      memcpy(entry.text, dirent->d_name, 32);
       if (nl > 31)
         strcpy(&entry.text[28], "...");
     }
@@ -291,7 +291,7 @@ static int file_activate_proc(struct menu_item *item)
     ds->index = index;
     int l = strlen(entry->name) - gf_suffix_length;
     char *name = malloc(l + 1);
-    strncpy(name, entry->name, l);
+    memcpy(name, entry->name, l);
     name[l] = 0;
     if (gf_mode == GETFILE_SAVE) {
       set_name(name);

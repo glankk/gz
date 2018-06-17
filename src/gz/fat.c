@@ -1366,7 +1366,7 @@ static int generate_sfn(struct fat *fat, uint32_t clust,
   /* find a free short name */
   for (int i = 1; i < 1000000; ++i) {
     /* make discriminator */
-    char sfn_disc[7];
+    char sfn_disc[8];
     sprintf(sfn_disc, "%i", i);
     int sfn_disc_length = strlen(sfn_disc);
     /* make name */
