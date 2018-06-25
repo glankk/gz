@@ -9,12 +9,12 @@
 		<Option compiler="n64" />
 		<Option extended_obj_names="1" />
 		<MakeCommands>
-			<Build command="" />
-			<CompileFile command="" />
-			<Clean command="" />
-			<DistClean command="" />
-			<AskRebuildNeeded command="" />
-			<SilentBuild command=" &gt; $(CMD_NULL)" />
+			<Build command="$make -f $makefile $target" />
+			<CompileFile command="$make -f $makefile $file" />
+			<Clean command="$make -f $makefile clean-$target" />
+			<DistClean command="$make -f $makefile distclean-$target" />
+			<AskRebuildNeeded command="$make -q -f $makefile $target" />
+			<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
 		</MakeCommands>
 		<Build>
 			<Target title="gz-oot-1.0-lua">
@@ -26,16 +26,18 @@
 				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
-					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.0-test.State&quot;' />
-					<Variable name="emurom" value="..\n64\roms\oot-1.0-j.z64" />
+					<Variable name="EMUDIR" value="$(bizhawkdir)" />
+					<Variable name="emuname" value="$(bizhawk)" />
+					<Variable name="emuarg" value='--load-state=&quot;N64/State/oot-1.0-test.State&quot;' />
+					<Variable name="emurom" value="$(romdir)/$(oot10)" />
 				</Environment>
 				<MakeCommands>
-					<Build command="$make -f $makefile $target" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean-$target" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
 				</MakeCommands>
 			</Target>
 			<Target title="gz-oot-1.1-lua">
@@ -47,16 +49,18 @@
 				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
-					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.1-test.State&quot;' />
-					<Variable name="emurom" value="..\n64\roms\oot-1.1-j.z64" />
+					<Variable name="EMUDIR" value="$(bizhawkdir)" />
+					<Variable name="emuname" value="$(bizhawk)" />
+					<Variable name="emuarg" value='--load-state=&quot;N64/State/oot-1.1-test.State&quot;' />
+					<Variable name="emurom" value="$(romdir)/$(oot11)" />
 				</Environment>
 				<MakeCommands>
-					<Build command="$make -f $makefile $target" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean-$target" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
 				</MakeCommands>
 			</Target>
 			<Target title="gz-oot-1.2-lua">
@@ -68,16 +72,18 @@
 				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
-					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.2-test.State&quot;' />
-					<Variable name="emurom" value="..\n64\roms\oot-1.2-j.z64" />
+					<Variable name="EMUDIR" value="$(bizhawkdir)" />
+					<Variable name="emuname" value="$(bizhawk)" />
+					<Variable name="emuarg" value='--load-state=&quot;N64/State/oot-1.2-test.State&quot;' />
+					<Variable name="emurom" value="$(romdir)/$(oot12)" />
 				</Environment>
 				<MakeCommands>
-					<Build command="$make -f $makefile $target" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean-$target" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
 				</MakeCommands>
 			</Target>
 			<Target title="gz-oot-vc-lua">
@@ -89,20 +95,143 @@
 				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
 				<Option run_host_application_in_terminal="0" />
 				<Environment>
-					<Variable name="emuarg" value='--load-state=&quot;N64\State\oot-1.2-test.State&quot;' />
-					<Variable name="emurom" value="..\n64\roms\oot-1.2-j.z64" />
+					<Variable name="EMUDIR" value="$(bizhawkdir)" />
+					<Variable name="emuname" value="$(bizhawk)" />
+					<Variable name="emuarg" value='--load-state=&quot;N64/State/oot-1.2-test.State&quot;' />
+					<Variable name="emurom" value="$(romdir)/$(oot12)" />
 				</Environment>
 				<MakeCommands>
-					<Build command="$make -f $makefile $target" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean-$target" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
+				</MakeCommands>
+			</Target>
+			<Target title="gz-oot-1.0">
+				<Option output="bin/gz/oot-1.0/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(EMUDIR)" />
+				<Option object_output="obj" />
+				<Option type="3" />
+				<Option compiler="n64" />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option run_host_application_in_terminal="0" />
+				<ExtraCommands>
+					<Add after='sh &quot;patch/make-rom&quot; &quot;$(romdir)/$(rom)&quot;' />
+					<Add after='sh &quot;patch/inject_ucode&quot; &quot;$(emurom)&quot; &quot;$(romdir)/$(ucode)&quot;' />
+				</ExtraCommands>
+				<Environment>
+					<Variable name="EMUDIR" value="$(cen64dir)" />
+					<Variable name="emuname" value="$(cen64)" />
+					<Variable name="emuarg" value="-multithread pifdata.bin" />
+					<Variable name="emurom" value="$(PROJECTDIR)/patch/gz-oot-1.0-$(lang).z64" />
+					<Variable name="rom" value="$(oot10)" />
+				</Environment>
+				<MakeCommands>
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
+				</MakeCommands>
+			</Target>
+			<Target title="gz-oot-1.1">
+				<Option output="bin/gz/oot-1.1/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(EMUDIR)" />
+				<Option object_output="obj" />
+				<Option type="3" />
+				<Option compiler="n64" />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option run_host_application_in_terminal="0" />
+				<ExtraCommands>
+					<Add after='sh &quot;patch/make-rom&quot; &quot;$(romdir)/$(rom)&quot;' />
+					<Add after='sh &quot;patch/inject_ucode&quot; &quot;$(emurom)&quot; &quot;$(romdir)/$(ucode)&quot;' />
+				</ExtraCommands>
+				<Environment>
+					<Variable name="EMUDIR" value="$(cen64dir)" />
+					<Variable name="emuname" value="$(cen64)" />
+					<Variable name="emuarg" value="-multithread pifdata.bin" />
+					<Variable name="emurom" value="$(PROJECTDIR)/patch/gz-oot-1.1-$(lang).z64" />
+					<Variable name="rom" value="$(oot11)" />
+				</Environment>
+				<MakeCommands>
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
+				</MakeCommands>
+			</Target>
+			<Target title="gz-oot-1.2">
+				<Option output="bin/gz/oot-1.2/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(EMUDIR)" />
+				<Option object_output="obj" />
+				<Option type="3" />
+				<Option compiler="n64" />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option run_host_application_in_terminal="0" />
+				<ExtraCommands>
+					<Add after='sh &quot;patch/make-rom&quot; &quot;$(romdir)/$(rom)&quot;' />
+					<Add after='sh &quot;patch/inject_ucode&quot; &quot;$(emurom)&quot; &quot;$(romdir)/$(ucode)&quot;' />
+				</ExtraCommands>
+				<Environment>
+					<Variable name="EMUDIR" value="$(cen64dir)" />
+					<Variable name="emuname" value="$(cen64)" />
+					<Variable name="emuarg" value="-multithread pifdata.bin" />
+					<Variable name="emurom" value="$(PROJECTDIR)/patch/gz-oot-1.2-$(lang).z64" />
+					<Variable name="rom" value="$(oot12)" />
+				</Environment>
+				<MakeCommands>
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
+				</MakeCommands>
+			</Target>
+			<Target title="gz-oot-vc">
+				<Option output="bin/gz/oot-vc/gz.bin" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(EMUDIR)" />
+				<Option object_output="obj" />
+				<Option type="3" />
+				<Option compiler="n64-vc" />
+				<Option host_application='$(emuname)&quot; $(emuarg) &quot;$(emurom)' />
+				<Option run_host_application_in_terminal="0" />
+				<ExtraCommands>
+					<Add after='sh &quot;patch/make-rom-vc&quot; &quot;$(romdir)/$(rom)&quot;' />
+					<Add after='sh &quot;patch/inject_ucode&quot; &quot;$(emurom)&quot; &quot;$(romdir)/$(ucode)&quot;' />
+				</ExtraCommands>
+				<Environment>
+					<Variable name="EMUDIR" value="$(cen64dir)" />
+					<Variable name="emuname" value="$(cen64)" />
+					<Variable name="emuarg" value="-multithread pifdata.bin" />
+					<Variable name="emurom" value="$(PROJECTDIR)/patch/gz-oot-vc-$(lang).z64" />
+					<Variable name="rom" value="$(oot12)" />
+				</Environment>
+				<MakeCommands>
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="" />
 				</MakeCommands>
 			</Target>
 			<Environment>
-				<Variable name="emuname" value="EmuHawk" />
+				<Variable name="bizhawkdir" value="$(PROJECTDIR)/../../../emu/BizHawk" />
+				<Variable name="bizhawk" value="EmuHawk" />
+				<Variable name="cen64dir" value="$(PROJECTDIR)/../../../emu/cen64" />
+				<Variable name="cen64" value="cen64" />
+				<Variable name="romdir" value="$(PROJECTDIR)/../../../emu/n64/roms" />
+				<Variable name="oot10" value="oot-1.0-$(lang).z64" />
+				<Variable name="oot11" value="oot-1.1-$(lang).z64" />
+				<Variable name="oot12" value="oot-1.2-$(lang).z64" />
+				<Variable name="ucode" value="hey-you-pikachu-u.z64" />
+				<Variable name="lang" value="j" />
 			</Environment>
 		</Build>
 		<Unit filename="res/resources.json" />
@@ -206,6 +335,10 @@
 		</Unit>
 		<Unit filename="src/gz/settings.h" />
 		<Unit filename="src/gz/sys.h" />
+		<Unit filename="src/gz/ucode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/ucode.h" />
 		<Unit filename="src/gz/watchlist.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -218,9 +351,5 @@
 		<Unit filename="src/gz/zu_scenes.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Extensions>
-			<code_completion />
-			<debugger />
-		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
