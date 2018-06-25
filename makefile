@@ -43,7 +43,9 @@ GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 all                   : $(GZ)
 clean                 : $(foreach v,$(GZ_VERSIONS),clean-gz-$(v)-hooks)
 	rm -rf $(OBJDIR) $(BINDIR)
-.PHONY                : all clean
+distclean             :
+	rm -rf patch/ups patch/*.z64
+.PHONY                : all clean distclean
 
 .SECONDEXPANSION      :
 
