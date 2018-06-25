@@ -85,6 +85,32 @@ void guRotateF(MtxF *mf, float a, float x, float y, float z)
   mf->ww = 1.f;
 }
 
+void guRotateRPYF(MtxF *mf, float r, float p, float h)
+{
+  float sr = sin(r);
+  float cr = cos(r);
+  float sp = sin(p);
+  float cp = cos(p);
+  float sh = sin(h);
+  float ch = cos(h);
+  mf->xx = cp * ch;
+  mf->xy = cp * sh;
+  mf->xz = -sp;
+  mf->xw = 0.f;
+  mf->yx = sr * sp * ch - cr * sh;
+  mf->yy = sr * sp * sh + cr * ch;
+  mf->yz = sr * cp;
+  mf->yw = 0.f;
+  mf->zx = cr * sp * ch + sr * sh;
+  mf->zy = cr * sp * sh - sp * sh;
+  mf->zz = cr * cp;
+  mf->zw = 0.f;
+  mf->wx = 0.f;
+  mf->wy = 0.f;
+  mf->wz = 0.f;
+  mf->ww = 1.f;
+}
+
 void guScaleF(MtxF *mf, float x, float y, float z)
 {
   *mf = (MtxF)guDefMtxF(x,   0.f, 0.f, 0.f,

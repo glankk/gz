@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <vector/vector.h>
 #include "input.h"
+#include "mem.h"
 #include "menu.h"
 #include "resource.h"
 
@@ -132,18 +133,8 @@ static int address_proc(struct menu_item *item,
                         enum menu_callback_reason reason,
                         void *data)
 {
-  if (reason == MENU_CALLBACK_CHANGED) {
-    uint32_t address = menu_intinput_get(item);
-    for (int i = 0; i < domains.size; ++i) {
-      struct mem_domain *d = vector_at(&domains, i);
-      if (address >= d->start && address < d->start + d->size) {
-        view_domain_index = i;
-        d->view_offset = address - d->start;
-        break;
-      }
-    }
-    update_view();
-  }
+  if (reason == MENU_CALLBACK_CHANGED)
+    mem_goto(menu_intinput_get(item));
   return 0;
 }
 
@@ -238,4 +229,17 @@ void mem_menu_create(struct menu *menu)
     make_cells(menu);
     goto_domain(0);
   }
+}
+
+void mem_goto(uint32_t address)
+{
+  for (int i = 0; i < domains.size; ++i) {
+    struct mem_domain *d = vector_at(&domains, i);
+    if (address >= d->start && address < d->start + d->size) {
+      view_domain_index = i;
+      d->view_offset = address - d->start;
+      break;
+    }
+  }
+  update_view();
 }

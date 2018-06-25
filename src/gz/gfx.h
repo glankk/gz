@@ -4,9 +4,11 @@
 #include <n64.h>
 #include "gu.h"
 
-#define GFX_FILE_DRAM (-1)
-#define gfx_disp(...) {Gfx gfx_disp__[]={__VA_ARGS__};                        \
-                       gfx_disp_append(gfx_disp__,sizeof(gfx_disp__));}
+#define GFX_FILE_DRAM   (-1)
+#define gfx_disp(...)   {Gfx gfx_disp__[]={__VA_ARGS__};                      \
+                         gfx_disp_append(gfx_disp__,sizeof(gfx_disp__));}
+#define GFX_TEXT_NORMAL 0
+#define GFX_TEXT_FAST   1
 
 enum gfx_mode
 {
@@ -14,6 +16,7 @@ enum gfx_mode
   GFX_MODE_COMBINE,
   GFX_MODE_COLOR,
   GFX_MODE_DROPSHADOW,
+  GFX_MODE_TEXT,
   GFX_MODE_ALL,
 };
 
@@ -122,6 +125,10 @@ void gfx_sprite_draw(const struct gfx_sprite *sprite);
 int  gfx_font_xheight(const struct gfx_font *font);
 void gfx_printf(const struct gfx_font *font, int x, int y,
                 const char *format, ...);
+void gfx_printf_n(const struct gfx_font *font, int x, int y,
+                  const char *format, ...);
+void gfx_printf_f(const struct gfx_font *font, int x, int y,
+                  const char *format, ...);
 
 extern const MtxF gfx_cm_desaturate;
 

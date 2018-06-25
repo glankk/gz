@@ -18,6 +18,7 @@
 #include "resource.h"
 #include "settings.h"
 #include "sys.h"
+#include "ucode.h"
 #include "watchlist.h"
 #include "z64.h"
 #include "zu.h"
@@ -153,20 +154,21 @@ struct heap_node
 
 struct actor_debug_info
 {
-  uint8_t type;
-  uint8_t index;
+  struct menu_item *edit_item;
+  uint8_t           type;
+  uint8_t           index;
 };
 
 struct actor_spawn_info
 {
-  uint16_t  actor_no;
-  uint16_t  variable;
-  int32_t   x;
-  int32_t   y;
-  int32_t   z;
-  uint16_t  rx;
-  uint16_t  ry;
-  uint16_t  rz;
+  uint16_t        actor_no;
+  uint16_t        variable;
+  int32_t         x;
+  int32_t         y;
+  int32_t         z;
+  uint16_t        rx;
+  uint16_t        ry;
+  uint16_t        rz;
 };
 
 enum movie_state
@@ -176,10 +178,6 @@ enum movie_state
   MOVIE_PLAYING,
 };
 
-_Alignas(8) __attribute__((weak))
-char gspL3DEX2_fifoTextStart[0x1190] = "gspL3DEX2_fifoTextStart";
-_Alignas(8) __attribute__((weak))
-char gspL3DEX2_fifoDataStart[0x03F0] = "gspL3DEX2_fifoDataStart";
 
 #define                     CPU_COUNTER_FREQ 46875000
 __attribute__((section(".data")))
@@ -188,6 +186,7 @@ static uint8_t              profile = 0;
 static struct menu          menu_main;
 static struct menu          menu_explorer;
 static struct menu          menu_global_watches;
+static struct menu          menu_mem;
 static struct menu_item    *menu_font_option;
 static struct menu_item    *menu_watchlist;
 static _Bool                menu_active = 0;
@@ -1631,6 +1630,10 @@ static int menu_font_option_proc(struct menu_item *item,
   if (reason == MENU_CALLBACK_CHANGED) {
     int font_resource = menu_font_options[menu_option_get(item)];
     settings->menu_settings.font_resource = font_resource;
+    if (settings->menu_settings.font_resource == RES_FONT_FIPPS)
+      gfx_mode_configure(GFX_MODE_TEXT, GFX_TEXT_NORMAL);
+    else
+      gfx_mode_configure(GFX_MODE_TEXT, GFX_TEXT_FAST);
     struct gfx_font *font = resource_get(font_resource);
     menu_set_font(&menu_main, font);
     menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
@@ -1718,6 +1721,10 @@ static void apply_settings()
   menu_set_cell_width(&menu_main, font->char_width + font->letter_spacing);
   menu_set_cell_height(&menu_main, font->char_height + font->line_spacing);
   gfx_mode_set(GFX_MODE_DROPSHADOW, settings->menu_settings.drop_shadow);
+  if (settings->menu_settings.font_resource == RES_FONT_FIPPS)
+    gfx_mode_configure(GFX_MODE_TEXT, GFX_TEXT_NORMAL);
+  else
+    gfx_mode_configure(GFX_MODE_TEXT, GFX_TEXT_FAST);
   menu_set_pxoffset(&menu_main, settings->menu_x);
   menu_set_pyoffset(&menu_main, settings->menu_y);
   menu_imitate(&menu_global_watches, &menu_main);
@@ -2114,19 +2121,31 @@ static int objects_draw_proc(struct menu_item *item,
 static void actor_index_dec_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  uint32_t max = z64_game.actor_list[info->type].length;
-  if (max == 0)
-    max = 1;
-  info->index = (info->index + max - 1) % max;
+  int type = info->type;
+  int index = info->index;
+  do {
+    if (--index >= 0)
+      break;
+    type = (type + 12 - 1) % 12;
+    index = z64_game.actor_list[type].length;
+  } while (type != info->type || index != info->index);
+  info->type = type;
+  info->index = index;
 }
 
 static void actor_index_inc_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *info = data;
-  uint32_t max = z64_game.actor_list[info->type].length;
-  if (max == 0)
-    max = 1;
-  info->index = (info->index + 1) % max;
+  int type = info->type;
+  int index = info->index + 1;
+  do {
+    if (index < z64_game.actor_list[type].length)
+      break;
+    type = (type + 1) % 12;
+    index = 0;
+  } while (type != info->type || index != info->index);
+  info->type = type;
+  info->index = index;
 }
 
 static int actor_draw_proc(struct menu_item *item,
@@ -2148,18 +2167,78 @@ static int actor_draw_proc(struct menu_item *item,
     else
       info->index = 0;
   }
-  gfx_printf(font, x + cw * 17, y, "(%i)", max);
+  gfx_printf(font, x + cw * 14, y, "%i / %i", info->index, max);
   if (info->index < max) {
     z64_actor_t *actor = z64_game.actor_list[info->type].first;
     for (int i = 0; i < info->index; ++i)
       actor = actor->next;
-    gfx_printf(font, x, y + ch * 1, "%08" PRIx32 "  %04" PRIx16,
-               actor, actor->actor_id);
+    sprintf(info->edit_item->text, "%08" PRIx32, (uint32_t)actor);
+    gfx_printf(font, x + cw * 10, y + ch * 1, "%04" PRIx16, actor->actor_id);
     gfx_printf(font, x, y + ch * 2, "variable  %04" PRIx16, actor->variable);
+
+    {
+      Mtx m;
+      {
+        MtxF mf;
+        guTranslateF(&mf, actor->pos_2.x, actor->pos_2.y, actor->pos_2.z);
+        MtxF mt;
+        guRotateRPYF(&mt,
+                     actor->rot_2.x * M_PI / 0x8000,
+                     actor->rot_2.y * M_PI / 0x8000,
+                     actor->rot_2.z * M_PI / 0x8000);
+        guMtxCatF(&mt, &mf, &mf);
+        guMtxF2L(&mf, &m);
+      }
+      Vtx v[6] =
+      {
+        gdSPDefVtxC(-8192, 0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
+        gdSPDefVtxC(8192,  0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
+        gdSPDefVtxC(0,      -8192, 0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
+        gdSPDefVtxC(0,      8192,  0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
+        gdSPDefVtxC(0,      0,      -8192, 0, 0, 0x00, 0x00, 0xFF, 0x80),
+        gdSPDefVtxC(0,      0,      8192,  0, 0, 0x00, 0x00, 0xFF, 0x80),
+      };
+      load_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
+      gDPPipeSync(z64_ctxt.gfx->poly_xlu.p++);
+      gDPSetCycleType(z64_ctxt.gfx->poly_xlu.p++, G_CYC_1CYCLE);
+      gDPSetRenderMode(z64_ctxt.gfx->poly_xlu.p++,
+                       G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2);
+      gDPSetCombineMode(z64_ctxt.gfx->poly_xlu.p++,
+                        G_CC_PRIMITIVE, G_CC_PRIMITIVE);
+      gSPLoadGeometryMode(z64_ctxt.gfx->poly_xlu.p++, G_ZBUFFER);
+      gSPTexture(z64_ctxt.gfx->poly_xlu.p++, 0, 0, 0, 0, G_OFF);
+      gSPMatrix(z64_ctxt.gfx->poly_xlu.p++,
+                gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, m),
+                G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
+      gSPVertex(z64_ctxt.gfx->poly_xlu.p++,
+                gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, v), 6, 0);
+      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
+                      0, 0, 0xFF, 0x00, 0x00, 0x80);
+      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 0, 1, 0);
+      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
+                      0, 0, 0x00, 0xFF, 0x00, 0x80);
+      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 2, 3, 0);
+      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
+                      0, 0, 0x00, 0x00, 0xFF, 0x80);
+      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 4, 5, 0);
+      unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p, 1);
+    }
   }
   else
-    gfx_printf(font, x, y + ch * 1, "<none>");
+    strcpy(info->edit_item->text, "<none>");
   return 1;
+}
+
+static void edit_actor_proc(struct menu_item *item, void *data)
+{
+  struct actor_debug_info *info = data;
+  if (info->index < z64_game.actor_list[info->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[info->type].first;
+    for (int i = 0; i < info->index; ++i)
+      actor = actor->next;
+    menu_enter(&menu_main, &menu_mem);
+    mem_goto((uint32_t)actor);
+  }
 }
 
 static void delete_actor_proc(struct menu_item *item, void *data)
@@ -2536,7 +2615,6 @@ static void main_hook(void)
                   gDisplayListData(&poly_d, m), G_MTX_MODELVIEW | G_MTX_LOAD);
       }
       /* initialize line dlist */
-      _Bool have_l3dex2 = (gspL3DEX2_fifoTextStart[0] == 'J');
       struct line
       {
         int va;
@@ -2553,11 +2631,7 @@ static void main_hook(void)
         line_disp = malloc(sizeof(*line_disp) * line_size);
         line_p = line_disp;
         line_d = line_disp + line_size;
-        if (have_l3dex2) {
-          gSPLoadUcode(line_p++,
-                       MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoTextStart),
-                       MIPS_KSEG0_TO_PHYS(gspL3DEX2_fifoDataStart));
-        }
+        load_l3dex2(&line_p);
         gDPPipeSync(line_p++);
         if (xlu)
           gDPSetRenderMode(line_p++, G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2);
@@ -2661,16 +2735,7 @@ static void main_hook(void)
       gSPEndDisplayList(poly_p++);
       if (settings->menu_settings.col_view_line) {
         vector_destroy(&line_set);
-        if (have_l3dex2) {
-          gSPLoadUcode(line_p++,
-                       MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoTextStart),
-                       MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoDataStart));
-          Lights0 lites;
-          lites.a.l.col[0] = lites.a.l.colc[0] = z64_game.lighting.ambient[0];
-          lites.a.l.col[1] = lites.a.l.colc[1] = z64_game.lighting.ambient[1];
-          lites.a.l.col[2] = lites.a.l.colc[2] = z64_game.lighting.ambient[2];
-          gSPSetLights0(line_p++, lites);
-        }
+        unload_l3dex2(&line_p, 1);
         gSPEndDisplayList(line_p++);
       }
       col_view_state = 2;
@@ -3146,7 +3211,7 @@ static void init(void)
                                     NULL, NULL);
           item->pxoffset = 76 + i * 18;
           item->pyoffset = 72;
-          char *tooltip = malloc(9);
+          char *tooltip = malloc(20);
           sprintf(tooltip, "bottle %d", i + 1);
           item->tooltip = tooltip;
         }
@@ -3553,8 +3618,11 @@ static void init(void)
         item->data = &data;
         menu_add_static(&actors, 0, 2, "index", 0xC0C0C0);
         menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, &data);
-        menu_add_watch(&actors, 12, 2, (uint32_t)&data.index, WATCH_TYPE_U8);
-        menu_add_button(&actors, 15, 2, ">", actor_index_inc_proc, &data);
+        menu_add_button(&actors, 12, 2, ">", actor_index_inc_proc, &data);
+        item = menu_add_button(&actors, 0, 3, NULL, &edit_actor_proc, &data);
+        item->text = malloc(9);
+        item->text[0] = 0;
+        data.edit_item = item;
         menu_add_button(&actors, 0, 5, "delete", &delete_actor_proc, &data);
         menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &data);
       }
@@ -3582,9 +3650,8 @@ static void init(void)
     static struct menu flags;
     menu_add_submenu(&menu_debug, 0, 5, &flags, "flags");
     flag_menu_create(&flags);
-    static struct menu mem;
-    menu_add_submenu(&menu_debug, 0, 6, &mem, "memory");
-    mem_menu_create(&mem);
+    menu_add_submenu(&menu_debug, 0, 6, &menu_mem, "memory");
+    mem_menu_create(&menu_mem);
 
     /* settings */
     menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
