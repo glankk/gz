@@ -52,7 +52,7 @@ if text_insert then
   print(string.format("found text insertion point at 0x%08X in `%s`", text_insert, arg[1]))
 else
   print("unable find text insertion point")
-  return
+  return 1
 end
 
 -- find data insertion point
@@ -63,7 +63,7 @@ if data_insert then
   print(string.format("found data insertion point at 0x%08X in `%s`", data_insert, arg[1]))
 else
   print("unable find data insertion point")
-  return
+  return 1
 end
 
 -- include destination locations as search locations in source
@@ -92,7 +92,7 @@ for i = 1,#text_loc do
 end
 if not text then
   print("unable find text chunk")
-  return
+  return 1
 end
 
 -- find data
@@ -112,7 +112,7 @@ for i = 1,#data_loc do
 end
 if not data then
   print("unable find data chunk")
-  return
+  return 1
 end
 
 -- insert microcode
