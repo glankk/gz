@@ -299,6 +299,9 @@
 		<Unit filename="src/gz/menu_def.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/menu_floatinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/menu_intinput.c">
 			<Option compilerVar="CC" />
 		</Unit>

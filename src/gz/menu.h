@@ -208,6 +208,12 @@ struct menu_item   *menu_add_intinput(struct menu *menu, int x, int y,
 uint32_t            menu_intinput_get(struct menu_item *item);
 int32_t             menu_intinput_gets(struct menu_item *item);
 void                menu_intinput_set(struct menu_item *item, uint32_t value);
+struct menu_item   *menu_add_floatinput(struct menu *menu, int x, int y,
+                                        int sig_precis, int exp_precis,
+                                        menu_generic_callback callback_proc,
+                                        void *callback_data);
+float               menu_floatinput_get(struct menu_item *item);
+void                menu_floatinput_set(struct menu_item *item, float value);
 struct menu_item   *menu_add_strinput(struct menu *menu, int x, int y,
                                       int length,
                                       menu_generic_callback callback_proc,

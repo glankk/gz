@@ -145,8 +145,7 @@ static int sign_navigate_proc(struct menu_item *item,
 {
   if (nav != MENU_NAVIGATE_UP && nav != MENU_NAVIGATE_DOWN)
     return 0;
-  char c[2] = "+-";
-  item->text[0] = c[1 - (item->text[0] - '+') / 2];
+  item->text[0] = '+' + '-' - item->text[0];
   return 1;
 }
 
@@ -199,9 +198,8 @@ struct menu_item *menu_add_intinput(struct menu *menu, int x, int y,
   item->activate_proc = activate_proc;
   item->destroy_proc = destroy_proc;
   for (int i = 0; i < length; ++i) {
-    struct menu_item *digit = menu_item_add(data->imenu, i, 0, NULL,
-                                            data->imenu->
-                                            highlight_color_static);
+    uint32_t color = data->imenu->highlight_color_static;
+    struct menu_item *digit = menu_item_add(data->imenu, i, 0, NULL, color);
     data->digits[i] = digit;
     digit->text = malloc(2);
     if (data->signed_ && i == 0) {
