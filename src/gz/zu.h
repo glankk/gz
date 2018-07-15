@@ -85,7 +85,11 @@ struct zu_gfx
 
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);
 void *zu_zseg_locate(uint32_t seg_addr);
+void *zu_seg_relocate(void *p_seg_addr, const z64_stab_t *stab);
+void *zu_zseg_relocate(void *p_seg_addr);
+
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size);
+void zu_getfile_idx(int file_idx, void *dram_addr);
 
 void *zu_sr_header(void *sr, int header_index, const z64_stab_t *stab);
 void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,

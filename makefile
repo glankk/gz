@@ -44,7 +44,7 @@ all                   : $(GZ)
 clean                 : $(foreach v,$(GZ_VERSIONS),clean-gz-$(v)-hooks)
 	rm -rf $(OBJDIR) $(BINDIR)
 distclean             :
-	rm -rf patch/ups patch/*.z64
+	rm -rf patch/ups patch/*.z64 patch/*.wad
 .PHONY                : all clean distclean
 
 .SECONDEXPANSION      :

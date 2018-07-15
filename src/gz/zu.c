@@ -26,6 +26,20 @@ void *zu_zseg_locate(uint32_t seg_addr)
   return zu_seg_locate(&z64_stab, seg_addr);
 }
 
+void *zu_seg_relocate(void *p_seg_addr, const z64_stab_t *stab)
+{
+  uint32_t *p_seg_addr_u32 = p_seg_addr;
+  uint32_t seg_addr = *p_seg_addr_u32;
+  uint8_t seg = (seg_addr >> 24) & 0x0000000F;
+  uint32_t off = (seg_addr >> 0) & 0x00FFFFFF;
+  return (void*)(*p_seg_addr_u32 = MIPS_PHYS_TO_KSEG0(stab->seg[seg] + off));
+}
+
+void *zu_zseg_relocate(void *p_seg_addr)
+{
+  return zu_seg_relocate(p_seg_addr, &z64_stab);
+}
+
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
 {
   OSMesgQueue notify_mq;
@@ -36,6 +50,24 @@ void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
     vrom_addr,
     dram_addr,
     size,
+    NULL, 0, 0,
+    &notify_mq, 0,
+  };
+  z64_osSendMesg(&z64_file_mq, &f, OS_MESG_NOBLOCK);
+  z64_osRecvMesg(&notify_mq, NULL, OS_MESG_BLOCK);
+}
+
+void zu_getfile_idx(int file_idx, void *dram_addr)
+{
+  z64_ftab_t *file = &z64_ftab[file_idx];
+  OSMesgQueue notify_mq;
+  OSMesg notify_m;
+  z64_osCreateMesgQueue(&notify_mq, &notify_m, 1);
+  z64_getfile_t f =
+  {
+    file->vrom_start,
+    dram_addr,
+    file->vrom_end - file->vrom_start,
     NULL, 0, 0,
     &notify_mq, 0,
   };

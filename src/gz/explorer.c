@@ -202,7 +202,7 @@ static int think_proc(struct menu_item *item)
   /* handle scene changes */
   if (data->scene_index != z64_game.scene_index) {
     data->scene_next = z64_game.scene_index;
-    data->room_next = z64_game.room_index;
+    data->room_next = z64_game.room_ctxt.rooms[0].index;
     if (data->room_next < 0)
       data->room_next = 0;
   }
@@ -435,7 +435,7 @@ static int draw_proc(struct menu_item *item,
         }
       }
     /* draw actors */
-    if (z64_game.pause_state == 0) {
+    if (z64_game.pause_ctxt.state == 0) {
       zu_gfx_inject(&data->gfx);
       z64_DrawActors(&z64_game, &z64_game.actor_ctxt);
       zu_gfx_restore(&data->gfx);
@@ -462,13 +462,13 @@ static int draw_proc(struct menu_item *item,
 static int activate_proc(struct menu_item *item)
 {
   struct item_data *data = item->data;
-  if (data->room_index != z64_game.room_index) {
-    z64_game.room_index = -1;
-    z64_game.room_ptr = NULL;
-    z64_UnloadRoom(&z64_game, &z64_game.room_index);
-    z64_game.room_index = -1;
-    z64_game.room_ptr = NULL;
-    z64_LoadRoom(&z64_game, &z64_game.room_index, data->room_index);
+  if (data->room_index != z64_game.room_ctxt.rooms[0].index) {
+    z64_game.room_ctxt.rooms[0].index = -1;
+    z64_game.room_ctxt.rooms[0].file = NULL;
+    z64_UnloadRoom(&z64_game, &z64_game.room_ctxt);
+    z64_game.room_ctxt.rooms[0].index = -1;
+    z64_game.room_ctxt.rooms[0].file = NULL;
+    z64_LoadRoom(&z64_game, &z64_game.room_ctxt, data->room_index);
   }
   z64_xyzf_t pos = {data->x, data->y, data->z};
   z64_link.common.pos_1 = z64_link.common.pos_2 = pos;

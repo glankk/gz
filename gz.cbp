@@ -337,6 +337,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/settings.h" />
+		<Unit filename="src/gz/state.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/sys.h" />
 		<Unit filename="src/gz/ucode.c">
 			<Option compilerVar="CC" />

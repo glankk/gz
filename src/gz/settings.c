@@ -68,6 +68,7 @@ void settings_load_default(void)
 #endif
   d->n_watches = 0;
   d->cheats = 0;
+  d->cheats |= 1 << CHEAT_NOMUSIC;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
     d->teleport_pos[i].x = 0.f;
     d->teleport_pos[i].y = 0.f;
@@ -84,8 +85,10 @@ void settings_load_default(void)
   d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_START, BUTTON_L);
 #endif
   d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
-  d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
-  d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);
+  //d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
+  //d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);
+  d->binds[COMMAND_SAVEPOS] = input_bind_make(0);
+  d->binds[COMMAND_LOADPOS] = input_bind_make(0);
   d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
