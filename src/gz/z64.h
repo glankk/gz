@@ -454,33 +454,35 @@ typedef struct
   uint16_t          aspect_height;            /* 0x0138 */
   char              unk_05_[0x0050];          /* 0x013A */
   int16_t           game_playing;             /* 0x018A */
-  char              unk_06_[0x03B8];          /* 0x018C */
+  char              unk_06_[0x0004];          /* 0x018C */
+  int16_t           screenshot_state;         /* 0x0190 */
+  char              unk_07_[0x03B2];          /* 0x0192 */
   uint16_t          c_up_icon_x;              /* 0x0544 */
   uint16_t          c_up_icon_y;              /* 0x0546 */
-  char              unk_07_[0x021C];          /* 0x0548 */
+  char              unk_08_[0x021C];          /* 0x0548 */
   uint16_t          game_freeze;              /* 0x0764 */
-  char              unk_08_[0x002E];          /* 0x0766 */
+  char              unk_09_[0x002E];          /* 0x0766 */
   uint16_t          magic_fill_r;             /* 0x0794 */
   uint16_t          magic_fill_g;             /* 0x0796 */
   uint16_t          magic_fill_b;             /* 0x0798 */
-  char              unk_09_[0x004A];          /* 0x079A */
+  char              unk_0A_[0x004A];          /* 0x079A */
   uint16_t          c_button_r;               /* 0x07E4 */
   uint16_t          c_button_g;               /* 0x07E6 */
   uint16_t          c_button_b;               /* 0x07E8 */
   uint16_t          b_button_r;               /* 0x07EA */
   uint16_t          b_button_g;               /* 0x07EC */
   uint16_t          b_button_b;               /* 0x07EE */
-  char              unk_0A_[0x0004];          /* 0x07F0 */
+  char              unk_0B_[0x0004];          /* 0x07F0 */
   qs510_t           start_icon_dd;            /* 0x07F4 */
   int16_t           start_icon_scale;         /* 0x07F6 */
-  char              unk_0B_[0x0006];          /* 0x07F8 */
+  char              unk_0C_[0x0006];          /* 0x07F8 */
   uint16_t          start_icon_y;             /* 0x07FE */
-  char              unk_0C_[0x0002];          /* 0x0800 */
+  char              unk_0D_[0x0002];          /* 0x0800 */
   uint16_t          start_icon_x;             /* 0x0802 */
-  char              unk_0D_[0x000C];          /* 0x0804 */
+  char              unk_0E_[0x000C];          /* 0x0804 */
   uint16_t          c_up_button_x;            /* 0x0810 */
   uint16_t          c_up_button_y;            /* 0x0812 */
-  char              unk_0E_[0x0008];          /* 0x0814 */
+  char              unk_0F_[0x0008];          /* 0x0814 */
   uint16_t          start_button_x;           /* 0x081C */
   uint16_t          start_button_y;           /* 0x081E */
   uint16_t          item_button_x[4];         /* 0x0820 */
@@ -489,31 +491,31 @@ typedef struct
   uint16_t          item_icon_x[4];           /* 0x0838 */
   uint16_t          item_icon_y[4];           /* 0x0840 */
   qs510_t           item_icon_dd[4];          /* 0x0848 */
-  char              unk_0F_[0x0264];          /* 0x0850 */
+  char              unk_10_[0x0264];          /* 0x0850 */
   uint16_t          a_button_y;               /* 0x0AB4 */
   uint16_t          a_button_x;               /* 0x0AB6 */
-  char              unk_10_[0x0002];          /* 0x0AB8 */
+  char              unk_11_[0x0002];          /* 0x0AB8 */
   uint16_t          a_button_icon_y;          /* 0x0ABA */
   uint16_t          a_button_icon_x;          /* 0x0ABC */
-  char              unk_11_[0x0002];          /* 0x0ABE */
+  char              unk_12_[0x0002];          /* 0x0ABE */
   uint16_t          a_button_r;               /* 0x0AC0 */
   uint16_t          a_button_g;               /* 0x0AC2 */
   uint16_t          a_button_b;               /* 0x0AC4 */
-  char              unk_12_[0x0030];          /* 0x0AC6 */
+  char              unk_13_[0x0030];          /* 0x0AC6 */
   uint16_t          magic_bar_x;              /* 0x0AF6 */
   uint16_t          magic_bar_y;              /* 0x0AF8 */
   uint16_t          magic_fill_x;             /* 0x0AFA */
-  char              unk_13_[0x02D6];          /* 0x0AFC */
+  char              unk_14_[0x02D6];          /* 0x0AFC */
   int16_t           minimap_disabled;         /* 0x0DD2 */
-  char              unk_14_[0x015A];          /* 0x0DD4 */
+  char              unk_15_[0x015A];          /* 0x0DD4 */
   int16_t           dungeon_map_floor;        /* 0x0F2E */
-  char              unk_15_[0x0064];          /* 0x0F30 */
+  char              unk_16_[0x0064];          /* 0x0F30 */
   uint16_t          item_ammo_x[4];           /* 0x0F94 */
   uint16_t          item_ammo_y[4];           /* 0x0F9C */
-  char              unk_16_[0x0008];          /* 0x0FA4 */
+  char              unk_17_[0x0008];          /* 0x0FA4 */
   uint16_t          item_icon_space[4];       /* 0x0FAC */
   uint16_t          item_button_space[4];     /* 0x0FB4 */
-  char              unk_17_[0x0618];          /* 0x0FBC */
+  char              unk_18_[0x0618];          /* 0x0FBC */
                                               /* 0x15D4 */
 } z64_gameinfo_t;
 
@@ -936,12 +938,14 @@ typedef struct
 } z64_input_t;
 
 /* state context base */
-typedef struct
+typedef struct z64_ctxt z64_ctxt_t;
+typedef void (*z64_ctxt_proc_t)(z64_ctxt_t *ctxt);
+struct z64_ctxt
 {
   z64_gfx_t        *gfx;                      /* 0x0000 */
-  void             *state_main;               /* 0x0004 */
-  void             *state_dtor;               /* 0x0008 */
-  void             *next_ctor;                /* 0x000C */
+  z64_ctxt_proc_t   state_main;               /* 0x0004 */
+  z64_ctxt_proc_t   state_dtor;               /* 0x0008 */
+  z64_ctxt_proc_t   next_ctor;                /* 0x000C */
   uint32_t          next_size;                /* 0x0010 */
   z64_input_t       input[4];                 /* 0x0014 */
   uint32_t          state_heap_size;          /* 0x0074 */
@@ -954,7 +958,7 @@ typedef struct
   int32_t           state_frames;             /* 0x009C */
   uint32_t          unk_01_;                  /* 0x00A0 */
                                               /* 0x00A4 */
-} z64_ctxt_t;
+};
 
 typedef struct z64_part_s z64_part_t;
 typedef int32_t (*z64_part_ctor_t)(z64_ctxt_t *ctxt, int part_index,
@@ -997,7 +1001,6 @@ typedef struct
                                               /* 0x0006 */
 } z64_col_lut_t;
 
-/* game + 0x7C0 */
 typedef struct
 {
   /* static collision stuff */
@@ -1154,8 +1157,9 @@ typedef struct
   uint16_t          a_action;                 /* 0x01F0 */
   char              unk_03_[0x0002];          /* 0x01F2 */
   float             f1F4;                     /* 0x01F4 */
-  int16_t           b_label;                  /* 0x01F8 */
-  char              unk_04_[0x0068];          /* 0x01FA */
+  char              unk_04_[0x0004];          /* 0x01F8 */
+  int16_t           b_label;                  /* 0x01FC */
+  char              unk_05_[0x0064];          /* 0x01FE */
   struct
   {
     uint8_t         unk_00_;
@@ -1171,7 +1175,7 @@ typedef struct
     uint8_t         dfnl;
     uint8_t         all;
   }                 restriction_flags;        /* 0x0262 */
-  char              unk_05_[0x0002];          /* 0x026E */
+  char              unk_06_[0x0002];          /* 0x026E */
                                               /* 0x0270 */
 } z64_if_ctxt_t;
 
@@ -1410,15 +1414,17 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091474
 #define z64_entrance_offset_hook_addr           0x8009AA44
-#define z64_frame_update_func_addr              0x8009AF1C
-#define z64_frame_update_call_addr              0x8009CAE8
+#define z64_frame_input_func_addr               0x800A0BA0
+#define z64_main_hook_addr                      0x800A0BF8
 #define z64_disp_swap_1_addr                    0x800A1198
 #define z64_disp_swap_2_addr                    0x800A11B0
 #define z64_disp_swap_3_addr                    0x800A11C8
 #define z64_disp_swap_4_addr                    0x800A11E4
-#define z64_frame_input_func_addr               0x800A0BA0
-#define z64_main_hook_addr                      0x800A0C3C
 #define z64_frame_input_call_addr               0x800A16AC
+#define z64_ocarina_input_func_addr             0x800A279C
+#define z64_ocarina_input_call_addr             0x800C1F40
+#define z64_ocarina_update_func_addr            0x800C3B2C
+#define z64_ocarina_update_call_addr            0x800C3DE0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
 #define z64_day_speed_addr                      0x800F1650
 #define z64_light_handlers_addr                 0x800F1B40
@@ -1432,8 +1438,10 @@ typedef struct
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
 #define z64_seq_buf_addr                        0x80124800
+#define z64_disp_addr                           0x8016A640
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
+#define z64_cimg_addr                           0x803B5000
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
@@ -1472,15 +1480,17 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091484
 #define z64_entrance_offset_hook_addr           0x8009AA54
-#define z64_frame_update_func_addr              0x8009AF2C
-#define z64_frame_update_call_addr              0x8009CAF8
+#define z64_frame_input_func_addr               0x800A0BB0
+#define z64_main_hook_addr                      0x800A0C08
 #define z64_disp_swap_1_addr                    0x800A11A8
 #define z64_disp_swap_2_addr                    0x800A11C0
 #define z64_disp_swap_3_addr                    0x800A11D8
 #define z64_disp_swap_4_addr                    0x800A11F4
-#define z64_frame_input_func_addr               0x800A0BB0
-#define z64_main_hook_addr                      0x800A0C4C
 #define z64_frame_input_call_addr               0x800A16BC
+#define z64_ocarina_input_func_addr             0x800A27AC
+#define z64_ocarina_input_call_addr             0x800C1F90
+#define z64_ocarina_update_func_addr            0x800C3B9C
+#define z64_ocarina_update_call_addr            0x800C3E50
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
 #define z64_day_speed_addr                      0x800F1810
 #define z64_light_handlers_addr                 0x800F1D00
@@ -1494,8 +1504,10 @@ typedef struct
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
 #define z64_seq_buf_addr                        0x801249C0
+#define z64_disp_addr                           0x8016A800
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
+#define z64_cimg_addr                           0x803B5000
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
@@ -1534,15 +1546,17 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x800812C0
 #define z64_Io_addr                             0x80091AB4
 #define z64_entrance_offset_hook_addr           0x8009B134
-#define z64_frame_update_func_addr              0x8009B60C
-#define z64_frame_update_call_addr              0x8009D1D8
+#define z64_frame_input_func_addr               0x800A1290
+#define z64_main_hook_addr                      0x800A12E4
 #define z64_disp_swap_1_addr                    0x800A1848
 #define z64_disp_swap_2_addr                    0x800A1860
 #define z64_disp_swap_3_addr                    0x800A1878
 #define z64_disp_swap_4_addr                    0x800A1894
-#define z64_frame_input_func_addr               0x800A1290
-#define z64_main_hook_addr                      0x800A1328
 #define z64_frame_input_call_addr               0x800A1D8C
+#define z64_ocarina_input_func_addr             0x800A2E7C
+#define z64_ocarina_input_call_addr             0x800C25F0
+#define z64_ocarina_update_func_addr            0x800C41F4
+#define z64_ocarina_update_call_addr            0x800C44A8
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_light_handlers_addr                 0x800F2180
@@ -1556,8 +1570,10 @@ typedef struct
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
 #define z64_seq_buf_addr                        0x801250D0
+#define z64_disp_addr                           0x8016AF00
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0
+#define z64_cimg_addr                           0x803B5000
 
 /* rom addresses */
 #define z64_icon_item_static_vaddr              0x007BD000
@@ -1576,6 +1592,9 @@ typedef struct
 #define z64_ctxt_game_size                      0x00012518
 
 #endif
+
+#define z64_disp_size                           0x12410
+#define z64_cimg_size                           0x25800
 
 /* function prototypes */
 typedef void (*z64_DrawActors_proc)       (z64_game_t *game, void *actor_ctxt);

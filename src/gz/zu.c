@@ -559,3 +559,80 @@ Gfx *zu_gfx_flush(struct zu_gfx *gfx)
   /* flush */
   return gfx->work_w;
 }
+
+/* relocate the commands in the current display list buffer */
+void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx)
+{
+  z64_gfx_t *gfx = z64_ctxt.gfx;
+  z64_disp_buf_t *z_disp[4] =
+  {
+    &gfx->work,
+    &gfx->poly_opa,
+    &gfx->poly_xlu,
+    &gfx->overlay,
+  };
+  uint32_t src_gfx = z64_disp_addr + src_gfx_idx * z64_disp_size;
+  uint32_t dst_gfx = z64_disp_addr + (gfx->frame_count_1 & 1) * z64_disp_size;
+  uint32_t src_cimg = z64_cimg_addr + src_cimg_idx * z64_cimg_size;
+  uint32_t dst_cimg = z64_cimg_addr + (gfx->frame_count_2 & 1) * z64_cimg_size;
+  for (int i = 0; i < sizeof(z_disp) / sizeof(*z_disp); ++i) {
+    z64_disp_buf_t *disp = z_disp[i];
+    for (Gfx *p = disp->buf; p != disp->p; ++p) {
+      /* check gbi commands with addresses in the low word */
+      switch (p->hi >> 24) {
+        case G_VTX:             break;
+        case G_DMA_IO:          break;
+        case G_MTX:             break;
+        case G_MOVEWORD:
+          switch ((p->hi >> 16) & 0xFF) {
+            case G_MW_SEGMENT:  break;
+            default:            continue;
+          }                     break;
+        case G_MOVEMEM:         break;
+        case G_LOAD_UCODE:      break;
+        case G_DL:              break;
+        case G_RDPHALF_1:
+          switch (p[1].hi >> 24) {
+            case G_BRANCH_Z:    break;
+            case G_LOAD_UCODE:  break;
+            default:            continue;
+          }                     break;
+        case G_SETTIMG:         break;
+        case G_SETZIMG:         break;
+        case G_SETCIMG:         break;
+        default:                continue;
+      }
+      /* relocate previous gfx -> current gfx, previous cimg -> current cimg */
+      if (p->lo >= src_gfx && p->lo < src_gfx + z64_disp_size)
+        p->lo += dst_gfx - src_gfx;
+      else if (p->lo >= src_cimg && p->lo < src_cimg + z64_cimg_size)
+        p->lo += dst_cimg - src_cimg;
+    }
+  }
+}
+
+void zu_save_disp_p(struct zu_disp_p *disp_p)
+{
+  z64_gfx_t *gfx = z64_ctxt.gfx;
+  disp_p->work_p = gfx->work.p - gfx->work.buf;
+  disp_p->work_d = gfx->work.d - gfx->work.buf;
+  disp_p->poly_opa_p = gfx->poly_opa.p - gfx->poly_opa.buf;
+  disp_p->poly_opa_d = gfx->poly_opa.d - gfx->poly_opa.buf;
+  disp_p->poly_xlu_p = gfx->poly_xlu.p - gfx->poly_xlu.buf;
+  disp_p->poly_xlu_d = gfx->poly_xlu.d - gfx->poly_xlu.buf;
+  disp_p->overlay_p = gfx->overlay.p - gfx->overlay.buf;
+  disp_p->overlay_d = gfx->overlay.d - gfx->overlay.buf;
+}
+
+void zu_load_disp_p(struct zu_disp_p *disp_p)
+{
+  z64_gfx_t *gfx = z64_ctxt.gfx;
+  gfx->work.p = gfx->work.buf + disp_p->work_p;
+  gfx->work.d = gfx->work.buf + disp_p->work_d;
+  gfx->poly_opa.p = gfx->poly_opa.buf + disp_p->poly_opa_p;
+  gfx->poly_opa.d = gfx->poly_opa.buf + disp_p->poly_opa_d;
+  gfx->poly_xlu.p = gfx->poly_xlu.buf + disp_p->poly_xlu_p;
+  gfx->poly_xlu.d = gfx->poly_xlu.buf + disp_p->poly_xlu_d;
+  gfx->overlay.p = gfx->overlay.buf + disp_p->overlay_p;
+  gfx->overlay.d = gfx->overlay.buf + disp_p->overlay_d;
+}

@@ -199,13 +199,13 @@ static void stop(void)
   __asm__ volatile ("mfc0 $t0, $12  \n"
                     "and  $t0, %0   \n"
                     "mtc0 $t0, $12  \n" :: "r"(~MIPS_STATUS_IE));
-#elif 0
+#elif 1
   //z64_osStopThread((void*)0x80007DD8); /* dmamgr */
   z64_osStopThread((void*)0x8011D318); /* sched */
   z64_osStopThread((void*)0x8011D580); /* padmgr */
   z64_osStopThread((void*)0x80120D60); /* audio */
 #endif
-#if 0
+#if 1
   volatile uint32_t *sp_status = (void*)0xA4040010;
   volatile uint32_t *pi_status = (void*)0xA4600010;
   /* wait for rsp to halt */
@@ -224,7 +224,7 @@ static void go(void)
   __asm__ volatile ("mfc0 $t0, $12  \n"
                     "or   $t0, %0   \n"
                     "mtc0 $t0, $12  \n" :: "r"(MIPS_STATUS_IE));
-#elif 0
+#elif 1
   //z64_osStartThread((void*)0x80007DD8); /* dmamgr */
   z64_osStartThread((void*)0x8011D318); /* sched */
   z64_osStartThread((void*)0x8011D580); /* padmgr */
@@ -582,12 +582,31 @@ void save_state(void)
   write(file, &z64_letterbox_target, sizeof(z64_letterbox_target));
   write(file, &z64_letterbox_current, sizeof(z64_letterbox_current));
 
-  /* song state */
-  //write(file, (void*)0x80102208, 0x60);
-  //write(file, (void*)0x80121F0C, 0xA8);
+#if 0
+  /* ocarina state */
+  write(file, (void*)0x80102208, 0x60);
+  write(file, (void*)0x80121F0C, 0xA8);
 
-  /* cutscene state (optimize me) */
-  //write(file, (void*)0x8011BA20, 0x11A0);
+  /* cutscene state */
+  write(file, (void*)0x8011BC20, 0x0140);
+  /* cutscene text id */
+  write(file, (void*)0x800EFCD0, 0x0002);
+#endif
+
+  _Bool save_gfx = 1;
+  if (save_gfx) {
+    write(file, &sot, sizeof(sot));
+    int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
+    void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
+    write(file, disp, z64_disp_size);
+    struct zu_disp_p disp_p;
+    zu_save_disp_p(&disp_p);
+    write(file, &disp_p, sizeof(disp_p));
+    write(file, &z64_ctxt.gfx->frame_count_1, sizeof(z64_ctxt.gfx->frame_count_1));
+    write(file, &z64_ctxt.gfx->frame_count_2, sizeof(z64_ctxt.gfx->frame_count_2));
+  }
+  else
+    write(file, &eot, sizeof(eot));
 
   //write(file, (void*)0x800E2FC0, 0x31E10);
   //write(file, (void*)0x8012143C, 0x41F4);
@@ -1065,12 +1084,16 @@ void load_state(void)
   read(file, &z64_letterbox_target, sizeof(z64_letterbox_target));
   read(file, &z64_letterbox_current, sizeof(z64_letterbox_current));
 
-  /* song state */
-  //read(file, (void*)0x80102208, 0x60);
-  //read(file, (void*)0x80121F0C, 0xA8);
+#if 0
+  /* ocarina state */
+  read(file, (void*)0x80102208, 0x60);
+  read(file, (void*)0x80121F0C, 0xA8);
 
-  /* cutscene state (optimize me) */
-  //read(file, (void*)0x8011BA20, 0x11A0);
+  /* cutscene state */
+  read(file, (void*)0x8011BC20, 0x0140);
+  /* cutscene text id */
+  read(file, (void*)0x800EFCD0, 0x0002);
+#endif
 
   /* stop sound effects */
   /* importantly, this removes all sound effect control points, which prevents
@@ -1107,10 +1130,27 @@ void load_state(void)
   //read(file, (void*)0x8012143C, 0x41F4);
   //read(file, (void*)0x801DAA00, 0x1D4790);
 
-  /* kill frame */
-  z64_ctxt.gfx->work.p = z64_ctxt.gfx->work.buf;
-  gDPFullSync(z64_ctxt.gfx->work.p++);
-  gSPEndDisplayList(z64_ctxt.gfx->work.p++);
+  int16_t next_gfx;
+  read(file, &next_gfx, sizeof(next_gfx));
+  if (next_gfx == 0) {
+    int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
+    void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
+    read(file, disp, z64_disp_size);
+    struct zu_disp_p disp_p;
+    read(file, &disp_p, sizeof(disp_p));
+    zu_load_disp_p(&disp_p);
+    uint32_t frame_count_1;
+    uint32_t frame_count_2;
+    read(file, &frame_count_1, sizeof(frame_count_1));
+    read(file, &frame_count_2, sizeof(frame_count_2));
+    zu_reloc_gfx(frame_count_1 & 1, frame_count_2 & 1);
+  }
+  else {
+    /* kill frame */
+    z64_ctxt.gfx->work.p = z64_ctxt.gfx->work.buf;
+    gDPFullSync(z64_ctxt.gfx->work.p++);
+    gSPEndDisplayList(z64_ctxt.gfx->work.p++);
+  }
 
   gDPFullSync(z64_ctxt.gfx->work_c);
   gSPEndDisplayList(z64_ctxt.gfx->work_c + 1);

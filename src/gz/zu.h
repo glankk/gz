@@ -83,6 +83,18 @@ struct zu_gfx
   z64_disp_buf_t  z_overlay;
 };
 
+struct zu_disp_p
+{
+  uint32_t        work_p;
+  uint32_t        work_d;
+  uint32_t        poly_opa_p;
+  uint32_t        poly_opa_d;
+  uint32_t        poly_xlu_p;
+  uint32_t        poly_xlu_d;
+  uint32_t        overlay_p;
+  uint32_t        overlay_d;
+};
+
 void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);
 void *zu_zseg_locate(uint32_t seg_addr);
 void *zu_seg_relocate(void *p_seg_addr, const z64_stab_t *stab);
@@ -125,6 +137,10 @@ void zu_gfx_destroy(struct zu_gfx *gfx);
 void zu_gfx_inject(struct zu_gfx *gfx);
 void zu_gfx_restore(struct zu_gfx *gfx);
 Gfx *zu_gfx_flush(struct zu_gfx *gfx);
+
+void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx);
+void zu_save_disp_p(struct zu_disp_p *disp_p);
+void zu_load_disp_p(struct zu_disp_p *disp_p);
 
 extern struct zu_scene_info zu_scene_info[];
 

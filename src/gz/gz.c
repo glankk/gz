@@ -184,6 +184,7 @@ enum movie_state
 #define                     CPU_COUNTER_FREQ 46875000
 __attribute__((section(".data")))
 static _Bool                gz_ready = 0;
+static struct zu_disp_p     z_disp_p;
 static uint8_t              profile = 0;
 static struct menu          menu_main;
 static struct menu          menu_explorer;
@@ -2318,6 +2319,28 @@ static void main_hook(void)
   input_update();
   gfx_mode_init();
 
+#if 0
+  {
+    void save_state(void);
+    void load_state(void);
+    if (!menu_active) {
+      if (input_pressed_raw() & BUTTON_D_LEFT)
+        save_state();
+      else if (input_pressed_raw() & BUTTON_D_RIGHT)
+        load_state();
+    }
+# if 0
+    extern char          *fbuf_;
+    extern unsigned int   fpos_;
+    gfx_printf(font, 16, 16 + ch * 0, "0x%08" PRIx32, fbuf_);
+    gfx_printf(font, 16, 16 + ch * 1, "%u", fpos_);
+# endif
+  }
+#endif
+
+  /* save gfx pointer offsets for frame advance display list copy */
+  zu_save_disp_p(&z_disp_p);
+
   {
     /* emergency settings reset */
     uint16_t pad_pressed = input_pressed();
@@ -2819,23 +2842,6 @@ static void main_hook(void)
     }
   }
 
-#if 1
-  {
-    void save_state(void);
-    void load_state(void);
-    if (!menu_active) {
-      if (input_pressed_raw() & BUTTON_D_LEFT)
-        save_state();
-      else if (input_pressed_raw() & BUTTON_D_RIGHT)
-        load_state();
-    }
-    extern char          *fbuf_;
-    extern unsigned int   fpos_;
-    gfx_printf(font, 16, 16 + ch * 0, "0x%08" PRIx32, fbuf_);
-    gfx_printf(font, 16, 16 + ch * 1, "%u", fpos_);
-  }
-#endif
-
 #if 0
   {
     for (int i = 0; i < afx_ifcmd_list.size; ++i) {
@@ -2867,20 +2873,6 @@ HOOK void entrance_offset_hook(void)
   __asm__ volatile (".set noat  \n"
                     "lw $v1, %0 \n"
                     "la $at, %1 \n" :: "m"(offset), "i"(0x51));
-}
-
-HOOK void update_hook(void)
-{
-  init_gp();
-  void (*frame_update_func)(z64_ctxt_t *ctxt);
-  frame_update_func = (void*)z64_frame_update_func_addr;
-  if (!gz_ready)
-    frame_update_func(&z64_ctxt);
-  else if (frames_queued != 0) {
-    if (frames_queued > 0)
-      --frames_queued;
-    frame_update_func(&z64_ctxt);
-  }
 }
 
 HOOK void input_hook(void)
@@ -2951,6 +2943,7 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
 
 HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
 {
+  init_gp();
   uint8_t *write_pos = (void*)0x8012B208;
   uint8_t *read_pos = (void*)0x8012B209;
   struct afx_ifcmd *buf = (void*)0x8012B280;
@@ -2965,6 +2958,78 @@ HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
   if (afx_ifcmd_list.size > 24)
     vector_erase(&afx_ifcmd_list, 0, 1);
 #endif
+}
+
+static _Bool do_frame;
+static void state_main_hook(void)
+{
+  if (frames_queued != 0) {
+    if (frames_queued > 0)
+      --frames_queued;
+    z64_ctxt.state_main(&z64_ctxt);
+    do_frame = 1;
+  }
+  else {
+    z64_gfx_t *gfx = z64_ctxt.gfx;
+    if (z64_file.gameinfo->screenshot_state != 2 &&
+        z64_ctxt.state_frames != 0)
+    {
+      /* copy gfx buffer from previous frame */
+      if (gfx->frame_count_1 & 1) {
+        memcpy((void*)(z64_disp_addr + z64_disp_size),
+               (void*)(z64_disp_addr), z64_disp_size);
+      }
+      else {
+        memcpy((void*)(z64_disp_addr),
+               (void*)(z64_disp_addr + z64_disp_size), z64_disp_size);
+      }
+      /* set pointers */
+      zu_load_disp_p(&z_disp_p);
+      /* relocate */
+      zu_reloc_gfx(1 - (gfx->frame_count_1 & 1), 1 - (gfx->frame_count_2 & 1));
+      /* isn't that just beautiful */
+    }
+    else {
+      /* non-frame, clear screen */
+      gDPSetColorImage(gfx->poly_opa.p++,
+                       G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH,
+                       ZU_MAKE_SEG(Z64_SEG_CIMG, 0));
+      gDPSetCycleType(gfx->poly_opa.p++, G_CYC_FILL);
+      gDPSetRenderMode(gfx->poly_opa.p++, G_RM_NOOP, G_RM_NOOP2);
+      gDPSetFillColor(gfx->poly_opa.p++,
+                      (GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01) << 16) |
+                      GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01));
+      gDPFillRectangle(gfx->poly_opa.p++,
+                       0, 0, Z64_SCREEN_WIDTH - 1, Z64_SCREEN_HEIGHT - 1);
+      gDPPipeSync(gfx->poly_opa.p++);
+    }
+    /* undo frame counter increment */
+    --z64_ctxt.state_frames;
+    do_frame = 0;
+  }
+}
+
+HOOK void ocarina_update_hook(void)
+{
+  init_gp();
+  void (*ocarina_update_func)(void);
+  ocarina_update_func = (void*)z64_ocarina_update_func_addr;
+  if (!gz_ready || do_frame)
+    ocarina_update_func();
+}
+
+HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
+{
+  init_gp();
+  void (*ocarina_input_func)(void *a0, z64_input_t *input, int a2);
+  ocarina_input_func = (void*)z64_ocarina_input_func_addr;
+  ocarina_input_func(a0, input, a2);
+  if (gz_ready && movie_state == MOVIE_PLAYING && movie_frame > 0) {
+    /* ocarina inputs happen after the movie counter has been advanced,
+       so use the previous movie frame */
+    z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame - 1);
+    *input = *frame_input;
+  }
 }
 
 static void stack_thunk(void (*func)(void))
@@ -3007,8 +3072,7 @@ static void init(void)
     vector_init(&afx_ifcmd_list, sizeof(struct afx_ifcmd));
     uint32_t hook[] =
     {
-      MIPS_LA(MIPS_AT, afx_ifcmd_hook),
-      MIPS_JR(MIPS_AT),
+      MIPS_JAL(afx_ifcmd_hook),
       MIPS_NOP,
     };
     memcpy((void*)0x800BB04C, hook, sizeof(hook));
@@ -3843,10 +3907,10 @@ static void init(void)
 ENTRY void _start()
 {
   init_gp();
-  if (gz_ready)
-    stack_thunk(main_hook);
-  else
+  if (!gz_ready)
     stack_thunk(init);
+  state_main_hook();
+  stack_thunk(main_hook);
 }
 
 /* support libraries */
