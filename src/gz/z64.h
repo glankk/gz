@@ -1106,6 +1106,19 @@ typedef struct
 
 typedef struct
 {
+  int8_t            room_idx_1;               /* 0x0000 */
+  int8_t            effect_1;                 /* 0x0001 */
+  int8_t            room_idx_2;               /* 0x0002 */
+  int8_t            effect_2;                 /* 0x0003 */
+  int16_t           actor_id;                 /* 0x0004 */
+  z64_xyz_t         pos;                      /* 0x0006 */
+  z64_angle_t       rot;                      /* 0x000C */
+  int16_t           variable;                 /* 0x000E */
+                                              /* 0x0010 */
+} z64_tnsn_actor_t;
+
+typedef struct
+{
   int8_t            index;                    /* 0x0000 */
   char              unk_00_[0x0001];          /* 0x0001 */
   uint8_t           bhv_z;                    /* 0x0002 */
@@ -1139,7 +1152,7 @@ typedef struct
   /* transition actor list */
   uint8_t           n_tnsn;                   /* 0x0078 */
   char              pad_01_[0x0003];          /* 0x0079 */
-  void             *tnsn_list;                /* 0x007C */
+  z64_tnsn_actor_t *tnsn_list;                /* 0x007C */
                                               /* 0x0080 */
 } z64_room_ctxt_t;
 
@@ -1414,6 +1427,7 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091474
 #define z64_entrance_offset_hook_addr           0x8009AA44
+#define z64_srand_call_addr                     0x8009AC80
 #define z64_frame_input_func_addr               0x800A0BA0
 #define z64_main_hook_addr                      0x800A0BF8
 #define z64_disp_swap_1_addr                    0x800A1198
@@ -1425,6 +1439,7 @@ typedef struct
 #define z64_ocarina_input_call_addr             0x800C1F40
 #define z64_ocarina_update_func_addr            0x800C3B2C
 #define z64_ocarina_update_call_addr            0x800C3DE0
+#define z64_srand_func_addr                     0x800CDCC0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
 #define z64_day_speed_addr                      0x800F1650
 #define z64_light_handlers_addr                 0x800F1B40
@@ -1433,6 +1448,7 @@ typedef struct
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
 #define z64_seq_pos_addr                        0x801043B0
+#define z64_random_addr                         0x80105440
 #define gspF3DEX2_NoN_fifoDataStart             0x801145C0
 #define z64_file_addr                           0x8011A5D0
 #define z64_input_direct_addr                   0x8011D730
@@ -1480,6 +1496,7 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091484
 #define z64_entrance_offset_hook_addr           0x8009AA54
+#define z64_srand_call_addr                     0x8009AC90
 #define z64_frame_input_func_addr               0x800A0BB0
 #define z64_main_hook_addr                      0x800A0C08
 #define z64_disp_swap_1_addr                    0x800A11A8
@@ -1491,6 +1508,7 @@ typedef struct
 #define z64_ocarina_input_call_addr             0x800C1F90
 #define z64_ocarina_update_func_addr            0x800C3B9C
 #define z64_ocarina_update_call_addr            0x800C3E50
+#define z64_srand_func_addr                     0x800CDE80
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
 #define z64_day_speed_addr                      0x800F1810
 #define z64_light_handlers_addr                 0x800F1D00
@@ -1499,6 +1517,7 @@ typedef struct
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
 #define z64_seq_pos_addr                        0x80104570
+#define z64_random_addr                         0x80105600
 #define gspF3DEX2_NoN_fifoDataStart             0x80114780
 #define z64_file_addr                           0x8011A790
 #define z64_input_direct_addr                   0x8011D8F0
@@ -1546,6 +1565,7 @@ typedef struct
 #define z64_UnloadRoom_addr                     0x800812C0
 #define z64_Io_addr                             0x80091AB4
 #define z64_entrance_offset_hook_addr           0x8009B134
+#define z64_srand_call_addr                     0x8009B370
 #define z64_frame_input_func_addr               0x800A1290
 #define z64_main_hook_addr                      0x800A12E4
 #define z64_disp_swap_1_addr                    0x800A1848
@@ -1557,6 +1577,7 @@ typedef struct
 #define z64_ocarina_input_call_addr             0x800C25F0
 #define z64_ocarina_update_func_addr            0x800C41F4
 #define z64_ocarina_update_call_addr            0x800C44A8
+#define z64_srand_func_addr                     0x800CE500
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_light_handlers_addr                 0x800F2180
@@ -1565,6 +1586,7 @@ typedef struct
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
 #define z64_seq_pos_addr                        0x801049F0
+#define z64_random_addr                         0x80105A80
 #define gspF3DEX2_NoN_fifoDataStart             0x80114C70
 #define z64_file_addr                           0x8011AC80
 #define z64_input_direct_addr                   0x8011DE00
@@ -1630,6 +1652,7 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
                                    z64_entrance_table_addr)
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \
                                    z64_scene_config_table_addr)
+#define z64_random              (*(uint32_t*)         z64_random_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)
 #define z64_input_direct        (*(z64_input_t*)      z64_input_direct_addr)
 #define z64_gameinfo            (*                    z64_file.gameinfo)

@@ -3,49 +3,26 @@
 #include <mips.h>
 #include <n64.h>
 #include <set/set.h>
+#include "gz.h"
 #include "sys.h"
 #include "zu.h"
 #include "z64.h"
 
-char          *fbuf_;
-unsigned int   fpos_;
-
-#if 1
-
-#define open  open_
-#define write write_
-#define read  read_
-#define close close_
-
-static int open_(const char *path, int oflags, ...)
+static void serial_write(void **p, void *data, uint32_t length)
 {
-  if (!fbuf_)
-    fbuf_ = malloc(512 * 1024);
-  fpos_ = 0;
-  return 0;
+  char *cp = *p;
+  memcpy(cp, data, length);
+  cp += length;
+  *p = cp;
 }
 
-static int write_(int fildes, void *buf, unsigned int nbyte)
+static void serial_read(void **p, void *data, uint32_t length)
 {
-  memcpy(&fbuf_[fpos_], buf, nbyte);
-  fpos_ += nbyte;
-  return nbyte;
+  char *cp = *p;
+  memcpy(data, cp, length);
+  cp += length;
+  *p = cp;
 }
-
-static int read_(int fildes, void *buf, unsigned int nbyte)
-{
-  memcpy(buf, &fbuf_[fpos_], nbyte);
-  fpos_ += nbyte;
-  return nbyte;
-}
-
-static int close_(int fildes)
-{
-  return 0;
-}
-
-#endif
-
 
 typedef void (*z64_CreateStaticCollision_proc)(z64_col_ctxt_t *col_ctxt, z64_game_t *game, z64_col_lut_t *col_lut);
 typedef void (*z64_LoadMinimap_proc)(z64_game_t *game, int room_idx);
@@ -70,6 +47,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_LoadOverlay_addr                    0x800CCBB8
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_part_space_addr                     0x800E7B40
+#define z64_part_pos_addr                       0x800E7B44
 #define z64_part_max_addr                       0x800E7B48
 #define z64_actor_ovl_tab_addr                  0x800E8530
 #define z64_day_speed_addr                      0x800F1650
@@ -102,6 +80,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_LoadOverlay_addr                    0x800CCD78
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_part_space_addr                     0x800E7D00
+#define z64_part_pos_addr                       0x800E7D04
 #define z64_part_max_addr                       0x800E7D08
 #define z64_actor_ovl_tab_addr                  0x800E86F0
 #define z64_day_speed_addr                      0x800F1810
@@ -134,6 +113,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_LoadOverlay_addr                    0x800CD3F8
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_part_space_addr                     0x800E8180
+#define z64_part_pos_addr                       0x800E8184
 #define z64_part_max_addr                       0x800E8188
 #define z64_actor_ovl_tab_addr                  0x800E8B70
 #define z64_day_speed_addr                      0x800F1C90
@@ -158,6 +138,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 
 #define z64_part_ovl_tab        (*(z64_part_ovl_t(*)[37])     z64_part_ovl_tab_addr)
 #define z64_part_space          (*(z64_part_t**)              z64_part_space_addr)
+#define z64_part_pos            (*(int32_t*)                  z64_part_pos_addr)
 #define z64_part_max            (*(int32_t*)                  z64_part_max_addr)
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
 #define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
@@ -199,7 +180,7 @@ static void stop(void)
   __asm__ volatile ("mfc0 $t0, $12  \n"
                     "and  $t0, %0   \n"
                     "mtc0 $t0, $12  \n" :: "r"(~MIPS_STATUS_IE));
-#elif 1
+#elif 0
   //z64_osStopThread((void*)0x80007DD8); /* dmamgr */
   z64_osStopThread((void*)0x8011D318); /* sched */
   z64_osStopThread((void*)0x8011D580); /* padmgr */
@@ -224,7 +205,7 @@ static void go(void)
   __asm__ volatile ("mfc0 $t0, $12  \n"
                     "or   $t0, %0   \n"
                     "mtc0 $t0, $12  \n" :: "r"(MIPS_STATUS_IE));
-#elif 1
+#elif 0
   //z64_osStartThread((void*)0x80007DD8); /* dmamgr */
   z64_osStartThread((void*)0x8011D318); /* sched */
   z64_osStartThread((void*)0x8011D580); /* padmgr */
@@ -232,9 +213,9 @@ static void go(void)
 #endif
 }
 
-static void save_ovl(int file, void *addr, size_t size)
+static void save_ovl(void **p, void *addr, size_t size)
 {
-  write(file, &addr, sizeof(addr));
+  serial_write(p, &addr, sizeof(addr));
   char *start = addr;
   char *end = start + size;
   uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
@@ -243,18 +224,18 @@ static void save_ovl(int file, void *addr, size_t size)
   z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
   void *data = start + hdr->text_size;
   void *bss = end;
-  write(file, data, hdr->data_size);
-  write(file, bss, hdr->bss_size);
+  serial_write(p, data, hdr->data_size);
+  serial_write(p, bss, hdr->bss_size);
 }
 
-static void load_ovl(int file, void **p_addr,
+static void load_ovl(void **p, void **p_addr,
                      uint32_t vrom_start, uint32_t vrom_end,
                      uint32_t vram_start, uint32_t vram_end)
 {
   void *addr = *p_addr;
   size_t size = vrom_end - vrom_start;
   void *load_addr;
-  read(file, &load_addr, sizeof(load_addr));
+  serial_read(p, &load_addr, sizeof(load_addr));
   if (addr != load_addr) {
     addr = load_addr;
     *p_addr = addr;
@@ -268,8 +249,8 @@ static void load_ovl(int file, void **p_addr,
   z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
   void *data = start + hdr->text_size;
   void *bss = end;
-  read(file, data, hdr->data_size);
-  read(file, bss, hdr->bss_size);
+  serial_read(p, data, hdr->data_size);
+  serial_read(p, bss, hdr->bss_size);
 }
 
 static void reloc_col_hdr(uint32_t seg_addr)
@@ -473,17 +454,17 @@ static _Bool addr_comp(void *a, void *b)
   return *a_u32 < *b_u32;
 }
 
-void save_state(void)
+void save_state(void *state, struct state_meta *meta)
 {
   stop();
-  int file = open("state.gzs", O_WRONLY | O_CREAT | O_TRUNC, 0777);
+  void *p = state;
 
   int16_t sot = 0;
   int16_t eot = -1;
   /* save context */
-  write(file, &z64_game, sizeof(z64_game));
-  write(file, &z64_file, sizeof(z64_file));
-  write(file, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_write(&p, &z64_game, sizeof(z64_game));
+  serial_write(&p, &z64_file, sizeof(z64_file));
+  serial_write(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* save overlays */
   int16_t n_ovl;
   struct set ovl_nodes;
@@ -493,133 +474,153 @@ void save_state(void)
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_actor_ovl_t *ovl = &z64_actor_ovl_tab[i];
     if (ovl->ptr) {
-      write(file, &i, sizeof(i));
-      write(file, &ovl->n_inst, sizeof(ovl->n_inst));
-      save_ovl(file, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      serial_write(&p, &i, sizeof(i));
+      serial_write(&p, &ovl->n_inst, sizeof(ovl->n_inst));
+      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
-  write(file, &eot, sizeof(eot));
+  serial_write(&p, &eot, sizeof(eot));
   /* play overlays */
   n_ovl = sizeof(z64_play_ovl_tab) / sizeof(*z64_play_ovl_tab);
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
     if (ovl->ptr) {
-      write(file, &i, sizeof(i));
-      save_ovl(file, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      serial_write(&p, &i, sizeof(i));
+      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
-  write(file, &eot, sizeof(eot));
-  write(file, &z64_play_ovl_ptr, sizeof(z64_play_ovl_ptr));
+  serial_write(&p, &eot, sizeof(eot));
+  serial_write(&p, &z64_play_ovl_ptr, sizeof(z64_play_ovl_ptr));
   /* particle overlays */
   n_ovl = sizeof(z64_part_ovl_tab) / sizeof(*z64_part_ovl_tab);
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
     if (ovl->ptr) {
-      write(file, &i, sizeof(i));
-      save_ovl(file, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      serial_write(&p, &i, sizeof(i));
+      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
-  write(file, &eot, sizeof(eot));
+  serial_write(&p, &eot, sizeof(eot));
   /* map mark overlay */
   if (z64_map_mark_ovl.ptr) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
-    write(file, &sot, sizeof(sot));
-    save_ovl(file, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+    serial_write(&p, &sot, sizeof(sot));
+    save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
     set_insert(&ovl_nodes, &ovl->ptr);
   }
-  write(file, &eot, sizeof(eot));
+  serial_write(&p, &eot, sizeof(eot));
 
   /* save arena nodes */
-  write(file, &z64_game_arena, sizeof(z64_game_arena));
+  serial_write(&p, &z64_game_arena, sizeof(z64_game_arena));
   for (z64_arena_node_t *node = z64_game_arena.first_node;
        node; node = node->next)
   {
-    write(file, &sot, sizeof(sot));
-    write(file, &node->free, sizeof(node->free));
-    write(file, &node->size, sizeof(node->size));
+    serial_write(&p, &sot, sizeof(sot));
+    serial_write(&p, &node->free, sizeof(node->free));
+    serial_write(&p, &node->size, sizeof(node->size));
     char *data = node->data;
     if (!set_get(&ovl_nodes, &data) && !node->free)
-      write(file, data, node->size);
+      serial_write(&p, data, node->size);
   }
-  write(file, &eot, sizeof(eot));
+  serial_write(&p, &eot, sizeof(eot));
   set_destroy(&ovl_nodes);
 
   /* save light queue */
-  write(file, &z64_light_queue, sizeof(z64_light_queue));
-  /* save particle space info */
-  write(file, &z64_part_space, sizeof(z64_part_space));
-  write(file, &z64_part_max, sizeof(z64_part_max));
+  serial_write(&p, &z64_light_queue, sizeof(z64_light_queue));
   /* save matrix stack info */
-  write(file, &z64_mtx_stack, sizeof(z64_mtx_stack));
-  write(file, &z64_mtx_stack_top, sizeof(z64_mtx_stack_top));
+  serial_write(&p, &z64_mtx_stack, sizeof(z64_mtx_stack));
+  serial_write(&p, &z64_mtx_stack_top, sizeof(z64_mtx_stack_top));
   /* save segment table */
-  write(file, &z64_stab, sizeof(z64_stab));
+  serial_write(&p, &z64_stab, sizeof(z64_stab));
 
-  /* save dynamic collision */
-  write(file, z64_game.col_ctxt.dyn_list,
+#if 1
+  /* save particles */
+  serial_write(&p, &z64_part_space, sizeof(z64_part_space));
+  serial_write(&p, &z64_part_pos, sizeof(z64_part_pos));
+  serial_write(&p, &z64_part_max, sizeof(z64_part_max));
+  serial_write(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
+#endif
+
+  /* save transition actor list (it may have been modified during gameplay) */
+  z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
+  serial_write(&p, room_ctxt->tnsn_list,
+               room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
+
+  /* dynamic collision */
+  serial_write(&p, z64_game.col_ctxt.dyn_list,
         z64_game.col_ctxt.dyn_list_max * sizeof(*z64_game.col_ctxt.dyn_list));
-  write(file, z64_game.col_ctxt.dyn_poly,
+  serial_write(&p, z64_game.col_ctxt.dyn_poly,
         z64_game.col_ctxt.dyn_poly_max * sizeof(*z64_game.col_ctxt.dyn_poly));
-  write(file, z64_game.col_ctxt.dyn_vtx,
+  serial_write(&p, z64_game.col_ctxt.dyn_vtx,
         z64_game.col_ctxt.dyn_vtx_max * sizeof(*z64_game.col_ctxt.dyn_vtx));
 
   if (z64_game.elf_message)
-    write(file, z64_game.elf_message, 0x0070);
+    serial_write(&p, z64_game.elf_message, 0x0070);
 
   /* minimap details */
-  write(file, &z64_minimap_entrance_x, sizeof(z64_minimap_entrance_x));
-  write(file, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
-  write(file, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
+  serial_write(&p, &z64_minimap_entrance_x, sizeof(z64_minimap_entrance_x));
+  serial_write(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
+  serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* day speed */
-  write(file, &z64_day_speed, sizeof(z64_day_speed));
-  write(file, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
+  serial_write(&p, &z64_day_speed, sizeof(z64_day_speed));
+  serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* letterboxing */
-  write(file, &z64_letterbox_target, sizeof(z64_letterbox_target));
-  write(file, &z64_letterbox_current, sizeof(z64_letterbox_current));
+  serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
+  serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
+
+  /* rng */
+  serial_write(&p, &z64_random, sizeof(z64_random));
 
 #if 0
   /* ocarina state */
-  write(file, (void*)0x80102208, 0x60);
-  write(file, (void*)0x80121F0C, 0xA8);
+  serial_write(&p, (void*)0x80102208, 0x0060);
+  serial_write(&p, (void*)0x80121F0C, 0x00A8);
 
   /* cutscene state */
-  write(file, (void*)0x8011BC20, 0x0140);
+  serial_write(&p, (void*)0x8011BC20, 0x0140);
   /* cutscene text id */
-  write(file, (void*)0x800EFCD0, 0x0002);
+  serial_write(&p, (void*)0x800EFCD0, 0x0002);
+
+  /* textbox state */
+  serial_write(&p, (void*)0x8010A924, 0x0028);
 #endif
 
   _Bool save_gfx = 1;
   if (save_gfx) {
-    write(file, &sot, sizeof(sot));
+    serial_write(&p, &sot, sizeof(sot));
     int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
     void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
-    write(file, disp, z64_disp_size);
+    serial_write(&p, disp, z64_disp_size);
     struct zu_disp_p disp_p;
     zu_save_disp_p(&disp_p);
-    write(file, &disp_p, sizeof(disp_p));
-    write(file, &z64_ctxt.gfx->frame_count_1, sizeof(z64_ctxt.gfx->frame_count_1));
-    write(file, &z64_ctxt.gfx->frame_count_2, sizeof(z64_ctxt.gfx->frame_count_2));
+    serial_write(&p, &disp_p, sizeof(disp_p));
+    serial_write(&p, &z64_ctxt.gfx->frame_count_1,
+          sizeof(z64_ctxt.gfx->frame_count_1));
+    serial_write(&p, &z64_ctxt.gfx->frame_count_2,
+          sizeof(z64_ctxt.gfx->frame_count_2));
   }
   else
-    write(file, &eot, sizeof(eot));
+    serial_write(&p, &eot, sizeof(eot));
 
-  //write(file, (void*)0x800E2FC0, 0x31E10);
-  //write(file, (void*)0x8012143C, 0x41F4);
-  //write(file, (void*)0x801DAA00, 0x1D4790);
+  /* metadata */
+  serial_write(&p, meta, sizeof(*meta));
 
-  close(file);
+  //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
+  //serial_write(&p, (void*)0x8012143C, 0x41F4);
+  //serial_write(&p, (void*)0x801DAA00, 0x1D4790);
+
   go();
 }
 
-void load_state(void)
+void load_state(void *state, struct state_meta *meta)
 {
   stop();
-  int file = open("state.gzs", O_RDONLY);
+  void *p = state;
 
   /* save allocation info */
   struct alloc
@@ -642,9 +643,9 @@ void load_state(void)
   int scene_index = z64_game.scene_index;
   _Bool p_pause_objects = z64_game.pause_ctxt.state > 3;
   /* load context */
-  read(file, &z64_game, sizeof(z64_game));
-  read(file, &z64_file, sizeof(z64_file));
-  read(file, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_read(&p, &z64_game, sizeof(z64_game));
+  serial_read(&p, &z64_file, sizeof(z64_file));
+  serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */
   int16_t n_ovl;
   int16_t next_ovl;
@@ -652,16 +653,16 @@ void load_state(void)
   set_init(&ovl_nodes, sizeof(uint32_t), addr_comp);
   /* actor overlays */
   n_ovl = sizeof(z64_actor_ovl_tab) / sizeof(*z64_actor_ovl_tab);
-  read(file, &next_ovl, sizeof(next_ovl));
+  serial_read(&p, &next_ovl, sizeof(next_ovl));
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_actor_ovl_t *ovl = &z64_actor_ovl_tab[i];
     if (i == next_ovl) {
-      read(file, &ovl->n_inst, sizeof(ovl->n_inst));
-      load_ovl(file, &ovl->ptr,
+      serial_read(&p, &ovl->n_inst, sizeof(ovl->n_inst));
+      load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
-      read(file, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ovl, sizeof(next_ovl));
     }
     else {
       ovl->n_inst = 0;
@@ -670,70 +671,70 @@ void load_state(void)
   }
   /* play overlays */
   n_ovl = sizeof(z64_play_ovl_tab) / sizeof(*z64_play_ovl_tab);
-  read(file, &next_ovl, sizeof(next_ovl));
+  serial_read(&p, &next_ovl, sizeof(next_ovl));
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
     if (i == next_ovl) {
-      load_ovl(file, &ovl->ptr,
+      load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       ovl->reloc_offset = (uint32_t)ovl->ptr - ovl->vram_start;
       set_insert(&ovl_nodes, &ovl->ptr);
-      read(file, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ovl, sizeof(next_ovl));
     }
     else {
       ovl->ptr = NULL;
       ovl->reloc_offset = 0;
     }
   }
-  read(file, &z64_play_ovl_ptr, sizeof(z64_play_ovl_ptr));
+  serial_read(&p, &z64_play_ovl_ptr, sizeof(z64_play_ovl_ptr));
   /* particle overlays */
   n_ovl = sizeof(z64_part_ovl_tab) / sizeof(*z64_part_ovl_tab);
-  read(file, &next_ovl, sizeof(next_ovl));
+  serial_read(&p, &next_ovl, sizeof(next_ovl));
   for (int16_t i = 0; i < n_ovl; ++i) {
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
     if (i == next_ovl) {
-      load_ovl(file, &ovl->ptr,
+      load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
-      read(file, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ovl, sizeof(next_ovl));
     }
     else
       ovl->ptr = NULL;
   }
   /* map mark overlay */
-  read(file, &next_ovl, sizeof(next_ovl));
+  serial_read(&p, &next_ovl, sizeof(next_ovl));
   if (next_ovl == 0) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
-    load_ovl(file, &ovl->ptr,
+    load_ovl(&p, &ovl->ptr,
              ovl->vrom_start, ovl->vrom_end,
              ovl->vram_start, ovl->vram_end);
     set_insert(&ovl_nodes, &ovl->ptr);
-    read(file, &next_ovl, sizeof(next_ovl));
+    serial_read(&p, &next_ovl, sizeof(next_ovl));
   }
   else
     z64_map_mark_ovl.ptr = NULL;
 
   /* load arena nodes */
-  read(file, &z64_game_arena, sizeof(z64_game_arena));
+  serial_read(&p, &z64_game_arena, sizeof(z64_game_arena));
   z64_arena_node_t *node = z64_game_arena.first_node;
   int16_t tag;
-  read(file, &tag, sizeof(tag));
+  serial_read(&p, &tag, sizeof(tag));
   while (node) {
     node->magic = 0x7373;
     node->arena = &z64_game_arena;
     node->filename = NULL,
     node->line = 0;
     node->thread_id = 4;
-    read(file, &node->free, sizeof(node->free));
-    read(file, &node->size, sizeof(node->size));
+    serial_read(&p, &node->free, sizeof(node->free));
+    serial_read(&p, &node->size, sizeof(node->size));
     char *data = node->data;
     if (!set_get(&ovl_nodes, &data) && !node->free)
-      read(file, data, node->size);
+      serial_read(&p, data, node->size);
     if (node == z64_game_arena.first_node)
       node->prev = NULL;
-    read(file, &tag, sizeof(tag));
+    serial_read(&p, &tag, sizeof(tag));
     if (tag == 0) {
       node->next = (void*)&node->data[node->size];
       node->next->prev = node;
@@ -745,15 +746,20 @@ void load_state(void)
   set_destroy(&ovl_nodes);
 
   /* load light queue */
-  read(file, &z64_light_queue, sizeof(z64_light_queue));
-  /* load particle space info */
-  read(file, &z64_part_space, sizeof(z64_part_space));
-  read(file, &z64_part_max, sizeof(z64_part_max));
+  serial_read(&p, &z64_light_queue, sizeof(z64_light_queue));
   /* load matrix stack info */
-  read(file, &z64_mtx_stack, sizeof(z64_mtx_stack));
-  read(file, &z64_mtx_stack_top, sizeof(z64_mtx_stack_top));
+  serial_read(&p, &z64_mtx_stack, sizeof(z64_mtx_stack));
+  serial_read(&p, &z64_mtx_stack_top, sizeof(z64_mtx_stack_top));
   /* load segment table */
-  read(file, &z64_stab, sizeof(z64_stab));
+  serial_read(&p, &z64_stab, sizeof(z64_stab));
+
+#if 1
+  /* load particles */
+  serial_read(&p, &z64_part_space, sizeof(z64_part_space));
+  serial_read(&p, &z64_part_pos, sizeof(z64_part_pos));
+  serial_read(&p, &z64_part_max, sizeof(z64_part_max));
+  serial_read(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
+#endif
 
   /* load scene */
   if (z64_game.scene_index != scene_index) {
@@ -762,6 +768,10 @@ void load_state(void)
     zu_getfile(scene->scene_vrom_start, z64_game.scene_file, size);
     reloc_col_hdr((uint32_t)z64_game.col_ctxt.col_hdr);
   }
+  /* load transition actor list */
+  z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
+  serial_read(&p, room_ctxt->tnsn_list,
+              room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
   /* load rooms */
   for (int i = 0; i < 2; ++i) {
     struct alloc *p_room = &room_list[i];
@@ -811,6 +821,8 @@ void load_state(void)
       z64_mem_obj_t *c_obj = &z64_game.obj_ctxt.objects[i];
       int p_id = p_obj->id;
       int c_id = c_obj->id;
+      if (c_id < 0)
+        c_id = -c_id;
       void *p_ptr = p_obj->ptr;
       void *c_ptr = c_obj->data;
       /* if the object in the current slot is different, or loaded to
@@ -1033,21 +1045,12 @@ void load_state(void)
     }
   }
 
-  /* remove particles */
-  for (int i = 0; i < z64_part_max; ++i) {
-    z64_part_t *part = &z64_part_space[i];
-    memset(part, 0, sizeof(*part));
-    part->time = -1;
-    part->priority = 0x80;
-    part->part_id = 0x25;
-  }
-
   /* dynamic collision */
-  read(file, z64_game.col_ctxt.dyn_list,
+  serial_read(&p, z64_game.col_ctxt.dyn_list,
        z64_game.col_ctxt.dyn_list_max * sizeof(*z64_game.col_ctxt.dyn_list));
-  read(file, z64_game.col_ctxt.dyn_poly,
+  serial_read(&p, z64_game.col_ctxt.dyn_poly,
        z64_game.col_ctxt.dyn_poly_max * sizeof(*z64_game.col_ctxt.dyn_poly));
-  read(file, z64_game.col_ctxt.dyn_vtx,
+  serial_read(&p, z64_game.col_ctxt.dyn_vtx,
        z64_game.col_ctxt.dyn_vtx_max * sizeof(*z64_game.col_ctxt.dyn_vtx));
 
   /* static collision */
@@ -1069,30 +1072,36 @@ void load_state(void)
   }
 
   if (z64_game.elf_message)
-    read(file, z64_game.elf_message, 0x0070);
+    serial_read(&p, z64_game.elf_message, 0x0070);
 
   /* minimap details */
-  read(file, &z64_minimap_entrance_x, sizeof(z64_minimap_entrance_x));
-  read(file, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
-  read(file, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
+  serial_read(&p, &z64_minimap_entrance_x, sizeof(z64_minimap_entrance_x));
+  serial_read(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
+  serial_read(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* day speed */
-  read(file, &z64_day_speed, sizeof(z64_day_speed));
-  read(file, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
+  serial_read(&p, &z64_day_speed, sizeof(z64_day_speed));
+  serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* letterboxing */
-  read(file, &z64_letterbox_target, sizeof(z64_letterbox_target));
-  read(file, &z64_letterbox_current, sizeof(z64_letterbox_current));
+  serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
+  serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
+
+  /* rng */
+  serial_read(&p, &z64_random, sizeof(z64_random));
 
 #if 0
   /* ocarina state */
-  read(file, (void*)0x80102208, 0x60);
-  read(file, (void*)0x80121F0C, 0xA8);
+  serial_read(&p, (void*)0x80102208, 0x0060);
+  serial_read(&p, (void*)0x80121F0C, 0x00A8);
 
   /* cutscene state */
-  read(file, (void*)0x8011BC20, 0x0140);
+  serial_read(&p, (void*)0x8011BC20, 0x0140);
   /* cutscene text id */
-  read(file, (void*)0x800EFCD0, 0x0002);
+  serial_read(&p, (void*)0x800EFCD0, 0x0002);
+
+  /* textbox state */
+  serial_read(&p, (void*)0x8010A924, 0x0028);
 #endif
 
   /* stop sound effects */
@@ -1117,45 +1126,49 @@ void load_state(void)
 
 #if 0
   if (c_pause_objects && !p_pause_objects) {
-    uint16_t (*p)[240][320] = (void*)0x8012BE40;
+    uint16_t (*zimg)[240][320] = (void*)0x8012BE40;
     for (int y = 0; y < 240; ++y) {
       for (int x = 0; x < 320; ++x) {
-        (*p)[y][x] = GPACK_RGBA5551(y * 0x1F / 239, 0x00, x * 0x1F / 319, 0x00);
+        (*zimg)[y][x] = GPACK_RGBA5551(y * 0x1F / 239, 0x00,
+                                       x * 0x1F / 319, 0x00);
       }
     }
   }
 #endif
 
-  //read(file, (void*)0x800E2FC0, 0x31E10);
-  //read(file, (void*)0x8012143C, 0x41F4);
-  //read(file, (void*)0x801DAA00, 0x1D4790);
-
+  /* display lists */
   int16_t next_gfx;
-  read(file, &next_gfx, sizeof(next_gfx));
+  serial_read(&p, &next_gfx, sizeof(next_gfx));
   if (next_gfx == 0) {
     int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
     void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
-    read(file, disp, z64_disp_size);
+    serial_read(&p, disp, z64_disp_size);
     struct zu_disp_p disp_p;
-    read(file, &disp_p, sizeof(disp_p));
+    serial_read(&p, &disp_p, sizeof(disp_p));
     zu_load_disp_p(&disp_p);
     uint32_t frame_count_1;
     uint32_t frame_count_2;
-    read(file, &frame_count_1, sizeof(frame_count_1));
-    read(file, &frame_count_2, sizeof(frame_count_2));
+    serial_read(&p, &frame_count_1, sizeof(frame_count_1));
+    serial_read(&p, &frame_count_2, sizeof(frame_count_2));
     zu_reloc_gfx(frame_count_1 & 1, frame_count_2 & 1);
   }
   else {
-    /* kill frame */
+    /* no display lists, kill frame */
     z64_ctxt.gfx->work.p = z64_ctxt.gfx->work.buf;
     gDPFullSync(z64_ctxt.gfx->work.p++);
     gSPEndDisplayList(z64_ctxt.gfx->work.p++);
   }
 
+  /* metadata */
+  serial_read(&p, meta, sizeof(*meta));
+
+  //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
+  //serial_read(&p, (void*)0x8012143C, 0x41F4);
+  //serial_read(&p, (void*)0x801DAA00, 0x1D4790);
+
   gDPFullSync(z64_ctxt.gfx->work_c);
   gSPEndDisplayList(z64_ctxt.gfx->work_c + 1);
   z64_ctxt.gfx->work_c_size = 0x10;
 
-  close(file);
   go();
 }

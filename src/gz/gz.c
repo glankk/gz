@@ -6,6 +6,7 @@
 #include <startup.h>
 #include <mips.h>
 #include <n64.h>
+#include <vector/vector.h>
 #include "explorer.h"
 #include "files.h"
 #include "flags.h"
@@ -24,9 +25,6 @@
 #include "zu.h"
 
 //#define LEAN
-
-#define STRINGIZE(S)  STRINGIZE_(S)
-#define STRINGIZE_(S) #S
 
 struct equipment_item_option
 {
@@ -138,22 +136,6 @@ struct slot_info
   size_t    max;
 };
 
-struct heap_node
-{
-  uint16_t          magic;
-  uint16_t          free;
-  size_t            size;
-  struct heap_node *next;
-  struct heap_node *prev;
-  char              unk_00_[0x0008];
-  OSId              thread_id;
-  void             *arena;
-  uint32_t          count_hi;
-  uint32_t          count_lo;
-  char              pad_00_[0x0008];
-  char              data[];
-};
-
 struct actor_debug_info
 {
   struct menu_item *edit_item;
@@ -178,6 +160,13 @@ enum movie_state
   MOVIE_IDLE,
   MOVIE_RECORDING,
   MOVIE_PLAYING,
+};
+
+struct movie_seed
+{
+  int       frame_idx;
+  uint32_t  old_seed;
+  uint32_t  new_seed;
 };
 
 
@@ -212,8 +201,12 @@ static _Bool                entrance_override_next = 0;
 static int32_t              next_entrance = -1;
 static enum movie_state     movie_state = MOVIE_IDLE;
 static struct vector        movie_inputs;
+static struct vector        movie_seeds;
 static int                  movie_frame;
+static int                  movie_seed_pos;
 static int                  col_view_state = 0;
+static void                *state_buf[2];
+static uint8_t              state_slot = 0;
 
 static uint16_t menu_font_options[] =
 {
@@ -434,6 +427,27 @@ static const char *cheat_names[] =
   "no minimap",
   "isg",
 };
+
+static void movie_rewind(void)
+{
+  movie_frame = 0;
+  movie_seed_pos = 0;
+}
+
+static void movie_seek(int frame)
+{
+  if (frame > movie_inputs.size)
+    frame = movie_inputs.size;
+  movie_frame = frame;
+  movie_seed_pos = 0;
+  for (int i = 0; i < movie_seeds.size; ++i) {
+    struct movie_seed *ms = vector_at(&movie_seeds, i);
+    if (ms->frame_idx >= movie_frame) {
+      movie_seed_pos = i;
+      break;
+    }
+  }
+}
 
 static void do_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
 {
@@ -731,7 +745,7 @@ void command_recordmacro(void)
     movie_state = MOVIE_IDLE;
   else {
     movie_state = MOVIE_RECORDING;
-    vector_erase(&movie_inputs, 0, movie_inputs.size);
+    movie_rewind();
   }
 }
 
@@ -741,7 +755,7 @@ void command_playmacro(void)
     movie_state = MOVIE_IDLE;
   else if (movie_inputs.size > 0) {
     movie_state = MOVIE_PLAYING;
-    movie_frame = 0;
+    movie_rewind();
   }
 }
 
@@ -2319,22 +2333,29 @@ static void main_hook(void)
   input_update();
   gfx_mode_init();
 
-#if 0
+#if 1
   {
-    void save_state(void);
-    void load_state(void);
+    void save_state(void *state, struct state_meta *meta);
+    void load_state(void *state, struct state_meta *meta);
     if (!menu_active) {
-      if (input_pressed_raw() & BUTTON_D_LEFT)
-        save_state();
-      else if (input_pressed_raw() & BUTTON_D_RIGHT)
-        load_state();
+      if (input_pressed_raw() & BUTTON_D_LEFT) {
+        void **state = &state_buf[state_slot];
+        if (!*state)
+          *state = malloc(512 * 1024);
+        struct state_meta meta;
+        if (movie_state == MOVIE_IDLE)
+          meta.movie_frame = -1;
+        else
+          meta.movie_frame = movie_frame;
+        save_state(*state, &meta);
+      }
+      else if (input_pressed_raw() & BUTTON_D_RIGHT) {
+        struct state_meta meta;
+        load_state(state_buf[state_slot], &meta);
+        if (movie_state != MOVIE_IDLE && meta.movie_frame != -1)
+          movie_seek(meta.movie_frame);
+      }
     }
-# if 0
-    extern char          *fbuf_;
-    extern unsigned int   fpos_;
-    gfx_printf(font, 16, 16 + ch * 0, "0x%08" PRIx32, fbuf_);
-    gfx_printf(font, 16, 16 + ch * 1, "%u", fpos_);
-# endif
   }
 #endif
 
@@ -2507,6 +2528,8 @@ static void main_hook(void)
       };
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_sprite_draw(&sprite);
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+      gfx_printf(font, 32, 48 + ch, "%i / %i", movie_frame, movie_inputs.size);
     }
     else if (movie_state == MOVIE_PLAYING) {
       struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
@@ -2517,6 +2540,8 @@ static void main_hook(void)
       };
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_sprite_draw(&sprite);
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
+      gfx_printf(font, 32, 48 + ch, "%i / %i", movie_frame, movie_inputs.size);
     }
     else if (frames_queued != -1) {
       struct gfx_texture *t = resource_get(RES_ICON_PAUSE);
@@ -2528,6 +2553,7 @@ static void main_hook(void)
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
       gfx_sprite_draw(&sprite);
     }
+    gfx_printf(font, 32, 48 + ch * 2, "%i", movie_seed_pos);
   }
 
   if (settings->menu_settings.input_display) {
@@ -2815,12 +2841,14 @@ static void main_hook(void)
   }
 
   {
+#define STRINGIFY(S)  STRINGIFY_(S)
+#define STRINGIFY_(S) #S
     static int splash_time = 230;
     if (splash_time > 0) {
       --splash_time;
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
-      const char *tarname = STRINGIZE(PACKAGE_TARNAME);
-      const char *url = STRINGIZE(PACKAGE_URL);
+      const char *tarname = STRINGIFY(PACKAGE_TARNAME);
+      const char *url = STRINGIFY(PACKAGE_URL);
       gfx_printf(font, 16, Z64_SCREEN_HEIGHT - 6 - ch, tarname);
       gfx_printf(font, Z64_SCREEN_WIDTH - 12 - cw * strlen(url),
                  Z64_SCREEN_HEIGHT - 6 - ch, url);
@@ -2840,6 +2868,8 @@ static void main_hook(void)
         gfx_sprite_draw(&logo_sprite);
       }
     }
+#undef STRINGIFY
+#undef STRINGIFY_
   }
 
 #if 0
@@ -2885,8 +2915,15 @@ HOOK void input_hook(void)
   else if (frames_queued != 0) {
     z64_input_t input = z64_input_direct;
     frame_input_func(&z64_ctxt);
-    if (movie_state == MOVIE_RECORDING)
-      vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
+    if (movie_state == MOVIE_RECORDING) {
+      if (movie_frame >= movie_inputs.size)
+        vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
+      else {
+        z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame);
+        *frame_input = z64_ctxt.input[0];
+      }
+      ++movie_frame;
+    }
     else if (movie_state == MOVIE_PLAYING) {
       if (movie_frame >= movie_inputs.size) {
         if (input_bind_held(COMMAND_PLAYMACRO) && movie_inputs.size > 0)
@@ -2960,14 +2997,23 @@ HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
 #endif
 }
 
-static _Bool do_frame;
+static _Bool frame_flag;
 static void state_main_hook(void)
 {
   if (frames_queued != 0) {
     if (frames_queued > 0)
       --frames_queued;
+    /* use frame flag to check for an srand this frame */
+    frame_flag = 0;
     z64_ctxt.state_main(&z64_ctxt);
-    do_frame = 1;
+    /* if recording over a previous seed, erase it */
+    if (movie_state == MOVIE_RECORDING && !frame_flag) {
+      struct movie_seed *ms = vector_at(&movie_seeds, movie_seed_pos);
+      if (ms && ms->frame_idx == movie_frame)
+        vector_erase(&movie_seeds, movie_seed_pos, 1);
+    }
+    /* set frame flag to execute an ocarina frame */
+    frame_flag = 1;
   }
   else {
     z64_gfx_t *gfx = z64_ctxt.gfx;
@@ -3005,8 +3051,37 @@ static void state_main_hook(void)
     }
     /* undo frame counter increment */
     --z64_ctxt.state_frames;
-    do_frame = 0;
+    /* do not execute an ocarina frame */
+    frame_flag = 0;
   }
+}
+
+HOOK void srand_hook(uint32_t seed)
+{
+  init_gp();
+  frame_flag = 1;
+  void (*z64_srand)(uint32_t seed) = (void*)z64_srand_func_addr;
+  if (movie_state == MOVIE_RECORDING) {
+    /* insert a recorded seed */
+    struct movie_seed *ms = vector_at(&movie_seeds, movie_seed_pos);
+    if (!ms || ms->frame_idx != movie_frame)
+      ms = vector_insert(&movie_seeds, movie_seed_pos++, 1, NULL);
+    ms->frame_idx = movie_frame;
+    ms->old_seed = z64_random;
+    ms->new_seed = seed;
+  }
+  else if (movie_state == MOVIE_PLAYING) {
+    /* restore a recorded seed, if conditions match */
+    struct movie_seed *ms = vector_at(&movie_seeds, movie_seed_pos);
+    if (ms && ms->frame_idx == movie_frame) {
+      ++movie_seed_pos;
+      if (ms->old_seed == z64_random) {
+        z64_random = ms->new_seed;
+        return;
+      }
+    }
+  }
+  z64_srand(seed);
 }
 
 HOOK void ocarina_update_hook(void)
@@ -3014,7 +3089,7 @@ HOOK void ocarina_update_hook(void)
   init_gp();
   void (*ocarina_update_func)(void);
   ocarina_update_func = (void*)z64_ocarina_update_func_addr;
-  if (!gz_ready || do_frame)
+  if (!gz_ready || frame_flag)
     ocarina_update_func();
 }
 
@@ -3092,6 +3167,7 @@ static void init(void)
   lag_vi_offset = -(int32_t)z64_vi_counter;
   day_time_prev = z64_file.day_time;
   vector_init(&movie_inputs, sizeof(z64_input_t));
+  vector_init(&movie_seeds, sizeof(struct movie_seed));
 
   /* initialize menus */
   {
@@ -3117,6 +3193,17 @@ static void init(void)
     menu_add_submenu(&menu_main, 0, 8, &menu_debug, "debug");
     static struct menu menu_settings;
     menu_add_submenu(&menu_main, 0, 9, &menu_settings, "settings");
+
+    menu_add_static(&menu_main, 0, 11, "state slot", 0xC0C0C0);
+    static struct slot_info state_slot_info;
+    state_slot_info.data = &state_slot;
+    state_slot_info.max = 2;
+    menu_add_watch(&menu_main, 14, 11,
+                   (uint32_t)state_slot_info.data, WATCH_TYPE_U8);
+    menu_add_button(&menu_main, 12, 11, "-",
+                    slot_dec_proc, &state_slot_info);
+    menu_add_button(&menu_main, 16, 11, "+",
+                    slot_inc_proc, &state_slot_info);
 
     /* warps */
     menu_init(&menu_warps, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);

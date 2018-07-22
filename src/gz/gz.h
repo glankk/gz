@@ -26,6 +26,11 @@ struct memory_file
   int16_t     quest_screen_song;
 };
 
+struct state_meta
+{
+  int         movie_frame;
+};
+
 void save_memfile(struct memory_file *memfile);
 void load_memfile(struct memory_file *memfile);
 
