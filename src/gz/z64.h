@@ -795,19 +795,22 @@ typedef struct
   Gfx              *poly_xlu_w;               /* 0x0004 */
   char              unk_00_[0x0008];          /* 0x0008 */
   Gfx              *overlay_w;                /* 0x0010 */
-  char              unk_01_[0x00A4];          /* 0x0014 */
-  Gfx              *work_c;                   /* 0x00B8 */
-  uint32_t          work_c_size;              /* 0x00BC */
-  char              unk_02_[0x00F0];          /* 0x00C0 */
+  char              unk_01_[0x0024];          /* 0x0014 */
+  OSMesg            task_msg[8];              /* 0x0038 */
+  char              unk_02_[0x0004];          /* 0x0058 */
+  OSMesgQueue       task_mq;                  /* 0x005C */
+  char              pad_00_[0x0004];          /* 0x0074 */
+  OSScTask          task;                     /* 0x0078 */
+  char              unk_03_[0x00E0];          /* 0x00D0 */
   Gfx              *work_w;                   /* 0x01B0 */
   z64_disp_buf_t    work;                     /* 0x01B4 */
-  char              unk_03_[0x00E4];          /* 0x01C4 */
+  char              unk_04_[0x00E4];          /* 0x01C4 */
   z64_disp_buf_t    overlay;                  /* 0x02A8 */
   z64_disp_buf_t    poly_opa;                 /* 0x02B8 */
   z64_disp_buf_t    poly_xlu;                 /* 0x02C8 */
   uint32_t          frame_count_1;            /* 0x02D8 */
   void             *frame_buffer;             /* 0x02DC */
-  char              unk_04_[0x0008];          /* 0x02E0 */
+  char              unk_05_[0x0008];          /* 0x02E0 */
   uint32_t          frame_count_2;            /* 0x02E8 */
                                               /* 0x02EC */
 } z64_gfx_t;
@@ -923,9 +926,12 @@ typedef struct
 typedef struct
 {
   z64_controller_t  raw;                      /* 0x0000 */
-  uint16_t          unk_00_;                  /* 0x0004 */
+  /* 0x0000: ok */
+  /* 0x0800: device not present */
+  /* 0x0400: transaction error */
+  uint16_t          status;                   /* 0x0004 */
   z64_controller_t  raw_prev;                 /* 0x0006 */
-  uint16_t          unk_01_;                  /* 0x000A */
+  uint16_t          status_prev;              /* 0x000A */
   uint16_t          pad_pressed;              /* 0x000C */
   int8_t            x_diff;                   /* 0x000E */
   int8_t            y_diff;                   /* 0x000F */
@@ -1161,9 +1167,9 @@ typedef struct
 {
   char              unk_00_[0x0130];          /* 0x0000 */
   char             *parameter;                /* 0x0130 */
-  char             *action_tex;               /* 0x0134 */
-  char             *item_tex;                 /* 0x0138 */
-  char             *minimap_tex;              /* 0x013C */
+  char             *action_texture;           /* 0x0134 */
+  char             *item_texture;             /* 0x0138 */
+  char             *minimap_texture;          /* 0x013C */
   char              unk_01_[0x00AC];          /* 0x0140 */
   uint16_t          h1EC;                     /* 0x01EC */
   char              unk_02_[0x0002];          /* 0x01EE */
@@ -1199,7 +1205,7 @@ typedef struct
   void             *icon_item_24;             /* 0x012C */
   void             *icon_item_s;              /* 0x0130 */
   void             *icon_item_lang;           /* 0x0134 */
-  void             *p138;                     /* 0x0138 */
+  void             *name_texture;             /* 0x0138 */
   void             *p13C;                     /* 0x013C */
   char              unk_01_[0x0094];          /* 0x0140 */
   uint16_t          state;                    /* 0x01D4 */
@@ -1221,7 +1227,7 @@ typedef struct
   char              unk_08_[0x0004];          /* 0x0234 */
   int16_t           cursor_pos;               /* 0x0238 */
   char              unk_09_[0x0002];          /* 0x023A */
-  int16_t           pause_item;               /* 0x023C */
+  int16_t           item_id;                  /* 0x023C */
   int16_t           item_item;                /* 0x023E */
   int16_t           map_item;                 /* 0x0240 */
   int16_t           quest_item;               /* 0x0242 */
@@ -1366,43 +1372,55 @@ typedef struct
   int8_t            cutscene_state;           /* 0x01D6C */
   char              unk_0E_[0x020B];          /* 0x01D6D */
   z64_sky_ctxt_t    sky_ctxt;                 /* 0x01F78 */
-  char              unk_0F_[0xE314];          /* 0x020C8 */
-  uint8_t           textbox_state_1;          /* 0x103DC */
-  char              unk_10_[0x00DF];          /* 0x103DD */
-  uint8_t           textbox_state_2;          /* 0x104BC */
-  char              unk_11_[0x0002];          /* 0x104BD */
-  uint8_t           textbox_state_3;          /* 0x104BF */
-  char              unk_12_[0x0030];          /* 0x104C0 */
+  char              unk_0F_[0xE2C0];          /* 0x020C8 */
+  char             *message_texture;          /* 0x10388 */
+  char              unk_10_[0x0049];          /* 0x1038C */
+  uint8_t           message_type;             /* 0x103D5 */
+  char              unk_11_[0x0006];          /* 0x103D6 */
+  uint8_t           message_state_1;          /* 0x103DC */
+  char              pad_00_[0x0001];          /* 0x103DD */
+  union
+  {
+    uint8_t         message_data_e[200];
+    uint16_t        message_data_j[100];
+  };                                          /* 0x103DE */
+  char              unk_12_[0x0016];          /* 0x104A6 */
+  uint8_t           message_state_2;          /* 0x104BC */
+  char              unk_13_[0x0002];          /* 0x104BD */
+  uint8_t           message_state_3;          /* 0x104BF */
+  char              unk_14_[0x0030];          /* 0x104C0 */
   z64_if_ctxt_t     if_ctxt;                  /* 0x104F0 */
   z64_pause_ctxt_t  pause_ctxt;               /* 0x10760 */
-  char              unk_13_[0x0020];          /* 0x10A14 */
+  char              unk_15_[0x000C];          /* 0x10A14 */
+  uint16_t          death_state;              /* 0x10A20 */
+  char              unk_16_[0x0012];          /* 0x10A22 */
   uint8_t           sky_image_idx[2];         /* 0x10A34 */
-  char              unk_14_[0x0D6E];          /* 0x10A36 */
+  char              unk_17_[0x0D6E];          /* 0x10A36 */
   z64_obj_ctxt_t    obj_ctxt;                 /* 0x117A4 */
   z64_room_ctxt_t   room_ctxt;                /* 0x11CBC */
-  char              unk_15_[0x00A8];          /* 0x11D3C */
+  char              unk_18_[0x00A8];          /* 0x11D3C */
   uint32_t          gameplay_frames;          /* 0x11DE4 */
   uint8_t           link_age;                 /* 0x11DE8 */
-  char              unk_16_;                  /* 0x11DE9 */
+  char              unk_19_;                  /* 0x11DE9 */
   uint8_t           spawn_index;              /* 0x11DEA */
   uint8_t           n_map_actors;             /* 0x11DEB */
   uint8_t           n_rooms;                  /* 0x11DEC */
-  char              unk_17_[0x0003];          /* 0x11DED */
+  char              unk_1A_[0x0003];          /* 0x11DED */
   z64_vrom_file_t  *room_list;                /* 0x11DF0 */
-  char              unk_18_[0x0004];          /* 0x11DF4 */
+  char              unk_1B_[0x0004];          /* 0x11DF4 */
   void             *map_actor_list;           /* 0x11DF8 */
-  char              unk_19_[0x0008];          /* 0x11DFC */
+  char              unk_1C_[0x0008];          /* 0x11DFC */
   void             *scene_exit_list;          /* 0x11E04 */
-  char              unk_1A_[0x0004];          /* 0x11E08 */
+  char              unk_1D_[0x0004];          /* 0x11E08 */
   void             *elf_message;              /* 0x11E0C */
-  char              unk_1B_[0x0004];          /* 0x11E10 */
+  char              unk_1E_[0x0004];          /* 0x11E10 */
   uint8_t           skybox_type;              /* 0x11E14 */
   int8_t            scene_load_flag;          /* 0x11E15 */
-  char              unk_1C_[0x0004];          /* 0x11E16 */
+  char              unk_1F_[0x0004];          /* 0x11E16 */
   int16_t           entrance_index;           /* 0x11E1A */
-  char              unk_1D_[0x0042];          /* 0x11E1C */
+  char              unk_20_[0x0042];          /* 0x11E1C */
   uint8_t           fadeout_transition;       /* 0x11E5E */
-  char              unk_1E_[0x06B9];          /* 0x11E5F */
+  char              unk_21_[0x06B9];          /* 0x11E5F */
                                               /* 0x12518 */
 } z64_game_t;
 
@@ -1437,8 +1455,8 @@ typedef struct
 #define z64_frame_input_call_addr               0x800A16AC
 #define z64_ocarina_input_func_addr             0x800A279C
 #define z64_ocarina_input_call_addr             0x800C1F40
-#define z64_ocarina_update_func_addr            0x800C3B2C
-#define z64_ocarina_update_call_addr            0x800C3DE0
+#define z64_ocarina_update_func_addr            0x800C3DC8
+#define z64_ocarina_update_call_addr            0x800A183C
 #define z64_srand_func_addr                     0x800CDCC0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
 #define z64_day_speed_addr                      0x800F1650
@@ -1454,6 +1472,7 @@ typedef struct
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
 #define z64_seq_buf_addr                        0x80124800
+#define z64_zimg_addr                           0x8012BE40
 #define z64_disp_addr                           0x8016A640
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
@@ -1506,8 +1525,8 @@ typedef struct
 #define z64_frame_input_call_addr               0x800A16BC
 #define z64_ocarina_input_func_addr             0x800A27AC
 #define z64_ocarina_input_call_addr             0x800C1F90
-#define z64_ocarina_update_func_addr            0x800C3B9C
-#define z64_ocarina_update_call_addr            0x800C3E50
+#define z64_ocarina_update_func_addr            0x800C3E38
+#define z64_ocarina_update_call_addr            0x800A184C
 #define z64_srand_func_addr                     0x800CDE80
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
 #define z64_day_speed_addr                      0x800F1810
@@ -1523,6 +1542,7 @@ typedef struct
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
 #define z64_seq_buf_addr                        0x801249C0
+#define z64_zimg_addr                           0x8012C000
 #define z64_disp_addr                           0x8016A800
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
@@ -1575,8 +1595,8 @@ typedef struct
 #define z64_frame_input_call_addr               0x800A1D8C
 #define z64_ocarina_input_func_addr             0x800A2E7C
 #define z64_ocarina_input_call_addr             0x800C25F0
-#define z64_ocarina_update_func_addr            0x800C41F4
-#define z64_ocarina_update_call_addr            0x800C44A8
+#define z64_ocarina_update_func_addr            0x800C4490
+#define z64_ocarina_update_call_addr            0x800A1F1C
 #define z64_srand_func_addr                     0x800CE500
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
 #define z64_day_speed_addr                      0x800F1C90
@@ -1592,6 +1612,7 @@ typedef struct
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
 #define z64_seq_buf_addr                        0x801250D0
+#define z64_zimg_addr                           0x8012C700
 #define z64_disp_addr                           0x8016AF00
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0

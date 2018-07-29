@@ -162,6 +162,17 @@ enum movie_state
   MOVIE_PLAYING,
 };
 
+struct movie_input
+{
+  z64_controller_t  raw;            /* 0x0000 */
+  z64_controller_t  raw_prev;       /* 0x0004 */
+  uint16_t          pad_pressed;    /* 0x0008 */
+  uint16_t          pad_released;   /* 0x000A */
+  int8_t            x_diff;         /* 0x000C */
+  int8_t            y_diff;         /* 0x000D */
+                                    /* 0x000E */
+};
+
 struct movie_seed
 {
   int       frame_idx;
@@ -205,7 +216,7 @@ static struct vector        movie_seeds;
 static int                  movie_frame;
 static int                  movie_seed_pos;
 static int                  col_view_state = 0;
-static void                *state_buf[2];
+static void                *state_buf[3];
 static uint8_t              state_slot = 0;
 
 static uint16_t menu_font_options[] =
@@ -428,6 +439,50 @@ static const char *cheat_names[] =
   "isg",
 };
 
+static void z_to_movie(z64_input_t *zi, struct movie_input *mi)
+{
+  mi->raw = zi->raw;
+  mi->raw_prev = zi->raw_prev;
+  mi->pad_pressed = zi->pad_pressed;
+  mi->pad_released = zi->pad_released;
+  mi->x_diff = zi->x_diff;
+  mi->y_diff = zi->y_diff;
+}
+
+static void movie_to_z(z64_input_t *zi, struct movie_input *mi)
+{
+  zi->raw = mi->raw;
+  zi->raw_prev = mi->raw_prev;
+  zi->pad_pressed = mi->pad_pressed;
+  zi->pad_released = mi->pad_released;
+  zi->x_diff = mi->x_diff;
+  zi->y_diff = mi->y_diff;
+  if (zi->raw.x < 8) {
+    if (zi->raw.x > -8)
+      zi->adjusted_x = 0;
+    else if (zi->raw.x < -66)
+      zi->adjusted_x = -60;
+    else
+      zi->adjusted_x = zi->raw.x + 7;
+  }
+  else if (zi->raw.x > 66)
+    zi->adjusted_x = 60;
+  else
+    zi->adjusted_x = zi->raw.x - 7;
+  if (zi->raw.y < 8) {
+    if (zi->raw.y > -8)
+      zi->adjusted_y = 0;
+    else if (zi->raw.y < -66)
+      zi->adjusted_y = -60;
+    else
+      zi->adjusted_y = zi->raw.y + 7;
+  }
+  else if (zi->raw.y > 66)
+    zi->adjusted_y = 60;
+  else
+    zi->adjusted_y = zi->raw.y - 7;
+}
+
 static void movie_rewind(void)
 {
   movie_frame = 0;
@@ -562,10 +617,10 @@ void command_break(void)
     z64_game.event_flag = 0x0000;
   if (z64_game.cutscene_state != 0x00)
     z64_game.cutscene_state = 0x03;
-  if (z64_game.textbox_state_1 != 0x00) {
-    z64_game.textbox_state_1 = 0x36;
-    z64_game.textbox_state_2 = 0x00;
-    z64_game.textbox_state_3 = 0x02;
+  if (z64_game.message_state_1 != 0x00) {
+    z64_game.message_state_1 = 0x36;
+    z64_game.message_state_2 = 0x00;
+    z64_game.message_state_3 = 0x02;
   }
   if (settings->menu_settings.break_type == SETTINGS_BREAK_AGGRESSIVE) {
     z64_game.camera_mode = 0x0001;
@@ -2341,7 +2396,7 @@ static void main_hook(void)
       if (input_pressed_raw() & BUTTON_D_LEFT) {
         void **state = &state_buf[state_slot];
         if (!*state)
-          *state = malloc(512 * 1024);
+          *state = malloc(400 * 1024);
         struct state_meta meta;
         if (movie_state == MOVIE_IDLE)
           meta.movie_frame = -1;
@@ -2553,7 +2608,6 @@ static void main_hook(void)
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
       gfx_sprite_draw(&sprite);
     }
-    gfx_printf(font, 32, 48 + ch * 2, "%i", movie_seed_pos);
   }
 
   if (settings->menu_settings.input_display) {
@@ -2913,42 +2967,42 @@ HOOK void input_hook(void)
   if (!gz_ready)
     frame_input_func(&z64_ctxt);
   else if (frames_queued != 0) {
-    z64_input_t input = z64_input_direct;
+    z64_input_t di = z64_input_direct;
+    z64_input_t *zi = &z64_ctxt.input[0];
     frame_input_func(&z64_ctxt);
     if (movie_state == MOVIE_RECORDING) {
+      struct movie_input *mi;
       if (movie_frame >= movie_inputs.size)
-        vector_push_back(&movie_inputs, 1, &z64_ctxt.input[0]);
-      else {
-        z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame);
-        *frame_input = z64_ctxt.input[0];
-      }
+        mi = vector_push_back(&movie_inputs, 1, NULL);
+      else
+        mi = vector_at(&movie_inputs, movie_frame);
+      z_to_movie(zi, mi);
       ++movie_frame;
     }
     else if (movie_state == MOVIE_PLAYING) {
       if (movie_frame >= movie_inputs.size) {
         if (input_bind_held(COMMAND_PLAYMACRO) && movie_inputs.size > 0)
-          movie_frame = 0;
+          movie_rewind();
         else
           movie_state = MOVIE_IDLE;
       }
       if (movie_state == MOVIE_PLAYING) {
-        z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame++);
-        z64_input_t *ctxt_input = &z64_ctxt.input[0];
-        *ctxt_input = *frame_input;
+        struct movie_input *mi = vector_at(&movie_inputs, movie_frame++);
+        movie_to_z(zi, mi);
         if (settings->menu_settings.macro_input) {
-          if (frame_input->adjusted_x == 0) {
-            ctxt_input->raw.x = input.raw.x;
-            ctxt_input->x_diff = input.x_diff;
-            ctxt_input->adjusted_x = input.adjusted_x;
+          if (zi->adjusted_x == 0) {
+            zi->raw.x = di.raw.x;
+            zi->x_diff = di.x_diff;
+            zi->adjusted_x = di.adjusted_x;
           }
-          if (frame_input->adjusted_y == 0) {
-            ctxt_input->raw.y = input.raw.y;
-            ctxt_input->y_diff = input.y_diff;
-            ctxt_input->adjusted_y = input.adjusted_y;
+          if (zi->adjusted_y == 0) {
+            zi->raw.y = di.raw.y;
+            zi->y_diff = di.y_diff;
+            zi->adjusted_y = di.adjusted_y;
           }
-          ctxt_input->raw.pad |= input.raw.pad;
-          ctxt_input->pad_pressed |= input.pad_pressed;
-          ctxt_input->pad_released |= input.pad_released;
+          zi->raw.pad |= di.raw.pad;
+          zi->pad_pressed |= di.pad_pressed;
+          zi->pad_released |= di.pad_released;
         }
       }
     }
@@ -3102,8 +3156,8 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   if (gz_ready && movie_state == MOVIE_PLAYING && movie_frame > 0) {
     /* ocarina inputs happen after the movie counter has been advanced,
        so use the previous movie frame */
-    z64_input_t *frame_input = vector_at(&movie_inputs, movie_frame - 1);
-    *input = *frame_input;
+    struct movie_input *mi = vector_at(&movie_inputs, movie_frame - 1);
+    movie_to_z(input, mi);
   }
 }
 
@@ -3166,7 +3220,7 @@ static void init(void)
 #endif
   lag_vi_offset = -(int32_t)z64_vi_counter;
   day_time_prev = z64_file.day_time;
-  vector_init(&movie_inputs, sizeof(z64_input_t));
+  vector_init(&movie_inputs, sizeof(struct movie_input));
   vector_init(&movie_seeds, sizeof(struct movie_seed));
 
   /* initialize menus */
@@ -3197,7 +3251,7 @@ static void init(void)
     menu_add_static(&menu_main, 0, 11, "state slot", 0xC0C0C0);
     static struct slot_info state_slot_info;
     state_slot_info.data = &state_slot;
-    state_slot_info.max = 2;
+    state_slot_info.max = 3;
     menu_add_watch(&menu_main, 14, 11,
                    (uint32_t)state_slot_info.data, WATCH_TYPE_U8);
     menu_add_button(&menu_main, 12, 11, "-",

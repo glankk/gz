@@ -50,6 +50,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos_addr                       0x800E7B44
 #define z64_part_max_addr                       0x800E7B48
 #define z64_actor_ovl_tab_addr                  0x800E8530
+#define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_day_speed_addr                      0x800F1650
 #define z64_sky_images_addr                     0x800F184C
 #define z64_map_mark_ovl_addr                   0x800F1BF8
@@ -63,6 +64,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
+#define z64_gameover_countdown_addr             0x801132B0
+#define z64_death_fade_addr                     0x8011BD26
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
 #define z64_mtx_stack_addr                      0x80121200
@@ -83,6 +86,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos_addr                       0x800E7D04
 #define z64_part_max_addr                       0x800E7D08
 #define z64_actor_ovl_tab_addr                  0x800E86F0
+#define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_day_speed_addr                      0x800F1810
 #define z64_sky_images_addr                     0x800F1A0C
 #define z64_map_mark_ovl_addr                   0x800F1DB8
@@ -96,6 +100,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE67C
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
+#define z64_gameover_countdown_addr             0x80113470
+#define z64_death_fade_addr                     0x8011BEE6
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
 #define z64_mtx_stack_addr                      0x801213C0
@@ -116,6 +122,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos_addr                       0x800E8184
 #define z64_part_max_addr                       0x800E8188
 #define z64_actor_ovl_tab_addr                  0x800E8B70
+#define z64_letterbox_time_addr                 0x800EF838
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_sky_images_addr                     0x800F1E8C
 #define z64_map_mark_ovl_addr                   0x800F2238
@@ -129,6 +136,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
+#define z64_gameover_countdown_addr             0x80113960
+#define z64_death_fade_addr                     0x8011C3D6
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
 #define z64_mtx_stack_addr                      0x80121AD0
@@ -141,6 +150,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos            (*(int32_t*)                  z64_part_pos_addr)
 #define z64_part_max            (*(int32_t*)                  z64_part_max_addr)
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
+#define z64_letterbox_time      (*(uint32_t*)                 z64_letterbox_time_addr)
 #define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
 #define z64_sky_images          (*(z64_sky_image_t(*)[9])     z64_sky_images_addr)
 #define z64_map_mark_ovl        (*(z64_map_mark_ovl_t*)       z64_map_mark_ovl_addr)
@@ -154,6 +164,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr        (*(z64_play_ovl_t*)           z64_play_ovl_ptr_addr)
 #define z64_sfx_write_pos       (*(uint8_t*)                  z64_sfx_write_pos_addr)
 #define z64_sfx_read_pos        (*(uint8_t*)                  z64_sfx_read_pos_addr)
+#define z64_gameover_countdown  (*(int16_t*)                  z64_gameover_countdown_addr)
+#define z64_death_fade          (*(uint8_t*)                  z64_death_fade_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
 #define z64_game_arena          (*(z64_arena_t*)              z64_game_arena_addr)
 #define z64_mtx_stack           (*(MtxF(**)[20])              z64_mtx_stack_addr)
@@ -168,50 +180,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_StopSfx               ( (z64_StopSfx_proc)                z64_StopSfx_addr)
 #define z64_LoadOverlay           ( (z64_LoadOverlay_proc)            z64_LoadOverlay_addr)
 
-
-static void (*z64_osStopThread)(OSThread *t) = (void*)0x80001F70;
-static void (*z64_osStartThread)(OSThread *t) = (void*)0x80005EC0;
-
-
-static void stop(void)
-{
-  /* disable interrupts */
-#if 0
-  __asm__ volatile ("mfc0 $t0, $12  \n"
-                    "and  $t0, %0   \n"
-                    "mtc0 $t0, $12  \n" :: "r"(~MIPS_STATUS_IE));
-#elif 0
-  //z64_osStopThread((void*)0x80007DD8); /* dmamgr */
-  z64_osStopThread((void*)0x8011D318); /* sched */
-  z64_osStopThread((void*)0x8011D580); /* padmgr */
-  z64_osStopThread((void*)0x80120D60); /* audio */
-#endif
-#if 1
-  volatile uint32_t *sp_status = (void*)0xA4040010;
-  volatile uint32_t *pi_status = (void*)0xA4600010;
-  /* wait for rsp to halt */
-  while (!(*sp_status & 3))
-    ;
-  /* wait for dma busy */
-  while (*pi_status & 3)
-    ;
-#endif
-}
-
-static void go(void)
-{
-  /* enable interrupts */
-#if 0
-  __asm__ volatile ("mfc0 $t0, $12  \n"
-                    "or   $t0, %0   \n"
-                    "mtc0 $t0, $12  \n" :: "r"(MIPS_STATUS_IE));
-#elif 0
-  //z64_osStartThread((void*)0x80007DD8); /* dmamgr */
-  z64_osStartThread((void*)0x8011D318); /* sched */
-  z64_osStartThread((void*)0x8011D580); /* padmgr */
-  z64_osStartThread((void*)0x80120D60); /* audio */
-#endif
-}
 
 static void save_ovl(void **p, void *addr, size_t size)
 {
@@ -456,7 +424,6 @@ static _Bool addr_comp(void *a, void *b)
 
 void save_state(void *state, struct state_meta *meta)
 {
-  stop();
   void *p = state;
 
   int16_t sot = 0;
@@ -572,6 +539,12 @@ void save_state(void *state, struct state_meta *meta)
   /* letterboxing */
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
+  serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* countdown to gameover screen */
+  serial_write(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
+  /* death fade state */
+  serial_write(&p, &z64_death_fade, sizeof(z64_death_fade));
 
   /* rng */
   serial_write(&p, &z64_random, sizeof(z64_random));
@@ -580,6 +553,7 @@ void save_state(void *state, struct state_meta *meta)
   /* ocarina state */
   serial_write(&p, (void*)0x80102208, 0x0060);
   serial_write(&p, (void*)0x80121F0C, 0x00A8);
+  /* todo: ocarina audio sync hack */
 
   /* cutscene state */
   serial_write(&p, (void*)0x8011BC20, 0x0140);
@@ -613,13 +587,14 @@ void save_state(void *state, struct state_meta *meta)
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
   //serial_write(&p, (void*)0x801DAA00, 0x1D4790);
-
-  go();
 }
 
 void load_state(void *state, struct state_meta *meta)
 {
-  stop();
+  /* wait for gfx task to finish */
+  z64_osRecvMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_BLOCK);
+  z64_osSendMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_NOBLOCK);
+
   void *p = state;
 
   /* save allocation info */
@@ -641,7 +616,9 @@ void load_state(void *state, struct state_meta *meta)
     obj_list[i].ptr = obj->data;
   }
   int scene_index = z64_game.scene_index;
-  _Bool p_pause_objects = z64_game.pause_ctxt.state > 3;
+  _Bool p_pause_objects = (z64_game.pause_ctxt.state > 0x0003 &&
+                           z64_game.pause_ctxt.state < 0x0008) ||
+                          z64_game.pause_ctxt.state > 0x000A;
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
   serial_read(&p, &z64_file, sizeof(z64_file));
@@ -788,31 +765,55 @@ void load_state(void *state, struct state_meta *meta)
   }
 
   /* load objects */
-  _Bool c_pause_objects = z64_game.pause_ctxt.state > 3;
+  _Bool c_pause_objects = (z64_game.pause_ctxt.state > 0x0003 &&
+                           z64_game.pause_ctxt.state < 0x0008) ||
+                          z64_game.pause_ctxt.state > 0x000A;
   _Bool dungeon_map = z64_game.scene_index < 0x000A ||
                       (z64_game.scene_index > 0x0010 &&
                        z64_game.scene_index < 0x0019);
   if (c_pause_objects) {
-    z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
-                         &z64_game.pause_ctxt.s27C);
-    /* ovl_kaleido_scope modifies icons of restricted items to be grayscale */
-    /* relevant function: 8039AFBC */
-    zu_getfile_idx(8, z64_game.pause_ctxt.icon_item);
-    zu_getfile_idx(9, z64_game.pause_ctxt.icon_item_24);
+    /* gameover-specific states */
+    if (z64_game.pause_ctxt.state >= 0x0008 &&
+        z64_game.pause_ctxt.state <= 0x0011)
+    {
+      zu_getfile_idx(12, z64_game.pause_ctxt.icon_item_s);
+    }
+    else {
+      z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
+                           &z64_game.pause_ctxt.s27C);
+      if (dungeon_map) {
+        zu_getfile_idx(11, z64_game.pause_ctxt.icon_item_s);
+        uint32_t vaddr = z64_ftab[26].vrom_start;
+        vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
+        zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture, 0x07F8);
+        vaddr += 0x07F8;
+        zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture + 0x0800, 0x07F8);
+      }
+      else
+        zu_getfile_idx(10, z64_game.pause_ctxt.icon_item_s);
+      if (z64_game.pause_ctxt.screen_idx == 1) {
+        uint32_t vaddr = z64_ftab[16].vrom_start;
+        if (z64_file.language != 0)
+          vaddr += 0x000C * 0x0400;
+        vaddr += z64_game.pause_ctxt.item_id * 0x400;
+        zu_getfile(vaddr, z64_game.pause_ctxt.name_texture, 0x0400);
+      }
+      else {
+        uint32_t vaddr = z64_ftab[15].vrom_start;
+        if (z64_file.language != 0)
+          vaddr += 0x007B * 0x0400;
+        vaddr += z64_game.pause_ctxt.item_id * 0x400;
+        zu_getfile(vaddr, z64_game.pause_ctxt.name_texture, 0x0400);
+      }
+    }
     if (z64_file.language == 0)
       zu_getfile_idx(13, z64_game.pause_ctxt.icon_item_lang);
     else
       zu_getfile_idx(14, z64_game.pause_ctxt.icon_item_lang);
-    if (dungeon_map) {
-      zu_getfile_idx(11, z64_game.pause_ctxt.icon_item_s);
-      uint32_t vaddr = z64_ftab[26].vrom_start;
-      vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
-      zu_getfile(vaddr, z64_game.if_ctxt.minimap_tex, 0x07F8);
-      vaddr += 0x07F8;
-      zu_getfile(vaddr, z64_game.if_ctxt.minimap_tex + 0x0800, 0x07F8);
-    }
-    else
-      zu_getfile_idx(10, z64_game.pause_ctxt.icon_item_s);
+    /* ovl_kaleido_scope modifies icons of restricted items to be grayscale */
+    /* relevant function: 8039AFBC */
+    zu_getfile_idx(8, z64_game.pause_ctxt.icon_item);
+    zu_getfile_idx(9, z64_game.pause_ctxt.icon_item_24);
   }
   else {
     /* load normal objects in the object context */
@@ -1086,6 +1087,12 @@ void load_state(void *state, struct state_meta *meta)
   /* letterboxing */
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
+  serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* countdown to gameover screen */
+  serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
+  /* death fade state */
+  serial_read(&p, &z64_death_fade, sizeof(z64_death_fade));
 
   /* rng */
   serial_read(&p, &z64_random, sizeof(z64_random));
@@ -1113,28 +1120,82 @@ void load_state(void *state, struct state_meta *meta)
 
   /* load textures */
   zu_getfile_idx(940, z64_game.if_ctxt.parameter);
+  /* item button icons */
   for (int i = 0; i < 4; ++i)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
       z64_UpdateItemButton(&z64_game, i);
+  /* action labels */
   z64_LoadActionLabel(&z64_game.if_ctxt, z64_game.if_ctxt.a_action,
                       Z64_ACTIONBTN_A);
   z64_LoadActionLabel(&z64_game.if_ctxt, z64_game.if_ctxt.b_label % 0x1D,
                       Z64_ACTIONBTN_B);
   z64_LoadActionLabel(&z64_game.if_ctxt, 0x0003, Z64_ACTIONBTN_START);
+  /* minimap */
   if (!c_pause_objects || !dungeon_map)
     z64_LoadMinimap(&z64_game, z64_game.room_ctxt.rooms[0].index);
-
-#if 0
-  if (c_pause_objects && !p_pause_objects) {
-    uint16_t (*zimg)[240][320] = (void*)0x8012BE40;
-    for (int y = 0; y < 240; ++y) {
-      for (int x = 0; x < 320; ++x) {
-        (*zimg)[y][x] = GPACK_RGBA5551(y * 0x1F / 239, 0x00,
-                                       x * 0x1F / 319, 0x00);
+  /* message stuff */
+  if (z64_game.message_state_1 != 0) {
+    char *tex_buf = z64_game.message_texture;
+    uint32_t message_static = z64_ftab[18].vrom_start;
+    /* load message background */
+    switch (z64_game.message_type) {
+      case 0:   zu_getfile(message_static + 0x0000, tex_buf, 0x1000); break;
+      case 1:   zu_getfile(message_static + 0x1000, tex_buf, 0x1000); break;
+      case 2:   zu_getfile(message_static + 0x3000, tex_buf, 0x1000); break;
+      case 3:   zu_getfile(message_static + 0x2000, tex_buf, 0x1000); break;
+      default:  break;
+    }
+    /* look for an icon or foreground image command;
+       if one is found then load the texture */
+    int icon_idx = -1;
+    int foreground_image = -1;
+    if (z64_file.language == 0) {
+      /* japanese message format */
+      for (int i = 0; i < 2; ++i) {
+        if (z64_game.message_data_j[i] == 0x819A)
+          icon_idx = z64_game.message_data_j[i + 1];
+        else if (z64_game.message_data_j[i] == 0x86B3)
+          foreground_image = 0;
+        else
+          continue;
+        break;
       }
     }
+    else {
+      /* english message format */
+      for (int i = 0; i < 2; ++i) {
+        if (z64_game.message_data_e[i] == 0x13)
+          icon_idx = z64_game.message_data_e[i + 1];
+        else if (z64_game.message_data_e[i] == 0x15)
+          foreground_image = 0;
+        else
+          continue;
+        break;
+      }
+    }
+    if (foreground_image == 0)
+      zu_getfile(z64_ftab[20].vrom_start, tex_buf + 0x1000, 0x1200);
+    else if (icon_idx >= 0x66) {
+      zu_getfile(z64_ftab[9].vrom_start + (icon_idx - 0x66) * 0x900,
+                 tex_buf + 0x1000, 0x900);
+    }
+    else if (icon_idx >= 0x00) {
+      zu_getfile(z64_ftab[8].vrom_start + icon_idx * 0x1000,
+                 tex_buf + 0x1000, 0x1000);
+    }
   }
-#endif
+  /* clear unsaved textures */
+  if (c_pause_objects && !p_pause_objects) {
+    uint16_t (*zimg)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
+    zimg = (void*)z64_zimg_addr;
+    for (int y = 0; y < Z64_SCREEN_HEIGHT; ++y)
+      for (int x = 0; x < Z64_SCREEN_WIDTH; ++x)
+        (*zimg)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+    uint16_t (*limg)[112][64] = z64_game.pause_ctxt.p13C;
+    for (int y = 0; y < 112; ++y)
+      for (int x = 0; x < 64; ++x)
+        (*limg)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+  }
 
   /* display lists */
   int16_t next_gfx;
@@ -1165,10 +1226,4 @@ void load_state(void *state, struct state_meta *meta)
   //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_read(&p, (void*)0x8012143C, 0x41F4);
   //serial_read(&p, (void*)0x801DAA00, 0x1D4790);
-
-  gDPFullSync(z64_ctxt.gfx->work_c);
-  gSPEndDisplayList(z64_ctxt.gfx->work_c + 1);
-  z64_ctxt.gfx->work_c_size = 0x10;
-
-  go();
 }
