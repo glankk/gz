@@ -3045,9 +3045,12 @@ HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
     --*write_pos;
 #endif
 #if 0
-  vector_push_back(&afx_ifcmd_list, 1, &c);
-  if (afx_ifcmd_list.size > 24)
-    vector_erase(&afx_ifcmd_list, 0, 1);
+  uint8_t hi = a0 >> 24;
+  if (gz_ready) {
+    vector_push_back(&afx_ifcmd_list, 1, &c);
+    if (afx_ifcmd_list.size > 24)
+      vector_erase(&afx_ifcmd_list, 0, 1);
+  }
 #endif
 }
 
@@ -3201,7 +3204,7 @@ static void init(void)
     vector_init(&afx_ifcmd_list, sizeof(struct afx_ifcmd));
     uint32_t hook[] =
     {
-      MIPS_JAL(afx_ifcmd_hook),
+      MIPS_J(afx_ifcmd_hook),
       MIPS_NOP,
     };
     memcpy((void*)0x800BB04C, hook, sizeof(hook));

@@ -24,6 +24,7 @@ static void serial_read(void **p, void *data, uint32_t length)
   *p = cp;
 }
 
+
 typedef void (*z64_CreateStaticCollision_proc)(z64_col_ctxt_t *col_ctxt, z64_game_t *game, z64_col_lut_t *col_lut);
 typedef void (*z64_LoadMinimap_proc)(z64_game_t *game, int room_idx);
 typedef void (*z64_LoadActionLabel_proc)(z64_if_ctxt_t *if_ctxt, uint16_t action_idx, int button_idx);
@@ -31,6 +32,10 @@ typedef void (*z64_InitPauseObjects_proc)(z64_game_t *game, void *addr, void *s7
 typedef void (*z64_CreateSkyGfx_proc)(z64_sky_ctxt_t *sky_ctxt, int skybox_type);
 typedef void (*z64_CreateSkyVtx_proc)(z64_sky_ctxt_t *sky_ctxt, int a1);
 typedef void (*z64_StopSfx_proc)(void);
+typedef void (*z64_AfxCmdF_proc)(uint32_t hi, float lo);
+typedef void (*z64_AfxCmdW_proc)(uint32_t hi, uint32_t lo);
+typedef void (*z64_ConfigureAfx_proc)(uint8_t cfg);
+typedef void (*z64_ResetAudio_proc)(uint8_t cfg);
 typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
                                          uint32_t vram_start, uint32_t vram_end,
                                          void *dst);
@@ -44,6 +49,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_CreateSkyGfx_addr                   0x80095A9C
 #define z64_CreateSkyVtx_addr                   0x80095C4C
 #define z64_StopSfx_addr                        0x800A0290
+#define z64_AfxCmdF_addr                        0x800BB098
+#define z64_AfxCmdW_addr                        0x800BB0BC
+#define z64_ConfigureAfx_addr                   0x800BB548
+#define z64_ResetAudio_addr                     0x800C7E98
 #define z64_LoadOverlay_addr                    0x800CCBB8
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_part_space_addr                     0x800E7B40
@@ -64,12 +73,14 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
+#define z64_afx_cfg_addr                        0x801043C0
 #define z64_gameover_countdown_addr             0x801132B0
 #define z64_death_fade_addr                     0x8011BD26
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
+#define z64_seq_ctl_addr                        0x80124C00
 
 #elif Z64_VERSION == Z64_OOT11
 
@@ -80,6 +91,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_CreateSkyGfx_addr                   0x80095AAC
 #define z64_CreateSkyVtx_addr                   0x80095C5C
 #define z64_StopSfx_addr                        0x800A02A0
+#define z64_AfxCmdF_addr                        0x800BB0B8
+#define z64_AfxCmdW_addr                        0x800BB0DC
+#define z64_ConfigureAfx_addr                   0x800BB568
+#define z64_ResetAudio_addr                     0x800C8070
 #define z64_LoadOverlay_addr                    0x800CCD78
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_part_space_addr                     0x800E7D00
@@ -100,12 +115,14 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE67C
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
+#define z64_afx_cfg_addr                        0x80104580
 #define z64_gameover_countdown_addr             0x80113470
 #define z64_death_fade_addr                     0x8011BEE6
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
+#define z64_seq_ctl_addr                        0x80124DC0
 
 #elif Z64_VERSION == Z64_OOT12
 
@@ -116,6 +133,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_CreateSkyGfx_addr                   0x8009618C
 #define z64_CreateSkyVtx_addr                   0x8009633C
 #define z64_StopSfx_addr                        0x800A0980
+#define z64_AfxCmdF_addr                        0x800BB71C
+#define z64_AfxCmdW_addr                        0x800BB740
+#define z64_ConfigureAfx_addr                   0x800BBBCC
+#define z64_ResetAudio_addr                     0x800C86E8
 #define z64_LoadOverlay_addr                    0x800CD3F8
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_part_space_addr                     0x800E8180
@@ -136,12 +157,14 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
+#define z64_afx_cfg_addr                        0x80104A00
 #define z64_gameover_countdown_addr             0x80113960
 #define z64_death_fade_addr                     0x8011C3D6
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
+#define z64_seq_ctl_addr                        0x801254D0
 
 #endif
 
@@ -164,12 +187,14 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr        (*(z64_play_ovl_t*)           z64_play_ovl_ptr_addr)
 #define z64_sfx_write_pos       (*(uint8_t*)                  z64_sfx_write_pos_addr)
 #define z64_sfx_read_pos        (*(uint8_t*)                  z64_sfx_read_pos_addr)
+#define z64_afx_cfg             (*(uint8_t*)                  z64_afx_cfg_addr)
 #define z64_gameover_countdown  (*(int16_t*)                  z64_gameover_countdown_addr)
 #define z64_death_fade          (*(uint8_t*)                  z64_death_fade_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
 #define z64_game_arena          (*(z64_arena_t*)              z64_game_arena_addr)
 #define z64_mtx_stack           (*(MtxF(**)[20])              z64_mtx_stack_addr)
 #define z64_mtx_stack_top       (*(MtxF**)                    z64_mtx_stack_top_addr)
+#define z64_seq_ctl             (*(z64_seq_ctl_t(*)[4])       z64_seq_ctl_addr)
 
 #define z64_CreateStaticCollision ( (z64_CreateStaticCollision_proc)  z64_CreateStaticCollision_addr)
 #define z64_LoadMinimap           ( (z64_LoadMinimap_proc)            z64_LoadMinimap_addr)
@@ -178,6 +203,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_CreateSkyGfx          ( (z64_CreateSkyGfx_proc)           z64_CreateSkyGfx_addr)
 #define z64_CreateSkyVtx          ( (z64_CreateSkyVtx_proc)           z64_CreateSkyVtx_addr)
 #define z64_StopSfx               ( (z64_StopSfx_proc)                z64_StopSfx_addr)
+#define z64_AfxCmdF               ( (z64_AfxCmdF_proc)                z64_AfxCmdF_addr)
+#define z64_AfxCmdW               ( (z64_AfxCmdW_proc)                z64_AfxCmdW_addr)
+#define z64_ConfigureAfx          ( (z64_ConfigureAfx_proc)           z64_ConfigureAfx_addr)
+#define z64_ResetAudio            ( (z64_ResetAudio_proc)             z64_ResetAudio_addr)
 #define z64_LoadOverlay           ( (z64_LoadOverlay_proc)            z64_LoadOverlay_addr)
 
 
@@ -236,31 +265,30 @@ static void load_sky_image(void)
   z64_sky_ctxt_t *sky_ctxt = &z64_game.sky_ctxt;
   switch (z64_game.skybox_type) {
     case 0x0001: {
-      z64_sky_image_t *image[2];
+      z64_sky_image_t *image[2] = {NULL, NULL};
       uint8_t *image_idx = z64_game.sky_image_idx;
       uint32_t file_size;
-
-      image[0] = &z64_sky_images[image_idx[0]];
-      file_size = image[0]->tex_end - image[0]->tex_start;
-      zu_getfile(image[0]->tex_start, sky_ctxt->textures[0], file_size);
-
-      image[1] = &z64_sky_images[image_idx[1]];
-      file_size = image[1]->tex_end - image[1]->tex_start;
-      zu_getfile(image[1]->tex_start, sky_ctxt->textures[1], file_size);
-
+      if (image_idx[0] != 0x63) {
+        image[0] = &z64_sky_images[image_idx[0]];
+        file_size = image[0]->tex_end - image[0]->tex_start;
+        zu_getfile(image[0]->tex_start, sky_ctxt->textures[0], file_size);
+      }
+      if (image_idx[1] != 0x63) {
+        image[1] = &z64_sky_images[image_idx[1]];
+        file_size = image[1]->tex_end - image[1]->tex_start;
+        zu_getfile(image[1]->tex_start, sky_ctxt->textures[1], file_size);
+      }
       if ((image_idx[0] & 1) == (image_idx[0] & 4) >> 2) {
-        file_size = image[0]->pal_end - image[0]->pal_start;
-        zu_getfile(image[1]->pal_start,
-                   sky_ctxt->palettes, file_size);
-        zu_getfile(image[0]->pal_start,
-                   sky_ctxt->palettes + file_size, file_size);
+        if (image_idx[1] != 0x63)
+          zu_getfile(image[1]->pal_start, sky_ctxt->palettes, 0x0100);
+        if (image_idx[0] != 0x63)
+          zu_getfile(image[0]->pal_start, sky_ctxt->palettes + 0x0100, 0x0100);
       }
       else {
-        file_size = image[0]->pal_end - image[0]->pal_start;
-        zu_getfile(image[0]->pal_start,
-                   sky_ctxt->palettes, file_size);
-        zu_getfile(image[1]->pal_start,
-                   sky_ctxt->palettes + file_size, file_size);
+        if (image_idx[0] != 0x63)
+          zu_getfile(image[0]->pal_start, sky_ctxt->palettes, 0x0100);
+        if (image_idx[1] != 0x63)
+          zu_getfile(image[1]->pal_start, sky_ctxt->palettes + 0x0100, 0x0100);
       }
       break;
     }
@@ -426,6 +454,9 @@ void save_state(void *state, struct state_meta *meta)
 {
   void *p = state;
 
+  /* save metadata */
+  serial_write(&p, meta, sizeof(*meta));
+
   int16_t sot = 0;
   int16_t eot = -1;
   /* save context */
@@ -565,6 +596,7 @@ void save_state(void *state, struct state_meta *meta)
 #endif
 
   _Bool save_gfx = 1;
+  /* save display lists */
   if (save_gfx) {
     serial_write(&p, &sot, sizeof(sot));
     int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
@@ -574,15 +606,24 @@ void save_state(void *state, struct state_meta *meta)
     zu_save_disp_p(&disp_p);
     serial_write(&p, &disp_p, sizeof(disp_p));
     serial_write(&p, &z64_ctxt.gfx->frame_count_1,
-          sizeof(z64_ctxt.gfx->frame_count_1));
+                 sizeof(z64_ctxt.gfx->frame_count_1));
     serial_write(&p, &z64_ctxt.gfx->frame_count_2,
-          sizeof(z64_ctxt.gfx->frame_count_2));
+                 sizeof(z64_ctxt.gfx->frame_count_2));
   }
   else
     serial_write(&p, &eot, sizeof(eot));
 
-  /* metadata */
-  serial_write(&p, meta, sizeof(*meta));
+  /* save afx config */
+  serial_write(&p, &z64_afx_cfg, sizeof(z64_afx_cfg));
+  /* save audio state */
+  for (int i = 0; i < 4; ++i) {
+    z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+    serial_write(&p, &sc->seq_idx, sizeof(sc->seq_idx));
+    if (sc->vs_time != 0)
+      serial_write(&p, &sc->vs_target, sizeof(sc->vs_target));
+    else
+      serial_write(&p, &sc->vs_current, sizeof(sc->vs_current));
+  }
 
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
@@ -619,6 +660,11 @@ void load_state(void *state, struct state_meta *meta)
   _Bool p_pause_objects = (z64_game.pause_ctxt.state > 0x0003 &&
                            z64_game.pause_ctxt.state < 0x0008) ||
                           z64_game.pause_ctxt.state > 0x000A;
+  int p_afx_cfg = z64_afx_cfg;
+
+  /* load metadata */
+  serial_read(&p, meta, sizeof(*meta));
+
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
   serial_read(&p, &z64_file, sizeof(z64_file));
@@ -744,6 +790,11 @@ void load_state(void *state, struct state_meta *meta)
     uint32_t size = scene->scene_vrom_end - scene->scene_vrom_start;
     zu_getfile(scene->scene_vrom_start, z64_game.scene_file, size);
     reloc_col_hdr((uint32_t)z64_game.col_ctxt.col_hdr);
+    /* create static collision */
+    z64_game.col_ctxt.stc_list_pos = 0;
+    z64_CreateStaticCollision(&z64_game.col_ctxt, &z64_game,
+                              z64_game.col_ctxt.stc_lut);
+
   }
   /* load transition actor list */
   z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
@@ -1054,11 +1105,6 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, z64_game.col_ctxt.dyn_vtx,
        z64_game.col_ctxt.dyn_vtx_max * sizeof(*z64_game.col_ctxt.dyn_vtx));
 
-  /* static collision */
-  z64_game.col_ctxt.stc_list_pos = 0;
-  z64_CreateStaticCollision(&z64_game.col_ctxt, &z64_game,
-                            z64_game.col_ctxt.stc_lut);
-
   /* create skybox */
   if (z64_game.skybox_type != 0) {
     if (z64_game.sky_ctxt.mode == 0) {
@@ -1197,7 +1243,7 @@ void load_state(void *state, struct state_meta *meta)
         (*limg)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
   }
 
-  /* display lists */
+  /* load display lists */
   int16_t next_gfx;
   serial_read(&p, &next_gfx, sizeof(next_gfx));
   if (next_gfx == 0) {
@@ -1214,14 +1260,54 @@ void load_state(void *state, struct state_meta *meta)
     zu_reloc_gfx(frame_count_1 & 1, frame_count_2 & 1);
   }
   else {
-    /* no display lists, kill frame */
+    /* no display lists saved, kill frame */
     z64_ctxt.gfx->work.p = z64_ctxt.gfx->work.buf;
     gDPFullSync(z64_ctxt.gfx->work.p++);
     gSPEndDisplayList(z64_ctxt.gfx->work.p++);
   }
 
-  /* metadata */
-  serial_read(&p, meta, sizeof(*meta));
+  /* configure afx */
+  uint8_t c_afx_cfg;
+  serial_read(&p, &c_afx_cfg, sizeof(c_afx_cfg));
+  if (c_afx_cfg != p_afx_cfg) {
+    z64_afx_cfg = c_afx_cfg;
+    z64_ConfigureAfx(c_afx_cfg);
+    z64_ResetAudio(p_afx_cfg);
+    z64_AfxCmdW(0xF8000000, 0x00000000);
+  }
+  /* restore audio state */
+  for (int i = 0; i < 4; ++i) {
+    z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+    uint16_t seq_idx;
+    float volume;
+    serial_read(&p, &seq_idx, sizeof(seq_idx));
+    serial_read(&p, &volume, sizeof(volume));
+    /* clear volume effects */
+    sc->vs_current = volume;
+    sc->vs_time = 0;
+    sc->vp_start = 0;
+    for (int j = 0; j < 16; ++j) {
+      z64_chan_ctl_t *cc = &sc->channels[j];
+      cc->vs_current = 1.;
+      cc->vs_time = 0;
+      z64_AfxCmdF(0x01000000 | (i << 16) | (j << 8), 1.f);
+    }
+    sc->ch_volume_state = 0;
+    /* play sequence */
+    if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg) {
+      sc->seq_idx = seq_idx;
+      sc->prev_seq_idx = seq_idx;
+      if (seq_idx == 0xFFFF)
+        seq_idx = 0;
+      z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
+    }
+    /* set volume */
+    z64_AfxCmdF(0x41000000 | (i << 16), 1.f);
+  }
+  if (z64_game.pause_ctxt.state > 0 && z64_game.pause_ctxt.state < 8)
+    z64_AfxCmdW(0xF1000000, 0x00000000);
+  else
+    z64_AfxCmdW(0xF2000000, 0x00000000);
 
   //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_read(&p, (void*)0x8012143C, 0x41F4);

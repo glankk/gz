@@ -68,7 +68,6 @@ void settings_load_default(void)
 #endif
   d->n_watches = 0;
   d->cheats = 0;
-  d->cheats |= 1 << CHEAT_NOMUSIC;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
     d->teleport_pos[i].x = 0.f;
     d->teleport_pos[i].y = 0.f;

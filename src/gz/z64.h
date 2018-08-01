@@ -1424,6 +1424,68 @@ typedef struct
                                               /* 0x12518 */
 } z64_game_t;
 
+/* high-level audio control structures (separate from afx) */
+typedef struct
+{
+  /* volume effect state */
+  float             vs_current;               /* 0x0000 */
+  float             vs_target;                /* 0x0004 */
+  float             vs_delta;                 /* 0x0008 */
+  uint16_t          vs_time;                  /* 0x000C */
+  char              pad_00_[0x0002];          /* 0x000E */
+  /* pitch effect state */
+  float             ps_current;               /* 0x0010 */
+  float             ps_target;                /* 0x0014 */
+  float             ps_delta;                 /* 0x0018 */
+  uint16_t          ps_time;                  /* 0x001C */
+  char              pad_01_[0x0002];          /* 0x001E */
+                                              /* 0x0020 */
+} z64_chan_ctl_t;
+
+typedef struct
+{
+  /* volume effect state */
+  float             vs_current;               /* 0x0000 */
+  float             vs_target;                /* 0x0004 */
+  float             vs_delta;                 /* 0x0008 */
+  uint16_t          vs_time;                  /* 0x000C */
+  /* volume effect parameters (for starting a volume effect) */
+  uint8_t           vp_factors[4];            /* 0x000E */
+  uint8_t           vp_time;                  /* 0x0012 */
+  uint8_t           vp_start;                 /* 0x0013 */
+  /* pitch effect parameters (ditto) */
+  uint32_t          pp_bits;                  /* 0x0014 */
+  uint16_t          pp_unk;                   /* 0x0018 */
+  char              pad_00_[0x0002];          /* 0x001A */
+  /* pitch effect state */
+  float             ps_current;               /* 0x001C */
+  float             ps_target;                /* 0x0020 */
+  float             ps_delta;                 /* 0x0024 */
+  uint16_t          ps_time;                  /* 0x0028 */
+  char              pad_01_[0x0002];          /* 0x002A */
+  /* unknown */
+  uint32_t          w2C;                      /* 0x002C */
+  char              unk_00_[0x001C];          /* 0x0030 */
+  uint8_t           b4C;                      /* 0x004C */
+  uint8_t           b4D;                      /* 0x004D */
+  uint8_t           b4E;                      /* 0x004E */
+  char              pad_02_[0x0001];          /* 0x004F */
+  /* channel control stuff */
+  z64_chan_ctl_t    channels[0x10];           /* 0x0050 */
+  /* bitmask of channels with active effects */
+  uint16_t          ch_pitch_state;           /* 0x0250 */
+  uint16_t          ch_volume_state;          /* 0x0252 */
+  /* sequence info */
+  uint16_t          seq_idx;                  /* 0x0254 */
+  uint16_t          prev_seq_idx;             /* 0x0256 */
+  /* unknown */
+  uint16_t          h258;                     /* 0x0258 */
+  char              unk_01_[0x0006];          /* 0x025A */
+  uint8_t           b260;                     /* 0x0260 */
+  char              pad_03_[0x0003];          /* 0x0261 */
+                                              /* 0x0264 */
+} z64_seq_ctl_t;
+
 #if Z64_VERSION == Z64_OOT10
 
 /* dram addresses */
