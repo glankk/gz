@@ -381,6 +381,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7D08
 #define z64_actor_ovl_tab_addr                  0x800E86F0
 #define z64_letterbox_time_addr                 0x800EF3B8
+#define z64_oob_timer_addr                      0x800EF86C
 #define z64_day_speed_addr                      0x800F1810
 #define z64_sky_images_addr                     0x800F1A0C
 #define z64_map_mark_ovl_addr                   0x800F1DB8
@@ -424,6 +425,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E8188
 #define z64_actor_ovl_tab_addr                  0x800E8B70
 #define z64_letterbox_time_addr                 0x800EF838
+#define z64_oob_timer_addr                      0x800EFCEC
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_sky_images_addr                     0x800F1E8C
 #define z64_map_mark_ovl_addr                   0x800F2238
@@ -856,6 +858,9 @@ void save_state(void *state, struct state_meta *meta)
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
+  /* oob timer */
+  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+
   /* countdown to gameover screen */
   serial_write(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
   /* death fade state */
@@ -874,9 +879,6 @@ void save_state(void *state, struct state_meta *meta)
   serial_write(&p, (void*)0x8011BC20, 0x0140);
   /* cutscene text id */
   serial_write(&p, (void*)0x800EFCD0, 0x0002);
-
-  /* oob timer */
-  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
 
   /* textbox state */
   serial_write(&p, (void*)0x8010A924, 0x0028);
@@ -1423,6 +1425,9 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
+  /* oob timer */
+  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+
   /* countdown to gameover screen */
   serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
   /* death fade state */
@@ -1440,9 +1445,6 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, (void*)0x8011BC20, 0x0140);
   /* cutscene text id */
   serial_read(&p, (void*)0x800EFCD0, 0x0002);
-
-  /* oob timer */
-  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
 
   /* textbox state */
   serial_read(&p, (void*)0x8010A924, 0x0028);
