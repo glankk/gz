@@ -25,6 +25,283 @@ static void serial_read(void **p, void *data, uint32_t length)
 }
 
 
+
+/* special particle effects */
+typedef struct
+{
+  /* velocity */
+  float             vel_x;                    /* 0x0000 */
+  float             vel_y;                    /* 0x0004 */
+  float             vel_z;                    /* 0x0008 */
+  /* position */
+  float             x;                        /* 0x000C */
+  float             y;                        /* 0x0010 */
+  float             z;                        /* 0x0014 */
+  /* integer xyz velocity-position pair, unused ? */
+  int16_t           h18;                      /* 0x0018 */
+  int16_t           h1A;                      /* 0x001A */
+  int16_t           h1C;                      /* 0x001C */
+  int16_t           h1E;                      /* 0x001E */
+  int16_t           h20;                      /* 0x0020 */
+  int16_t           h22;                      /* 0x0022 */
+                                              /* 0x0024 */
+} z64_dot_cp_t;
+
+typedef struct
+{
+  /* initial position */
+  int16_t           x;                        /* 0x0000 */
+  int16_t           y;                        /* 0x0002 */
+  int16_t           z;                        /* 0x0004 */
+  char              pad_00_[0x0002];          /* 0x0006 */
+  /* number of active control points */
+  uint32_t          n_cp;                     /* 0x0008 */
+  /* control points */
+  z64_dot_cp_t      cp[32];                   /* 0x000C */
+  /* initial linear velocity */
+  float             vel;                      /* 0x048C */
+  /* vertical acceleration */
+  float             accel_y;                  /* 0x0490 */
+  /* initial number of controls points (n_cp_a * n_cp_b + 2) */
+  uint32_t          n_cp_a;                   /* 0x0494 */
+  uint32_t          n_cp_b;                   /* 0x0498 */
+  /* primary color 1 */
+  uint8_t           c1r1;                     /* 0x049C */
+  uint8_t           c1g1;                     /* 0x049D */
+  uint8_t           c1b1;                     /* 0x049E */
+  uint8_t           c1a1;                     /* 0x049F */
+  /* secondary color 1 */
+  uint8_t           c2r1;                     /* 0x04A0 */
+  uint8_t           c2g1;                     /* 0x04A1 */
+  uint8_t           c2b1;                     /* 0x04A2 */
+  uint8_t           c2a1;                     /* 0x04A3 */
+  /* tertiary color 1 */
+  uint8_t           c3r1;                     /* 0x04A4 */
+  uint8_t           c3g1;                     /* 0x04A5 */
+  uint8_t           c3b1;                     /* 0x04A6 */
+  uint8_t           c3a1;                     /* 0x04A7 */
+  /* quaternary color 1 */
+  uint8_t           c4r1;                     /* 0x04A8 */
+  uint8_t           c4g1;                     /* 0x04A9 */
+  uint8_t           c4b1;                     /* 0x04AA */
+  uint8_t           c4a1;                     /* 0x04AB */
+  /* primary color 2 */
+  uint8_t           c1r2;                     /* 0x04AC */
+  uint8_t           c1g2;                     /* 0x04AD */
+  uint8_t           c1b2;                     /* 0x04AE */
+  uint8_t           c1a2;                     /* 0x04AF */
+  /* secondary color 2 */
+  uint8_t           c2r2;                     /* 0x04B0 */
+  uint8_t           c2g2;                     /* 0x04B1 */
+  uint8_t           c2b2;                     /* 0x04B2 */
+  uint8_t           c2a2;                     /* 0x04B3 */
+  /* tertiary color 2 */
+  uint8_t           c3r2;                     /* 0x04B4 */
+  uint8_t           c3g2;                     /* 0x04B5 */
+  uint8_t           c3b2;                     /* 0x04B6 */
+  uint8_t           c3a2;                     /* 0x04B7 */
+  /* quaternary color 2 */
+  uint8_t           c4r2;                     /* 0x04B8 */
+  uint8_t           c4g2;                     /* 0x04B9 */
+  uint8_t           c4b2;                     /* 0x04BA */
+  uint8_t           c4a2;                     /* 0x04BB */
+  /* elapsed time and total duration */
+  int32_t           time;                     /* 0x04BC */
+  int32_t           duration;                 /* 0x04C0 */
+                                              /* 0x04C4 */
+} z64_dot_fx_t;
+
+typedef struct
+{
+  uint8_t           active;                   /* 0x0000 */
+  uint8_t           b1;                       /* 0x0001 */
+  uint8_t           b2;                       /* 0x0002 */
+  char              pad_00_[0x0001];          /* 0x0003 */
+  z64_dot_fx_t      fx;                       /* 0x0004 */
+                                              /* 0x04C8 */
+} z64_dot_t;
+
+typedef struct
+{
+  /* state ? */
+  int32_t           state;                    /* 0x0000 */
+  /* elapsed time */
+  int32_t           time;                     /* 0x0004 */
+  /* point 1 */
+  int16_t           p1x;                      /* 0x0008 */
+  int16_t           p1y;                      /* 0x000A */
+  int16_t           p1z;                      /* 0x000C */
+  /* point 2 */
+  int16_t           p2x;                      /* 0x000E */
+  int16_t           p2y;                      /* 0x0010 */
+  int16_t           p2z;                      /* 0x0012 */
+  /* flags ? */
+  uint16_t          flags;                    /* 0x0014 */
+  char              pad_00_[0x0002];          /* 0x0016 */
+                                              /* 0x0018 */
+} z64_trail_cp_t;
+
+typedef struct
+{
+  /* control points */
+  z64_trail_cp_t    cp[16];                   /* 0x0000 */
+  /* interpolation mode ? */
+  uint32_t          ipn_mode;                 /* 0x0180 */
+  /* parameter for interpolation mode 4 */
+  float             f184;                     /* 0x0184 */
+  /* flags ? */
+  uint16_t          h188;                     /* 0x0188 */
+  /* counter increment, counter, what for ? */
+  int16_t           h18A;                     /* 0x018A */
+  int16_t           h18C;                     /* 0x018C */
+  /* point 1 starting color */
+  uint8_t           p1r1;                     /* 0x018E */
+  uint8_t           p1g1;                     /* 0x018F */
+  uint8_t           p1b1;                     /* 0x0190 */
+  uint8_t           p1a1;                     /* 0x0191 */
+  /* point 2 starting color */
+  uint8_t           p2r1;                     /* 0x0192 */
+  uint8_t           p2g1;                     /* 0x0193 */
+  uint8_t           p2b1;                     /* 0x0194 */
+  uint8_t           p2a1;                     /* 0x0195 */
+  /* point 1 ending color */
+  uint8_t           p1r2;                     /* 0x0196 */
+  uint8_t           p1g2;                     /* 0x0197 */
+  uint8_t           p1b2;                     /* 0x0198 */
+  uint8_t           p1a2;                     /* 0x0199 */
+  /* point 2 ending color */
+  uint8_t           p2r2;                     /* 0x019A */
+  uint8_t           p2g2;                     /* 0x019B */
+  uint8_t           p2b2;                     /* 0x019C */
+  uint8_t           p2a2;                     /* 0x019D */
+  /* number of active control points */
+  uint8_t           n_cp;                     /* 0x019E */
+  /* control point duration */
+  uint8_t           duration;                 /* 0x019F */
+  /* unknown */
+  uint8_t           b1A0;                     /* 0x01A0 */
+  /* render mode */
+  /* 0:   simple */
+  /* 1:   simple with alternate colors */
+  /* 2+:  smooth */
+  uint8_t           mode;                     /* 0x01A1 */
+  /* alternate colors */
+  /* inner color */
+  uint8_t           m1r1;                     /* 0x01A2 */
+  uint8_t           m1g1;                     /* 0x01A3 */
+  uint8_t           m1b1;                     /* 0x01A4 */
+  uint8_t           m1a1;                     /* 0x01A5 */
+  /* outer color */
+  uint8_t           m1r2;                     /* 0x01A6 */
+  uint8_t           m1g2;                     /* 0x01A7 */
+  uint8_t           m1b2;                     /* 0x01A8 */
+  uint8_t           m1a2;                     /* 0x01A9 */
+  char              pad_00_[0x0002];          /* 0x01AA */
+                                              /* 0x01AC */
+} z64_trail_fx_t;
+
+typedef struct
+{
+  uint8_t           active;                   /* 0x0000 */
+  char              pad_00_[0x0003];          /* 0x0001 */
+  z64_trail_fx_t    fx;                       /* 0x0004 */
+                                              /* 0x01B0 */
+} z64_trail_t;
+
+typedef struct
+{
+  /* initial velocity */
+  float             vel;                      /* 0x0000 */
+  /* point 1 velocity and distance */
+  float             p1v;                      /* 0x0004 */
+  float             p1d;                      /* 0x0008 */
+  /* point 2 velocity and distance */
+  float             p2v;                      /* 0x000C */
+  float             p2d;                      /* 0x0010 */
+  /* orientation */
+  int16_t           yaw;                      /* 0x0014 */
+  int16_t           pitch;                    /* 0x0016 */
+                                              /* 0x0018 */
+} z64_spark_cp_t;
+
+typedef struct
+{
+  /* control points */
+  z64_spark_cp_t    cp[16];                   /* 0x0000 */
+  /* number of active control points */
+  uint8_t           n_cp;                     /* 0x0180 */
+  char              pad_00_[0x0001];          /* 0x0181 */
+  /* position */
+  int16_t           x;                        /* 0x0182 */
+  int16_t           y;                        /* 0x0184 */
+  int16_t           z;                        /* 0x0186 */
+  /* primary color 1 */
+  uint8_t           c1r1;                     /* 0x0188 */
+  uint8_t           c1g1;                     /* 0x0189 */
+  uint8_t           c1b1;                     /* 0x018A */
+  uint8_t           c1a1;                     /* 0x018B */
+  /* secondary color 1 */
+  uint8_t           c2r1;                     /* 0x018C */
+  uint8_t           c2g1;                     /* 0x018D */
+  uint8_t           c2b1;                     /* 0x018E */
+  uint8_t           c2a1;                     /* 0x018F */
+  /* primary color 2 */
+  uint8_t           c1r2;                     /* 0x0190 */
+  uint8_t           c1g2;                     /* 0x0191 */
+  uint8_t           c1b2;                     /* 0x0192 */
+  uint8_t           c1a2;                     /* 0x0193 */
+  /* secondary color 2 */
+  uint8_t           c2r2;                     /* 0x0194 */
+  uint8_t           c2g2;                     /* 0x0195 */
+  uint8_t           c2b2;                     /* 0x0196 */
+  uint8_t           c2a2;                     /* 0x0197 */
+  /* primary color 3 */
+  uint8_t           c1r3;                     /* 0x0198 */
+  uint8_t           c1g3;                     /* 0x0199 */
+  uint8_t           c1b3;                     /* 0x019A */
+  uint8_t           c1a3;                     /* 0x019B */
+  /* secondary color 3 */
+  uint8_t           c2r3;                     /* 0x019C */
+  uint8_t           c2g3;                     /* 0x019D */
+  uint8_t           c2b3;                     /* 0x019E */
+  uint8_t           c2a3;                     /* 0x019F */
+  /* deceleration of point velocities */
+  float             decel;                    /* 0x01A0 */
+  char              unk_00_[0x0004];          /* 0x01A4 */
+  /* initial velocity range */
+  float             vel_max;                  /* 0x01A8 */
+  float             vel_min;                  /* 0x01AC */
+  /* total duration and elapsed time */
+  uint8_t           duration;                 /* 0x01B0 */
+  uint8_t           time;                     /* 0x01B1 */
+  /* light */
+  z64_light_t       light;                    /* 0x01B2 */
+  z64_light_node_t *light_node;               /* 0x01C0 */
+  /* reduces light intensity by half each frame when set to 1 */
+  int32_t           decay;                    /* 0x01C4 */
+                                              /* 0x01C8 */
+} z64_spark_fx_t;
+
+typedef struct
+{
+  uint8_t           active;                   /* 0x0000 */
+  uint8_t           b1;                       /* 0x0001 */
+  uint8_t           b2;                       /* 0x0002 */
+  char              pad_00_[0x0001];          /* 0x0003 */
+  z64_spark_fx_t    fx;                       /* 0x0004 */
+                                              /* 0x01CC */
+} z64_spark_t;
+
+typedef struct
+{
+  z64_game_t       *game;                     /* 0x0000 */
+  z64_dot_t         dots[3];                  /* 0x0004 */
+  z64_trail_t       trails[25];               /* 0x0E5C */
+  z64_spark_t       sparks[3];                /* 0x388C */
+                                              /* 0x3DF0 */
+} z64_pfx_t;
+
+
 typedef void (*z64_CreateStaticCollision_proc)(z64_col_ctxt_t *col_ctxt, z64_game_t *game, z64_col_lut_t *col_lut);
 typedef void (*z64_LoadMinimap_proc)(z64_game_t *game, int room_idx);
 typedef void (*z64_LoadActionLabel_proc)(z64_if_ctxt_t *if_ctxt, uint16_t action_idx, int button_idx);
@@ -60,6 +337,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7B48
 #define z64_actor_ovl_tab_addr                  0x800E8530
 #define z64_letterbox_time_addr                 0x800EF1F8
+#define z64_oob_timer_addr                      0x800EF6AC
 #define z64_day_speed_addr                      0x800F1650
 #define z64_sky_images_addr                     0x800F184C
 #define z64_map_mark_ovl_addr                   0x800F1BF8
@@ -75,6 +353,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x80104364
 #define z64_afx_cfg_addr                        0x801043C0
 #define z64_gameover_countdown_addr             0x801132B0
+#define z64_pfx_addr                            0x80114DE0
 #define z64_death_fade_addr                     0x8011BD26
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
@@ -117,6 +396,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x80104524
 #define z64_afx_cfg_addr                        0x80104580
 #define z64_gameover_countdown_addr             0x80113470
+#define z64_pfx_addr                            0x80114FA0
 #define z64_death_fade_addr                     0x8011BEE6
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
@@ -159,6 +439,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x801049A4
 #define z64_afx_cfg_addr                        0x80104A00
 #define z64_gameover_countdown_addr             0x80113960
+#define z64_pfx_addr                            0x80115490
 #define z64_death_fade_addr                     0x8011C3D6
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
@@ -174,6 +455,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max            (*(int32_t*)                  z64_part_max_addr)
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
 #define z64_letterbox_time      (*(uint32_t*)                 z64_letterbox_time_addr)
+#define z64_oob_timer           (*(int32_t*)                  z64_oob_timer_addr)
 #define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
 #define z64_sky_images          (*(z64_sky_image_t(*)[9])     z64_sky_images_addr)
 #define z64_map_mark_ovl        (*(z64_map_mark_ovl_t*)       z64_map_mark_ovl_addr)
@@ -189,6 +471,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos        (*(uint8_t*)                  z64_sfx_read_pos_addr)
 #define z64_afx_cfg             (*(uint8_t*)                  z64_afx_cfg_addr)
 #define z64_gameover_countdown  (*(int16_t*)                  z64_gameover_countdown_addr)
+#define z64_pfx                 (*(z64_pfx_t*)                z64_pfx_addr)
 #define z64_death_fade          (*(uint8_t*)                  z64_death_fade_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
 #define z64_game_arena          (*(z64_arena_t*)              z64_game_arena_addr)
@@ -540,6 +823,7 @@ void save_state(void *state, struct state_meta *meta)
   serial_write(&p, &z64_part_pos, sizeof(z64_part_pos));
   serial_write(&p, &z64_part_max, sizeof(z64_part_max));
   serial_write(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
+  serial_write(&p, &z64_pfx, sizeof(z64_pfx));
 #endif
 
   /* save transition actor list (it may have been modified during gameplay) */
@@ -590,6 +874,9 @@ void save_state(void *state, struct state_meta *meta)
   serial_write(&p, (void*)0x8011BC20, 0x0140);
   /* cutscene text id */
   serial_write(&p, (void*)0x800EFCD0, 0x0002);
+
+  /* oob timer */
+  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
 
   /* textbox state */
   serial_write(&p, (void*)0x8010A924, 0x0028);
@@ -782,6 +1069,7 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, &z64_part_pos, sizeof(z64_part_pos));
   serial_read(&p, &z64_part_max, sizeof(z64_part_max));
   serial_read(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
+  serial_read(&p, &z64_pfx, sizeof(z64_pfx));
 #endif
 
   /* load scene */
@@ -884,215 +1172,215 @@ void load_state(void *state, struct state_meta *meta)
         uint32_t start = z64_object_table[c_id].vrom_start;
         uint32_t end = z64_object_table[c_id].vrom_end;
         zu_getfile(start, c_ptr, end - start);
-        /* object-specific initialization monkaS */
-        z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(c_ptr);
-        switch(c_id) {
-        /* some object files contain collision data. this collision data has
-           an associated collision header (z64_col_hdr_t), with segment
-           addresses that must be relocated to prevent crashes.
-           this relocation usually happens within the constructor of the actor
-           that uses said collision data. this means that the locations of
-           these collision headers are hardcoded in the actor overlays.
-           thus, there's no convenient list of all addresses that may need
-           relocation. instead, they have to be painstakingly tracked down
-           by hand. hopefully i've managed to find them all. */
-          case 0x0001:  reloc_col_hdr(0x06039CE0);
-                        reloc_col_hdr(0x0603A950);
-                        reloc_col_hdr(0x0603ACB0);
-                        reloc_col_hdr(0x0603B020); break;
-          case 0x0002:  reloc_col_hdr(0x060041B0); break;
-          case 0x0003:  reloc_col_hdr(0x06004E98);
-                        reloc_col_hdr(0x06005FB8); break;
-          case 0x000E:  reloc_col_hdr(0x06005FC8); break;
-          case 0x0019:  reloc_col_hdr(0x06024764);
-                        reloc_col_hdr(0x060250A8); break;
-          case 0x001C:  reloc_col_hdr(0x0601D9D0); break;
-          case 0x002A:  reloc_col_hdr(0x06000E94); break;
-          case 0x002B:  reloc_col_hdr(0x06001DDC);
-                        reloc_col_hdr(0x06003CE0);
-                        reloc_col_hdr(0x06004F30); break;
-          case 0x002C:  reloc_col_hdr(0x0600CB80);
-                        reloc_col_hdr(0x0600CC90);
-                        reloc_col_hdr(0x0600CDA0);
-                        reloc_col_hdr(0x0600D054);
-                        reloc_col_hdr(0x0600D188);
-                        reloc_col_hdr(0x0600D5C0);
-                        reloc_col_hdr(0x0600D800);
-                        reloc_col_hdr(0x0600D878);
-                        reloc_col_hdr(0x0600D8F8);
-                        reloc_col_hdr(0x0600DA10);
-                        reloc_col_hdr(0x0600DD1C);
-                        reloc_col_hdr(0x0600DE44);
-                        reloc_col_hdr(0x0600DF78);
-                        reloc_col_hdr(0x0600E1E8);
-                        reloc_col_hdr(0x0600E2CC);
-                        reloc_col_hdr(0x0600E380);
-                        reloc_col_hdr(0x0600E430);
-                        reloc_col_hdr(0x0600E568);
-                        reloc_col_hdr(0x0600FAE8);
-                        reloc_col_hdr(0x060120E8); break;
-          case 0x002F:  reloc_col_hdr(0x06000280);
-                        reloc_col_hdr(0x060005E0); break;
-          case 0x0036:  reloc_col_hdr(0x06005780);
-                        reloc_col_hdr(0x06006050);
-                        reloc_col_hdr(0x06006460);
-                        reloc_col_hdr(0x060066A8);
-                        reloc_col_hdr(0x06007798); break;
-          case 0x0037:  reloc_col_hdr(0x06012FD0); break;
-          case 0x0038:  reloc_col_hdr(0x06000118); break;
-          case 0x0040:  reloc_col_hdr(0x06000A1C);
-                        reloc_col_hdr(0x06001830);
-                        reloc_col_hdr(0x0600BA8C); break;
-          case 0x004D:  reloc_col_hdr(0x060042D8); break;
-          case 0x0059:  reloc_col_hdr(0x060003F0);
-                        reloc_col_hdr(0x06000998);
-                        reloc_col_hdr(0x06000ED0);
-                        reloc_col_hdr(0x060015F8);
-                        reloc_col_hdr(0x06001C58);
-                        reloc_col_hdr(0x06001DE8);
-                        reloc_col_hdr(0x060025A4);
-                        reloc_col_hdr(0x06003590);
-                        reloc_col_hdr(0x06007250);
-                        reloc_col_hdr(0x060073F0);
-                        reloc_col_hdr(0x060074EC); break;
-          case 0x005C:  reloc_col_hdr(0x060054B8); break;
-          case 0x005E:  reloc_col_hdr(0x06007888); break;
-          case 0x0061:  reloc_col_hdr(0x06000658); break;
-          case 0x0068:  reloc_col_hdr(0x06000330); break;
-          case 0x0069:  reloc_col_hdr(0x06000118);
-                        reloc_col_hdr(0x06004330);
-                        reloc_col_hdr(0x060044D0);
-                        reloc_col_hdr(0x06004780);
-                        reloc_col_hdr(0x06004940);
-                        reloc_col_hdr(0x06004B00);
-                        reloc_col_hdr(0x06004CC0);
-                        reloc_col_hdr(0x06005334);
-                        reloc_col_hdr(0x06005E30);
-                        reloc_col_hdr(0x06006F70);
-                        reloc_col_hdr(0x060081D0);
-                        reloc_col_hdr(0x06008D10);
-                        reloc_col_hdr(0x06009168);
-                        reloc_col_hdr(0x06009CD0);
-                        reloc_col_hdr(0x0600A7F4);
-                        reloc_col_hdr(0x0600A938);
-                        reloc_col_hdr(0x0600E408);
-                        reloc_col_hdr(0x0600ED7C);
-                        reloc_col_hdr(0x060108B8);
-                        reloc_col_hdr(0x06010E10);
-                        reloc_col_hdr(0x060131C4); break;
-          case 0x006A:  reloc_col_hdr(0x06000EE8);
-                        reloc_col_hdr(0x06001238); break;
-          case 0x006B:  reloc_col_hdr(0x060003F0);
-                        reloc_col_hdr(0x06001C1C);
-                        reloc_col_hdr(0x06002594);
-                        reloc_col_hdr(0x06002854);
-                        reloc_col_hdr(0x06002920); break;
-          case 0x006C:  reloc_col_hdr(0x060003C4);
-                        reloc_col_hdr(0x060025FC); break;
-          case 0x006F:  reloc_col_hdr(0x06003490); break;
-          case 0x0070:  reloc_col_hdr(0x060043D0); break;
-          case 0x0071:  reloc_col_hdr(0x06006078); break;
-          case 0x0072:  reloc_col_hdr(0x06001AF8);
-                        reloc_col_hdr(0x0600221C);
-                        reloc_col_hdr(0x060035F8);
-                        reloc_col_hdr(0x060037D8);
-                        reloc_col_hdr(0x060063B8);
-                        reloc_col_hdr(0x060087AC);
-                        reloc_col_hdr(0x060089E0); break;
-          case 0x0074:  reloc_col_hdr(0x06001904);
-                        reloc_col_hdr(0x06002FD8);
-                        reloc_col_hdr(0x060039D4); break;
-          case 0x0076:  reloc_col_hdr(0x060000C0); break;
-          case 0x0081:  reloc_col_hdr(0x06001F10); break;
-          case 0x0082:  reloc_col_hdr(0x06000350);
-                        reloc_col_hdr(0x060006D0); break;
-          case 0x008D:  reloc_col_hdr(0x06000870);
-                        reloc_col_hdr(0x06000C2C);
-                        reloc_col_hdr(0x06001830);
-                        reloc_col_hdr(0x06001AB8); break;
-          case 0x0096:  reloc_col_hdr(0x06005048);
-                        reloc_col_hdr(0x06005580);
-                        reloc_col_hdr(0x06005CF8);
-                        reloc_col_hdr(0x06008CE0); break;
-          case 0x0099:  reloc_col_hdr(0x06007860); break;
-          case 0x009A:  reloc_col_hdr(0x0600169C); break;
-          case 0x009C:  reloc_col_hdr(0x06000D68); break;
-          case 0x00A1:  reloc_col_hdr(0x060128D8);
-                        reloc_col_hdr(0x06012BA4);
-                        reloc_col_hdr(0x060133EC); break;
-          case 0x00A2:  reloc_col_hdr(0x06000428); break;
-          case 0x00AC:  reloc_col_hdr(0x06001A70); break;
-          case 0x00AE:  reloc_col_hdr(0x0600283C);
-                        reloc_col_hdr(0x06005520);
-                        reloc_col_hdr(0x06007580);
-                        reloc_col_hdr(0x06008458); break;
-          case 0x00AF:  reloc_col_hdr(0x06000368);
-                        reloc_col_hdr(0x06000534);
-                        reloc_col_hdr(0x06002154);
-                        reloc_col_hdr(0x0600261C);
-                        reloc_col_hdr(0x06002FE4); break;
-          case 0x00B1:  reloc_col_hdr(0x06000A38); break;
-          case 0x00E2:  reloc_col_hdr(0x060180F8); break;
-          case 0x00F0:  reloc_col_hdr(0x06000348);
-                        reloc_col_hdr(0x060004D0); break;
-          case 0x00F1:  reloc_col_hdr(0x060004A8);
-                        reloc_col_hdr(0x06005C4C);
-                        reloc_col_hdr(0x0600C4C8);
-                        reloc_col_hdr(0x0600D7E8);
-                        reloc_col_hdr(0x0600E710);
-                        reloc_col_hdr(0x0600F208);
-                        reloc_col_hdr(0x0601167C);
-                        reloc_col_hdr(0x06012508); break;
-          case 0x00F9:  reloc_col_hdr(0x0600075C); break;
-          case 0x0100:  reloc_col_hdr(0x06001438); break;
-          case 0x0112:  reloc_col_hdr(0x06000C98); break;
-          case 0x0113:  reloc_col_hdr(0x06002590);
-                        reloc_col_hdr(0x060038FC); break;
-          case 0x011B:  reloc_col_hdr(0x06000360); break;
-          case 0x011C:  reloc_col_hdr(0x06000578);
-                        reloc_col_hdr(0x06000730); break;
-          case 0x011D:  reloc_col_hdr(0x060003D0); break;
-          case 0x011E:  reloc_col_hdr(0x060005DC); break;
-          case 0x0125:  reloc_col_hdr(0x06007564); break;
-          case 0x0129:  reloc_col_hdr(0x060011B8); break;
-          case 0x0130:  reloc_col_hdr(0x06000DB8); break;
-          case 0x013A:  reloc_col_hdr(0x06000D78); break;
-          case 0x014B:  reloc_col_hdr(0x06000170); break;
-          case 0x014C:  reloc_col_hdr(0x06005CB8);
-                        reloc_col_hdr(0x060091E4); break;
-          case 0x0156:  reloc_col_hdr(0x060011D4); break;
-          case 0x0161:  reloc_col_hdr(0x06000918);
-                        reloc_col_hdr(0x060012C0); break;
-          case 0x0162:  reloc_col_hdr(0x060011EC);
-                        reloc_col_hdr(0x0600238C); break;
-          case 0x0166:  reloc_col_hdr(0x06000908);
-                        reloc_col_hdr(0x06000AF0); break;
-          case 0x016C:  reloc_col_hdr(0x06000D48);
-                        reloc_col_hdr(0x06001430); break;
-          case 0x016F:  reloc_col_hdr(0x06001A58); break;
-          case 0x0170:  reloc_col_hdr(0x06000B70); break;
-          case 0x0178:  reloc_col_hdr(0x06000CB8);
-                        reloc_col_hdr(0x06001B00);
-                        reloc_col_hdr(0x06001C40); break;
-          case 0x0179:  reloc_col_hdr(0x06004618);
-                        reloc_col_hdr(0x0600C080);
-                        reloc_col_hdr(0x0600ECD8); break;
-          case 0x0180:  reloc_col_hdr(0x06001A38);
-                        reloc_col_hdr(0x06003C64); break;
-          case 0x0181:  reloc_col_hdr(0x06001C58);
-                        reloc_col_hdr(0x06001DA8); break;
-          case 0x0185:  reloc_col_hdr(0x06001B70);
-                        reloc_col_hdr(0x06001F70);
-                        reloc_col_hdr(0x06002448);
-                        reloc_col_hdr(0x06002850);
-                        reloc_col_hdr(0x06002D28);
-                        reloc_col_hdr(0x06002FE4);
-                        reloc_col_hdr(0x060033E0);
-                        reloc_col_hdr(0x06003AF0); break;
-          case 0x0189:  reloc_col_hdr(0x0600C2D0); break;
-          case 0x018A:  reloc_col_hdr(0x06000118); break;
-          case 0x0190:  reloc_col_hdr(0x06000B30); break;
-        }
+      }
+      /* object-specific initialization monkaS */
+      z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(c_ptr);
+      switch(c_id) {
+      /* some object files contain collision data. this collision data has
+         an associated collision header (z64_col_hdr_t), with segment
+         addresses that must be relocated to prevent crashes.
+         this relocation usually happens within the constructor of the actor
+         that uses said collision data. this means that the locations of
+         these collision headers are hardcoded in the actor overlays.
+         thus, there's no convenient list of all addresses that may need
+         relocation. instead, they have to be painstakingly tracked down
+         by hand. hopefully i've managed to find them all. */
+        case 0x0001:  reloc_col_hdr(0x06039CE0);
+                      reloc_col_hdr(0x0603A950);
+                      reloc_col_hdr(0x0603ACB0);
+                      reloc_col_hdr(0x0603B020); break;
+        case 0x0002:  reloc_col_hdr(0x060041B0); break;
+        case 0x0003:  reloc_col_hdr(0x06004E98);
+                      reloc_col_hdr(0x06005FB8); break;
+        case 0x000E:  reloc_col_hdr(0x06005FC8); break;
+        case 0x0019:  reloc_col_hdr(0x06024764);
+                      reloc_col_hdr(0x060250A8); break;
+        case 0x001C:  reloc_col_hdr(0x0601D9D0); break;
+        case 0x002A:  reloc_col_hdr(0x06000E94); break;
+        case 0x002B:  reloc_col_hdr(0x06001DDC);
+                      reloc_col_hdr(0x06003CE0);
+                      reloc_col_hdr(0x06004F30); break;
+        case 0x002C:  reloc_col_hdr(0x0600CB80);
+                      reloc_col_hdr(0x0600CC90);
+                      reloc_col_hdr(0x0600CDA0);
+                      reloc_col_hdr(0x0600D054);
+                      reloc_col_hdr(0x0600D188);
+                      reloc_col_hdr(0x0600D5C0);
+                      reloc_col_hdr(0x0600D800);
+                      reloc_col_hdr(0x0600D878);
+                      reloc_col_hdr(0x0600D8F8);
+                      reloc_col_hdr(0x0600DA10);
+                      reloc_col_hdr(0x0600DD1C);
+                      reloc_col_hdr(0x0600DE44);
+                      reloc_col_hdr(0x0600DF78);
+                      reloc_col_hdr(0x0600E1E8);
+                      reloc_col_hdr(0x0600E2CC);
+                      reloc_col_hdr(0x0600E380);
+                      reloc_col_hdr(0x0600E430);
+                      reloc_col_hdr(0x0600E568);
+                      reloc_col_hdr(0x0600FAE8);
+                      reloc_col_hdr(0x060120E8); break;
+        case 0x002F:  reloc_col_hdr(0x06000280);
+                      reloc_col_hdr(0x060005E0); break;
+        case 0x0036:  reloc_col_hdr(0x06005780);
+                      reloc_col_hdr(0x06006050);
+                      reloc_col_hdr(0x06006460);
+                      reloc_col_hdr(0x060066A8);
+                      reloc_col_hdr(0x06007798); break;
+        case 0x0037:  reloc_col_hdr(0x06012FD0); break;
+        case 0x0038:  reloc_col_hdr(0x06000118); break;
+        case 0x0040:  reloc_col_hdr(0x06000A1C);
+                      reloc_col_hdr(0x06001830);
+                      reloc_col_hdr(0x0600BA8C); break;
+        case 0x004D:  reloc_col_hdr(0x060042D8); break;
+        case 0x0059:  reloc_col_hdr(0x060003F0);
+                      reloc_col_hdr(0x06000998);
+                      reloc_col_hdr(0x06000ED0);
+                      reloc_col_hdr(0x060015F8);
+                      reloc_col_hdr(0x06001C58);
+                      reloc_col_hdr(0x06001DE8);
+                      reloc_col_hdr(0x060025A4);
+                      reloc_col_hdr(0x06003590);
+                      reloc_col_hdr(0x06007250);
+                      reloc_col_hdr(0x060073F0);
+                      reloc_col_hdr(0x060074EC); break;
+        case 0x005C:  reloc_col_hdr(0x060054B8); break;
+        case 0x005E:  reloc_col_hdr(0x06007888); break;
+        case 0x0061:  reloc_col_hdr(0x06000658); break;
+        case 0x0068:  reloc_col_hdr(0x06000330); break;
+        case 0x0069:  reloc_col_hdr(0x06000118);
+                      reloc_col_hdr(0x06004330);
+                      reloc_col_hdr(0x060044D0);
+                      reloc_col_hdr(0x06004780);
+                      reloc_col_hdr(0x06004940);
+                      reloc_col_hdr(0x06004B00);
+                      reloc_col_hdr(0x06004CC0);
+                      reloc_col_hdr(0x06005334);
+                      reloc_col_hdr(0x06005E30);
+                      reloc_col_hdr(0x06006F70);
+                      reloc_col_hdr(0x060081D0);
+                      reloc_col_hdr(0x06008D10);
+                      reloc_col_hdr(0x06009168);
+                      reloc_col_hdr(0x06009CD0);
+                      reloc_col_hdr(0x0600A7F4);
+                      reloc_col_hdr(0x0600A938);
+                      reloc_col_hdr(0x0600E408);
+                      reloc_col_hdr(0x0600ED7C);
+                      reloc_col_hdr(0x060108B8);
+                      reloc_col_hdr(0x06010E10);
+                      reloc_col_hdr(0x060131C4); break;
+        case 0x006A:  reloc_col_hdr(0x06000EE8);
+                      reloc_col_hdr(0x06001238); break;
+        case 0x006B:  reloc_col_hdr(0x060003F0);
+                      reloc_col_hdr(0x06001C1C);
+                      reloc_col_hdr(0x06002594);
+                      reloc_col_hdr(0x06002854);
+                      reloc_col_hdr(0x06002920); break;
+        case 0x006C:  reloc_col_hdr(0x060003C4);
+                      reloc_col_hdr(0x060025FC); break;
+        case 0x006F:  reloc_col_hdr(0x06003490); break;
+        case 0x0070:  reloc_col_hdr(0x060043D0); break;
+        case 0x0071:  reloc_col_hdr(0x06006078); break;
+        case 0x0072:  reloc_col_hdr(0x06001AF8);
+                      reloc_col_hdr(0x0600221C);
+                      reloc_col_hdr(0x060035F8);
+                      reloc_col_hdr(0x060037D8);
+                      reloc_col_hdr(0x060063B8);
+                      reloc_col_hdr(0x060087AC);
+                      reloc_col_hdr(0x060089E0); break;
+        case 0x0074:  reloc_col_hdr(0x06001904);
+                      reloc_col_hdr(0x06002FD8);
+                      reloc_col_hdr(0x060039D4); break;
+        case 0x0076:  reloc_col_hdr(0x060000C0); break;
+        case 0x0081:  reloc_col_hdr(0x06001F10); break;
+        case 0x0082:  reloc_col_hdr(0x06000350);
+                      reloc_col_hdr(0x060006D0); break;
+        case 0x008D:  reloc_col_hdr(0x06000870);
+                      reloc_col_hdr(0x06000C2C);
+                      reloc_col_hdr(0x06001830);
+                      reloc_col_hdr(0x06001AB8); break;
+        case 0x0096:  reloc_col_hdr(0x06005048);
+                      reloc_col_hdr(0x06005580);
+                      reloc_col_hdr(0x06005CF8);
+                      reloc_col_hdr(0x06008CE0); break;
+        case 0x0099:  reloc_col_hdr(0x06007860); break;
+        case 0x009A:  reloc_col_hdr(0x0600169C); break;
+        case 0x009C:  reloc_col_hdr(0x06000D68); break;
+        case 0x00A1:  reloc_col_hdr(0x060128D8);
+                      reloc_col_hdr(0x06012BA4);
+                      reloc_col_hdr(0x060133EC); break;
+        case 0x00A2:  reloc_col_hdr(0x06000428); break;
+        case 0x00AC:  reloc_col_hdr(0x06001A70); break;
+        case 0x00AE:  reloc_col_hdr(0x0600283C);
+                      reloc_col_hdr(0x06005520);
+                      reloc_col_hdr(0x06007580);
+                      reloc_col_hdr(0x06008458); break;
+        case 0x00AF:  reloc_col_hdr(0x06000368);
+                      reloc_col_hdr(0x06000534);
+                      reloc_col_hdr(0x06002154);
+                      reloc_col_hdr(0x0600261C);
+                      reloc_col_hdr(0x06002FE4); break;
+        case 0x00B1:  reloc_col_hdr(0x06000A38); break;
+        case 0x00E2:  reloc_col_hdr(0x060180F8); break;
+        case 0x00F0:  reloc_col_hdr(0x06000348);
+                      reloc_col_hdr(0x060004D0); break;
+        case 0x00F1:  reloc_col_hdr(0x060004A8);
+                      reloc_col_hdr(0x06005C4C);
+                      reloc_col_hdr(0x0600C4C8);
+                      reloc_col_hdr(0x0600D7E8);
+                      reloc_col_hdr(0x0600E710);
+                      reloc_col_hdr(0x0600F208);
+                      reloc_col_hdr(0x0601167C);
+                      reloc_col_hdr(0x06012508); break;
+        case 0x00F9:  reloc_col_hdr(0x0600075C); break;
+        case 0x0100:  reloc_col_hdr(0x06001438); break;
+        case 0x0112:  reloc_col_hdr(0x06000C98); break;
+        case 0x0113:  reloc_col_hdr(0x06002590);
+                      reloc_col_hdr(0x060038FC); break;
+        case 0x011B:  reloc_col_hdr(0x06000360); break;
+        case 0x011C:  reloc_col_hdr(0x06000578);
+                      reloc_col_hdr(0x06000730); break;
+        case 0x011D:  reloc_col_hdr(0x060003D0); break;
+        case 0x011E:  reloc_col_hdr(0x060005DC); break;
+        case 0x0125:  reloc_col_hdr(0x06007564); break;
+        case 0x0129:  reloc_col_hdr(0x060011B8); break;
+        case 0x0130:  reloc_col_hdr(0x06000DB8); break;
+        case 0x013A:  reloc_col_hdr(0x06000D78); break;
+        case 0x014B:  reloc_col_hdr(0x06000170); break;
+        case 0x014C:  reloc_col_hdr(0x06005CB8);
+                      reloc_col_hdr(0x060091E4); break;
+        case 0x0156:  reloc_col_hdr(0x060011D4); break;
+        case 0x0161:  reloc_col_hdr(0x06000918);
+                      reloc_col_hdr(0x060012C0); break;
+        case 0x0162:  reloc_col_hdr(0x060011EC);
+                      reloc_col_hdr(0x0600238C); break;
+        case 0x0166:  reloc_col_hdr(0x06000908);
+                      reloc_col_hdr(0x06000AF0); break;
+        case 0x016C:  reloc_col_hdr(0x06000D48);
+                      reloc_col_hdr(0x06001430); break;
+        case 0x016F:  reloc_col_hdr(0x06001A58); break;
+        case 0x0170:  reloc_col_hdr(0x06000B70); break;
+        case 0x0178:  reloc_col_hdr(0x06000CB8);
+                      reloc_col_hdr(0x06001B00);
+                      reloc_col_hdr(0x06001C40); break;
+        case 0x0179:  reloc_col_hdr(0x06004618);
+                      reloc_col_hdr(0x0600C080);
+                      reloc_col_hdr(0x0600ECD8); break;
+        case 0x0180:  reloc_col_hdr(0x06001A38);
+                      reloc_col_hdr(0x06003C64); break;
+        case 0x0181:  reloc_col_hdr(0x06001C58);
+                      reloc_col_hdr(0x06001DA8); break;
+        case 0x0185:  reloc_col_hdr(0x06001B70);
+                      reloc_col_hdr(0x06001F70);
+                      reloc_col_hdr(0x06002448);
+                      reloc_col_hdr(0x06002850);
+                      reloc_col_hdr(0x06002D28);
+                      reloc_col_hdr(0x06002FE4);
+                      reloc_col_hdr(0x060033E0);
+                      reloc_col_hdr(0x06003AF0); break;
+        case 0x0189:  reloc_col_hdr(0x0600C2D0); break;
+        case 0x018A:  reloc_col_hdr(0x06000118); break;
+        case 0x0190:  reloc_col_hdr(0x06000B30); break;
       }
     }
   }
@@ -1153,16 +1441,12 @@ void load_state(void *state, struct state_meta *meta)
   /* cutscene text id */
   serial_read(&p, (void*)0x800EFCD0, 0x0002);
 
+  /* oob timer */
+  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+
   /* textbox state */
   serial_read(&p, (void*)0x8010A924, 0x0028);
 #endif
-
-  /* stop sound effects */
-  /* importantly, this removes all sound effect control points, which prevents
-     floating-point exception crashes due to dangling pointers in the cp's. */
-  z64_StopSfx();
-  /* cancel pending sound effects */
-  z64_sfx_read_pos = z64_sfx_write_pos;
 
   /* load textures */
   zu_getfile_idx(940, z64_game.if_ctxt.parameter);
@@ -1266,6 +1550,14 @@ void load_state(void *state, struct state_meta *meta)
     gSPEndDisplayList(z64_ctxt.gfx->work.p++);
   }
 
+  /* stop sound effects */
+  /* importantly, this removes all sound effect control points, which prevents
+     floating-point exception crashes due to dangling pointers in the cp's. */
+  z64_StopSfx();
+  /* cancel pending sound effects */
+  z64_sfx_read_pos = z64_sfx_write_pos;
+  /* cancel pending audio commands */
+  z64_audio_cmd_read_pos = z64_audio_cmd_write_pos;
   /* configure afx */
   uint8_t c_afx_cfg;
   serial_read(&p, &c_afx_cfg, sizeof(c_afx_cfg));

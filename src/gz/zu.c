@@ -385,25 +385,25 @@ void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
   {
     z64_file.seq_index = -1;
     z64_file.night_sfx = -1;
-    zu_setmusic(0x101E00FF);
-    zu_setmusic(0x620A0000);
-    zu_setmusic(0x620A0100);
-    zu_setmusic(0x620A0200);
-    zu_setmusic(0x620A0300);
-    zu_setmusic(0x620A0400);
-    zu_setmusic(0x620A0500);
-    zu_setmusic(0x620A0600);
-    zu_setmusic(0x620A0700);
-    zu_setmusic(0x620A0800);
-    zu_setmusic(0x620A0900);
-    zu_setmusic(0x620A0A00);
-    zu_setmusic(0x620A0B00);
-    zu_setmusic(0x620A0C00);
-    zu_setmusic(0x620A0E00);
-    zu_setmusic(0x620A0F00);
+    zu_audio_cmd(0x101E00FF);
+    zu_audio_cmd(0x620A0000);
+    zu_audio_cmd(0x620A0100);
+    zu_audio_cmd(0x620A0200);
+    zu_audio_cmd(0x620A0300);
+    zu_audio_cmd(0x620A0400);
+    zu_audio_cmd(0x620A0500);
+    zu_audio_cmd(0x620A0600);
+    zu_audio_cmd(0x620A0700);
+    zu_audio_cmd(0x620A0800);
+    zu_audio_cmd(0x620A0900);
+    zu_audio_cmd(0x620A0A00);
+    zu_audio_cmd(0x620A0B00);
+    zu_audio_cmd(0x620A0C00);
+    zu_audio_cmd(0x620A0E00);
+    zu_audio_cmd(0x620A0F00);
   }
-  zu_setmusic(0x111E00FF);
-  zu_setmusic(0x131E00FF);
+  zu_audio_cmd(0x111E00FF);
+  zu_audio_cmd(0x131E00FF);
   z64_file.entrance_index = entrance_index;
   z64_file.cutscene_index = cutscene_index;
   z64_file.interface_flag = 0;
@@ -423,11 +423,10 @@ void zu_execute_filemenu(void)
   z64_ctxt.next_size = z64_ctxt_filemenu_size;
 }
 
-void zu_setmusic(uint32_t command)
+void zu_audio_cmd(uint32_t cmd)
 {
-  uint32_t *buf = (void*)z64_seq_buf_addr;
-  uint8_t *pos = (void*)z64_seq_pos_addr;
-  buf[(*pos)++] = command;
+  uint32_t *cmd_buf = (void*)z64_audio_cmd_buf_addr;
+  cmd_buf[z64_audio_cmd_write_pos++] = cmd;
 }
 
 void zu_set_event_flag(int flag_index)

@@ -2396,7 +2396,7 @@ static void main_hook(void)
       if (input_pressed_raw() & BUTTON_D_LEFT) {
         void **state = &state_buf[state_slot];
         if (!*state)
-          *state = malloc(400 * 1024);
+          *state = malloc(410 * 1024);
         struct state_meta meta;
         if (movie_state == MOVIE_IDLE)
           meta.movie_frame = -1;
@@ -2517,9 +2517,9 @@ static void main_hook(void)
       z64_file.day_time = day_time_prev;
   }
   if (settings->cheats & (1 << CHEAT_NOMUSIC)) {
-    zu_setmusic(0x100000FF);
-    zu_setmusic(0x110000FF);
-    zu_setmusic(0x130000FF);
+    zu_audio_cmd(0x100000FF);
+    zu_audio_cmd(0x110000FF);
+    zu_audio_cmd(0x130000FF);
     z64_file.seq_index = -1;
     z64_file.night_sfx = -1;
   }
