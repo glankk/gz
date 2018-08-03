@@ -1426,7 +1426,7 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
   /* oob timer */
-  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+  serial_read(&p, &z64_oob_timer, sizeof(z64_oob_timer));
 
   /* countdown to gameover screen */
   serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
