@@ -1011,9 +1011,9 @@ void load_state(void *state, struct state_meta *meta)
     obj_list[i].ptr = obj->data;
   }
   int scene_index = z64_game.scene_index;
-  _Bool p_pause_objects = (z64_game.pause_ctxt.state > 0x0003 &&
-                           z64_game.pause_ctxt.state < 0x0008) ||
-                          z64_game.pause_ctxt.state > 0x000A;
+  int ps = z64_game.pause_ctxt.state;
+  _Bool p_pause_objects = (ps > 0x0003 && ps < 0x0008) || ps > 0x000A;
+  _Bool p_gameover = ps >= 0x0008 && ps <= 0x0011;
   int p_afx_cfg = z64_afx_cfg;
 
   /* load metadata */
@@ -1203,7 +1203,7 @@ void load_state(void *state, struct state_meta *meta)
     int c_id = c_room->index;
     void *p_ptr = p_room->ptr;
     void *c_ptr = c_room->file;
-    if (c_id != -1 && (c_id != p_id || c_ptr != p_ptr)) {
+    if (c_ptr && c_id != -1 && (c_id != p_id || c_ptr != p_ptr)) {
       uint32_t start = z64_game.room_list[c_id].vrom_start;
       uint32_t end = z64_game.room_list[c_id].vrom_end;
       zu_getfile(start, c_ptr, end - start);
@@ -1211,19 +1211,15 @@ void load_state(void *state, struct state_meta *meta)
   }
 
   /* load objects */
-  _Bool c_pause_objects = (z64_game.pause_ctxt.state > 0x0003 &&
-                           z64_game.pause_ctxt.state < 0x0008) ||
-                          z64_game.pause_ctxt.state > 0x000A;
-  _Bool dungeon_map = z64_game.scene_index < 0x000A ||
-                      (z64_game.scene_index > 0x0010 &&
-                       z64_game.scene_index < 0x0019);
+  ps = z64_game.pause_ctxt.state;
+  _Bool c_pause_objects = (ps > 0x0003 && ps < 0x0008) || ps > 0x000A;
+  _Bool c_gameover = ps >= 0x0008 && ps <= 0x0011;
+  int si = z64_game.scene_index;
+  _Bool dungeon_map = si < 0x000A || (si > 0x0010 && si < 0x0019);
   if (c_pause_objects) {
     /* gameover-specific states */
-    if (z64_game.pause_ctxt.state >= 0x0008 &&
-        z64_game.pause_ctxt.state <= 0x0011)
-    {
+    if (c_gameover)
       zu_getfile_idx(12, z64_game.pause_ctxt.icon_item_s);
-    }
     else {
       z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
                            &z64_game.pause_ctxt.s27C);
@@ -1630,15 +1626,18 @@ void load_state(void *state, struct state_meta *meta)
   }
   /* clear unsaved textures */
   if (c_pause_objects && !p_pause_objects) {
-    uint16_t (*zimg)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
-    zimg = (void*)z64_zimg_addr;
+    uint16_t (*img)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
+    img = (void*)z64_zimg_addr;
     for (int y = 0; y < Z64_SCREEN_HEIGHT; ++y)
       for (int x = 0; x < Z64_SCREEN_WIDTH; ++x)
-        (*zimg)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
-    uint16_t (*limg)[112][64] = z64_game.pause_ctxt.p13C;
+        (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+  }
+  if (c_pause_objects && !c_gameover && (!p_pause_objects || p_gameover)) {
+    uint16_t (*img)[112][64];
+    img = z64_game.pause_ctxt.p13C;
     for (int y = 0; y < 112; ++y)
       for (int x = 0; x < 64; ++x)
-        (*limg)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
+        (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
   }
 
   /* load display lists */
