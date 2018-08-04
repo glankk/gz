@@ -920,12 +920,6 @@ void save_state(void *state, struct state_meta *meta)
   /* rng */
   serial_write(&p, &z64_random, sizeof(z64_random));
 
-  /* ocarina state */
-  serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
-  /* todo: ocarina audio sync hack */
-  /* song state */
-  serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
-
   /* cutscene state */
   serial_write(&p, (void*)z64_cs_state_addr, 0x0140);
   /* cutscene message id */
@@ -978,6 +972,12 @@ void save_state(void *state, struct state_meta *meta)
     else
       serial_write(&p, &sc->vs_current, sizeof(sc->vs_current));
   }
+
+  /* save ocarina state */
+  serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  /* todo: ocarina audio sync hack */
+  /* save song state */
+  serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
 
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
@@ -1545,11 +1545,6 @@ void load_state(void *state, struct state_meta *meta)
   /* rng */
   serial_read(&p, &z64_random, sizeof(z64_random));
 
-  /* ocarina state */
-  serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
-  /* song state */
-  serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
-
   /* cutscene state */
   serial_read(&p, (void*)z64_cs_state_addr, 0x0140);
   /* cutscene message id */
@@ -1733,12 +1728,17 @@ void load_state(void *state, struct state_meta *meta)
       z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
     }
     /* set volume */
-    z64_AfxCmdF(0x41000000 | (i << 16), 1.f);
+    z64_AfxCmdF(0x41000000 | (i << 16), volume);
   }
   if (z64_game.pause_ctxt.state > 0 && z64_game.pause_ctxt.state < 8)
     z64_AfxCmdW(0xF1000000, 0x00000000);
   else
     z64_AfxCmdW(0xF2000000, 0x00000000);
+
+  /* load ocarina state */
+  serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  /* load song state */
+  serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
 
   //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_read(&p, (void*)0x8012143C, 0x41F4);
