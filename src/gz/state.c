@@ -25,8 +25,7 @@ static void serial_read(void **p, void *data, uint32_t length)
 }
 
 
-
-/* special particle effects */
+/* static particle effects */
 typedef struct
 {
   /* velocity */
@@ -338,6 +337,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_actor_ovl_tab_addr                  0x800E8530
 #define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_oob_timer_addr                      0x800EF6AC
+#define z64_cs_message_addr                     0x800EFCD0
 #define z64_day_speed_addr                      0x800F1650
 #define z64_sky_images_addr                     0x800F184C
 #define z64_map_mark_ovl_addr                   0x800F1BF8
@@ -349,17 +349,21 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE478
 #define z64_play_ovl_tab_addr                   0x800FE480
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
+#define z64_ocarina_state_addr                  0x80102208
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
 #define z64_afx_cfg_addr                        0x801043C0
+#define z64_message_state_addr                  0x8010A924
 #define z64_gameover_countdown_addr             0x801132B0
 #define z64_pfx_addr                            0x80114DE0
-#define z64_death_fade_addr                     0x8011BD26
+#define z64_cs_state_addr                       0x8011BC20
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
+#define z64_song_state_addr                     0x80121F0C
 #define z64_seq_ctl_addr                        0x80124C00
+#define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT11
 
@@ -382,6 +386,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_actor_ovl_tab_addr                  0x800E86F0
 #define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_oob_timer_addr                      0x800EF86C
+#define z64_cs_message_addr                     0x800EFE90
 #define z64_day_speed_addr                      0x800F1810
 #define z64_sky_images_addr                     0x800F1A0C
 #define z64_map_mark_ovl_addr                   0x800F1DB8
@@ -393,17 +398,21 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE638
 #define z64_play_ovl_tab_addr                   0x800FE640
 #define z64_play_ovl_ptr_addr                   0x800FE67C
+#define z64_ocarina_state_addr                  0x801023C8
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
 #define z64_afx_cfg_addr                        0x80104580
+#define z64_message_state_addr                  0x8010AAE4
 #define z64_gameover_countdown_addr             0x80113470
 #define z64_pfx_addr                            0x80114FA0
-#define z64_death_fade_addr                     0x8011BEE6
+#define z64_cs_state_addr                       0x8011BDE0
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
+#define z64_song_state_addr                     0x801220CC
 #define z64_seq_ctl_addr                        0x80124DC0
+#define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT12
 
@@ -426,6 +435,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_actor_ovl_tab_addr                  0x800E8B70
 #define z64_letterbox_time_addr                 0x800EF838
 #define z64_oob_timer_addr                      0x800EFCEC
+#define z64_cs_message_addr                     0x800F0310
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_sky_images_addr                     0x800F1E8C
 #define z64_map_mark_ovl_addr                   0x800F2238
@@ -437,17 +447,21 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FEAC8
 #define z64_play_ovl_tab_addr                   0x800FEAD0
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
+#define z64_ocarina_state_addr                  0x80102848
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
 #define z64_afx_cfg_addr                        0x80104A00
+#define z64_message_state_addr                  0x8010AFD4
 #define z64_gameover_countdown_addr             0x80113960
 #define z64_pfx_addr                            0x80115490
-#define z64_death_fade_addr                     0x8011C3D6
+#define z64_cs_state_addr                       0x8011C2D0
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
+#define z64_song_state_addr                     0x801227DC
 #define z64_seq_ctl_addr                        0x801254D0
+#define z64_item_highlight_vram_addr            0x80829D9C
 
 #endif
 
@@ -474,7 +488,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_afx_cfg             (*(uint8_t*)                  z64_afx_cfg_addr)
 #define z64_gameover_countdown  (*(int16_t*)                  z64_gameover_countdown_addr)
 #define z64_pfx                 (*(z64_pfx_t*)                z64_pfx_addr)
-#define z64_death_fade          (*(uint8_t*)                  z64_death_fade_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
 #define z64_game_arena          (*(z64_arena_t*)              z64_game_arena_addr)
 #define z64_mtx_stack           (*(MtxF(**)[20])              z64_mtx_stack_addr)
@@ -728,6 +741,17 @@ static void load_sky_image(void)
   }
 }
 
+static void grayscale_texture(uint32_t *pixels, uint16_t n_pixels)
+{
+  for (int i = 0; i < n_pixels; ++i) {
+    uint32_t c = pixels[i];
+    uint8_t s = (((c & 0xFF000000) >> 24) +
+                 ((c & 0x00FF0000) >> 15) +
+                 ((c & 0x0000FF00) >> 8)) / 7;
+    pixels[i] = (s << 24) | (s << 16) | (s << 8) | (c & 0x000000FF);
+  }
+}
+
 static _Bool addr_comp(void *a, void *b)
 {
   uint32_t *a_u32 = a;
@@ -819,14 +843,43 @@ void save_state(void *state, struct state_meta *meta)
   /* save segment table */
   serial_write(&p, &z64_stab, sizeof(z64_stab));
 
-#if 1
   /* save particles */
   serial_write(&p, &z64_part_space, sizeof(z64_part_space));
   serial_write(&p, &z64_part_pos, sizeof(z64_part_pos));
   serial_write(&p, &z64_part_max, sizeof(z64_part_max));
-  serial_write(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
-  serial_write(&p, &z64_pfx, sizeof(z64_pfx));
-#endif
+  for (int16_t i = 0; i < z64_part_max; ++i) {
+    z64_part_t *part = &z64_part_space[i];
+    if (part->time >= 0) {
+      serial_write(&p, &i, sizeof(i));
+      serial_write(&p, part, sizeof(*part));
+    }
+  }
+  serial_write(&p, &eot, sizeof(eot));
+  /* save static particles */
+  for (int16_t i = 0; i < 3; ++i) {
+    z64_dot_t *dot = &z64_pfx.dots[i];
+    if (dot->active) {
+      serial_write(&p, &i, sizeof(i));
+      serial_write(&p, dot, sizeof(*dot));
+    }
+  }
+  serial_write(&p, &eot, sizeof(eot));
+  for (int16_t i = 0; i < 25; ++i) {
+    z64_trail_t *trail = &z64_pfx.trails[i];
+    if (trail->active) {
+      serial_write(&p, &i, sizeof(i));
+      serial_write(&p, trail, sizeof(*trail));
+    }
+  }
+  serial_write(&p, &eot, sizeof(eot));
+  for (int16_t i = 0; i < 3; ++i) {
+    z64_spark_t *spark = &z64_pfx.sparks[i];
+    if (spark->active) {
+      serial_write(&p, &i, sizeof(i));
+      serial_write(&p, spark, sizeof(*spark));
+    }
+  }
+  serial_write(&p, &eot, sizeof(eot));
 
   /* save transition actor list (it may have been modified during gameplay) */
   z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
@@ -863,41 +916,53 @@ void save_state(void *state, struct state_meta *meta)
 
   /* countdown to gameover screen */
   serial_write(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
-  /* death fade state */
-  serial_write(&p, &z64_death_fade, sizeof(z64_death_fade));
 
   /* rng */
   serial_write(&p, &z64_random, sizeof(z64_random));
 
-#if 0
   /* ocarina state */
-  serial_write(&p, (void*)0x80102208, 0x0060);
-  serial_write(&p, (void*)0x80121F0C, 0x00A8);
+  serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* todo: ocarina audio sync hack */
+  /* song state */
+  serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
 
   /* cutscene state */
-  serial_write(&p, (void*)0x8011BC20, 0x0140);
-  /* cutscene text id */
-  serial_write(&p, (void*)0x800EFCD0, 0x0002);
+  serial_write(&p, (void*)z64_cs_state_addr, 0x0140);
+  /* cutscene message id */
+  serial_write(&p, (void*)z64_cs_message_addr, 0x0002);
 
-  /* textbox state */
-  serial_write(&p, (void*)0x8010A924, 0x0028);
-#endif
+  /* message state */
+  serial_write(&p, (void*)z64_message_state_addr, 0x0028);
 
   _Bool save_gfx = 1;
   /* save display lists */
   if (save_gfx) {
+    z64_gfx_t *gfx = z64_ctxt.gfx;
     serial_write(&p, &sot, sizeof(sot));
-    int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
-    void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
-    serial_write(&p, disp, z64_disp_size);
+    /* save pointers */
     struct zu_disp_p disp_p;
     zu_save_disp_p(&disp_p);
     serial_write(&p, &disp_p, sizeof(disp_p));
-    serial_write(&p, &z64_ctxt.gfx->frame_count_1,
-                 sizeof(z64_ctxt.gfx->frame_count_1));
-    serial_write(&p, &z64_ctxt.gfx->frame_count_2,
-                 sizeof(z64_ctxt.gfx->frame_count_2));
+    /* save commands and data */
+    z64_disp_buf_t *z_disp[4] =
+    {
+      &gfx->work,
+      &gfx->poly_opa,
+      &gfx->poly_xlu,
+      &gfx->overlay,
+    };
+    for (int i = 0; i < 4; ++i) {
+      z64_disp_buf_t *disp_buf = z_disp[i];
+      size_t s = sizeof(Gfx);
+      Gfx *e = disp_buf->buf + disp_buf->size / s;
+      serial_write(&p, disp_buf->buf, (disp_buf->p - disp_buf->buf) * s);
+      serial_write(&p, disp_buf->d, (e - disp_buf->d) * s);
+    }
+    /* save counters */
+    serial_write(&p, &gfx->frame_count_1,
+                 sizeof(gfx->frame_count_1));
+    serial_write(&p, &gfx->frame_count_2,
+                 sizeof(gfx->frame_count_2));
   }
   else
     serial_write(&p, &eot, sizeof(eot));
@@ -959,22 +1024,22 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, &z64_file, sizeof(z64_file));
   serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */
-  int16_t n_ovl;
-  int16_t next_ovl;
+  int16_t n_ent;
+  int16_t next_ent;
   struct set ovl_nodes;
   set_init(&ovl_nodes, sizeof(uint32_t), addr_comp);
   /* actor overlays */
-  n_ovl = sizeof(z64_actor_ovl_tab) / sizeof(*z64_actor_ovl_tab);
-  serial_read(&p, &next_ovl, sizeof(next_ovl));
-  for (int16_t i = 0; i < n_ovl; ++i) {
+  n_ent = sizeof(z64_actor_ovl_tab) / sizeof(*z64_actor_ovl_tab);
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < n_ent; ++i) {
     z64_actor_ovl_t *ovl = &z64_actor_ovl_tab[i];
-    if (i == next_ovl) {
+    if (i == next_ent) {
       serial_read(&p, &ovl->n_inst, sizeof(ovl->n_inst));
       load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
-      serial_read(&p, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ent, sizeof(next_ent));
     }
     else {
       ovl->n_inst = 0;
@@ -982,17 +1047,17 @@ void load_state(void *state, struct state_meta *meta)
     }
   }
   /* play overlays */
-  n_ovl = sizeof(z64_play_ovl_tab) / sizeof(*z64_play_ovl_tab);
-  serial_read(&p, &next_ovl, sizeof(next_ovl));
-  for (int16_t i = 0; i < n_ovl; ++i) {
+  n_ent = sizeof(z64_play_ovl_tab) / sizeof(*z64_play_ovl_tab);
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < n_ent; ++i) {
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
-    if (i == next_ovl) {
+    if (i == next_ent) {
       load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       ovl->reloc_offset = (uint32_t)ovl->ptr - ovl->vram_start;
       set_insert(&ovl_nodes, &ovl->ptr);
-      serial_read(&p, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ent, sizeof(next_ent));
     }
     else {
       ovl->ptr = NULL;
@@ -1001,29 +1066,29 @@ void load_state(void *state, struct state_meta *meta)
   }
   serial_read(&p, &z64_play_ovl_ptr, sizeof(z64_play_ovl_ptr));
   /* particle overlays */
-  n_ovl = sizeof(z64_part_ovl_tab) / sizeof(*z64_part_ovl_tab);
-  serial_read(&p, &next_ovl, sizeof(next_ovl));
-  for (int16_t i = 0; i < n_ovl; ++i) {
+  n_ent = sizeof(z64_part_ovl_tab) / sizeof(*z64_part_ovl_tab);
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < n_ent; ++i) {
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
-    if (i == next_ovl) {
+    if (i == next_ent) {
       load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
-      serial_read(&p, &next_ovl, sizeof(next_ovl));
+      serial_read(&p, &next_ent, sizeof(next_ent));
     }
     else
       ovl->ptr = NULL;
   }
   /* map mark overlay */
-  serial_read(&p, &next_ovl, sizeof(next_ovl));
-  if (next_ovl == 0) {
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  if (next_ent == 0) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
     load_ovl(&p, &ovl->ptr,
              ovl->vrom_start, ovl->vrom_end,
              ovl->vram_start, ovl->vram_end);
     set_insert(&ovl_nodes, &ovl->ptr);
-    serial_read(&p, &next_ovl, sizeof(next_ovl));
+    serial_read(&p, &next_ent, sizeof(next_ent));
   }
   else
     z64_map_mark_ovl.ptr = NULL;
@@ -1031,8 +1096,7 @@ void load_state(void *state, struct state_meta *meta)
   /* load arena nodes */
   serial_read(&p, &z64_game_arena, sizeof(z64_game_arena));
   z64_arena_node_t *node = z64_game_arena.first_node;
-  int16_t tag;
-  serial_read(&p, &tag, sizeof(tag));
+  serial_read(&p, &next_ent, sizeof(next_ent));
   while (node) {
     node->magic = 0x7373;
     node->arena = &z64_game_arena;
@@ -1046,8 +1110,8 @@ void load_state(void *state, struct state_meta *meta)
       serial_read(&p, data, node->size);
     if (node == z64_game_arena.first_node)
       node->prev = NULL;
-    serial_read(&p, &tag, sizeof(tag));
-    if (tag == 0) {
+    serial_read(&p, &next_ent, sizeof(next_ent));
+    if (next_ent == 0) {
       node->next = (void*)&node->data[node->size];
       node->next->prev = node;
     }
@@ -1065,14 +1129,55 @@ void load_state(void *state, struct state_meta *meta)
   /* load segment table */
   serial_read(&p, &z64_stab, sizeof(z64_stab));
 
-#if 1
   /* load particles */
   serial_read(&p, &z64_part_space, sizeof(z64_part_space));
   serial_read(&p, &z64_part_pos, sizeof(z64_part_pos));
   serial_read(&p, &z64_part_max, sizeof(z64_part_max));
-  serial_read(&p, z64_part_space, sizeof(*z64_part_space) * z64_part_max);
-  serial_read(&p, &z64_pfx, sizeof(z64_pfx));
-#endif
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < z64_part_max; ++i) {
+    z64_part_t *part = &z64_part_space[i];
+    if (i == next_ent) {
+      serial_read(&p, part, sizeof(*part));
+      serial_read(&p, &next_ent, sizeof(next_ent));
+    }
+    else {
+      memset(part, 0, sizeof(*part));
+      part->time = -1;
+      part->priority = 0x80;
+      part->part_id = 0x25;
+    }
+  }
+  /* load static particles */
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < 3; ++i) {
+    z64_dot_t *dot = &z64_pfx.dots[i];
+    if (i == next_ent) {
+      serial_read(&p, dot, sizeof(*dot));
+      serial_read(&p, &next_ent, sizeof(next_ent));
+    }
+    else
+      dot->active = 0;
+  }
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < 25; ++i) {
+    z64_trail_t *trail = &z64_pfx.trails[i];
+    if (i == next_ent) {
+      serial_read(&p, trail, sizeof(*trail));
+      serial_read(&p, &next_ent, sizeof(next_ent));
+    }
+    else
+      trail->active = 0;
+  }
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  for (int16_t i = 0; i < 3; ++i) {
+    z64_spark_t *spark = &z64_pfx.sparks[i];
+    if (i == next_ent) {
+      serial_read(&p, spark, sizeof(*spark));
+      serial_read(&p, &next_ent, sizeof(next_ent));
+    }
+    else
+      spark->active = 0;
+  }
 
   /* load scene */
   if (z64_game.scene_index != scene_index) {
@@ -1151,10 +1256,20 @@ void load_state(void *state, struct state_meta *meta)
       zu_getfile_idx(13, z64_game.pause_ctxt.icon_item_lang);
     else
       zu_getfile_idx(14, z64_game.pause_ctxt.icon_item_lang);
-    /* ovl_kaleido_scope modifies icons of restricted items to be grayscale */
-    /* relevant function: 8039AFBC */
     zu_getfile_idx(8, z64_game.pause_ctxt.icon_item);
     zu_getfile_idx(9, z64_game.pause_ctxt.icon_item_24);
+    /* gray out restricted items */
+    char *p = z64_play_ovl_tab[0].ptr;
+    p += (z64_item_highlight_vram_addr - z64_play_ovl_tab[0].vram_start);
+    uint8_t *item_highlight_tab = (void*)p;
+    uint32_t *pixels = z64_game.pause_ctxt.icon_item;
+    for (int i = 0; i < 0x56; ++i) {
+      if (item_highlight_tab[i] != 0x09 &&
+          item_highlight_tab[i] != z64_file.link_age)
+      {
+        grayscale_texture(&pixels[i * 0x0400], 0x0400);
+      }
+    }
   }
   else {
     /* load normal objects in the object context */
@@ -1430,25 +1545,22 @@ void load_state(void *state, struct state_meta *meta)
 
   /* countdown to gameover screen */
   serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
-  /* death fade state */
-  serial_read(&p, &z64_death_fade, sizeof(z64_death_fade));
 
   /* rng */
   serial_read(&p, &z64_random, sizeof(z64_random));
 
-#if 0
   /* ocarina state */
-  serial_read(&p, (void*)0x80102208, 0x0060);
-  serial_read(&p, (void*)0x80121F0C, 0x00A8);
+  serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  /* song state */
+  serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
 
   /* cutscene state */
-  serial_read(&p, (void*)0x8011BC20, 0x0140);
-  /* cutscene text id */
-  serial_read(&p, (void*)0x800EFCD0, 0x0002);
+  serial_read(&p, (void*)z64_cs_state_addr, 0x0140);
+  /* cutscene message id */
+  serial_read(&p, (void*)z64_cs_message_addr, 0x0002);
 
-  /* textbox state */
-  serial_read(&p, (void*)0x8010A924, 0x0028);
-#endif
+  /* message state */
+  serial_read(&p, (void*)z64_message_state_addr, 0x0028);
 
   /* load textures */
   zu_getfile_idx(940, z64_game.if_ctxt.parameter);
@@ -1530,15 +1642,29 @@ void load_state(void *state, struct state_meta *meta)
   }
 
   /* load display lists */
-  int16_t next_gfx;
-  serial_read(&p, &next_gfx, sizeof(next_gfx));
-  if (next_gfx == 0) {
-    int disp_idx = z64_ctxt.gfx->frame_count_1 & 1;
-    void *disp = (void*)(z64_disp_addr + disp_idx * z64_disp_size);
-    serial_read(&p, disp, z64_disp_size);
+  serial_read(&p, &next_ent, sizeof(next_ent));
+  if (next_ent == 0) {
+    z64_gfx_t *gfx = z64_ctxt.gfx;
+    /* load pointers */
     struct zu_disp_p disp_p;
     serial_read(&p, &disp_p, sizeof(disp_p));
     zu_load_disp_p(&disp_p);
+    /* load commands and data */
+    z64_disp_buf_t *z_disp[4] =
+    {
+      &gfx->work,
+      &gfx->poly_opa,
+      &gfx->poly_xlu,
+      &gfx->overlay,
+    };
+    for (int i = 0; i < 4; ++i) {
+      z64_disp_buf_t *disp_buf = z_disp[i];
+      size_t s = sizeof(Gfx);
+      Gfx *e = disp_buf->buf + disp_buf->size / s;
+      serial_read(&p, disp_buf->buf, (disp_buf->p - disp_buf->buf) * s);
+      serial_read(&p, disp_buf->d, (e - disp_buf->d) * s);
+    }
+    /* relocate lists */
     uint32_t frame_count_1;
     uint32_t frame_count_2;
     serial_read(&p, &frame_count_1, sizeof(frame_count_1));
@@ -1547,9 +1673,21 @@ void load_state(void *state, struct state_meta *meta)
   }
   else {
     /* no display lists saved, kill frame */
-    z64_ctxt.gfx->work.p = z64_ctxt.gfx->work.buf;
-    gDPFullSync(z64_ctxt.gfx->work.p++);
-    gSPEndDisplayList(z64_ctxt.gfx->work.p++);
+    z64_gfx_t *gfx = z64_ctxt.gfx;
+    gfx->work.p = gfx->work.buf;
+    gDPSetColorImage(gfx->work.p++,
+                     G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH,
+                     ZU_MAKE_SEG(Z64_SEG_CIMG, 0));
+    gDPSetCycleType(gfx->work.p++, G_CYC_FILL);
+    gDPSetRenderMode(gfx->work.p++, G_RM_NOOP, G_RM_NOOP2);
+    gDPSetFillColor(gfx->work.p++,
+                    (GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01) << 16) |
+                    GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01));
+    gDPFillRectangle(gfx->work.p++,
+                     0, 0, Z64_SCREEN_WIDTH - 1, Z64_SCREEN_HEIGHT - 1);
+    gDPPipeSync(gfx->work.p++);
+    gDPFullSync(gfx->work.p++);
+    gSPEndDisplayList(gfx->work.p++);
   }
 
   /* stop sound effects */

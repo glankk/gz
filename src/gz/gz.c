@@ -2404,7 +2404,9 @@ static void main_hook(void)
           meta.movie_frame = movie_frame;
         save_state(*state, &meta);
       }
-      else if (input_pressed_raw() & BUTTON_D_RIGHT) {
+      else if ((input_pressed_raw() & BUTTON_D_RIGHT) &&
+               state_buf[state_slot])
+      {
         struct state_meta meta;
         load_state(state_buf[state_slot], &meta);
         if (movie_state != MOVIE_IDLE && meta.movie_frame != -1)
