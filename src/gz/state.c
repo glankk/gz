@@ -361,6 +361,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_cs_state_addr                       0x8011BC20
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
+#define z64_map_mark_data_tab_addr              0x8011BF00
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
 #define z64_song_state_addr                     0x80121F0C
@@ -414,6 +415,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_cs_state_addr                       0x8011BDE0
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
+#define z64_map_mark_data_tab_addr              0x8011C0C0
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
 #define z64_song_state_addr                     0x801220CC
@@ -467,6 +469,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_cs_state_addr                       0x8011C2D0
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
+#define z64_map_mark_data_tab_addr              0x8011C5B0
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
 #define z64_song_state_addr                     0x801227DC
@@ -502,6 +505,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_pfx                 (*(z64_pfx_t*)                z64_pfx_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
 #define z64_game_arena          (*(z64_arena_t*)              z64_game_arena_addr)
+#define z64_map_mark_data_tab   (*(void**)                    z64_map_mark_data_tab_addr)
 #define z64_mtx_stack           (*(MtxF(**)[20])              z64_mtx_stack_addr)
 #define z64_mtx_stack_top       (*(MtxF**)                    z64_mtx_stack_top_addr)
 #define z64_seq_ctl             (*(z64_seq_ctl_t(*)[4])       z64_seq_ctl_addr)
@@ -1113,6 +1117,10 @@ void load_state(void *state, struct state_meta *meta)
              ovl->vram_start, ovl->vram_end);
     set_insert(&ovl_nodes, &ovl->ptr);
     serial_read(&p, &next_ent, sizeof(next_ent));
+    /* relocate data table pointer */
+    char *data_tab = ovl->ptr;
+    data_tab += ovl->vram_data_tab - ovl->vram_start;
+    z64_map_mark_data_tab = data_tab;
   }
   else
     z64_map_mark_ovl.ptr = NULL;

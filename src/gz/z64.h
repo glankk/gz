@@ -123,7 +123,7 @@ typedef struct
   uint32_t          vrom_end;                 /* 0x0008 */
   uint32_t          vram_start;               /* 0x000C */
   uint32_t          vram_end;                 /* 0x0010 */
-  uint32_t          vram_unk_00_;             /* 0x0014 */
+  uint32_t          vram_data_tab;            /* 0x0014 */
                                               /* 0x0018 */
 } z64_map_mark_ovl_t;
 
