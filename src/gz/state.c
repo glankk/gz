@@ -355,6 +355,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x80104364
 #define z64_afx_cfg_addr                        0x801043C0
 #define z64_message_state_addr                  0x8010A924
+#define z64_staff_notes_addr                    0x80112E8C
 #define z64_gameover_countdown_addr             0x801132B0
 #define z64_pfx_addr                            0x80114DE0
 #define z64_cs_state_addr                       0x8011BC20
@@ -407,6 +408,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x80104524
 #define z64_afx_cfg_addr                        0x80104580
 #define z64_message_state_addr                  0x8010AAE4
+#define z64_staff_notes_addr                    0x8011304C
 #define z64_gameover_countdown_addr             0x80113470
 #define z64_pfx_addr                            0x80114FA0
 #define z64_cs_state_addr                       0x8011BDE0
@@ -459,6 +461,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_read_pos_addr                   0x801049A4
 #define z64_afx_cfg_addr                        0x80104A00
 #define z64_message_state_addr                  0x8010AFD4
+#define z64_staff_notes_addr                    0x8011353C
 #define z64_gameover_countdown_addr             0x80113960
 #define z64_pfx_addr                            0x80115490
 #define z64_cs_state_addr                       0x8011C2D0
@@ -932,7 +935,7 @@ void save_state(void *state, struct state_meta *meta)
   /* cutscene state */
   serial_write(&p, (void*)z64_cs_state_addr, 0x0140);
   /* cutscene message id */
-  serial_write(&p, (void*)z64_cs_message_addr, 0x0002);
+  serial_write(&p, (void*)z64_cs_message_addr, 0x0008);
 
   /* message state */
   serial_write(&p, (void*)z64_message_state_addr, 0x0028);
@@ -998,6 +1001,7 @@ void save_state(void *state, struct state_meta *meta)
   /* save song state */
   serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
   serial_write(&p, (void*)z64_song_ptr_addr, 0x0004);
+  serial_write(&p, (void*)z64_staff_notes_addr, 0x001E);
 
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
@@ -1568,7 +1572,7 @@ void load_state(void *state, struct state_meta *meta)
   /* cutscene state */
   serial_read(&p, (void*)z64_cs_state_addr, 0x0140);
   /* cutscene message id */
-  serial_read(&p, (void*)z64_cs_message_addr, 0x0002);
+  serial_read(&p, (void*)z64_cs_message_addr, 0x0008);
 
   /* message state */
   serial_read(&p, (void*)z64_message_state_addr, 0x0028);
@@ -1779,6 +1783,7 @@ void load_state(void *state, struct state_meta *meta)
   /* load song state */
   serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
   serial_read(&p, (void*)z64_song_ptr_addr, 0x0004);
+  serial_read(&p, (void*)z64_staff_notes_addr, 0x001E);
   /* fix audio counters */
   {
     uint32_t *ocarina_counter = (void*)(z64_ocarina_state_addr + 0x005C);
