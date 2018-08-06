@@ -363,6 +363,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_top_addr                  0x80121204
 #define z64_song_state_addr                     0x80121F0C
 #define z64_seq_ctl_addr                        0x80124C00
+#define z64_afx_addr                            0x80125630
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT11
@@ -412,6 +413,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_top_addr                  0x801213C4
 #define z64_song_state_addr                     0x801220CC
 #define z64_seq_ctl_addr                        0x80124DC0
+#define z64_afx_addr                            0x801257F0
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT12
@@ -461,6 +463,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_top_addr                  0x80121AD4
 #define z64_song_state_addr                     0x801227DC
 #define z64_seq_ctl_addr                        0x801254D0
+#define z64_afx_addr                            0x80125F00
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #endif
@@ -966,6 +969,15 @@ void save_state(void *state, struct state_meta *meta)
   /* save audio state */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+    uint8_t *seq_flags = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
+    uint8_t seq_active = *seq_flags & 0x80;
+    serial_write(&p, &seq_active, sizeof(seq_active));
+    if (seq_active) {
+      serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
+      serial_write(&p, &sc->stop_cmd_count, sizeof(sc->stop_cmd_count));
+      serial_write(&p, &sc->stop_cmd_buf,
+                   sizeof(*sc->stop_cmd_buf) * sc->stop_cmd_count);
+    }
     serial_write(&p, &sc->seq_idx, sizeof(sc->seq_idx));
     if (sc->vs_time != 0)
       serial_write(&p, &sc->vs_target, sizeof(sc->vs_target));
@@ -1704,6 +1716,22 @@ void load_state(void *state, struct state_meta *meta)
   /* restore audio state */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+    uint8_t *seq_flags = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
+    uint8_t c_seq_active = *seq_flags & 0x80;
+    uint8_t p_seq_active;
+    serial_read(&p, &p_seq_active, sizeof(p_seq_active));
+    if (p_seq_active) {
+      serial_read(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
+      serial_read(&p, &sc->stop_cmd_count, sizeof(sc->stop_cmd_count));
+      serial_read(&p, &sc->stop_cmd_buf,
+                  sizeof(*sc->stop_cmd_buf) * sc->stop_cmd_count);
+      if (!c_seq_active && sc->stop_cmd_timer == 0)
+        sc->stop_cmd_timer = 1;
+    }
+    else {
+      sc->stop_cmd_timer = 0;
+      sc->stop_cmd_count = 0;
+    }
     uint16_t seq_idx;
     float volume;
     serial_read(&p, &seq_idx, sizeof(seq_idx));
@@ -1720,10 +1748,12 @@ void load_state(void *state, struct state_meta *meta)
     }
     sc->ch_volume_state = 0;
     /* play sequence */
-    if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg) {
+    if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
+        p_seq_active != c_seq_active)
+    {
       sc->seq_idx = seq_idx;
       sc->prev_seq_idx = seq_idx;
-      if (seq_idx == 0xFFFF)
+      if (seq_idx == 0xFFFF || !p_seq_active)
         seq_idx = 0;
       z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
     }

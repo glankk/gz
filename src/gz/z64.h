@@ -1463,10 +1463,10 @@ typedef struct
   float             ps_delta;                 /* 0x0024 */
   uint16_t          ps_time;                  /* 0x0028 */
   char              pad_01_[0x0002];          /* 0x002A */
-  /* on-sequence-stop commands ? */
-  uint32_t          w2Ca[8];                  /* 0x002C */
-  uint8_t           b4C;                      /* 0x004C */
-  uint8_t           b4D;                      /* 0x004D */
+  /* on-sequence-stop commands */
+  uint32_t          stop_cmd_buf[8];          /* 0x002C */
+  uint8_t           stop_cmd_timer;           /* 0x004C */
+  uint8_t           stop_cmd_count;           /* 0x004D */
   uint8_t           b4E;                      /* 0x004E */
   char              pad_02_[0x0001];          /* 0x004F */
   /* channel control stuff */
