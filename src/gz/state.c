@@ -350,6 +350,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_tab_addr                   0x800FE480
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
 #define z64_ocarina_state_addr                  0x80102208
+#define z64_song_ptr_addr                       0x80102B3C
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
 #define z64_afx_cfg_addr                        0x801043C0
@@ -362,6 +363,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
 #define z64_song_state_addr                     0x80121F0C
+#define z64_sfx_mute_addr                       0x80124754
 #define z64_seq_ctl_addr                        0x80124C00
 #define z64_afx_addr                            0x80125630
 #define z64_item_highlight_vram_addr            0x80829D9C
@@ -400,6 +402,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_tab_addr                   0x800FE640
 #define z64_play_ovl_ptr_addr                   0x800FE67C
 #define z64_ocarina_state_addr                  0x801023C8
+#define z64_song_ptr_addr                       0x80102CFC
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
 #define z64_afx_cfg_addr                        0x80104580
@@ -412,6 +415,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
 #define z64_song_state_addr                     0x801220CC
+#define z64_sfx_mute_addr                       0x80124914
 #define z64_seq_ctl_addr                        0x80124DC0
 #define z64_afx_addr                            0x801257F0
 #define z64_item_highlight_vram_addr            0x80829D9C
@@ -450,6 +454,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_tab_addr                   0x800FEAD0
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
 #define z64_ocarina_state_addr                  0x80102848
+#define z64_song_ptr_addr                       0x8010317C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
 #define z64_afx_cfg_addr                        0x80104A00
@@ -462,6 +467,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
 #define z64_song_state_addr                     0x801227DC
+#define z64_sfx_mute_addr                       0x80125024
 #define z64_seq_ctl_addr                        0x801254D0
 #define z64_afx_addr                            0x80125F00
 #define z64_item_highlight_vram_addr            0x80829D9C
@@ -984,12 +990,14 @@ void save_state(void *state, struct state_meta *meta)
     else
       serial_write(&p, &sc->vs_current, sizeof(sc->vs_current));
   }
+  serial_write(&p, (void*)z64_sfx_mute_addr, 0x0008);
 
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* todo: ocarina audio sync hack */
   /* save song state */
   serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
+  serial_write(&p, (void*)z64_song_ptr_addr, 0x0004);
 
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
@@ -1764,11 +1772,22 @@ void load_state(void *state, struct state_meta *meta)
     z64_AfxCmdW(0xF1000000, 0x00000000);
   else
     z64_AfxCmdW(0xF2000000, 0x00000000);
+  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* load song state */
   serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
+  serial_read(&p, (void*)z64_song_ptr_addr, 0x0004);
+  /* fix audio counters */
+  {
+    uint32_t *ocarina_counter = (void*)(z64_ocarina_state_addr + 0x005C);
+    uint32_t *song_counter = (void*)(z64_song_state_addr + 0x0010);
+    uint32_t *afx_counter = (void*)(z64_afx_addr + 0x289C);
+    uint32_t delta = *song_counter - *ocarina_counter;
+    *song_counter = *afx_counter;
+    *ocarina_counter = *song_counter - delta;
+  }
 
   //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_read(&p, (void*)0x8012143C, 0x41F4);
