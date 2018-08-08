@@ -312,6 +312,7 @@ typedef void (*z64_AfxCmdF_proc)(uint32_t hi, float lo);
 typedef void (*z64_AfxCmdW_proc)(uint32_t hi, uint32_t lo);
 typedef void (*z64_ConfigureAfx_proc)(uint8_t cfg);
 typedef void (*z64_ResetAudio_proc)(uint8_t cfg);
+typedef int (*z64_CheckAfxConfigBusy_proc)(void);
 typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
                                          uint32_t vram_start, uint32_t vram_end,
                                          void *dst);
@@ -329,6 +330,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_AfxCmdW_addr                        0x800BB0BC
 #define z64_ConfigureAfx_addr                   0x800BB548
 #define z64_ResetAudio_addr                     0x800C7E98
+#define z64_CheckAfxConfigBusy_addr             0x800CB798
 #define z64_LoadOverlay_addr                    0x800CCBB8
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_part_space_addr                     0x800E7B40
@@ -349,7 +351,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE478
 #define z64_play_ovl_tab_addr                   0x800FE480
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
-#define z64_ocarina_state_addr                  0x80102208
 #define z64_song_ptr_addr                       0x80102B3C
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
@@ -364,10 +365,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_map_mark_data_tab_addr              0x8011BF00
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
-#define z64_song_state_addr                     0x80121F0C
 #define z64_sfx_mute_addr                       0x80124754
 #define z64_seq_ctl_addr                        0x80124C00
-#define z64_afx_addr                            0x80125630
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT11
@@ -383,6 +382,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_AfxCmdW_addr                        0x800BB0DC
 #define z64_ConfigureAfx_addr                   0x800BB568
 #define z64_ResetAudio_addr                     0x800C8070
+#define z64_CheckAfxConfigBusy_addr             0x800CB958
 #define z64_LoadOverlay_addr                    0x800CCD78
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_part_space_addr                     0x800E7D00
@@ -403,7 +403,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE638
 #define z64_play_ovl_tab_addr                   0x800FE640
 #define z64_play_ovl_ptr_addr                   0x800FE67C
-#define z64_ocarina_state_addr                  0x801023C8
 #define z64_song_ptr_addr                       0x80102CFC
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
@@ -418,10 +417,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_map_mark_data_tab_addr              0x8011C0C0
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
-#define z64_song_state_addr                     0x801220CC
 #define z64_sfx_mute_addr                       0x80124914
 #define z64_seq_ctl_addr                        0x80124DC0
-#define z64_afx_addr                            0x801257F0
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #elif Z64_VERSION == Z64_OOT12
@@ -437,6 +434,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_AfxCmdW_addr                        0x800BB740
 #define z64_ConfigureAfx_addr                   0x800BBBCC
 #define z64_ResetAudio_addr                     0x800C86E8
+#define z64_CheckAfxConfigBusy_addr             0x800CBFD8
 #define z64_LoadOverlay_addr                    0x800CD3F8
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_part_space_addr                     0x800E8180
@@ -457,7 +455,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FEAC8
 #define z64_play_ovl_tab_addr                   0x800FEAD0
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
-#define z64_ocarina_state_addr                  0x80102848
 #define z64_song_ptr_addr                       0x8010317C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
@@ -472,10 +469,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_map_mark_data_tab_addr              0x8011C5B0
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
-#define z64_song_state_addr                     0x801227DC
 #define z64_sfx_mute_addr                       0x80125024
 #define z64_seq_ctl_addr                        0x801254D0
-#define z64_afx_addr                            0x80125F00
 #define z64_item_highlight_vram_addr            0x80829D9C
 
 #endif
@@ -521,6 +516,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_AfxCmdW               ( (z64_AfxCmdW_proc)                z64_AfxCmdW_addr)
 #define z64_ConfigureAfx          ( (z64_ConfigureAfx_proc)           z64_ConfigureAfx_addr)
 #define z64_ResetAudio            ( (z64_ResetAudio_proc)             z64_ResetAudio_addr)
+#define z64_CheckAfxConfigBusy    ( (z64_CheckAfxConfigBusy_proc)     z64_CheckAfxConfigBusy_addr)
 #define z64_LoadOverlay           ( (z64_LoadOverlay_proc)            z64_LoadOverlay_addr)
 
 
@@ -782,6 +778,9 @@ void save_state(void *state, struct state_meta *meta)
   /* save metadata */
   serial_write(&p, meta, sizeof(*meta));
 
+  /* save afx config */
+  serial_write(&p, &z64_afx_cfg, sizeof(z64_afx_cfg));
+
   int16_t sot = 0;
   int16_t eot = -1;
   /* save context */
@@ -977,8 +976,6 @@ void save_state(void *state, struct state_meta *meta)
   else
     serial_write(&p, &eot, sizeof(eot));
 
-  /* save afx config */
-  serial_write(&p, &z64_afx_cfg, sizeof(z64_afx_cfg));
   /* save audio state */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
@@ -1001,7 +998,6 @@ void save_state(void *state, struct state_meta *meta)
 
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
-  /* todo: ocarina audio sync hack */
   /* save song state */
   serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
   serial_write(&p, (void*)z64_song_ptr_addr, 0x0004);
@@ -1014,11 +1010,33 @@ void save_state(void *state, struct state_meta *meta)
 
 void load_state(void *state, struct state_meta *meta)
 {
+  void *p = state;
+
+  /* load metadata */
+  serial_read(&p, meta, sizeof(*meta));
+
+  /* stop sound effects */
+  /* importantly, this removes all sound effect control points, which prevents
+     floating-point exception crashes due to dangling pointers in the cp's. */
+  z64_StopSfx();
+  /* cancel pending sound effects */
+  z64_sfx_read_pos = z64_sfx_write_pos;
+  /* cancel pending audio commands */
+  z64_audio_cmd_read_pos = z64_audio_cmd_write_pos;
+  /* configure afx */
+  int p_afx_cfg = z64_afx_cfg;
+  uint8_t c_afx_cfg;
+  serial_read(&p, &c_afx_cfg, sizeof(c_afx_cfg));
+  if (c_afx_cfg != p_afx_cfg) {
+    z64_afx_cfg = c_afx_cfg;
+    z64_ConfigureAfx(c_afx_cfg);
+    z64_ResetAudio(p_afx_cfg);
+    z64_AfxCmdW(0xF8000000, 0x00000000);
+  }
+
   /* wait for gfx task to finish */
   z64_osRecvMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_BLOCK);
   z64_osSendMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_NOBLOCK);
-
-  void *p = state;
 
   /* save allocation info */
   struct alloc
@@ -1042,10 +1060,6 @@ void load_state(void *state, struct state_meta *meta)
   int ps = z64_game.pause_ctxt.state;
   _Bool p_pause_objects = (ps > 0x0003 && ps < 0x0008) || ps > 0x000A;
   _Bool p_gameover = ps >= 0x0008 && ps <= 0x0011;
-  int p_afx_cfg = z64_afx_cfg;
-
-  /* load metadata */
-  serial_read(&p, meta, sizeof(*meta));
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
@@ -1716,23 +1730,12 @@ void load_state(void *state, struct state_meta *meta)
     gSPEndDisplayList(gfx->work.p++);
   }
 
-  /* stop sound effects */
-  /* importantly, this removes all sound effect control points, which prevents
-     floating-point exception crashes due to dangling pointers in the cp's. */
-  z64_StopSfx();
-  /* cancel pending sound effects */
-  z64_sfx_read_pos = z64_sfx_write_pos;
-  /* cancel pending audio commands */
-  z64_audio_cmd_read_pos = z64_audio_cmd_write_pos;
-  /* configure afx */
-  uint8_t c_afx_cfg;
-  serial_read(&p, &c_afx_cfg, sizeof(c_afx_cfg));
+  /* wait for afx config to finish */
   if (c_afx_cfg != p_afx_cfg) {
-    z64_afx_cfg = c_afx_cfg;
-    z64_ConfigureAfx(c_afx_cfg);
-    z64_ResetAudio(p_afx_cfg);
-    z64_AfxCmdW(0xF8000000, 0x00000000);
+    while (z64_CheckAfxConfigBusy())
+      ;
   }
+
   /* restore audio state */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
@@ -1794,12 +1797,9 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, (void*)z64_staff_notes_addr, 0x001E);
   /* fix audio counters */
   {
-    uint32_t *ocarina_counter = (void*)(z64_ocarina_state_addr + 0x005C);
-    uint32_t *song_counter = (void*)(z64_song_state_addr + 0x0010);
-    uint32_t *afx_counter = (void*)(z64_afx_addr + 0x289C);
-    uint32_t delta = *song_counter - *ocarina_counter;
-    *song_counter = *afx_counter;
-    *ocarina_counter = *song_counter - delta;
+    uint32_t delta = z64_song_counter - z64_ocarina_counter;
+    z64_song_counter = z64_afx_counter;
+    z64_ocarina_counter = z64_song_counter - delta;
   }
 
   //serial_read(&p, (void*)0x800E2FC0, 0x31E10);

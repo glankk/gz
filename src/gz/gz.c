@@ -2373,12 +2373,12 @@ static void tab_next_proc(struct menu_item *item, void *data)
   menu_tab_next(data);
 }
 
-struct afx_ifcmd
+struct afx_cmd
 {
   uint32_t hi;
   uint32_t lo;
 };
-struct vector afx_ifcmd_list;
+struct vector afx_cmd_list;
 
 static void main_hook(void)
 {
@@ -2930,8 +2930,8 @@ static void main_hook(void)
 
 #if 0
   {
-    for (int i = 0; i < afx_ifcmd_list.size; ++i) {
-      struct afx_ifcmd *cmd = vector_at(&afx_ifcmd_list, i);
+    for (int i = 0; i < afx_cmd_list.size; ++i) {
+      struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
       gfx_printf(font, 16, 16 + ch * i, "%08x %08x", cmd->hi, cmd->lo);
     }
   }
@@ -3034,13 +3034,13 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
   disp_buf->d = (void*)((char*)buf + size);
 }
 
-HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
+HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
 {
   init_gp();
   uint8_t *write_pos = (void*)0x8012B208;
   uint8_t *read_pos = (void*)0x8012B209;
-  struct afx_ifcmd *buf = (void*)0x8012B280;
-  struct afx_ifcmd c = {a0, *a1};
+  struct afx_cmd *buf = (void*)0x8012B280;
+  struct afx_cmd c = {a0, *a1};
 #if 1
   buf[(*write_pos)++] = c;
   if (*write_pos == *read_pos)
@@ -3049,9 +3049,9 @@ HOOK void afx_ifcmd_hook(uint32_t a0, uint32_t *a1)
 #if 0
   uint8_t hi = a0 >> 24;
   if (gz_ready) {
-    vector_push_back(&afx_ifcmd_list, 1, &c);
-    if (afx_ifcmd_list.size > 24)
-      vector_erase(&afx_ifcmd_list, 0, 1);
+    vector_push_back(&afx_cmd_list, 1, &c);
+    if (afx_cmd_list.size > 24)
+      vector_erase(&afx_cmd_list, 0, 1);
   }
 #endif
 }
@@ -3150,6 +3150,11 @@ HOOK void ocarina_update_hook(void)
   ocarina_update_func = (void*)z64_ocarina_update_func_addr;
   if (!gz_ready || frame_flag)
     ocarina_update_func();
+  else {
+    /* update audio counters manually to avoid desync when resuming */
+    z64_song_counter = z64_afx_counter;
+    z64_ocarina_counter = z64_song_counter;
+  }
 }
 
 HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
@@ -3164,6 +3169,34 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
     struct movie_input *mi = vector_at(&movie_inputs, movie_frame - 1);
     movie_to_z(input, mi);
   }
+}
+
+HOOK void ocarina_sync_hook(void)
+{
+  init_gp();
+  /* don't sync when recording or playing a macro, or when frame advancing */
+  __asm__ volatile (/* this check is normally done by the game */
+                    "beq    $t6, $zero, .Lnosync  \n"
+                    /* check gz_ready */
+                    "la     $v0, %0               \n"
+                    "lw     $v0, 0($v0)           \n"
+                    "beq    $v0, $zero, .Lsync    \n"
+                    /* check movie_state */
+                    "la     $v0, %1               \n"
+                    "lw     $v0, 0($v0)           \n"
+                    "bne    $v0, $zero, .Lnosync  \n"
+                    /* check frames_queued */
+                    "la     $v0, %2               \n"
+                    "lw     $v0, 0($v0)           \n"
+                    "bge    $v0, $zero, .Lnosync  \n"
+                    /* sync by default */
+                    ".Lsync:                      \n"
+                    "  la   $v0, 0                \n"
+                    "  jr   $ra                   \n"
+                    ".Lnosync:                    \n"
+                    "  la   $v0, 1                \n"
+                    "  jr   $ra                   \n"
+                    :: "i"(&gz_ready), "i"(&movie_state), "i"(&frames_queued));
 }
 
 static void stack_thunk(void (*func)(void))
@@ -3203,10 +3236,10 @@ static void init(void)
 
 #if 0
   {
-    vector_init(&afx_ifcmd_list, sizeof(struct afx_ifcmd));
+    vector_init(&afx_cmd_list, sizeof(struct afx_cmd));
     uint32_t hook[] =
     {
-      MIPS_J(afx_ifcmd_hook),
+      MIPS_J(afx_cmd_hook),
       MIPS_NOP,
     };
     memcpy((void*)0x800BB04C, hook, sizeof(hook));

@@ -1514,10 +1514,11 @@ typedef struct
 #define z64_disp_swap_3_addr                    0x800A11C8
 #define z64_disp_swap_4_addr                    0x800A11E4
 #define z64_frame_input_call_addr               0x800A16AC
+#define z64_ocarina_update_call_addr            0x800A183C
 #define z64_ocarina_input_func_addr             0x800A279C
 #define z64_ocarina_input_call_addr             0x800C1F40
+#define z64_ocarina_sync_hook_addr              0x800C2EA0
 #define z64_ocarina_update_func_addr            0x800C3DC8
-#define z64_ocarina_update_call_addr            0x800A183C
 #define z64_srand_func_addr                     0x800CDCC0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
 #define z64_day_speed_addr                      0x800F1650
@@ -1526,6 +1527,7 @@ typedef struct
 #define z64_entrance_table_addr                 0x800F9C90
 #define z64_scene_table_addr                    0x800FB4E0
 #define z64_scene_config_table_addr             0x800FBD18
+#define z64_ocarina_state_addr                  0x80102208
 #define z64_audio_cmd_write_pos_addr            0x801043B0
 #define z64_audio_cmd_read_pos_addr             0x801043B4
 #define z64_random_addr                         0x80105440
@@ -1533,7 +1535,9 @@ typedef struct
 #define z64_file_addr                           0x8011A5D0
 #define z64_input_direct_addr                   0x8011D730
 #define z64_stab_addr                           0x80120C38
+#define z64_song_state_addr                     0x80121F0C
 #define z64_audio_cmd_buf_addr                  0x80124800
+#define z64_afx_addr                            0x80125630
 #define z64_zimg_addr                           0x8012BE40
 #define z64_disp_addr                           0x8016A640
 #define z64_ctxt_addr                           0x801C84A0
@@ -1585,10 +1589,11 @@ typedef struct
 #define z64_disp_swap_3_addr                    0x800A11D8
 #define z64_disp_swap_4_addr                    0x800A11F4
 #define z64_frame_input_call_addr               0x800A16BC
+#define z64_ocarina_update_call_addr            0x800A184C
 #define z64_ocarina_input_func_addr             0x800A27AC
 #define z64_ocarina_input_call_addr             0x800C1F90
+#define z64_ocarina_sync_hook_addr              0x800C2EFC
 #define z64_ocarina_update_func_addr            0x800C3E38
-#define z64_ocarina_update_call_addr            0x800A184C
 #define z64_srand_func_addr                     0x800CDE80
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
 #define z64_day_speed_addr                      0x800F1810
@@ -1597,6 +1602,7 @@ typedef struct
 #define z64_entrance_table_addr                 0x800F9E50
 #define z64_scene_table_addr                    0x800FB6A0
 #define z64_scene_config_table_addr             0x800FBED8
+#define z64_ocarina_state_addr                  0x801023C8
 #define z64_audio_cmd_write_pos_addr            0x80104570
 #define z64_audio_cmd_read_pos_addr             0x80104574
 #define z64_random_addr                         0x80105600
@@ -1604,7 +1610,9 @@ typedef struct
 #define z64_file_addr                           0x8011A790
 #define z64_input_direct_addr                   0x8011D8F0
 #define z64_stab_addr                           0x80120DF8
+#define z64_song_state_addr                     0x801220CC
 #define z64_audio_cmd_buf_addr                  0x801249C0
+#define z64_afx_addr                            0x801257F0
 #define z64_zimg_addr                           0x8012C000
 #define z64_disp_addr                           0x8016A800
 #define z64_ctxt_addr                           0x801C8660
@@ -1656,10 +1664,11 @@ typedef struct
 #define z64_disp_swap_3_addr                    0x800A1878
 #define z64_disp_swap_4_addr                    0x800A1894
 #define z64_frame_input_call_addr               0x800A1D8C
+#define z64_ocarina_update_call_addr            0x800A1F1C
 #define z64_ocarina_input_func_addr             0x800A2E7C
 #define z64_ocarina_input_call_addr             0x800C25F0
+#define z64_ocarina_sync_hook_addr              0x800C355C
 #define z64_ocarina_update_func_addr            0x800C4490
-#define z64_ocarina_update_call_addr            0x800A1F1C
 #define z64_srand_func_addr                     0x800CE500
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
 #define z64_day_speed_addr                      0x800F1C90
@@ -1668,6 +1677,7 @@ typedef struct
 #define z64_entrance_table_addr                 0x800FA2E0
 #define z64_scene_table_addr                    0x800FBB30
 #define z64_scene_config_table_addr             0x800FC368
+#define z64_ocarina_state_addr                  0x80102848
 #define z64_audio_cmd_write_pos_addr            0x801049F0
 #define z64_audio_cmd_read_pos_addr             0x801049F4
 #define z64_random_addr                         0x80105A80
@@ -1675,7 +1685,9 @@ typedef struct
 #define z64_file_addr                           0x8011AC80
 #define z64_input_direct_addr                   0x8011DE00
 #define z64_stab_addr                           0x80121508
+#define z64_song_state_addr                     0x801227DC
 #define z64_audio_cmd_buf_addr                  0x801250D0
+#define z64_afx_addr                            0x80125F00
 #define z64_zimg_addr                           0x8012C700
 #define z64_disp_addr                           0x8016AF00
 #define z64_ctxt_addr                           0x801C8D60
@@ -1737,13 +1749,18 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
                                    z64_entrance_table_addr)
 #define z64_scene_config_table  ( (z64_SceneConfig_proc*)                     \
                                    z64_scene_config_table_addr)
+#define z64_ocarina_counter     (*(uint32_t*)                                 \
+                                  (z64_ocarina_state_addr + 0x005C))
 #define z64_audio_cmd_write_pos (*(uint8_t*)                                  \
-                                 z64_audio_cmd_write_pos_addr)
+                                   z64_audio_cmd_write_pos_addr)
 #define z64_audio_cmd_read_pos  (*(uint8_t*)                                  \
-                                 z64_audio_cmd_read_pos_addr)
+                                   z64_audio_cmd_read_pos_addr)
 #define z64_random              (*(uint32_t*)         z64_random_addr)
 #define z64_file                (*(z64_file_t*)       z64_file_addr)
 #define z64_input_direct        (*(z64_input_t*)      z64_input_direct_addr)
+#define z64_song_counter        (*(uint32_t*)                                 \
+                                  (z64_song_state_addr + 0x0010))
+#define z64_afx_counter         (*(uint32_t*)        (z64_afx_addr + 0x289C))
 #define z64_gameinfo            (*                    z64_file.gameinfo)
 #define z64_ctxt                (*(z64_ctxt_t*)       z64_ctxt_addr)
 #define z64_game                (*(z64_game_t*)      &z64_ctxt)
@@ -1753,10 +1770,10 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 #define z64_osSendMesg          ((osSendMesg_t)       z64_osSendMesg_addr)
 #define z64_osRecvMesg          ((osRecvMesg_t)       z64_osRecvMesg_addr)
 #define z64_osCreateMesgQueue   ((osCreateMesgQueue_t)                        \
-                                 z64_osCreateMesgQueue_addr)
+                                  z64_osCreateMesgQueue_addr)
 #define z64_DrawActors          ((z64_DrawActors_proc)z64_DrawActors_addr)
 #define z64_DeleteActor         ((z64_DeleteActor_proc)                       \
-                                 z64_DeleteActor_addr)
+                                  z64_DeleteActor_addr)
 #define z64_SpawnActor          ((z64_SpawnActor_proc)z64_SpawnActor_addr)
 #define z64_SwitchAgeEquips     ((z64_SwitchAgeEquips_proc)                   \
                                                       z64_SwitchAgeEquips_addr)
