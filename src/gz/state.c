@@ -347,6 +347,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_y_addr             0x800F5534
 #define z64_minimap_entrance_r_addr             0x800F5538
 #define z64_temp_day_speed_addr                 0x800F7638
+#define z64_n_camera_shake_addr                 0x800F7D24
 #define z64_letterbox_target_addr               0x800FE474
 #define z64_letterbox_current_addr              0x800FE478
 #define z64_play_ovl_tab_addr                   0x800FE480
@@ -363,6 +364,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
 #define z64_map_mark_data_tab_addr              0x8011BF00
+#define z64_camera_shake_addr                   0x8011BF60
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
 #define z64_sfx_mute_addr                       0x80124754
@@ -399,6 +401,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_y_addr             0x800F56F4
 #define z64_minimap_entrance_r_addr             0x800F56F8
 #define z64_temp_day_speed_addr                 0x800F77F8
+#define z64_n_camera_shake_addr                 0x800F7EE4
 #define z64_letterbox_target_addr               0x800FE634
 #define z64_letterbox_current_addr              0x800FE638
 #define z64_play_ovl_tab_addr                   0x800FE640
@@ -415,6 +418,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
 #define z64_map_mark_data_tab_addr              0x8011C0C0
+#define z64_camera_shake_addr                   0x8011C120
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
 #define z64_sfx_mute_addr                       0x80124914
@@ -451,6 +455,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_y_addr             0x800F5B74
 #define z64_minimap_entrance_r_addr             0x800F5B78
 #define z64_temp_day_speed_addr                 0x800F7C80
+#define z64_n_camera_shake_addr                 0x800F8374
 #define z64_letterbox_target_addr               0x800FEAC4
 #define z64_letterbox_current_addr              0x800FEAC8
 #define z64_play_ovl_tab_addr                   0x800FEAD0
@@ -467,6 +472,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
 #define z64_map_mark_data_tab_addr              0x8011C5B0
+#define z64_camera_shake_addr                   0x8011C610
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
 #define z64_sfx_mute_addr                       0x80125024
@@ -895,6 +901,9 @@ void save_state(void *state, struct state_meta *meta)
     }
   }
   serial_write(&p, &eot, sizeof(eot));
+  /* save camera shake effects */
+  serial_write(&p, (void*)z64_n_camera_shake_addr, 0x0002);
+  serial_write(&p, (void*)z64_camera_shake_addr, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
   z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
@@ -1224,6 +1233,9 @@ void load_state(void *state, struct state_meta *meta)
     else
       spark->active = 0;
   }
+  /* load camera shake effects */
+  serial_read(&p, (void*)z64_n_camera_shake_addr, 0x0002);
+  serial_read(&p, (void*)z64_camera_shake_addr, 0x0090);
 
   /* load scene */
   if (z64_game.scene_index != scene_index) {
