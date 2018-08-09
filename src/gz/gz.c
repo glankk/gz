@@ -2390,7 +2390,8 @@ static void main_hook(void)
 
 #if 1
   {
-    void save_state(void *state, struct state_meta *meta);
+    static uint32_t state_size = 0;
+    uint32_t save_state(void *state, struct state_meta *meta);
     void load_state(void *state, struct state_meta *meta);
     if (!menu_active) {
       if (input_pressed_raw() & BUTTON_D_LEFT) {
@@ -2402,7 +2403,7 @@ static void main_hook(void)
           meta.movie_frame = -1;
         else
           meta.movie_frame = movie_frame;
-        save_state(*state, &meta);
+        state_size = save_state(*state, &meta);
       }
       else if ((input_pressed_raw() & BUTTON_D_RIGHT) &&
                state_buf[state_slot])
@@ -2412,6 +2413,21 @@ static void main_hook(void)
         if (movie_state != MOVIE_IDLE && meta.movie_frame != -1)
           movie_seek(meta.movie_frame);
       }
+    }
+    {
+      int unit = 0;
+      const char *unit_name[] = {"b", "kb", "mb"};
+      uint32_t unit_value = state_size;
+      for (int i = 1; i < 3; ++i) {
+        if (unit_value >= 1024 * 2) {
+          unit_value /= 1024;
+          ++unit;
+        }
+        else
+          break;
+      }
+      struct gfx_font *font = menu_get_font(&menu_main, 1);
+      gfx_printf(font, 16, 16, "%" PRIi32 "%s", unit_value, unit_name[unit]);
     }
   }
 #endif

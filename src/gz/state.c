@@ -777,7 +777,7 @@ static _Bool addr_comp(void *a, void *b)
   return *a_u32 < *b_u32;
 }
 
-void save_state(void *state, struct state_meta *meta)
+uint32_t save_state(void *state, struct state_meta *meta)
 {
   void *p = state;
 
@@ -1015,6 +1015,8 @@ void save_state(void *state, struct state_meta *meta)
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
   //serial_write(&p, (void*)0x801DAA00, 0x1D4790);
+
+  return (char*)p - (char*)state;
 }
 
 void load_state(void *state, struct state_meta *meta)
