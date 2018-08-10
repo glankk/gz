@@ -906,17 +906,29 @@ uint32_t save_state(void *state, struct state_meta *meta)
   serial_write(&p, (void*)z64_camera_shake_addr, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
-  z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
-  serial_write(&p, room_ctxt->tnsn_list,
-               room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
+  {
+    z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
+    serial_write(&p, room_ctxt->tnsn_list,
+                 room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
+  }
 
-  /* dynamic collision */
-  serial_write(&p, z64_game.col_ctxt.dyn_list,
-        z64_game.col_ctxt.dyn_list_max * sizeof(*z64_game.col_ctxt.dyn_list));
-  serial_write(&p, z64_game.col_ctxt.dyn_poly,
-        z64_game.col_ctxt.dyn_poly_max * sizeof(*z64_game.col_ctxt.dyn_poly));
-  serial_write(&p, z64_game.col_ctxt.dyn_vtx,
-        z64_game.col_ctxt.dyn_vtx_max * sizeof(*z64_game.col_ctxt.dyn_vtx));
+  /* save waterboxes */
+  {
+    z64_col_hdr_t *col_hdr = z64_game.col_ctxt.col_hdr;
+    serial_write(&p, &col_hdr->n_water, sizeof(col_hdr->n_water));
+    serial_write(&p, col_hdr->water,
+                 sizeof(*col_hdr->water) * col_hdr->n_water);
+  }
+  /* save dynamic collision */
+  {
+    z64_col_ctxt_t *col = &z64_game.col_ctxt;
+    serial_write(&p, col->dyn_list,
+                 col->dyn_list_max * sizeof(*col->dyn_list));
+    serial_write(&p, col->dyn_poly,
+                 col->dyn_poly_max * sizeof(*col->dyn_poly));
+    serial_write(&p, col->dyn_vtx,
+                 col->dyn_vtx_max * sizeof(*col->dyn_vtx));
+  }
 
   if (z64_game.elf_message)
     serial_write(&p, z64_game.elf_message, 0x0070);
@@ -1252,9 +1264,11 @@ void load_state(void *state, struct state_meta *meta)
 
   }
   /* load transition actor list */
-  z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
-  serial_read(&p, room_ctxt->tnsn_list,
-              room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
+  {
+    z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
+    serial_read(&p, room_ctxt->tnsn_list,
+                room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
+  }
   /* load rooms */
   for (int i = 0; i < 2; ++i) {
     struct alloc *p_room = &room_list[i];
@@ -1558,13 +1572,23 @@ void load_state(void *state, struct state_meta *meta)
     }
   }
 
-  /* dynamic collision */
-  serial_read(&p, z64_game.col_ctxt.dyn_list,
-       z64_game.col_ctxt.dyn_list_max * sizeof(*z64_game.col_ctxt.dyn_list));
-  serial_read(&p, z64_game.col_ctxt.dyn_poly,
-       z64_game.col_ctxt.dyn_poly_max * sizeof(*z64_game.col_ctxt.dyn_poly));
-  serial_read(&p, z64_game.col_ctxt.dyn_vtx,
-       z64_game.col_ctxt.dyn_vtx_max * sizeof(*z64_game.col_ctxt.dyn_vtx));
+  /* load waterboxes */
+  {
+    z64_col_hdr_t *col_hdr = z64_game.col_ctxt.col_hdr;
+    serial_read(&p, &col_hdr->n_water, sizeof(col_hdr->n_water));
+    serial_read(&p, col_hdr->water,
+                sizeof(*col_hdr->water) * col_hdr->n_water);
+  }
+  /* load dynamic collision */
+  {
+    z64_col_ctxt_t *col = &z64_game.col_ctxt;
+    serial_read(&p, col->dyn_list,
+                col->dyn_list_max * sizeof(*col->dyn_list));
+    serial_read(&p, col->dyn_poly,
+                col->dyn_poly_max * sizeof(*col->dyn_poly));
+    serial_read(&p, col->dyn_vtx,
+                col->dyn_vtx_max * sizeof(*col->dyn_vtx));
+  }
 
   /* create skybox */
   if (z64_game.skybox_type != 0) {
