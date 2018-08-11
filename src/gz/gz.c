@@ -2427,6 +2427,7 @@ static void main_hook(void)
           break;
       }
       struct gfx_font *font = menu_get_font(&menu_main, 1);
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, 0xFF));
       gfx_printf(font, 16, 16, "%" PRIi32 "%s", unit_value, unit_name[unit]);
     }
   }
@@ -3062,8 +3063,7 @@ HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
   if (*write_pos == *read_pos)
     --*write_pos;
 #endif
-#if 0
-  uint8_t hi = a0 >> 24;
+#if 1
   if (gz_ready) {
     vector_push_back(&afx_cmd_list, 1, &c);
     if (afx_cmd_list.size > 24)

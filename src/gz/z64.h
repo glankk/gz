@@ -1093,7 +1093,7 @@ typedef struct
   void             *obj_space_start;          /* 0x0000 */
   void             *obj_space_end;            /* 0x0004 */
   uint8_t           n_objects;                /* 0x0008 */
-  char              unk_00_[0x0001];          /* 0x0009 */
+  uint8_t           n_special;                /* 0x0009 */
   uint8_t           keep_index;               /* 0x000A */
   uint8_t           skeep_index;              /* 0x000B */
   z64_mem_obj_t     objects[19];              /* 0x000C */
@@ -1339,22 +1339,25 @@ typedef struct
   uint16_t          camera_flag_1;            /* 0x0033E */
   char              unk_06_[0x016C];          /* 0x00340 */
   int16_t           event_flag;               /* 0x004AC */
-  char              unk_07_[0x02FA];          /* 0x004AE */
+  char              unk_07_[0x02F6];          /* 0x004AE */
+  uint8_t           seq_idx;                  /* 0x007A4 */
+  uint8_t           night_sfx;                /* 0x007A5 */
+  char              unk_08_[0x0002];          /* 0x007A6 */
   z64_lighting_t    lighting;                 /* 0x007A8 */
-  char              unk_08_[0x0008];          /* 0x007B8 */
+  char              unk_09_[0x0008];          /* 0x007B8 */
   z64_col_ctxt_t    col_ctxt;                 /* 0x007C0 */
   char              actor_ctxt[0x0008];       /* 0x01C24 */
   uint8_t           n_actors_loaded;          /* 0x01C2C */
-  char              unk_09_[0x0003];          /* 0x01C2D */
+  char              unk_0A_[0x0003];          /* 0x01C2D */
   struct
   {
     uint32_t        length;
     z64_actor_t    *first;
   }                 actor_list[12];           /* 0x01C30 */
-  char              unk_0A_[0x0038];          /* 0x01C90 */
+  char              unk_0B_[0x0038];          /* 0x01C90 */
   z64_actor_t      *arrow_actor;              /* 0x01CC8 */
   z64_actor_t      *target_actor;             /* 0x01CCC */
-  char              unk_0B_[0x0058];          /* 0x01CD0 */
+  char              unk_0C_[0x0058];          /* 0x01CD0 */
   uint32_t          swch_flags;               /* 0x01D28 */
   uint32_t          temp_swch_flags;          /* 0x01D2C */
   uint32_t          unk_flags_0;              /* 0x01D30 */
@@ -1365,18 +1368,18 @@ typedef struct
   uint32_t          collect_flags;            /* 0x01D44 */
   uint32_t          temp_collect_flags;       /* 0x01D48 */
   void             *title_card_texture;       /* 0x01D4C */
-  char              unk_0C_[0x0007];          /* 0x01D50 */
+  char              unk_0D_[0x0007];          /* 0x01D50 */
   uint8_t           title_card_delay;         /* 0x01D57 */
-  char              unk_0D_[0x0010];          /* 0x01D58 */
+  char              unk_0E_[0x0010];          /* 0x01D58 */
   void             *cutscene_ptr;             /* 0x01D68 */
   int8_t            cutscene_state;           /* 0x01D6C */
-  char              unk_0E_[0x020B];          /* 0x01D6D */
+  char              unk_0F_[0x020B];          /* 0x01D6D */
   z64_sky_ctxt_t    sky_ctxt;                 /* 0x01F78 */
-  char              unk_0F_[0xE2C0];          /* 0x020C8 */
+  char              unk_10_[0xE2C0];          /* 0x020C8 */
   char             *message_texture;          /* 0x10388 */
-  char              unk_10_[0x0049];          /* 0x1038C */
+  char              unk_11_[0x0049];          /* 0x1038C */
   uint8_t           message_type;             /* 0x103D5 */
-  char              unk_11_[0x0006];          /* 0x103D6 */
+  char              unk_12_[0x0006];          /* 0x103D6 */
   uint8_t           message_state_1;          /* 0x103DC */
   char              pad_00_[0x0001];          /* 0x103DD */
   union
@@ -1384,43 +1387,50 @@ typedef struct
     uint8_t         message_data_e[200];
     uint16_t        message_data_j[100];
   };                                          /* 0x103DE */
-  char              unk_12_[0x0016];          /* 0x104A6 */
+  char              unk_13_[0x0016];          /* 0x104A6 */
   uint8_t           message_state_2;          /* 0x104BC */
-  char              unk_13_[0x0002];          /* 0x104BD */
+  char              unk_14_[0x0002];          /* 0x104BD */
   uint8_t           message_state_3;          /* 0x104BF */
-  char              unk_14_[0x0030];          /* 0x104C0 */
+  char              unk_15_[0x0030];          /* 0x104C0 */
   z64_if_ctxt_t     if_ctxt;                  /* 0x104F0 */
   z64_pause_ctxt_t  pause_ctxt;               /* 0x10760 */
-  char              unk_15_[0x000C];          /* 0x10A14 */
+  char              unk_16_[0x000C];          /* 0x10A14 */
   uint16_t          death_state;              /* 0x10A20 */
-  char              unk_16_[0x0012];          /* 0x10A22 */
+  char              unk_17_[0x0012];          /* 0x10A22 */
   uint8_t           sky_image_idx[2];         /* 0x10A34 */
-  char              unk_17_[0x0D6E];          /* 0x10A36 */
+  char              unk_18_[0x00CE];          /* 0x10A36 */
+  uint8_t           day_phase;                /* 0x10B04 */
+  char              unk_19_[0x000D];          /* 0x10B05 */
+  uint8_t           rain_effect_1;            /* 0x10B12 */
+  uint8_t           rain_level;               /* 0x10B13 */
+  char              unk_1A_[0x0002];          /* 0x10A14 */
+  uint8_t           rain_effect_2;            /* 0x10B16 */
+  char              unk_1B_[0x0C8D];          /* 0x10B17 */
   z64_obj_ctxt_t    obj_ctxt;                 /* 0x117A4 */
   z64_room_ctxt_t   room_ctxt;                /* 0x11CBC */
-  char              unk_18_[0x00A8];          /* 0x11D3C */
+  char              unk_1C_[0x00A8];          /* 0x11D3C */
   uint32_t          gameplay_frames;          /* 0x11DE4 */
   uint8_t           link_age;                 /* 0x11DE8 */
-  char              unk_19_;                  /* 0x11DE9 */
+  char              unk_1D_;                  /* 0x11DE9 */
   uint8_t           spawn_index;              /* 0x11DEA */
   uint8_t           n_map_actors;             /* 0x11DEB */
   uint8_t           n_rooms;                  /* 0x11DEC */
-  char              unk_1A_[0x0003];          /* 0x11DED */
+  char              unk_1E_[0x0003];          /* 0x11DED */
   z64_vrom_file_t  *room_list;                /* 0x11DF0 */
-  char              unk_1B_[0x0004];          /* 0x11DF4 */
+  char              unk_1F_[0x0004];          /* 0x11DF4 */
   void             *map_actor_list;           /* 0x11DF8 */
-  char              unk_1C_[0x0008];          /* 0x11DFC */
+  char              unk_20_[0x0008];          /* 0x11DFC */
   void             *scene_exit_list;          /* 0x11E04 */
-  char              unk_1D_[0x0004];          /* 0x11E08 */
+  char              unk_21_[0x0004];          /* 0x11E08 */
   void             *elf_message;              /* 0x11E0C */
-  char              unk_1E_[0x0004];          /* 0x11E10 */
+  char              unk_22_[0x0004];          /* 0x11E10 */
   uint8_t           skybox_type;              /* 0x11E14 */
   int8_t            scene_load_flag;          /* 0x11E15 */
-  char              unk_1F_[0x0004];          /* 0x11E16 */
+  char              unk_23_[0x0004];          /* 0x11E16 */
   int16_t           entrance_index;           /* 0x11E1A */
-  char              unk_20_[0x0042];          /* 0x11E1C */
+  char              unk_24_[0x0042];          /* 0x11E1C */
   uint8_t           fadeout_transition;       /* 0x11E5E */
-  char              unk_21_[0x06B9];          /* 0x11E5F */
+  char              unk_25_[0x06B9];          /* 0x11E5F */
                                               /* 0x12518 */
 } z64_game_t;
 

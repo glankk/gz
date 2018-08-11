@@ -301,6 +301,22 @@ typedef struct
 } z64_pfx_t;
 
 
+typedef struct
+{
+  /* which channels to use */
+  uint16_t          channel_enable;           /* 0x0000 */
+  /* which channels to disable initially */
+  uint16_t          channel_mask;             /* 0x0002 */
+  /* channel parameter command list */
+  /* 3 bytes per command: ccppvv */
+  /* c: channel (0xFF to terminate command list) */
+  /* p: parameter id */
+  /* v: parameter value */
+  uint8_t           params[0x64];             /* 0x0004 */
+                                              /* 0x0068 */
+} z64_night_sfx_t;
+
+
 typedef void (*z64_CreateStaticCollision_proc)(z64_col_ctxt_t *col_ctxt, z64_game_t *game, z64_col_lut_t *col_lut);
 typedef void (*z64_LoadMinimap_proc)(z64_game_t *game, int room_idx);
 typedef void (*z64_LoadActionLabel_proc)(z64_if_ctxt_t *if_ctxt, uint16_t action_idx, int button_idx);
@@ -352,6 +368,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE478
 #define z64_play_ovl_tab_addr                   0x800FE480
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
+#define z64_night_sfx_addr                      0x801019E8
 #define z64_song_ptr_addr                       0x80102B3C
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
@@ -406,6 +423,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE638
 #define z64_play_ovl_tab_addr                   0x800FE640
 #define z64_play_ovl_ptr_addr                   0x800FE67C
+#define z64_night_sfx_addr                      0x80101BA8
 #define z64_song_ptr_addr                       0x80102CFC
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
@@ -460,6 +478,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FEAC8
 #define z64_play_ovl_tab_addr                   0x800FEAD0
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
+#define z64_night_sfx_addr                      0x80102028
 #define z64_song_ptr_addr                       0x8010317C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
@@ -499,6 +518,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current   (*(int32_t*)                  z64_letterbox_current_addr)
 #define z64_play_ovl_tab        (*(z64_play_ovl_t(*)[2])      z64_play_ovl_tab_addr)
 #define z64_play_ovl_ptr        (*(z64_play_ovl_t*)           z64_play_ovl_ptr_addr)
+#define z64_night_sfx           (*(z64_night_sfx_t(*)[20])    z64_night_sfx_addr)
 #define z64_sfx_write_pos       (*(uint8_t*)                  z64_sfx_write_pos_addr)
 #define z64_sfx_read_pos        (*(uint8_t*)                  z64_sfx_read_pos_addr)
 #define z64_afx_cfg             (*(uint8_t*)                  z64_afx_cfg_addr)
@@ -756,6 +776,80 @@ static void load_sky_image(void)
       zu_getfile_idx(983, sky_ctxt->textures[0]);
       zu_getfile_idx(984, sky_ctxt->palettes);
       break;
+  }
+}
+
+static void play_night_sfx(void)
+{
+  _Bool rain_effect = z64_game.rain_effect_1 || z64_game.rain_effect_2;
+  uint8_t day_phase = z64_game.day_phase;
+  uint8_t night_sfx_idx = z64_game.night_sfx;
+  if (rain_effect && night_sfx_idx == 0x13)
+    night_sfx_idx = 0x05;
+
+  z64_night_sfx_t *night_sfx = &z64_night_sfx[night_sfx_idx];
+  /* set sequencer parameters */
+  z64_AfxCmdW(0x46000000, 0x01000000);
+  z64_AfxCmdW(0x46000004, (night_sfx->channel_enable << 16) & 0xFF000000);
+  z64_AfxCmdW(0x46000005, (night_sfx->channel_enable << 24) & 0xFF000000);
+  /* play night sequence */
+  z64_seq_ctl_t *sc = &z64_seq_ctl[0];
+  sc->seq_idx = 0x0001;
+  sc->prev_seq_idx = 0x0001;
+  z64_AfxCmdW(0x82000100, 0x00000000);
+  /* enable channels */
+  for (int8_t i = 0; i < 0x10; ++i) {
+    uint16_t bit = 1 << i;
+    if ((night_sfx->channel_enable & bit) && !(night_sfx->channel_mask & bit))
+      z64_AfxCmdW(0x06000001 | (i << 8), 0x01000000);
+  }
+  /* set channel parameters */
+  for (int i = 0; i < 0x64; i += 3) {
+    uint8_t c = night_sfx->params[i + 0];
+    if (c == 0xFF)
+      break;
+    uint8_t p = night_sfx->params[i + 1];
+    uint8_t v = night_sfx->params[i + 2];
+    z64_AfxCmdW(0x06000000 | (c << 8) | (p << 0), v << 24);
+  }
+  z64_AfxCmdW(0x06000D07, 0x00000000);
+  /* set day phase channel parameters */
+  if (day_phase != 0xFF) {
+    if (day_phase == 4 || day_phase == 5) {
+      /* channel 1 on */
+      z64_AfxCmdW(0x06000101, 0x01000000);
+    }
+    else if (day_phase > 5) {
+      /* channel 1 off */
+      z64_AfxCmdW(0x06000101, 0x00000000);
+    }
+    if ((day_phase == 6 || day_phase == 7) && !rain_effect) {
+      /* channel 2, 3, 4 on */
+      z64_AfxCmdW(0x06000201, 0x01000000);
+      z64_AfxCmdW(0x06000301, 0x01000000);
+      z64_AfxCmdW(0x06000401, 0x01000000);
+    }
+    else if (day_phase > 7) {
+      /* channel 2, 3, 4 off */
+      z64_AfxCmdW(0x06000201, 0x00000000);
+      z64_AfxCmdW(0x06000301, 0x00000000);
+      z64_AfxCmdW(0x06000401, 0x00000000);
+    }
+    if ((day_phase == 8 || day_phase == 0) && !rain_effect) {
+      /* channel 5, 6 on */
+      z64_AfxCmdW(0x06000501, 0x01000000);
+      z64_AfxCmdW(0x06000601, 0x01000000);
+    }
+    else if (day_phase > 0 && day_phase < 4) {
+      /* channel 5, 6 off */
+      z64_AfxCmdW(0x06000501, 0x00000000);
+      z64_AfxCmdW(0x06000601, 0x00000000);
+    }
+  }
+  if (rain_effect) {
+    /* channel 14, 15 on */
+    z64_AfxCmdW(0x06000E01, 0x01000000);
+    z64_AfxCmdW(0x06000F01, 0x01000000);
   }
 }
 
@@ -1809,8 +1903,10 @@ void load_state(void *state, struct state_meta *meta)
     }
     sc->ch_volume_state = 0;
     /* play sequence */
-    if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
-        p_seq_active != c_seq_active)
+    if (i == 0 && seq_idx == 0x0001 && p_seq_active)
+      play_night_sfx();
+    else if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
+             p_seq_active != c_seq_active)
     {
       sc->seq_idx = seq_idx;
       sc->prev_seq_idx = seq_idx;
