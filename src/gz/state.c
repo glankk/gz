@@ -326,6 +326,7 @@ typedef void (*z64_CreateSkyVtx_proc)(z64_sky_ctxt_t *sky_ctxt, int a1);
 typedef void (*z64_StopSfx_proc)(void);
 typedef void (*z64_AfxCmdF_proc)(uint32_t hi, float lo);
 typedef void (*z64_AfxCmdW_proc)(uint32_t hi, uint32_t lo);
+typedef void (*z64_FlushAfxCmd_proc)(void);
 typedef void (*z64_ConfigureAfx_proc)(uint8_t cfg);
 typedef void (*z64_ResetAudio_proc)(uint8_t cfg);
 typedef int (*z64_CheckAfxConfigBusy_proc)(void);
@@ -344,6 +345,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_StopSfx_addr                        0x800A0290
 #define z64_AfxCmdF_addr                        0x800BB098
 #define z64_AfxCmdW_addr                        0x800BB0BC
+#define z64_FlushAfxCmd_addr                    0x800BB140
 #define z64_ConfigureAfx_addr                   0x800BB548
 #define z64_ResetAudio_addr                     0x800C7E98
 #define z64_CheckAfxConfigBusy_addr             0x800CB798
@@ -356,6 +358,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_oob_timer_addr                      0x800EF6AC
 #define z64_cs_message_addr                     0x800EFCD0
+#define z64_weather_effect_addr                 0x800F1640
 #define z64_day_speed_addr                      0x800F1650
 #define z64_sky_images_addr                     0x800F184C
 #define z64_map_mark_ovl_addr                   0x800F1BF8
@@ -399,6 +402,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_StopSfx_addr                        0x800A02A0
 #define z64_AfxCmdF_addr                        0x800BB0B8
 #define z64_AfxCmdW_addr                        0x800BB0DC
+#define z64_FlushAfxCmd_addr                    0x800BB160
 #define z64_ConfigureAfx_addr                   0x800BB568
 #define z64_ResetAudio_addr                     0x800C8070
 #define z64_CheckAfxConfigBusy_addr             0x800CB958
@@ -411,6 +415,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_oob_timer_addr                      0x800EF86C
 #define z64_cs_message_addr                     0x800EFE90
+#define z64_weather_effect_addr                 0x800F1800
 #define z64_day_speed_addr                      0x800F1810
 #define z64_sky_images_addr                     0x800F1A0C
 #define z64_map_mark_ovl_addr                   0x800F1DB8
@@ -454,6 +459,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_StopSfx_addr                        0x800A0980
 #define z64_AfxCmdF_addr                        0x800BB71C
 #define z64_AfxCmdW_addr                        0x800BB740
+#define z64_FlushAfxCmd_addr                    0x800BB7C4
 #define z64_ConfigureAfx_addr                   0x800BBBCC
 #define z64_ResetAudio_addr                     0x800C86E8
 #define z64_CheckAfxConfigBusy_addr             0x800CBFD8
@@ -466,6 +472,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_time_addr                 0x800EF838
 #define z64_oob_timer_addr                      0x800EFCEC
 #define z64_cs_message_addr                     0x800F0310
+#define z64_weather_effect_addr                 0x800F1C80
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_sky_images_addr                     0x800F1E8C
 #define z64_map_mark_ovl_addr                   0x800F2238
@@ -540,6 +547,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_StopSfx               ( (z64_StopSfx_proc)                z64_StopSfx_addr)
 #define z64_AfxCmdF               ( (z64_AfxCmdF_proc)                z64_AfxCmdF_addr)
 #define z64_AfxCmdW               ( (z64_AfxCmdW_proc)                z64_AfxCmdW_addr)
+#define z64_FlushAfxCmd           ( (z64_FlushAfxCmd_proc)            z64_FlushAfxCmd_addr)
 #define z64_ConfigureAfx          ( (z64_ConfigureAfx_proc)           z64_ConfigureAfx_addr)
 #define z64_ResetAudio            ( (z64_ResetAudio_proc)             z64_ResetAudio_addr)
 #define z64_CheckAfxConfigBusy    ( (z64_CheckAfxConfigBusy_proc)     z64_CheckAfxConfigBusy_addr)
@@ -819,31 +827,16 @@ static void play_night_sfx(void)
       /* channel 1 on */
       z64_AfxCmdW(0x06000101, 0x01000000);
     }
-    else if (day_phase > 5) {
-      /* channel 1 off */
-      z64_AfxCmdW(0x06000101, 0x00000000);
-    }
     if ((day_phase == 6 || day_phase == 7) && !rain_effect) {
       /* channel 2, 3, 4 on */
       z64_AfxCmdW(0x06000201, 0x01000000);
       z64_AfxCmdW(0x06000301, 0x01000000);
       z64_AfxCmdW(0x06000401, 0x01000000);
     }
-    else if (day_phase > 7) {
-      /* channel 2, 3, 4 off */
-      z64_AfxCmdW(0x06000201, 0x00000000);
-      z64_AfxCmdW(0x06000301, 0x00000000);
-      z64_AfxCmdW(0x06000401, 0x00000000);
-    }
     if ((day_phase == 8 || day_phase == 0) && !rain_effect) {
       /* channel 5, 6 on */
       z64_AfxCmdW(0x06000501, 0x01000000);
       z64_AfxCmdW(0x06000601, 0x01000000);
-    }
-    else if (day_phase > 0 && day_phase < 4) {
-      /* channel 5, 6 off */
-      z64_AfxCmdW(0x06000501, 0x00000000);
-      z64_AfxCmdW(0x06000601, 0x00000000);
     }
   }
   if (rain_effect) {
@@ -1031,6 +1024,9 @@ uint32_t save_state(void *state, struct state_meta *meta)
   serial_write(&p, &z64_minimap_entrance_x, sizeof(z64_minimap_entrance_x));
   serial_write(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
   serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
+
+  /* weather effect */
+  serial_write(&p, (void*)z64_weather_effect_addr, 0x0008);
 
   /* day speed */
   serial_write(&p, &z64_day_speed, sizeof(z64_day_speed));
@@ -1705,6 +1701,9 @@ void load_state(void *state, struct state_meta *meta)
   serial_read(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
   serial_read(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
+  /* weather effect */
+  serial_read(&p, (void*)z64_weather_effect_addr, 0x0008);
+
   /* day speed */
   serial_read(&p, &z64_day_speed, sizeof(z64_day_speed));
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
@@ -1911,17 +1910,19 @@ void load_state(void *state, struct state_meta *meta)
       sc->seq_idx = seq_idx;
       sc->prev_seq_idx = seq_idx;
       if (seq_idx == 0xFFFF || !p_seq_active)
-        seq_idx = 0;
-      z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
+        z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
+      else
+        z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
     }
     /* set volume */
     z64_AfxCmdF(0x41000000 | (i << 16), volume);
   }
+  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
   if (z64_game.pause_ctxt.state > 0 && z64_game.pause_ctxt.state < 8)
     z64_AfxCmdW(0xF1000000, 0x00000000);
   else
     z64_AfxCmdW(0xF2000000, 0x00000000);
-  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
+  z64_FlushAfxCmd();
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
