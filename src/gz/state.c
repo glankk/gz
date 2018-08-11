@@ -1107,6 +1107,14 @@ uint32_t save_state(void *state, struct state_meta *meta)
   }
   serial_write(&p, (void*)z64_sfx_mute_addr, 0x0008);
 
+  /* save pending audio commands */
+  {
+    uint8_t n_cmd = z64_audio_cmd_write_pos - z64_audio_cmd_read_pos;
+    serial_write(&p, &n_cmd, sizeof(n_cmd));
+    for (uint8_t i = z64_audio_cmd_read_pos; i != z64_audio_cmd_write_pos; ++i)
+      serial_write(&p, &z64_audio_cmd_buf[i], sizeof(*z64_audio_cmd_buf));
+  }
+
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* save song state */
@@ -1902,17 +1910,19 @@ void load_state(void *state, struct state_meta *meta)
     }
     sc->ch_volume_state = 0;
     /* play sequence */
-    if (i == 0 && seq_idx == 0x0001 && p_seq_active)
-      play_night_sfx();
-    else if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
-             p_seq_active != c_seq_active)
-    {
-      sc->seq_idx = seq_idx;
-      sc->prev_seq_idx = seq_idx;
-      if (seq_idx == 0xFFFF || !p_seq_active)
-        z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
-      else
-        z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
+    if (i != 2) {
+      if (i == 0 && seq_idx == 0x0001 && p_seq_active)
+        play_night_sfx();
+      else if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
+               p_seq_active != c_seq_active)
+      {
+        sc->seq_idx = seq_idx;
+        sc->prev_seq_idx = seq_idx;
+        if (seq_idx == 0xFFFF || !p_seq_active)
+          z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
+        else
+          z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
+      }
     }
     /* set volume */
     z64_AfxCmdF(0x41000000 | (i << 16), volume);
@@ -1923,6 +1933,16 @@ void load_state(void *state, struct state_meta *meta)
   else
     z64_AfxCmdW(0xF2000000, 0x00000000);
   z64_FlushAfxCmd();
+
+  /* restore pending audio commands */
+  {
+    uint8_t n_cmd;
+    serial_read(&p, &n_cmd, sizeof(n_cmd));
+    for (uint8_t i = 0; i != n_cmd; ++i) {
+      serial_read(&p, &z64_audio_cmd_buf[z64_audio_cmd_write_pos++],
+                  sizeof(*z64_audio_cmd_buf));
+    }
+  }
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);

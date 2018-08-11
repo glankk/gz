@@ -1750,6 +1750,7 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 #define z64_vi_counter          (*(uint32_t*)         z64_vi_counter_addr)
 #define z64_ftab                (*(z64_ftab_t(*)[])   z64_ftab_addr)
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
+#define z64_audio_cmd_buf       (*(uint32_t(*)[0x100])z64_audio_cmd_buf_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)
 #define z64_day_speed           (*(uint16_t*)         z64_day_speed_addr)
 #define z64_light_handlers      ( (z64_light_handler_t*)                      \

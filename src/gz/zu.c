@@ -425,8 +425,7 @@ void zu_execute_filemenu(void)
 
 void zu_audio_cmd(uint32_t cmd)
 {
-  uint32_t *cmd_buf = (void*)z64_audio_cmd_buf_addr;
-  cmd_buf[z64_audio_cmd_write_pos++] = cmd;
+  z64_audio_cmd_buf[z64_audio_cmd_write_pos++] = cmd;
 }
 
 void zu_set_event_flag(int flag_index)
