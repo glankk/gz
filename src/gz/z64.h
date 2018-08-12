@@ -1145,7 +1145,8 @@ typedef struct
   void             *room_space_start;         /* 0x0028 */
   void             *room_space_end;           /* 0x002C */
   /* loading info */
-  int8_t            room_loading[2];          /* 0x0030 */
+  uint8_t           load_slot;                /* 0x0030 */
+  int8_t            load_active;              /* 0x0031 */
   char              pad_00_[0x0002];          /* 0x0032 */
   void             *load_ptr;                 /* 0x0034 */
   z64_getfile_t     load_getfile;             /* 0x0038 */
@@ -1513,6 +1514,7 @@ typedef struct
 #define z64_UpdateItemButton_addr               0x8006FB50
 #define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
+#define z64_room_load_sync_hook_addr            0x80080BD0
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091474
 #define z64_entrance_offset_hook_addr           0x8009AA44
@@ -1588,6 +1590,7 @@ typedef struct
 #define z64_UpdateItemButton_addr               0x8006FB50
 #define z64_UpdateEquipment_addr                0x80079764
 #define z64_LoadRoom_addr                       0x80080A3C
+#define z64_room_load_sync_hook_addr            0x80080BD0
 #define z64_UnloadRoom_addr                     0x80080C98
 #define z64_Io_addr                             0x80091484
 #define z64_entrance_offset_hook_addr           0x8009AA54
@@ -1663,6 +1666,7 @@ typedef struct
 #define z64_UpdateItemButton_addr               0x800701B0
 #define z64_UpdateEquipment_addr                0x80079DF4
 #define z64_LoadRoom_addr                       0x80081064
+#define z64_room_load_sync_hook_addr            0x800811F8
 #define z64_UnloadRoom_addr                     0x800812C0
 #define z64_Io_addr                             0x80091AB4
 #define z64_entrance_offset_hook_addr           0x8009B134

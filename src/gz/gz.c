@@ -2958,6 +2958,15 @@ static void main_hook(void)
   gfx_flush();
 }
 
+HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
+{
+  init_gp();
+  if (!gz_ready || movie_state == MOVIE_IDLE)
+    return z64_osRecvMesg(mq, msg, flag);
+  else
+    return z64_osRecvMesg(mq, msg, OS_MESG_BLOCK);
+}
+
 HOOK void entrance_offset_hook(void)
 {
   init_gp();
