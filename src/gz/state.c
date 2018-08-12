@@ -350,10 +350,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_ResetAudio_addr                     0x800C7E98
 #define z64_CheckAfxConfigBusy_addr             0x800CB798
 #define z64_LoadOverlay_addr                    0x800CCBB8
-#define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_part_space_addr                     0x800E7B40
 #define z64_part_pos_addr                       0x800E7B44
 #define z64_part_max_addr                       0x800E7B48
+#define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_actor_ovl_tab_addr                  0x800E8530
 #define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_oob_timer_addr                      0x800EF6AC
@@ -407,10 +407,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_ResetAudio_addr                     0x800C8070
 #define z64_CheckAfxConfigBusy_addr             0x800CB958
 #define z64_LoadOverlay_addr                    0x800CCD78
-#define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_part_space_addr                     0x800E7D00
 #define z64_part_pos_addr                       0x800E7D04
 #define z64_part_max_addr                       0x800E7D08
+#define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_actor_ovl_tab_addr                  0x800E86F0
 #define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_oob_timer_addr                      0x800EF86C
@@ -464,10 +464,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_ResetAudio_addr                     0x800C86E8
 #define z64_CheckAfxConfigBusy_addr             0x800CBFD8
 #define z64_LoadOverlay_addr                    0x800CD3F8
-#define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_part_space_addr                     0x800E8180
 #define z64_part_pos_addr                       0x800E8184
 #define z64_part_max_addr                       0x800E8188
+#define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_actor_ovl_tab_addr                  0x800E8B70
 #define z64_letterbox_time_addr                 0x800EF838
 #define z64_oob_timer_addr                      0x800EFCEC

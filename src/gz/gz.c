@@ -25,6 +25,7 @@
 #include "zu.h"
 
 //#define LEAN
+//#define AFX_DEBUG
 
 struct equipment_item_option
 {
@@ -2373,12 +2374,14 @@ static void tab_next_proc(struct menu_item *item, void *data)
   menu_tab_next(data);
 }
 
+#ifdef AFX_DEBUG
 struct afx_cmd
 {
   uint32_t hi;
   uint32_t lo;
 };
 struct vector afx_cmd_list;
+#endif
 
 static void main_hook(void)
 {
@@ -2945,12 +2948,10 @@ static void main_hook(void)
 #undef STRINGIFY_
   }
 
-#if 0
-  {
-    for (int i = 0; i < afx_cmd_list.size; ++i) {
-      struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
-      gfx_printf(font, 16, 16 + ch * i, "%08x %08x", cmd->hi, cmd->lo);
-    }
+#ifdef AFX_DEBUG
+  for (int i = 0; i < afx_cmd_list.size; ++i) {
+    struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
+    gfx_printf(font, 16, 16 + ch * i, "%08x %08x", cmd->hi, cmd->lo);
   }
 #endif
 
@@ -3051,6 +3052,7 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
   disp_buf->d = (void*)((char*)buf + size);
 }
 
+#ifdef AFX_DEBUG
 HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
 {
   init_gp();
@@ -3071,6 +3073,7 @@ HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
   }
 #endif
 }
+#endif
 
 static _Bool frame_flag;
 static void state_main_hook(void)
@@ -3250,7 +3253,7 @@ static void init(void)
                                                    G_CC_MODULATEIA_PRIM));
   }
 
-#if 0
+#ifdef AFX_DEBUG
   {
     vector_init(&afx_cmd_list, sizeof(struct afx_cmd));
     uint32_t hook[] =
