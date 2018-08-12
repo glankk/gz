@@ -1517,7 +1517,6 @@ typedef struct
 #define z64_Io_addr                             0x80091474
 #define z64_entrance_offset_hook_addr           0x8009AA44
 #define z64_srand_call_addr                     0x8009AC80
-#define z64_ups_nop_addr                        0x8009FFC0
 #define z64_frame_input_func_addr               0x800A0BA0
 #define z64_main_hook_addr                      0x800A0BF8
 #define z64_disp_swap_1_addr                    0x800A1198
@@ -1593,7 +1592,6 @@ typedef struct
 #define z64_Io_addr                             0x80091484
 #define z64_entrance_offset_hook_addr           0x8009AA54
 #define z64_srand_call_addr                     0x8009AC90
-#define z64_ups_nop_addr                        0x8009FFD0
 #define z64_frame_input_func_addr               0x800A0BB0
 #define z64_main_hook_addr                      0x800A0C08
 #define z64_disp_swap_1_addr                    0x800A11A8
@@ -1669,7 +1667,6 @@ typedef struct
 #define z64_Io_addr                             0x80091AB4
 #define z64_entrance_offset_hook_addr           0x8009B134
 #define z64_srand_call_addr                     0x8009B370
-#define z64_ups_nop_addr                        0x800A06B0
 #define z64_frame_input_func_addr               0x800A1290
 #define z64_main_hook_addr                      0x800A12E4
 #define z64_disp_swap_1_addr                    0x800A1848
