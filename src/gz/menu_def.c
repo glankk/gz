@@ -77,8 +77,8 @@ static int tooltip_draw_proc(struct menu_item *item,
   while (tool_menu->child)
     tool_menu = tool_menu->child;
   if (tool_menu->selector && tool_menu->selector->tooltip) {
-    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
-                                               draw_params->alpha));
+    gfx_mode_set(GFX_MODE_COLOR,
+                 GPACK_RGB24A8(draw_params->color, draw_params->alpha));
     gfx_printf(draw_params->font, draw_params->x, draw_params->y,
                "%s", tool_menu->selector->tooltip);
   }

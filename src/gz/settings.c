@@ -34,28 +34,28 @@ void settings_load_default(void)
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
-  d->menu_settings.font_resource = RES_FONT_PRESSSTART2P;
-  d->menu_settings.drop_shadow = 1;
-  d->menu_settings.input_display = 1;
-  d->menu_settings.lag_counter = 0;
-  d->menu_settings.lag_unit = SETTINGS_LAG_FRAMES;
+  d->bits.font_resource = RES_FONT_PRESSSTART2P;
+  d->bits.drop_shadow = 1;
+  d->bits.input_display = 1;
+  d->bits.lag_counter = 0;
+  d->bits.lag_unit = SETTINGS_LAG_FRAMES;
 #ifndef WIIVC
-  d->menu_settings.timer = 0;
+  d->bits.timer = 0;
 #endif
-  d->menu_settings.pause_display = 1;
-  d->menu_settings.macro_input = 0;
-  d->menu_settings.break_type = SETTINGS_BREAK_NORMAL;
-  d->menu_settings.warp_age = 0;
-  d->menu_settings.warp_cutscene = 0;
+  d->bits.pause_display = 1;
+  d->bits.macro_input = 0;
+  d->bits.break_type = SETTINGS_BREAK_NORMAL;
+  d->bits.warp_age = 0;
+  d->bits.warp_cutscene = 0;
 #ifndef WIIVC
-  d->menu_settings.load_to = SETTINGS_LOADTO_ZFILE;
-  d->menu_settings.on_load = SETTINGS_ONLOAD_NOTHING;
+  d->bits.load_to = SETTINGS_LOADTO_ZFILE;
+  d->bits.on_load = SETTINGS_ONLOAD_NOTHING;
 #endif
-  d->menu_settings.col_view_mode = SETTINGS_COLVIEW_DECAL;
-  d->menu_settings.col_view_xlu = 1;
-  d->menu_settings.col_view_line = 0;
-  d->menu_settings.col_view_shade = 1;
-  d->menu_settings.col_view_rd = 0;
+  d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
+  d->bits.col_view_xlu = 1;
+  d->bits.col_view_line = 0;
+  d->bits.col_view_shade = 1;
+  d->bits.col_view_rd = 0;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;

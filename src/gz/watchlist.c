@@ -10,7 +10,7 @@
 
 struct item_data
 {
-  struct menu      *menu_global_watches;
+  struct menu      *menu_release;
   struct menu      *imenu;
   struct vector     members;
   struct menu_item *add_button;
@@ -59,7 +59,7 @@ static void release_member(struct member_data *member_data)
   watch->y = 0;
   watch->pxoffset = member_data->x;
   watch->pyoffset = member_data->y;
-  menu_item_transfer(watch, member_data->data->menu_global_watches);
+  menu_item_transfer(watch, member_data->data->menu_release);
 }
 
 static void anchor_member(struct member_data *member_data)
@@ -263,13 +263,13 @@ static int destroy_proc(struct menu_item *item)
 }
 
 struct menu_item *watchlist_create(struct menu *menu,
-                                   struct menu *menu_global_watches,
+                                   struct menu *menu_release,
                                    int x, int y)
 {
   struct menu *imenu;
   struct menu_item *item = menu_add_imenu(menu, x, y, &imenu);
   struct item_data *data = malloc(sizeof(*data));
-  data->menu_global_watches = menu_global_watches;
+  data->menu_release = menu_release;
   data->imenu = imenu;
   vector_init(&data->members, sizeof(struct member_data*));
   if (!list_icons)

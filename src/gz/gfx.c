@@ -80,7 +80,6 @@ void gfx_mode_init(void)
   gDPSetDepthSource(gfx_disp_p++, G_ZS_PRIM);
   gDPSetCombineKey(gfx_disp_p++, G_CK_NONE);
   gDPSetTextureConvert(gfx_disp_p++, G_TC_FILT);
-  gDPSetTextureFilter(gfx_disp_p++, G_TF_BILERP);
   gDPSetTextureDetail(gfx_disp_p++, G_TD_CLAMP);
   gDPSetTexturePersp(gfx_disp_p++, G_TP_NONE);
   gDPSetTextureLOD(gfx_disp_p++, G_TL_TILE);

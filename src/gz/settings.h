@@ -103,7 +103,7 @@ struct watch_info
   uint8_t position_set  : 1;
 };
 
-struct menu_settings
+struct settings_bits
 {
   uint32_t font_resource  : 4;
   uint32_t drop_shadow    : 1;
@@ -136,7 +136,7 @@ struct settings_data
   uint32_t              watch_address[SETTINGS_WATCHES_MAX];
   uint32_t              cheats;
   z64_angle_t           teleport_rot[SETTINGS_TELEPORT_MAX];
-  struct menu_settings  menu_settings;
+  struct settings_bits  bits;
   int16_t               menu_x;
   int16_t               menu_y;
   int16_t               input_display_x;

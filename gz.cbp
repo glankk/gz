@@ -274,6 +274,36 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/gz.h" />
+		<Unit filename="src/gz/gz_cheats.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_col_view.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_command.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_debug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_equips.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_file.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_inventory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_scene.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_warps.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/input.c">
 			<Option compilerVar="CC" />
 		</Unit>
