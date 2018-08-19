@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "gfx.h"
@@ -5,6 +6,7 @@
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
+#include "state.h"
 #include "watchlist.h"
 #include "z64.h"
 #include "zu.h"
@@ -44,6 +46,8 @@ struct command_info command_info[COMMAND_MAX] =
   {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
   {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
   {"collision view",    command_colview,      CMDACT_PRESS_ONCE},
+  {"save state",        command_savestate,    CMDACT_PRESS_ONCE},
+  {"load state",        command_loadstate,    CMDACT_PRESS_ONCE},
   {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
   {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                 CMDACT_PRESS},
@@ -374,6 +378,30 @@ void command_colview(void)
     gz.col_view_state = 1;
   else if (gz.col_view_state == 2)
     gz.col_view_state = 3;
+}
+
+void command_savestate(void)
+{
+  if (gz.state_buf[gz.state_slot])
+    free(gz.state_buf[gz.state_slot]);
+  gz.state_buf[gz.state_slot] = malloc(400 * 1024);
+  struct state_meta *state = gz.state_buf[gz.state_slot];
+  state->size = save_state(state);
+  state->scene_idx = z64_game.scene_index;
+  if (gz.movie_state == MOVIE_IDLE)
+    state->movie_frame = -1;
+  else
+    state->movie_frame = gz.movie_frame;
+}
+
+void command_loadstate(void)
+{
+  if (gz.state_buf[gz.state_slot]) {
+    struct state_meta *state = gz.state_buf[gz.state_slot];
+    load_state(state);
+    if (gz.movie_state != MOVIE_IDLE && state->movie_frame != -1)
+      gz_movie_seek(state->movie_frame);
+  }
 }
 
 void command_recordmacro(void)

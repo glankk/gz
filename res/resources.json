@@ -131,6 +131,13 @@
     "format":       "ia8",
     "tile_height":  16
   },
+  "macro_icons.png":
+  {
+    "type":         "texture",
+    "name":         "macro_icons",
+    "format":       "ia8",
+    "tile_height":  8
+  },
   "arrow_icons.png":
   {
     "type":         "texture",
@@ -151,6 +158,13 @@
     "name":         "file_icons",
     "format":       "rgba32",
     "tile_height":  9
+  },
+  "save_icons.png":
+  {
+    "type":         "texture",
+    "name":         "save_icons",
+    "format":       "rgba16",
+    "tile_height":  15
   },
   "crosshair.png":
   {

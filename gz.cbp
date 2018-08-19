@@ -295,6 +295,12 @@
 		<Unit filename="src/gz/gz_inventory.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/gz_macro.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/gz_movie.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/gz/gz_scene.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -370,6 +376,7 @@
 		<Unit filename="src/gz/state.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/gz/state.h" />
 		<Unit filename="src/gz/sys.h" />
 		<Unit filename="src/gz/ucode.c">
 			<Option compilerVar="CC" />

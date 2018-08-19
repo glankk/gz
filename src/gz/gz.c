@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <inttypes.h>
+#include <math.h>
 #include <startup.h>
 #include <mips.h>
 #include <n64.h>
@@ -54,54 +54,6 @@ static void main_hook(void)
 #endif
   input_update();
   gfx_mode_init();
-
-#if 1
-  {
-    static uint32_t state_size = 0;
-    uint32_t save_state(void *state, struct state_meta *meta);
-    void load_state(void *state, struct state_meta *meta);
-    if (!gz.menu_active) {
-      if (input_pressed_raw() & BUTTON_D_LEFT) {
-        void **state = &gz.state_buf[gz.state_slot];
-        if (!*state)
-          *state = malloc(410 * 1024);
-        struct state_meta meta;
-        if (gz.movie_state == MOVIE_IDLE)
-          meta.movie_frame = -1;
-        else
-          meta.movie_frame = gz.movie_frame;
-        state_size = save_state(*state, &meta);
-      }
-      else if ((input_pressed_raw() & BUTTON_D_RIGHT) &&
-               gz.state_buf[gz.state_slot])
-      {
-        struct state_meta meta;
-        load_state(gz.state_buf[gz.state_slot], &meta);
-        if (gz.movie_state != MOVIE_IDLE && meta.movie_frame != -1)
-          gz_movie_seek(meta.movie_frame);
-      }
-    }
-    {
-      int unit = 0;
-      const char *unit_name[] = {"b", "kb", "mb"};
-      uint32_t unit_value = state_size;
-      for (int i = 1; i < 3; ++i) {
-        if (unit_value >= 1024 * 2) {
-          unit_value /= 1024;
-          ++unit;
-        }
-        else
-          break;
-      }
-      struct gfx_font *font = menu_get_font(gz.menu_main, 1);
-      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, 0xFF));
-      gfx_printf(font, 16, 16, "%" PRIi32 "%s", unit_value, unit_name[unit]);
-    }
-  }
-#endif
-
-  /* save gfx pointer offsets for frame advance display list copy */
-  zu_save_disp_p(&gz.z_disp_p);
 
   {
     /* handle emergency settings reset */
@@ -215,9 +167,10 @@ static void main_hook(void)
     z64_file.seq_index = -1;
     z64_file.night_sfx = -1;
   }
-  if (settings->cheats & (1 << CHEAT_USEITEMS))
+  if (settings->cheats & (1 << CHEAT_USEITEMS)) {
     memset(&z64_game.if_ctxt.restriction_flags, 0,
            sizeof(z64_game.if_ctxt.restriction_flags));
+  }
   if (settings->cheats & (1 << CHEAT_NOMAP))
     z64_gameinfo.minimap_disabled = 1;
   if (settings->cheats & (1 << CHEAT_ISG))
@@ -258,6 +211,9 @@ static void main_hook(void)
       z64_file.day_time += speed;
   }
   gz.day_time_prev = z64_file.day_time;
+
+  /* save gfx pointer offsets for frame advance display list copy */
+  zu_save_disp_p(&gz.z_disp_p);
 
   /* get menu appearance */
   struct gfx_font *font = menu_get_font(gz.menu_main, 1);
@@ -307,18 +263,46 @@ static void main_hook(void)
 
   /* draw input display */
   if (settings->bits.input_display) {
+    int d_x;
+    int d_y;
+    uint16_t d_pad;
+    if (gz.movie_state == MOVIE_PLAYING &&
+        gz.movie_frame < gz.movie_inputs.size)
+    {
+      struct movie_input *mi = vector_at(&gz.movie_inputs, gz.movie_frame);
+      d_x = mi->raw.x;
+      d_y = mi->raw.y;
+      d_pad = mi->raw.pad;
+      d_pad |= mi->pad_pressed;
+      if (settings->bits.macro_input) {
+        if (abs(d_x) < 8)
+          d_x = z64_input_direct.raw.x;
+        if (abs(d_y) < 8)
+          d_y = z64_input_direct.raw.y;
+        d_pad |= z64_input_direct.raw.pad;
+      }
+      d_pad &= ~BUTTON_L;
+      d_pad &= ~BUTTON_D_UP;
+      d_pad &= ~BUTTON_D_DOWN;
+      d_pad &= ~BUTTON_D_LEFT;
+      d_pad &= ~BUTTON_D_RIGHT;
+    }
+    else {
+      d_x = z64_input_direct.raw.x;
+      d_y = z64_input_direct.raw.y;
+      d_pad = input_z_pad();
+    }
     struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
     gfx_printf(font, settings->input_display_x, settings->input_display_y,
-               "%4i %4i", z64_input_direct.raw.x, z64_input_direct.raw.y);
+               "%4i %4i", d_x, d_y);
     static const int buttons[] =
     {
       15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
     };
-    uint16_t z_pad = input_z_pad();
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
       int b = buttons[i];
-      if (!(z_pad & (1 << b)))
+      if (!(d_pad & (1 << b)))
         continue;
       int x = (cw - texture->tile_width) / 2 + i * 10;
       int y = -(gfx_font_xheight(font) + texture->tile_height + 1) / 2;
@@ -491,12 +475,12 @@ HOOK void input_hook(void)
         struct movie_input *mi = vector_at(&gz.movie_inputs, gz.movie_frame++);
         movie_to_z(zi, mi);
         if (settings->bits.macro_input) {
-          if (zi->adjusted_x == 0) {
+          if (abs(zi->raw.x) < 8) {
             zi->raw.x = di.raw.x;
             zi->x_diff = di.x_diff;
             zi->adjusted_x = di.adjusted_x;
           }
-          if (zi->adjusted_y == 0) {
+          if (abs(zi->raw.y) < 8) {
             zi->raw.y = di.raw.y;
             zi->y_diff = di.y_diff;
             zi->adjusted_y = di.adjusted_y;
@@ -707,18 +691,6 @@ static void main_return_proc(struct menu_item *item, void *data)
   gz_hide_menu();
 }
 
-static void state_dec_proc(struct menu_item *item, void *data)
-{
-  gz.state_slot += 3 - 1;
-  gz.state_slot %= 3;
-}
-
-static void state_inc_proc(struct menu_item *item, void *data)
-{
-  gz.state_slot += 1;
-  gz.state_slot %= 3;
-}
-
 static void init(void)
 {
   /* startup */
@@ -753,7 +725,7 @@ static void init(void)
   for (int i = 0; i < SETTINGS_MEMFILE_MAX; ++i)
     gz.memfile_saved[i] = 0;
   gz.memfile_slot = 0;
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < SETTINGS_STATE_MAX; ++i)
     gz.state_buf[i] = NULL;
   gz.state_slot = 0;
 
@@ -806,14 +778,10 @@ static void init(void)
     menu_add_submenu(&menu, 0, 4, gz_inventory_menu(), "inventory");
     menu_add_submenu(&menu, 0, 5, gz_equips_menu(), "equips");
     menu_add_submenu(&menu, 0, 6, gz_file_menu(), "file");
-    menu_add_submenu(&menu, 0, 7, &watches, "watches");
-    menu_add_submenu(&menu, 0, 8, gz_debug_menu(), "debug");
-    menu_add_submenu(&menu, 0, 9, gz_settings_menu(), "settings");
-
-    menu_add_static(&menu, 0, 10, "state slot", 0xC0C0C0);
-    menu_add_watch(&menu, 14, 10, (uint32_t)&gz.state_slot, WATCH_TYPE_U8);
-    menu_add_button(&menu, 12, 10, "-", state_dec_proc, NULL);
-    menu_add_button(&menu, 16, 10, "+", state_inc_proc, NULL);
+    menu_add_submenu(&menu, 0, 7, gz_macro_menu(), "macro");
+    menu_add_submenu(&menu, 0, 8, &watches, "watches");
+    menu_add_submenu(&menu, 0, 9, gz_debug_menu(), "debug");
+    menu_add_submenu(&menu, 0, 10, gz_settings_menu(), "settings");
 
     /* populate watches menu */
     watches.selector = menu_add_submenu(&watches, 0, 0, NULL, "return");

@@ -70,13 +70,13 @@ struct menu *gz_equips_menu(void)
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
 
   /* create equipment switches */
-  struct gfx_texture *t_on = resource_get(RES_ZICON_ITEM);
-  struct gfx_texture *t_off = resource_get(RES_ZICON_ITEM_GRAY);
+  struct gfx_texture *t_icon = resource_get(RES_ZICON_ITEM);
+  struct gfx_texture *t_icon_gray = resource_get(RES_ZICON_ITEM_GRAY);
   for (int i = 0; i < 3 * 4; ++i) {
     struct menu_item *item;
     item = menu_add_switch(&menu, 0, 2,
-                           t_on, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
-                           t_off, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
+                           t_icon, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
+                           t_icon_gray, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
                            .5f,
                            equip_switch_proc,
                            (void*)((i / 3) | ((1 + i % 3) << 4)));

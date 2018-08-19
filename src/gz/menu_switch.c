@@ -73,7 +73,10 @@ static int draw_proc(struct menu_item *item,
                                               (color >> 8)  & 0xFF,
                                               (color >> 0)  & 0xFF,
                                               draw_params->alpha));
-  gfx_mode_replace(GFX_MODE_FILTER, G_TF_BILERP);
+  if (data->scale != 1.f)
+    gfx_mode_replace(GFX_MODE_FILTER, G_TF_BILERP);
+  else
+    gfx_mode_replace(GFX_MODE_FILTER, G_TF_POINT);
   gfx_mode_replace(GFX_MODE_DROPSHADOW, 0);
   struct gfx_sprite sprite =
   {

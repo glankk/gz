@@ -84,8 +84,6 @@ void settings_load_default(void)
   d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_START, BUTTON_L);
 #endif
   d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
-  //d->binds[COMMAND_SAVEPOS] = input_bind_make(1, BUTTON_D_LEFT);
-  //d->binds[COMMAND_LOADPOS] = input_bind_make(1, BUTTON_D_RIGHT);
   d->binds[COMMAND_SAVEPOS] = input_bind_make(0);
   d->binds[COMMAND_LOADPOS] = input_bind_make(0);
   d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
@@ -118,6 +116,8 @@ void settings_load_default(void)
   d->binds[COMMAND_PREVFILE] = input_bind_make(0);
   d->binds[COMMAND_NEXTFILE] = input_bind_make(0);
   d->binds[COMMAND_COLVIEW] = input_bind_make(0);
+  d->binds[COMMAND_SAVESTATE] = input_bind_make(1, BUTTON_D_LEFT);
+  d->binds[COMMAND_LOADSTATE] = input_bind_make(1, BUTTON_D_RIGHT);
   d->binds[COMMAND_RECORDMACRO] = input_bind_make(0);
   d->binds[COMMAND_PLAYMACRO] = input_bind_make(0);
   d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);

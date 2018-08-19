@@ -4,6 +4,7 @@
 #include <n64.h>
 #include <set/set.h>
 #include "gz.h"
+#include "state.h"
 #include "sys.h"
 #include "zu.h"
 #include "z64.h"
@@ -20,6 +21,13 @@ static void serial_read(void **p, void *data, uint32_t length)
 {
   char *cp = *p;
   memcpy(data, cp, length);
+  cp += length;
+  *p = cp;
+}
+
+static void serial_skip(void **p, uint32_t length)
+{
+  char *cp = *p;
   cp += length;
   *p = cp;
 }
@@ -864,12 +872,12 @@ static _Bool addr_comp(void *a, void *b)
   return *a_u32 < *b_u32;
 }
 
-uint32_t save_state(void *state, struct state_meta *meta)
+uint32_t save_state(void *state)
 {
   void *p = state;
 
-  /* save metadata */
-  serial_write(&p, meta, sizeof(*meta));
+  /* allocate metadata */
+  serial_skip(&p, sizeof(struct state_meta));
 
   /* save afx config */
   serial_write(&p, &z64_afx_cfg, sizeof(z64_afx_cfg));
@@ -1129,12 +1137,12 @@ uint32_t save_state(void *state, struct state_meta *meta)
   return (char*)p - (char*)state;
 }
 
-void load_state(void *state, struct state_meta *meta)
+void load_state(void *state)
 {
   void *p = state;
 
-  /* load metadata */
-  serial_read(&p, meta, sizeof(*meta));
+  /* skip metadata */
+  serial_skip(&p, sizeof(struct state_meta));
 
   /* stop sound effects */
   /* importantly, this removes all sound effect control points, which prevents

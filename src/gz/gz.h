@@ -106,14 +106,9 @@ struct gz
   struct memory_file   *memfile;
   _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
   uint8_t               memfile_slot;
-  void                 *state_buf[3];
+  void                 *state_buf[SETTINGS_STATE_MAX];
   uint8_t               state_slot;
   _Bool                 frame_flag;
-};
-
-struct state_meta
-{
-  int                   movie_frame;
 };
 
 void          gz_apply_settings();
@@ -153,6 +148,8 @@ void          command_nextpos(void);
 void          command_prevfile(void);
 void          command_nextfile(void);
 void          command_colview(void);
+void          command_savestate(void);
+void          command_loadstate(void);
 void          command_recordmacro(void);
 void          command_playmacro(void);
 
@@ -169,6 +166,7 @@ struct menu  *gz_cheats_menu(void);
 struct menu  *gz_inventory_menu(void);
 struct menu  *gz_equips_menu(void);
 struct menu  *gz_file_menu(void);
+struct menu  *gz_macro_menu(void);
 struct menu  *gz_debug_menu(void);
 struct menu  *gz_settings_menu(void);
 

@@ -586,7 +586,7 @@ struct menu *gz_inventory_menu(void)
                               NULL, NULL);
     item->pxoffset = 76 + i * 18;
     item->pyoffset = 72;
-    char *tooltip = malloc(9);
+    char *tooltip = malloc(19);
     sprintf(tooltip, "bottle %d", i + 1);
     item->tooltip = tooltip;
   }
