@@ -1377,25 +1377,30 @@ void load_state(void *state)
                               z64_game.col_ctxt.stc_lut);
 
   }
-  /* load transition actor list */
   {
+    /* load transition actor list */
     z64_room_ctxt_t *room_ctxt = &z64_game.room_ctxt;
     serial_read(&p, room_ctxt->tnsn_list,
                 room_ctxt->n_tnsn * sizeof(*room_ctxt->tnsn_list));
-  }
-  /* load rooms */
-  for (int i = 0; i < 2; ++i) {
-    struct alloc *p_room = &room_list[i];
-    z64_room_t *c_room = &z64_game.room_ctxt.rooms[i];
-    int p_id = p_room->id;
-    int c_id = c_room->index;
-    void *p_ptr = p_room->ptr;
-    void *c_ptr = c_room->file;
-    if (c_ptr && c_id != -1 && (c_id != p_id || c_ptr != p_ptr)) {
-      uint32_t start = z64_game.room_list[c_id].vrom_start;
-      uint32_t end = z64_game.room_list[c_id].vrom_end;
-      zu_getfile(start, c_ptr, end - start);
+    /* load rooms */
+    for (int i = 0; i < 2; ++i) {
+      struct alloc *p_room = &room_list[i];
+      z64_room_t *c_room = &room_ctxt->rooms[i];
+      int p_id = p_room->id;
+      int c_id = c_room->index;
+      void *p_ptr = p_room->ptr;
+      void *c_ptr = c_room->file;
+      if (c_ptr && c_id != -1 && (z64_game.scene_index != scene_index ||
+                                  c_id != p_id || c_ptr != p_ptr))
+      {
+        uint32_t start = z64_game.room_list[c_id].vrom_start;
+        uint32_t end = z64_game.room_list[c_id].vrom_end;
+        zu_getfile(start, c_ptr, end - start);
+      }
     }
+    /* start async room load */
+    if (room_ctxt->load_active)
+      z64_osSendMesg(&z64_file_mq, &room_ctxt->load_getfile, OS_MESG_NOBLOCK);
   }
 
   /* load objects */

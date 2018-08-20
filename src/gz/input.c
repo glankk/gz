@@ -97,8 +97,11 @@ void input_update(void)
     if (!input_enabled || bind_disable[i] ||
         (reservation_enabled && !bind_override[i] &&
         (pad_reserved & bind_pad[i])))
+    {
       *cs = 0;
+    }
     else {
+      int css = *cs;
       for (j = 0; j < 4; ++j) {
         c = bind_get_component(*b, j);
         if (c == BIND_END)
@@ -115,7 +118,9 @@ void input_update(void)
             break;
           }
         }
-        if ((pad_released & (1 << c)) || (pad_pressed_raw & ~bind_pad[i])) {
+        if ((pad_released & (1 << c)) ||
+            (css != 0 && (pad_pressed_raw & ~bind_pad[i])))
+        {
           *cs = 0;
           break;
         }
@@ -310,13 +315,15 @@ static int draw_proc(struct menu_item *item,
   int y = draw_params->y - (gfx_font_xheight(draw_params->font) +
                             texture->tile_height + 1) / 2;
   uint16_t b = settings->binds[data->bind_index];
-  gfx_mode_set(GFX_MODE_COLOR, (draw_params->color << 8) | draw_params->alpha);
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
   for (int i = 0; i < 4; ++i) {
     uint16_t c = bind_get_component(b, i);
     if (c == BIND_END) {
-      if (i == 0)
+      if (i == 0) {
         gfx_printf(draw_params->font, draw_params->x, draw_params->y,
                    "unbound");
+      }
       break;
     }
     struct gfx_sprite sprite =
@@ -325,9 +332,10 @@ static int draw_proc(struct menu_item *item,
       x + i * 10, y,
       1.f, 1.f,
     };
-    if (item->owner->selector != item)
-      gfx_mode_set(GFX_MODE_COLOR, (input_button_color[c] << 8) |
-                   draw_params->alpha);
+    if (item->owner->selector != item) {
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(input_button_color[c],
+                                                 draw_params->alpha));
+    }
     gfx_sprite_draw(&sprite);
   }
   return 1;
