@@ -551,6 +551,8 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_mtx_stack           (*(MtxF(**)[20])              z64_mtx_stack_addr)
 #define z64_mtx_stack_top       (*(MtxF**)                    z64_mtx_stack_top_addr)
 #define z64_seq_ctl             (*(z64_seq_ctl_t(*)[4])       z64_seq_ctl_addr)
+#define z64_afx_cmd_write_pos   (*(uint8_t*)                 (z64_afx_addr + 0x5BD8))
+#define z64_afx_cmd_read_pos    (*(uint8_t*)                 (z64_afx_addr + 0x5BD9))
 
 #define z64_CreateStaticCollision ( (z64_CreateStaticCollision_proc)  z64_CreateStaticCollision_addr)
 #define z64_LoadMinimap           ( (z64_LoadMinimap_proc)            z64_LoadMinimap_addr)
@@ -1168,10 +1170,11 @@ void load_state(void *state)
   /* importantly, this removes all sound effect control points, which prevents
      floating-point exception crashes due to dangling pointers in the cp's. */
   z64_StopSfx();
-  /* cancel pending sound effects */
+  /* cancel queued sound effects */
   z64_sfx_read_pos = z64_sfx_write_pos;
-  /* cancel pending audio commands */
+  /* cancel queued audio commands */
   z64_audio_cmd_read_pos = z64_audio_cmd_write_pos;
+  z64_afx_cmd_read_pos = z64_afx_cmd_write_pos;
   /* configure afx */
   int p_afx_cfg = z64_afx_cfg;
   uint8_t c_afx_cfg;
