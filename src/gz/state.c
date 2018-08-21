@@ -373,6 +373,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_x_addr             0x800F5530
 #define z64_minimap_entrance_y_addr             0x800F5534
 #define z64_minimap_entrance_r_addr             0x800F5538
+#define z64_hazard_state_addr                   0x800F7538
 #define z64_temp_day_speed_addr                 0x800F7638
 #define z64_n_camera_shake_addr                 0x800F7D24
 #define z64_letterbox_target_addr               0x800FE474
@@ -392,6 +393,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
 #define z64_map_mark_data_tab_addr              0x8011BF00
+#define z64_timer_state_addr                    0x8011BF20
 #define z64_camera_shake_addr                   0x8011BF60
 #define z64_mtx_stack_addr                      0x80121200
 #define z64_mtx_stack_top_addr                  0x80121204
@@ -430,6 +432,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_x_addr             0x800F56F0
 #define z64_minimap_entrance_y_addr             0x800F56F4
 #define z64_minimap_entrance_r_addr             0x800F56F8
+#define z64_hazard_state_addr                   0x800F76F8
 #define z64_temp_day_speed_addr                 0x800F77F8
 #define z64_n_camera_shake_addr                 0x800F7EE4
 #define z64_letterbox_target_addr               0x800FE634
@@ -449,6 +452,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
 #define z64_map_mark_data_tab_addr              0x8011C0C0
+#define z64_timer_state_addr                    0x8011C0E0
 #define z64_camera_shake_addr                   0x8011C120
 #define z64_mtx_stack_addr                      0x801213C0
 #define z64_mtx_stack_top_addr                  0x801213C4
@@ -487,6 +491,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_minimap_entrance_x_addr             0x800F5B70
 #define z64_minimap_entrance_y_addr             0x800F5B74
 #define z64_minimap_entrance_r_addr             0x800F5B78
+#define z64_hazard_state_addr                   0x800F7B78
 #define z64_temp_day_speed_addr                 0x800F7C80
 #define z64_n_camera_shake_addr                 0x800F8374
 #define z64_letterbox_target_addr               0x800FEAC4
@@ -506,6 +511,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
 #define z64_map_mark_data_tab_addr              0x8011C5B0
+#define z64_timer_state_addr                    0x8011C5D0
 #define z64_camera_shake_addr                   0x8011C610
 #define z64_mtx_stack_addr                      0x80121AD0
 #define z64_mtx_stack_top_addr                  0x80121AD4
@@ -1039,6 +1045,12 @@ uint32_t save_state(void *state)
   /* day speed */
   serial_write(&p, &z64_day_speed, sizeof(z64_day_speed));
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
+
+  /* hazard state */
+  serial_write(&p, (void*)z64_hazard_state_addr, 0x0008);
+
+  /* timer state */
+  serial_write(&p, (void*)z64_timer_state_addr, 0x0008);
 
   /* letterboxing */
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
@@ -1736,6 +1748,12 @@ void load_state(void *state)
   /* day speed */
   serial_read(&p, &z64_day_speed, sizeof(z64_day_speed));
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
+
+  /* hazard state */
+  serial_read(&p, (void*)z64_hazard_state_addr, 0x0008);
+
+  /* timer state */
+  serial_read(&p, (void*)z64_timer_state_addr, 0x0008);
 
   /* letterboxing */
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
