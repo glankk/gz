@@ -1166,15 +1166,15 @@ void load_state(void *state)
   /* skip metadata */
   serial_skip(&p, sizeof(struct state_meta));
 
-  /* stop sound effects */
-  /* importantly, this removes all sound effect control points, which prevents
-     floating-point exception crashes due to dangling pointers in the cp's. */
-  z64_StopSfx();
   /* cancel queued sound effects */
   z64_sfx_read_pos = z64_sfx_write_pos;
   /* cancel queued audio commands */
   z64_audio_cmd_read_pos = z64_audio_cmd_write_pos;
   z64_afx_cmd_read_pos = z64_afx_cmd_write_pos;
+  /* stop sound effects */
+  /* importantly, this removes all sound effect control points, which prevents
+     floating-point exception crashes due to dangling pointers in the cp's. */
+  z64_StopSfx();
   /* configure afx */
   int p_afx_cfg = z64_afx_cfg;
   uint8_t c_afx_cfg;

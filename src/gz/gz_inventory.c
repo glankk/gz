@@ -550,7 +550,7 @@ struct menu *gz_inventory_menu(void)
     item = menu_add_switch(&equipment, 0, 2,
                            t_item, equipment_list[i].item_id, 0xFFFFFF,
                            t_item_gray, equipment_list[i].item_id, 0xFFFFFF,
-                           .5f,
+                           .5f, 1,
                            equipment_switch_proc, &equipment_list[i]);
     item->pxoffset = 20 + i % 3 * 18;
     item->pyoffset = i / 3 * 18;
@@ -559,7 +559,7 @@ struct menu *gz_inventory_menu(void)
   item = menu_add_switch(&equipment, 0, 2,
                          t_item, Z64_ITEM_BIGGORON_SWORD, 0xFFFFFF,
                          t_item_gray, Z64_ITEM_BIGGORON_SWORD, 0xFFFFFF,
-                         .5f,
+                         .5f, 1,
                          bgs_switch_proc, NULL);
   item->pxoffset = 20 + 1 * 18;
   item->pyoffset = 4 * 18;
@@ -569,7 +569,7 @@ struct menu *gz_inventory_menu(void)
     item = menu_add_switch(&equipment, 0, 2,
                            t_item, item_list[i].item_id, 0xFFFFFF,
                            t_item_gray, item_list[i].item_id, 0xFFFFFF,
-                           .5f,
+                           .5f, 1,
                            item_switch_proc, &item_list[i]);
     item->pxoffset = 76 + i % 6 * 18;
     item->pyoffset = i / 6 * 18;
@@ -665,20 +665,20 @@ struct menu *gz_inventory_menu(void)
   item = menu_add_switch(&quest, 0, 10,
                          t_item_24, 14, 0xFFFFFF,
                          t_item_24, 14, 0x606060,
-                         2.f / 3.f,
+                         2.f / 3.f, 1,
                          byte_switch_proc, &di.boss_key);
   item->pxoffset = 5 * 18 + 20;
   item = menu_add_switch(&quest, 0, 10,
                          t_item_24, 15, 0xFFFFFF,
                          t_item_24, 15, 0x606060,
-                         2.f / 3.f,
+                         2.f / 3.f, 1,
                          byte_switch_proc, &di.compass);
   item->pxoffset = 5 * 18 + 20;
   item->pyoffset = 1 * 18;
   item = menu_add_switch(&quest, 0, 10,
                          t_item_24, 16, 0xFFFFFF,
                          t_item_24, 16, 0x606060,
-                         2.f / 3.f,
+                         2.f / 3.f, 1,
                          byte_switch_proc, &di.map);
   item->pxoffset = 5 * 18 + 20;
   item->pyoffset = 2 * 18;
@@ -689,7 +689,7 @@ struct menu *gz_inventory_menu(void)
     item = menu_add_switch(&quest, 0, 10,
                            t_item_24, d->tile, 0xFFFFFF,
                            t_item_24, d->tile, 0x606060,
-                           2.f / 3.f,
+                           2.f / 3.f, 1,
                            quest_item_switch_proc, (void*)d->mask);
     item->pxoffset = i % 6 * 18;
     item->pyoffset = i / 6 * 18;
@@ -707,7 +707,7 @@ struct menu *gz_inventory_menu(void)
     item = menu_add_switch(&quest, 0, 10,
                            t_note, 0, d->color,
                            t_note, 0, color_off,
-                           2.f / 3.f,
+                           2.f / 3.f, 1,
                            quest_item_switch_proc, (void*)d->mask);
     item->pxoffset = i % 6 * 18;
     item->pyoffset = 2 * 18 + i / 6 * 18;

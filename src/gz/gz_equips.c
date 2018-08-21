@@ -77,7 +77,7 @@ struct menu *gz_equips_menu(void)
     item = menu_add_switch(&menu, 0, 2,
                            t_icon, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
                            t_icon_gray, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
-                           .5f,
+                           .5f, 1,
                            equip_switch_proc,
                            (void*)((i / 3) | ((1 + i % 3) << 4)));
     item->pxoffset = i % 3 * 18;

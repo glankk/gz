@@ -290,7 +290,7 @@ void flag_menu_create(struct menu *menu)
         view_cells[n] = menu_add_switch(menu, 4 + x, 3 + y,
                                         t_flag, 1, 0xFFFFFF,
                                         t_flag, 0, 0xFFFFFF,
-                                        0.75f, flag_proc, (void*)n);
+                                        0.75f, 1, flag_proc, (void*)n);
       }
     }
     goto_record(0);
