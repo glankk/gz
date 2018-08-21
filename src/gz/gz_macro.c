@@ -293,23 +293,29 @@ static int state_info_draw_proc(struct menu_item *item,
   if (state) {
     gfx_printf(font, x + cw * 2, y,
                "%s", zu_scene_info[state->scene_idx].scene_name);
-    gfx_printf(font, x + cw * 8, y + ch * 2,
+    int cx = 2;
+#ifndef WIIVC
+    cx += 6;
+#endif
+    gfx_printf(font, x + cw * cx, y + ch * 2,
                "%" PRIu32 "kb", state->size / 1024);
     if (state->movie_frame != -1) {
       struct gfx_texture *t_macro = resource_get(RES_ICON_MACRO);
       int w = t_macro->tile_width;
       int h = t_macro->tile_height;
+      cx += 7;
       struct gfx_sprite sprite =
       {
         t_macro, 2,
-        x + cw * 15 + (cw - w) / 2,
+        x + cw * cx + (cw - w) / 2,
         y + ch * 2 - (gfx_font_xheight(font) + h + 1) / 2,
         1.f, 1.f,
       };
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       gfx_sprite_draw(&sprite);
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(color, alpha));
-      gfx_printf(font, x + cw * 17, y + ch * 2, "%i", state->movie_frame);
+      cx += 2;
+      gfx_printf(font, x + cw * cx, y + ch * 2, "%i", state->movie_frame);
     }
   }
   else
