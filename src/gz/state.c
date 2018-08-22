@@ -325,6 +325,14 @@ typedef struct
 } z64_night_sfx_t;
 
 
+typedef struct
+{
+  uint32_t          hi;                       /* 0x0000 */
+  uint32_t          lo;                       /* 0x0004 */
+                                              /* 0x0008 */
+} z64_afx_cmd_t;
+
+
 typedef void (*z64_CreateStaticCollision_proc)(z64_col_ctxt_t *col_ctxt, z64_game_t *game, z64_col_lut_t *col_lut);
 typedef void (*z64_LoadMinimap_proc)(z64_game_t *game, int room_idx);
 typedef void (*z64_LoadActionLabel_proc)(z64_if_ctxt_t *if_ctxt, uint16_t action_idx, int button_idx);
@@ -363,6 +371,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7B48
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_actor_ovl_tab_addr                  0x800E8530
+#define z64_hud_mode_addr                       0x800EF1AC
 #define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_oob_timer_addr                      0x800EF6AC
 #define z64_cs_message_addr                     0x800EFCD0
@@ -385,6 +394,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
 #define z64_afx_cfg_addr                        0x801043C0
+#define z64_afx_config_busy_addr                0x801043C4
 #define z64_message_state_addr                  0x8010A924
 #define z64_staff_notes_addr                    0x80112E8C
 #define z64_gameover_countdown_addr             0x801132B0
@@ -422,6 +432,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7D08
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_actor_ovl_tab_addr                  0x800E86F0
+#define z64_hud_mode_addr                       0x800EF36C
 #define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_oob_timer_addr                      0x800EF86C
 #define z64_cs_message_addr                     0x800EFE90
@@ -444,6 +455,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
 #define z64_afx_cfg_addr                        0x80104580
+#define z64_afx_config_busy_addr                0x80104584
 #define z64_message_state_addr                  0x8010AAE4
 #define z64_staff_notes_addr                    0x8011304C
 #define z64_gameover_countdown_addr             0x80113470
@@ -481,6 +493,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E8188
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_actor_ovl_tab_addr                  0x800E8B70
+#define z64_hud_mode_addr                       0x800EF7EC
 #define z64_letterbox_time_addr                 0x800EF838
 #define z64_oob_timer_addr                      0x800EFCEC
 #define z64_cs_message_addr                     0x800F0310
@@ -503,6 +516,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
 #define z64_afx_cfg_addr                        0x80104A00
+#define z64_afx_config_busy_addr                0x80104A04
 #define z64_message_state_addr                  0x8010AFD4
 #define z64_staff_notes_addr                    0x8011353C
 #define z64_gameover_countdown_addr             0x80113960
@@ -526,6 +540,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos            (*(int32_t*)                  z64_part_pos_addr)
 #define z64_part_max            (*(int32_t*)                  z64_part_max_addr)
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
+#define z64_hud_mode            (*(uint32_t*)                 z64_hud_mode_addr)
 #define z64_letterbox_time      (*(uint32_t*)                 z64_letterbox_time_addr)
 #define z64_oob_timer           (*(int32_t*)                  z64_oob_timer_addr)
 #define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
@@ -543,6 +558,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_sfx_write_pos       (*(uint8_t*)                  z64_sfx_write_pos_addr)
 #define z64_sfx_read_pos        (*(uint8_t*)                  z64_sfx_read_pos_addr)
 #define z64_afx_cfg             (*(uint8_t*)                  z64_afx_cfg_addr)
+#define z64_afx_config_busy     (*(uint8_t*)                  z64_afx_config_busy_addr)
 #define z64_gameover_countdown  (*(int16_t*)                  z64_gameover_countdown_addr)
 #define z64_pfx                 (*(z64_pfx_t*)                z64_pfx_addr)
 #define z64_light_queue         (*(z64_light_queue_t*)        z64_light_queue_addr)
@@ -553,6 +569,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_seq_ctl             (*(z64_seq_ctl_t(*)[4])       z64_seq_ctl_addr)
 #define z64_afx_cmd_write_pos   (*(uint8_t*)                 (z64_afx_addr + 0x5BD8))
 #define z64_afx_cmd_read_pos    (*(uint8_t*)                 (z64_afx_addr + 0x5BD9))
+#define z64_afx_cmd_buf         (*(z64_afx_cmd_t(*)[0x100])  (z64_afx_addr + 0x5C50))
 
 #define z64_CreateStaticCollision ( (z64_CreateStaticCollision_proc)  z64_CreateStaticCollision_addr)
 #define z64_LoadMinimap           ( (z64_LoadMinimap_proc)            z64_LoadMinimap_addr)
@@ -1054,6 +1071,9 @@ uint32_t save_state(void *state)
   /* timer state */
   serial_write(&p, (void*)z64_timer_state_addr, 0x0008);
 
+  /* hud state */
+  serial_write(&p, &z64_hud_mode, sizeof(z64_hud_mode));
+
   /* letterboxing */
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
@@ -1113,7 +1133,7 @@ uint32_t save_state(void *state)
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
-    _Bool seq_active = *(uint8_t*)(seq) & 0x80;
+    _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
     serial_write(&p, &seq_active, sizeof(seq_active));
     if (seq_active) {
       serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
@@ -1144,6 +1164,14 @@ uint32_t save_state(void *state)
     for (uint8_t i = z64_audio_cmd_read_pos; i != z64_audio_cmd_write_pos; ++i)
       serial_write(&p, &z64_audio_cmd_buf[i], sizeof(*z64_audio_cmd_buf));
   }
+#if 0
+  {
+    uint8_t n_cmd = z64_afx_cmd_write_pos - z64_afx_cmd_read_pos;
+    serial_write(&p, &n_cmd, sizeof(n_cmd));
+    for (uint8_t i = z64_afx_cmd_read_pos; i != z64_afx_cmd_write_pos; ++i)
+      serial_write(&p, &z64_afx_cmd_buf[i], sizeof(*z64_afx_cmd_buf));
+  }
+#endif
 
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
@@ -1758,6 +1786,9 @@ void load_state(void *state)
   /* timer state */
   serial_read(&p, (void*)z64_timer_state_addr, 0x0008);
 
+  /* hud state */
+  serial_read(&p, &z64_hud_mode, sizeof(z64_hud_mode));
+
   /* letterboxing */
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
@@ -1991,6 +2022,16 @@ void load_state(void *state)
                   sizeof(*z64_audio_cmd_buf));
     }
   }
+#if 0
+  {
+    uint8_t n_cmd;
+    serial_read(&p, &n_cmd, sizeof(n_cmd));
+    for (uint8_t i = 0; i != n_cmd; ++i) {
+      serial_read(&p, &z64_afx_cmd_buf[z64_afx_cmd_write_pos++],
+                  sizeof(*z64_afx_cmd_buf));
+    }
+  }
+#endif
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
