@@ -371,7 +371,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7B48
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_actor_ovl_tab_addr                  0x800E8530
-#define z64_hud_mode_addr                       0x800EF1AC
+#define z64_hud_state_addr                      0x800EF1A8
 #define z64_letterbox_time_addr                 0x800EF1F8
 #define z64_oob_timer_addr                      0x800EF6AC
 #define z64_cs_message_addr                     0x800EFCD0
@@ -432,7 +432,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E7D08
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_actor_ovl_tab_addr                  0x800E86F0
-#define z64_hud_mode_addr                       0x800EF36C
+#define z64_hud_state_addr                      0x800EF368
 #define z64_letterbox_time_addr                 0x800EF3B8
 #define z64_oob_timer_addr                      0x800EF86C
 #define z64_cs_message_addr                     0x800EFE90
@@ -493,7 +493,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_max_addr                       0x800E8188
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_actor_ovl_tab_addr                  0x800E8B70
-#define z64_hud_mode_addr                       0x800EF7EC
+#define z64_hud_state_addr                      0x800EF7E8
 #define z64_letterbox_time_addr                 0x800EF838
 #define z64_oob_timer_addr                      0x800EFCEC
 #define z64_cs_message_addr                     0x800F0310
@@ -540,7 +540,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_pos            (*(int32_t*)                  z64_part_pos_addr)
 #define z64_part_max            (*(int32_t*)                  z64_part_max_addr)
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
-#define z64_hud_mode            (*(uint32_t*)                 z64_hud_mode_addr)
 #define z64_letterbox_time      (*(uint32_t*)                 z64_letterbox_time_addr)
 #define z64_oob_timer           (*(int32_t*)                  z64_oob_timer_addr)
 #define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
@@ -1072,7 +1071,7 @@ uint32_t save_state(void *state)
   serial_write(&p, (void*)z64_timer_state_addr, 0x0008);
 
   /* hud state */
-  serial_write(&p, &z64_hud_mode, sizeof(z64_hud_mode));
+  serial_write(&p, (void*)z64_hud_state_addr, 0x0008);
 
   /* letterboxing */
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
@@ -1787,7 +1786,7 @@ void load_state(void *state)
   serial_read(&p, (void*)z64_timer_state_addr, 0x0008);
 
   /* hud state */
-  serial_read(&p, &z64_hud_mode, sizeof(z64_hud_mode));
+  serial_read(&p, (void*)z64_hud_state_addr, 0x0008);
 
   /* letterboxing */
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
