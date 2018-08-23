@@ -57,12 +57,12 @@ void gz_movie_seek(int frame)
   if (frame > gz.movie_inputs.size)
     frame = gz.movie_inputs.size;
   gz.movie_frame = frame;
-  gz.movie_seed_pos = 0;
-  for (int i = 0; i < gz.movie_seeds.size; ++i) {
-    struct movie_seed *ms = vector_at(&gz.movie_seeds, i);
-    if (ms->frame_idx >= gz.movie_frame) {
-      gz.movie_seed_pos = i;
+  int seed_pos = 0;
+  while (seed_pos < gz.movie_seeds.size) {
+    struct movie_seed *ms = vector_at(&gz.movie_seeds, seed_pos);
+    if (ms->frame_idx >= gz.movie_frame)
       break;
-    }
+    ++seed_pos;
   }
+  gz.movie_seed_pos = seed_pos;
 }
