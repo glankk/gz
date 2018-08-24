@@ -399,6 +399,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_staff_notes_addr                    0x80112E8C
 #define z64_gameover_countdown_addr             0x801132B0
 #define z64_pfx_addr                            0x80114DE0
+#define z64_camera_state_addr                   0x80118E20
 #define z64_cs_state_addr                       0x8011BC20
 #define z64_light_queue_addr                    0x8011BD60
 #define z64_game_arena_addr                     0x8011BEF0
@@ -460,6 +461,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_staff_notes_addr                    0x8011304C
 #define z64_gameover_countdown_addr             0x80113470
 #define z64_pfx_addr                            0x80114FA0
+#define z64_camera_state_addr                   0x80118FE0
 #define z64_cs_state_addr                       0x8011BDE0
 #define z64_light_queue_addr                    0x8011BF20
 #define z64_game_arena_addr                     0x8011C0B0
@@ -521,6 +523,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_staff_notes_addr                    0x8011353C
 #define z64_gameover_countdown_addr             0x80113960
 #define z64_pfx_addr                            0x80115490
+#define z64_camera_state_addr                   0x801194D0
 #define z64_cs_state_addr                       0x8011C2D0
 #define z64_light_queue_addr                    0x8011C410
 #define z64_game_arena_addr                     0x8011C5A0
@@ -1086,6 +1089,9 @@ uint32_t save_state(void *state)
 
   /* rng */
   serial_write(&p, &z64_random, sizeof(z64_random));
+
+  /* camera state */
+  serial_write(&p, (void*)z64_camera_state_addr, 0x0020);
 
   /* cutscene state */
   serial_write(&p, (void*)z64_cs_state_addr, 0x0140);
@@ -1801,6 +1807,9 @@ void load_state(void *state)
 
   /* rng */
   serial_read(&p, &z64_random, sizeof(z64_random));
+
+  /* camera state */
+  serial_read(&p, (void*)z64_camera_state_addr, 0x0020);
 
   /* cutscene state */
   serial_read(&p, (void*)z64_cs_state_addr, 0x0140);
