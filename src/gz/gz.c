@@ -269,11 +269,12 @@ static void main_hook(void)
     if (gz.movie_state == MOVIE_PLAYING &&
         gz.movie_frame < gz.movie_inputs.size)
     {
-      struct movie_input *mi = vector_at(&gz.movie_inputs, gz.movie_frame);
-      d_x = mi->raw.x;
-      d_y = mi->raw.y;
-      d_pad = mi->raw.pad;
-      d_pad |= mi->pad_pressed;
+      z64_input_t zi;
+      movie_to_z(gz.movie_frame, &zi);
+      d_x = zi.raw.x;
+      d_y = zi.raw.y;
+      d_pad = zi.raw.pad;
+      d_pad |= zi.pad_pressed;
       if (settings->bits.macro_input) {
         if (abs(d_x) < 8)
           d_x = z64_input_direct.raw.x;
@@ -456,13 +457,9 @@ HOOK void input_hook(void)
     z64_input_t *zi = &z64_ctxt.input[0];
     frame_input_func(&z64_ctxt);
     if (gz.movie_state == MOVIE_RECORDING) {
-      struct movie_input *mi;
       if (gz.movie_frame >= gz.movie_inputs.size)
-        mi = vector_push_back(&gz.movie_inputs, 1, NULL);
-      else
-        mi = vector_at(&gz.movie_inputs, gz.movie_frame);
-      z_to_movie(zi, mi);
-      ++gz.movie_frame;
+        vector_push_back(&gz.movie_inputs, 1, NULL);
+      z_to_movie(gz.movie_frame++, zi);
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       if (gz.movie_frame >= gz.movie_inputs.size) {
@@ -472,8 +469,7 @@ HOOK void input_hook(void)
           gz.movie_state = MOVIE_IDLE;
       }
       if (gz.movie_state == MOVIE_PLAYING) {
-        struct movie_input *mi = vector_at(&gz.movie_inputs, gz.movie_frame++);
-        movie_to_z(zi, mi);
+        movie_to_z(gz.movie_frame++, zi);
         if (settings->bits.macro_input) {
           if (abs(zi->raw.x) < 8) {
             zi->raw.x = di.raw.x;
@@ -650,8 +646,7 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   if (gz.ready && gz.movie_state == MOVIE_PLAYING && gz.movie_frame > 0) {
     /* ocarina inputs happen after the movie counter has been advanced,
        so use the previous movie frame */
-    struct movie_input *mi = vector_at(&gz.movie_inputs, gz.movie_frame - 1);
-    movie_to_z(input, mi);
+    movie_to_z(gz.movie_frame - 1, input);
   }
 }
 

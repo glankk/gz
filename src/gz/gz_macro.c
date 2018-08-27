@@ -96,14 +96,16 @@ static int do_import_macro(const char *path, void *data)
     gz_movie_rewind();
     vector_insert(&gz.movie_inputs, 0, n_input, NULL);
     vector_insert(&gz.movie_seeds, 0, n_seed, NULL);
+    fread(&gz.movie_input_start, sizeof(gz.movie_input_start), 1, f);
+    if (ferror(f) || feof(f))
+      goto f_err;
     sys_io_mode(SYS_IO_DMA);
     fread(gz.movie_inputs.begin, gz.movie_inputs.element_size, n_input, f);
     if (ferror(f) || feof(f))
       goto f_err;
     fread(gz.movie_seeds.begin, gz.movie_seeds.element_size, n_seed, f);
-    if (ferror(f))
+    if (ferror(f) || feof(f))
       goto f_err;
-    clearerr(f);
 f_err:
     sys_io_mode(SYS_IO_PIO);
     if (ferror(f))
@@ -134,6 +136,9 @@ static int do_export_macro(const char *path, void *data)
     if (ferror(f))
       goto f_err;
     fwrite(&n_seed, sizeof(n_seed), 1, f);
+    if (ferror(f))
+      goto f_err;
+    fwrite(&gz.movie_input_start, sizeof(gz.movie_input_start), 1, f);
     if (ferror(f))
       goto f_err;
     fwrite(gz.movie_inputs.begin, gz.movie_inputs.element_size, n_input, f);

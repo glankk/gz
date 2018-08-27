@@ -6,6 +6,7 @@
 #include "gz.h"
 #include "state.h"
 #include "sys.h"
+#include "yaz0.h"
 #include "zu.h"
 #include "z64.h"
 
@@ -588,19 +589,58 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_CheckAfxConfigBusy    ( (z64_CheckAfxConfigBusy_proc)     z64_CheckAfxConfigBusy_addr)
 #define z64_LoadOverlay           ( (z64_LoadOverlay_proc)            z64_LoadOverlay_addr)
 
-
-static void save_ovl(void **p, void *addr, size_t size)
+static void save_ovl(void **p, void *addr,
+                     uint32_t vrom_start, uint32_t vrom_end)
 {
+  /* locate file table entry */
+  z64_ftab_t *file;
+  for (int i = 0; i < 1510; ++i) {
+    file = &z64_ftab[i];
+    if (file->vrom_start == vrom_start && file->vrom_end == vrom_end)
+      break;
+  }
+  /* save overlay address */
   serial_write(p, &addr, sizeof(addr));
+  /* compute segment addresses */
   char *start = addr;
-  char *end = start + size;
+  char *end = start + (vrom_end - vrom_start);
   uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
-  void *data = start + hdr->text_size;
-  void *bss = end;
-  serial_write(p, data, hdr->data_size);
+  char *data = start + hdr->text_size;
+  char *bss = end;
+  /* save data segment */
+  if (hdr->data_size > 0) {
+    yaz0_begin(file->prom_start);
+    yaz0_advance(hdr->text_size);
+  }
+  uint16_t n_copy = 0;
+  uint16_t n_save = 0;
+  char *save_data = NULL;
+  for (uint32_t i = 0; i < hdr->data_size; ++i) {
+    if (yaz0_get_byte() == data[i]) {
+      if (n_save > 0) {
+        serial_write(p, &n_copy, sizeof(n_copy));
+        serial_write(p, &n_save, sizeof(n_save));
+        serial_write(p, save_data, n_save);
+        n_copy = 0;
+        n_save = 0;
+      }
+      ++n_copy;
+    }
+    else {
+      if (n_save == 0)
+        save_data = &data[i];
+      ++n_save;
+    }
+  }
+  if (n_copy > 0 || n_save > 0) {
+    serial_write(p, &n_copy, sizeof(n_copy));
+    serial_write(p, &n_save, sizeof(n_save));
+    serial_write(p, save_data, n_save);
+  }
+  /* save bss segment */
   serial_write(p, bss, hdr->bss_size);
 }
 
@@ -608,24 +648,50 @@ static void load_ovl(void **p, void **p_addr,
                      uint32_t vrom_start, uint32_t vrom_end,
                      uint32_t vram_start, uint32_t vram_end)
 {
-  void *addr = *p_addr;
-  size_t size = vrom_end - vrom_start;
+  /* locate file table entry */
+  z64_ftab_t *file;
+  for (int i = 0; i < 1510; ++i) {
+    file = &z64_ftab[i];
+    if (file->vrom_start == vrom_start && file->vrom_end == vrom_end)
+      break;
+  }
+  /* load overlay address */
   void *load_addr;
   serial_read(p, &load_addr, sizeof(load_addr));
+  /* load overlay */
+  void *addr = *p_addr;
   if (addr != load_addr) {
     addr = load_addr;
     *p_addr = addr;
     z64_LoadOverlay(vrom_start, vrom_end, vram_start, vram_end, addr);
   }
+  /* compute segment addresses */
   char *start = addr;
-  char *end = start + size;
+  char *end = start + (vrom_end - vrom_start);
   uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
-  void *data = start + hdr->text_size;
-  void *bss = end;
-  serial_read(p, data, hdr->data_size);
+  char *data = start + hdr->text_size;
+  char *bss = end;
+  /* restore data segment */
+  if (hdr->data_size > 0) {
+    yaz0_begin(file->prom_start);
+    yaz0_advance(hdr->text_size);
+  }
+  for (uint32_t i = 0; i < hdr->data_size; ) {
+    uint16_t n_copy = 0;
+    uint16_t n_save = 0;
+    serial_read(p, &n_copy, sizeof(n_copy));
+    serial_read(p, &n_save, sizeof(n_save));
+    for (uint16_t j = 0; j < n_copy; ++j)
+      data[i++] = yaz0_get_byte();
+    serial_read(p, &data[i], n_save);
+    i += n_save;
+    if (i < hdr->data_size)
+      yaz0_advance(n_save);
+  }
+  /* restore bss segment */
   serial_read(p, bss, hdr->bss_size);
 }
 
@@ -926,7 +992,7 @@ uint32_t save_state(void *state)
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
       serial_write(&p, &ovl->n_inst, sizeof(ovl->n_inst));
-      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -937,7 +1003,7 @@ uint32_t save_state(void *state)
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -949,7 +1015,7 @@ uint32_t save_state(void *state)
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -958,7 +1024,7 @@ uint32_t save_state(void *state)
   if (z64_map_mark_ovl.ptr) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
     serial_write(&p, &sot, sizeof(sot));
-    save_ovl(&p, ovl->ptr, ovl->vrom_end - ovl->vrom_start);
+    save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
     set_insert(&ovl_nodes, &ovl->ptr);
   }
   serial_write(&p, &eot, sizeof(eot));

@@ -384,7 +384,7 @@ void command_savestate(void)
 {
   if (gz.state_buf[gz.state_slot])
     free(gz.state_buf[gz.state_slot]);
-  gz.state_buf[gz.state_slot] = malloc(400 * 1024);
+  gz.state_buf[gz.state_slot] = malloc(368 * 1024);
   struct state_meta *state = gz.state_buf[gz.state_slot];
   state->size = save_state(state);
   state->scene_idx = z64_game.scene_index;

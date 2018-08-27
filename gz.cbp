@@ -386,6 +386,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/gz/watchlist.h" />
+		<Unit filename="src/gz/yaz0.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/gz/yaz0.h" />
 		<Unit filename="src/gz/z64.h" />
 		<Unit filename="src/gz/zu.c">
 			<Option compilerVar="CC" />

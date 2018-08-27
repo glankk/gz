@@ -54,12 +54,8 @@ enum movie_state
 struct movie_input
 {
   z64_controller_t      raw;            /* 0x0000 */
-  z64_controller_t      raw_prev;       /* 0x0004 */
-  uint16_t              pad_pressed;    /* 0x0008 */
-  uint16_t              pad_released;   /* 0x000A */
-  int8_t                x_diff;         /* 0x000C */
-  int8_t                y_diff;         /* 0x000D */
-                                        /* 0x000E */
+  uint16_t              pad_delta;      /* 0x0004 */
+                                        /* 0x0006 */
 };
 
 struct movie_seed
@@ -90,6 +86,7 @@ struct gz
   uint32_t              disp_hook_p[4];
   uint32_t              disp_hook_d[4];
   enum movie_state      movie_state;
+  z64_controller_t      movie_input_start;
   struct vector         movie_inputs;
   struct vector         movie_seeds;
   int                   movie_frame;
@@ -153,8 +150,8 @@ void          command_loadstate(void);
 void          command_recordmacro(void);
 void          command_playmacro(void);
 
-void          z_to_movie(z64_input_t *zi, struct movie_input *mi);
-void          movie_to_z(z64_input_t *zi, struct movie_input *mi);
+void          z_to_movie(int movie_frame, z64_input_t *zi);
+void          movie_to_z(int movie_frame, z64_input_t *zi);
 void          gz_movie_rewind(void);
 void          gz_movie_seek(int frame);
 
