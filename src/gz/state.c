@@ -373,7 +373,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_ovl_tab_addr                   0x800E7C40
 #define z64_actor_ovl_tab_addr                  0x800E8530
 #define z64_hud_state_addr                      0x800EF1A8
+#define z64_event_state_1_addr                  0x800EF1B0
 #define z64_letterbox_time_addr                 0x800EF1F8
+#define z64_event_state_2_addr                  0x800EF1FC
+#define z64_event_camera_addr                   0x800EF254
 #define z64_oob_timer_addr                      0x800EF6AC
 #define z64_cs_message_addr                     0x800EFCD0
 #define z64_weather_effect_addr                 0x800F1640
@@ -435,7 +438,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_ovl_tab_addr                   0x800E7E00
 #define z64_actor_ovl_tab_addr                  0x800E86F0
 #define z64_hud_state_addr                      0x800EF368
+#define z64_event_state_1_addr                  0x800EF370
 #define z64_letterbox_time_addr                 0x800EF3B8
+#define z64_event_state_2_addr                  0x800EF3BC
+#define z64_event_camera_addr                   0x800EF414
 #define z64_oob_timer_addr                      0x800EF86C
 #define z64_cs_message_addr                     0x800EFE90
 #define z64_weather_effect_addr                 0x800F1800
@@ -497,7 +503,10 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_part_ovl_tab_addr                   0x800E8280
 #define z64_actor_ovl_tab_addr                  0x800E8B70
 #define z64_hud_state_addr                      0x800EF7E8
+#define z64_event_state_1_addr                  0x800EF7F0
 #define z64_letterbox_time_addr                 0x800EF838
+#define z64_event_state_2_addr                  0x800EF83C
+#define z64_event_camera_addr                   0x800EF894
 #define z64_oob_timer_addr                      0x800EFCEC
 #define z64_cs_message_addr                     0x800F0310
 #define z64_weather_effect_addr                 0x800F1C80
@@ -593,11 +602,15 @@ static void save_ovl(void **p, void *addr,
                      uint32_t vrom_start, uint32_t vrom_end)
 {
   /* locate file table entry */
-  z64_ftab_t *file;
-  for (int i = 0; i < 1510; ++i) {
-    file = &z64_ftab[i];
-    if (file->vrom_start == vrom_start && file->vrom_end == vrom_end)
+  z64_ftab_t *file = NULL;
+  for (int i = 0; ; ++i) {
+    z64_ftab_t *f = &z64_ftab[i];
+    if (f->vrom_start == vrom_start && f->vrom_end == vrom_end) {
+      file = f;
       break;
+    }
+    if (f->vrom_end == 0)
+      return;
   }
   /* save overlay address */
   serial_write(p, &addr, sizeof(addr));
@@ -649,11 +662,15 @@ static void load_ovl(void **p, void **p_addr,
                      uint32_t vram_start, uint32_t vram_end)
 {
   /* locate file table entry */
-  z64_ftab_t *file;
-  for (int i = 0; i < 1510; ++i) {
-    file = &z64_ftab[i];
-    if (file->vrom_start == vrom_start && file->vrom_end == vrom_end)
+  z64_ftab_t *file = NULL;
+  for (int i = 0; ; ++i) {
+    z64_ftab_t *f = &z64_ftab[i];
+    if (f->vrom_start == vrom_start && f->vrom_end == vrom_end) {
+      file = f;
       break;
+    }
+    if (f->vrom_end == 0)
+      return;
   }
   /* load overlay address */
   void *load_addr;
@@ -1146,6 +1163,13 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* event state */
+  serial_write(&p, (void*)z64_event_state_1_addr, 0x0008);
+  serial_write(&p, (void*)z64_event_state_2_addr, 0x0004);
+  /* event camera parameters */
+  for (int i = 0; i < 24; ++i)
+    serial_write(&p, (void*)(z64_event_camera_addr + 0x28 * i + 0x10), 0x0018);
 
   /* oob timer */
   serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
@@ -1864,6 +1888,13 @@ void load_state(void *state)
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* event state */
+  serial_read(&p, (void*)z64_event_state_1_addr, 0x0008);
+  serial_read(&p, (void*)z64_event_state_2_addr, 0x0004);
+  /* event camera parameters */
+  for (int i = 0; i < 24; ++i)
+    serial_read(&p, (void*)(z64_event_camera_addr + 0x28 * i + 0x10), 0x0018);
 
   /* oob timer */
   serial_read(&p, &z64_oob_timer, sizeof(z64_oob_timer));

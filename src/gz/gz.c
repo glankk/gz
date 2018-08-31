@@ -457,8 +457,11 @@ HOOK void input_hook(void)
     z64_input_t *zi = &z64_ctxt.input[0];
     frame_input_func(&z64_ctxt);
     if (gz.movie_state == MOVIE_RECORDING) {
-      if (gz.movie_frame >= gz.movie_inputs.size)
+      if (gz.movie_frame >= gz.movie_inputs.size) {
+        if (gz.movie_inputs.size == gz.movie_inputs.capacity)
+          vector_reserve(&gz.movie_inputs, 128);
         vector_push_back(&gz.movie_inputs, 1, NULL);
+      }
       z_to_movie(gz.movie_frame++, zi);
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
@@ -643,7 +646,7 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   void (*ocarina_input_func)(void *a0, z64_input_t *input, int a2);
   ocarina_input_func = (void*)z64_ocarina_input_func_addr;
   ocarina_input_func(a0, input, a2);
-  if (gz.ready && gz.movie_state == MOVIE_PLAYING && gz.movie_frame > 0) {
+  if (gz.ready && gz.movie_state != MOVIE_IDLE && gz.movie_frame > 0) {
     /* ocarina inputs happen after the movie counter has been advanced,
        so use the previous movie frame */
     movie_to_z(gz.movie_frame - 1, input);
@@ -656,7 +659,7 @@ HOOK void ocarina_sync_hook(void)
   /* don't sync when recording or playing a macro, or when frame advancing */
   __asm__ volatile (/* this check is normally done by the game */
                     "beq    $t6, $zero, .Lnosync  \n"
-                    /* check gz_ready */
+                    /* check gz ready */
                     "la     $v0, %0               \n"
                     "lw     $v0, 0($v0)           \n"
                     "beq    $v0, $zero, .Lsync    \n"

@@ -38,9 +38,17 @@ static inline _Bool set_int(_Bool enable)
 static uint8_t yaz0_get_code(void)
 {
   if ((yaz0_cp & 0x3FF) == 0) {
-    _Bool ie = set_int(0);
-    while (pi_regs.status & PI_STATUS_DMA_BUSY)
-      ;
+    _Bool ie;
+    while (1) {
+      if (pi_regs.status & PI_STATUS_DMA_BUSY)
+        continue;
+      ie = set_int(0);
+      if (pi_regs.status & PI_STATUS_DMA_BUSY) {
+        set_int(ie);
+        continue;
+      }
+      break;
+    }
     pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(yaz0_code_buf);
     pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(&yaz0->code[yaz0_cp]);
     pi_regs.wr_len = 0x3FF;

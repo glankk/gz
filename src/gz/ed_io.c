@@ -497,19 +497,25 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
   /* check for dma timeout */
   if (ed_regs.status & ED_STATE_DMA_TOUT)
     return ED_ERROR_SD_RD_TIMEOUT;
-  /* disable interrupts */
-  _Bool ie = set_int(0);
-  /* wait for dma busy */
-  while (pi_regs.status & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
-    ;
+  /* wait for dma busy and disable interrupts */
+  _Bool ie;
+  while (1) {
+    if (pi_regs.status & PI_STATUS_DMA_BUSY)
+      continue;
+    ie = set_int(0);
+    if (pi_regs.status & PI_STATUS_DMA_BUSY) {
+      set_int(ie);
+      continue;
+    }
+    break;
+  }
   /* dma to ram */
-  pi_regs.status = PI_STATUS_RESET | PI_STATUS_CLR_INTR;
   pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(dst);
   pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
   pi_regs.wr_len = n_blocks * 0x200 - 1;
-  while (pi_regs.status & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY))
+  while (pi_regs.status & PI_STATUS_DMA_BUSY)
     ;
-  pi_regs.status = PI_STATUS_RESET | PI_STATUS_CLR_INTR;
+  pi_regs.status = PI_STATUS_CLR_INTR;
   /* invalidate cache */
   for (uint32_t i = 0; i < n_blocks * 0x200; i += 0x20) {
     __asm__ volatile ("cache 0x10, 0x0000(%0) \n"

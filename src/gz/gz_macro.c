@@ -60,6 +60,8 @@ static int trim_switch_proc(struct menu_item *item,
                  gz.movie_inputs.size - gz.movie_frame);
     vector_erase(&gz.movie_seeds, gz.movie_seed_pos,
                  gz.movie_seeds.size - gz.movie_seed_pos);
+    vector_shrink_to_fit(&gz.movie_inputs);
+    vector_shrink_to_fit(&gz.movie_seeds);
   }
   return 0;
 }
@@ -96,6 +98,8 @@ static int do_import_macro(const char *path, void *data)
     gz_movie_rewind();
     vector_insert(&gz.movie_inputs, 0, n_input, NULL);
     vector_insert(&gz.movie_seeds, 0, n_seed, NULL);
+    vector_shrink_to_fit(&gz.movie_inputs);
+    vector_shrink_to_fit(&gz.movie_seeds);
     fread(&gz.movie_input_start, sizeof(gz.movie_input_start), 1, f);
     if (ferror(f) || feof(f))
       goto f_err;

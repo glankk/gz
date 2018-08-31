@@ -384,14 +384,14 @@ void command_savestate(void)
 {
   if (gz.state_buf[gz.state_slot])
     free(gz.state_buf[gz.state_slot]);
-  gz.state_buf[gz.state_slot] = malloc(368 * 1024);
-  struct state_meta *state = gz.state_buf[gz.state_slot];
+  struct state_meta *state = malloc(368 * 1024);
   state->size = save_state(state);
   state->scene_idx = z64_game.scene_index;
   if (gz.movie_state == MOVIE_IDLE)
     state->movie_frame = -1;
   else
     state->movie_frame = gz.movie_frame;
+  gz.state_buf[gz.state_slot] = realloc(state, state->size);
 }
 
 void command_loadstate(void)
