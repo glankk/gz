@@ -559,9 +559,7 @@ static void state_main_hook(void)
   }
   else {
     z64_gfx_t *gfx = z64_ctxt.gfx;
-    if (z64_file.gameinfo->screenshot_state != 2 &&
-        z64_ctxt.state_frames != 0)
-    {
+    if (z64_ctxt.state_frames != 0) {
       /* copy gfx buffer from previous frame */
       if (gfx->frame_count_1 & 1) {
         memcpy((void*)(z64_disp_addr + z64_disp_size),
@@ -585,8 +583,8 @@ static void state_main_hook(void)
       gDPSetCycleType(gfx->poly_opa.p++, G_CYC_FILL);
       gDPSetRenderMode(gfx->poly_opa.p++, G_RM_NOOP, G_RM_NOOP2);
       gDPSetFillColor(gfx->poly_opa.p++,
-                      (GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01) << 16) |
-                      GPACK_RGBA5551(0x1F, 0x1F, 0x1F, 0x01));
+                      (GPACK_RGBA5551(0x00, 0x00, 0x00, 0x01) << 16) |
+                      GPACK_RGBA5551(0x00, 0x00, 0x00, 0x01));
       gDPFillRectangle(gfx->poly_opa.p++,
                        0, 0, Z64_SCREEN_WIDTH - 1, Z64_SCREEN_HEIGHT - 1);
       gDPPipeSync(gfx->poly_opa.p++);

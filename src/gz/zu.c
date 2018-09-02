@@ -598,6 +598,8 @@ void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx)
         case G_SETTIMG:         break;
         case G_SETZIMG:         break;
         case G_SETCIMG:         break;
+        case G_BG_1CYC:         break;
+        case G_BG_COPY:         break;
         default:                continue;
       }
       /* relocate previous gfx -> current gfx, previous cimg -> current cimg */
