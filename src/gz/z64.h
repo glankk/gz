@@ -1532,6 +1532,8 @@ typedef struct
 #define z64_ocarina_sync_hook_addr              0x800C2EA0
 #define z64_ocarina_update_func_addr            0x800C3DC8
 #define z64_srand_func_addr                     0x800CDCC0
+#define z64_guPerspectiveF_camo_addr            0x800D035C
+#define z64_guPerspective_camo_addr             0x800D0590
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
 #define z64_day_speed_addr                      0x800F1650
 #define z64_light_handlers_addr                 0x800F1B40
@@ -1608,6 +1610,8 @@ typedef struct
 #define z64_ocarina_sync_hook_addr              0x800C2EFC
 #define z64_ocarina_update_func_addr            0x800C3E38
 #define z64_srand_func_addr                     0x800CDE80
+#define z64_guPerspectiveF_camo_addr            0x800D051C
+#define z64_guPerspective_camo_addr             0x800D0750
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
 #define z64_day_speed_addr                      0x800F1810
 #define z64_light_handlers_addr                 0x800F1D00
@@ -1684,6 +1688,8 @@ typedef struct
 #define z64_ocarina_sync_hook_addr              0x800C355C
 #define z64_ocarina_update_func_addr            0x800C4490
 #define z64_srand_func_addr                     0x800CE500
+#define z64_guPerspectiveF_camo_addr            0x800D0B9C
+#define z64_guPerspective_camo_addr             0x800D0DD0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_light_handlers_addr                 0x800F2180
