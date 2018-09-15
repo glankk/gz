@@ -401,8 +401,15 @@ void command_loadstate(void)
     load_state(state);
     if (gz.movie_state != MOVIE_IDLE && state->movie_frame != -1)
       gz_movie_seek(state->movie_frame);
-    /* undo buffered input */
-    z64_input_direct = z64_ctxt.input[0];
+    /* connect direct input with state's context input */
+    z64_input_t *di = &z64_input_direct;
+    z64_input_t *zi = &z64_ctxt.input[0];
+    di->raw_prev = zi->raw;
+    di->status_prev = zi->status;
+    di->pad_pressed = (di->raw.pad ^ zi->raw.pad) & di->raw.pad;
+    di->pad_released = (di->raw.pad ^ zi->raw.pad) & zi->raw.pad;
+    di->x_diff = di->raw.x - zi->raw.x;
+    di->y_diff = di->raw.y - zi->raw.y;
   }
 }
 
