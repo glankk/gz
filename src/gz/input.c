@@ -8,22 +8,24 @@
 #include "settings.h"
 #include "z64.h"
 
-#define         BIND_END 6
-static uint16_t pad = 0;
-static int      button_time[16] = {0};
-static uint16_t pad_pressed_raw;
-static uint16_t pad_pressed;
-static uint16_t pad_released;
-static _Bool    reservation_enabled;
-static uint16_t pad_reserved;
-static int      button_reserve_count[16] = {0};
-static int      bind_component_state[COMMAND_MAX] = {0};
-static int      bind_time[COMMAND_MAX] = {0};
-static _Bool    bind_pressed_raw[COMMAND_MAX];
-static _Bool    bind_pressed[COMMAND_MAX];
-static _Bool    bind_disable[COMMAND_MAX] = {0};
-static _Bool    bind_override[COMMAND_MAX] = {0};
-static _Bool    input_enabled = 1;
+#define           BIND_END 6
+static int8_t     joy_x;
+static int8_t     joy_y;
+static uint16_t   pad;
+static int        button_time[16];
+static uint16_t   pad_pressed_raw;
+static uint16_t   pad_pressed;
+static uint16_t   pad_released;
+static _Bool      reservation_enabled;
+static uint16_t   pad_reserved;
+static int        button_reserve_count[16];
+static int        bind_component_state[COMMAND_MAX];
+static int        bind_time[COMMAND_MAX];
+static _Bool      bind_pressed_raw[COMMAND_MAX];
+static _Bool      bind_pressed[COMMAND_MAX];
+static _Bool      bind_disable[COMMAND_MAX];
+static _Bool      bind_override[COMMAND_MAX];
+static _Bool      input_enabled = 1;
 
 static int bind_get_component(uint16_t bind, int index)
 {
@@ -72,6 +74,8 @@ const uint32_t input_button_color[] =
 
 void input_update(void)
 {
+  joy_x = z64_input_direct.raw.x;
+  joy_y = z64_input_direct.raw.y;
   uint16_t z_pad = input_z_pad();
   pad_pressed_raw = (pad ^ z_pad) & z_pad;
   pad_released = (pad ^ z_pad) & ~z_pad;
@@ -156,6 +160,16 @@ void input_update(void)
 uint16_t input_z_pad(void)
 {
   return z64_input_direct.raw.pad | input_sch_pad;
+}
+
+int8_t input_x(void)
+{
+  return joy_x;
+}
+
+int8_t input_y(void)
+{
+  return joy_y;
 }
 
 uint16_t input_pad(void)

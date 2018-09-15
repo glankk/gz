@@ -401,6 +401,8 @@ void command_loadstate(void)
     load_state(state);
     if (gz.movie_state != MOVIE_IDLE && state->movie_frame != -1)
       gz_movie_seek(state->movie_frame);
+    /* undo buffered input */
+    z64_input_direct = z64_ctxt.input[0];
   }
 }
 

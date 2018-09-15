@@ -277,10 +277,10 @@ static void main_hook(void)
       d_pad |= zi.pad_pressed;
       if (settings->bits.macro_input) {
         if (abs(d_x) < 8)
-          d_x = z64_input_direct.raw.x;
+          d_x = input_x();
         if (abs(d_y) < 8)
-          d_y = z64_input_direct.raw.y;
-        d_pad |= z64_input_direct.raw.pad;
+          d_y = input_y();
+        d_pad |= input_pad();
       }
       d_pad &= ~BUTTON_L;
       d_pad &= ~BUTTON_D_UP;
@@ -289,9 +289,9 @@ static void main_hook(void)
       d_pad &= ~BUTTON_D_RIGHT;
     }
     else {
-      d_x = z64_input_direct.raw.x;
-      d_y = z64_input_direct.raw.y;
-      d_pad = input_z_pad();
+      d_x = input_x();
+      d_y = input_y();
+      d_pad = input_pad();
     }
     struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));

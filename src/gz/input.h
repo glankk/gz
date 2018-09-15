@@ -25,6 +25,8 @@
 
 void      input_update(void);
 uint16_t  input_z_pad(void);
+int8_t    input_x(void);
+int8_t    input_y(void);
 uint16_t  input_pad(void);
 uint16_t  input_pressed_raw(void);
 uint16_t  input_pressed(void);
