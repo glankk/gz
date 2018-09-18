@@ -385,6 +385,8 @@ void command_savestate(void)
   if (gz.state_buf[gz.state_slot])
     free(gz.state_buf[gz.state_slot]);
   struct state_meta *state = malloc(368 * 1024);
+  state->z64_version = Z64_VERSION;
+  state->state_version = SETTINGS_STATE_VERSION;
   state->size = save_state(state);
   state->scene_idx = z64_game.scene_index;
   if (gz.movie_state == MOVIE_IDLE)
