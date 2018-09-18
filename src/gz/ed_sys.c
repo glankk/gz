@@ -117,7 +117,7 @@ static ino_t make_sn(struct fat_entry *entry)
 static int check_path(ino_t sn, struct fat_path *fp)
 {
   for (struct fat_entry *p_ent = fp->ent_list.first; p_ent;
-         p_ent = list_next(p_ent))
+       p_ent = list_next(p_ent))
   {
     if (sn == make_sn(p_ent)) {
       errno = EACCES;
@@ -652,20 +652,6 @@ int rmdir(const char *path)
     errno = ENOTDIR;
     return -1;
   }
-  if (ent_access(&entry, 1))
-    return -1;
-  if (fat_remove(&entry))
-    return -1;
-  return fat_flush(&fat);
-}
-
-int remove(const char *path)
-{
-  if (init_fat())
-    return -1;
-  struct fat_entry entry;
-  if (wd_find(path, &entry))
-    return -1;
   if (ent_access(&entry, 1))
     return -1;
   if (fat_remove(&entry))

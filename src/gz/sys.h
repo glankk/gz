@@ -47,7 +47,6 @@ long            telldir(DIR *dirp);
 void            rewinddir(DIR *dirp);
 int             mkdir(const char *path, mode_t mode);
 int             rmdir(const char *path);
-int             remove(const char *path);
 int             stat(const char *path, struct stat *buf);
 int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
