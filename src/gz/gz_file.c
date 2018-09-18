@@ -210,19 +210,24 @@ static int on_file_load_proc(struct menu_item *item,
 
 static int do_save_file(const char *path, void *data)
 {
+  const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
   FILE *f = fopen(path, "wb");
   if (f) {
     file = malloc(sizeof(*file));
-    gz_save_memfile(file);
-    if (fwrite(file, 1, sizeof(*file), f) == sizeof(*file)) {
-      if (fclose(f))
-        err_str = strerror(errno);
-      f = NULL;
+    if (!file)
+      err_str = s_memory;
+    else {
+      gz_save_memfile(file);
+      if (fwrite(file, 1, sizeof(*file), f) != sizeof(*file))
+        err_str = strerror(ferror(f));
+      else {
+        if (fclose(f))
+          err_str = strerror(errno);
+        f = NULL;
+      }
     }
-    else
-      err_str = strerror(ferror(f));
   }
   else
     err_str = strerror(errno);
@@ -240,15 +245,24 @@ static int do_save_file(const char *path, void *data)
 
 static int do_load_file(const char *path, void *data)
 {
+  const char *s_invalid = "invalid or corrupt memfile";
+  const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
   FILE *f = fopen(path, "rb");
   if (f) {
     struct stat st;
-    fstat(fileno(f), &st);
-    if (st.st_size == sizeof(*file)) {
+    if (fstat(fileno(f), &st))
+      err_str = strerror(errno);
+    else if (st.st_size != sizeof(*file))
+      err_str = s_invalid;
+    else {
       file = malloc(sizeof(*file));
-      if (fread(file, 1, sizeof(*file), f) == sizeof(*file)) {
+      if (!file)
+        err_str = s_memory;
+      else if (fread(file, 1, sizeof(*file), f) != sizeof(*file))
+        err_str = strerror(ferror(f));
+      else {
         if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
             settings->bits.load_to == SETTINGS_LOADTO_BOTH)
         {
@@ -261,11 +275,7 @@ static int do_load_file(const char *path, void *data)
           gz.memfile_saved[gz.memfile_slot] = 1;
         }
       }
-      else
-        err_str = strerror(ferror(f));
     }
-    else
-      err_str = "the file is corrupted";
   }
   else
     err_str = strerror(errno);

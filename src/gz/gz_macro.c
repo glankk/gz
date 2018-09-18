@@ -5,8 +5,10 @@
 #include "gz.h"
 #include "menu.h"
 #include "resource.h"
+#include "settings.h"
 #include "state.h"
 #include "sys.h"
+#include "z64.h"
 #include "zu.h"
 
 static int pause_switch_proc(struct menu_item *item,
@@ -82,6 +84,8 @@ static int movie_pos_proc(struct menu_item *item,
 #ifndef WIIVC
 static int do_import_macro(const char *path, void *data)
 {
+  const char *s_eof = "unexpected end of file";
+  const char *s_memory = "out of memory";
   const char *err_str = NULL;
   FILE *f = fopen(path, "rb");
   if (f) {
@@ -95,6 +99,12 @@ static int do_import_macro(const char *path, void *data)
       goto f_err;
     vector_clear(&gz.movie_inputs);
     vector_clear(&gz.movie_seeds);
+    if (!vector_reserve(&gz.movie_inputs, n_input) ||
+        !vector_reserve(&gz.movie_seeds, n_seed))
+    {
+      err_str = s_memory;
+      goto error;
+    }
     gz_movie_rewind();
     vector_insert(&gz.movie_inputs, 0, n_input, NULL);
     vector_insert(&gz.movie_seeds, 0, n_seed, NULL);
@@ -115,10 +125,11 @@ f_err:
     if (ferror(f))
       err_str = strerror(ferror(f));
     else if (feof(f))
-      err_str = "unexpected end of file";
+      err_str = s_eof;
   }
   else
     err_str = strerror(errno);
+error:
   if (f)
     fclose(f);
   if (err_str) {
@@ -210,25 +221,47 @@ static void save_state_proc(struct menu_item *item, void *data)
 #ifndef WIIVC
 static int do_import_state(const char *path, void *data)
 {
+  const char *s_invalid = "invalid state file";
+  const char *s_version = "incompatible state file";
+  const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct state_meta *state = NULL;
   FILE *f = fopen(path, "rb");
   if (f) {
     struct stat st;
-    fstat(fileno(f), &st);
+    if (fstat(fileno(f), &st)) {
+      err_str = strerror(errno);
+      goto error;
+    }
+    if (st.st_size < sizeof(struct state_meta)) {
+      err_str = s_invalid;
+      goto error;
+    }
     if (gz.state_buf[gz.state_slot])
       free(gz.state_buf[gz.state_slot]);
     gz.state_buf[gz.state_slot] = malloc(st.st_size);
     state = gz.state_buf[gz.state_slot];
+    if (!state) {
+      err_str = s_memory;
+      goto error;
+    }
     sys_io_mode(SYS_IO_DMA);
-    if (fread(state, 1, st.st_size, f) == st.st_size)
-      state = NULL;
-    else
+    if (fread(state, 1, st.st_size, f) != st.st_size)
       err_str = strerror(ferror(f));
+    else if (state->z64_version != Z64_VERSION ||
+             state->state_version != SETTINGS_STATE_VERSION)
+    {
+      err_str = s_version;
+    }
+    else if (state->size != st.st_size)
+      err_str = s_invalid;
+    else
+      state = NULL;
     sys_io_mode(SYS_IO_PIO);
   }
   else
     err_str = strerror(errno);
+error:
   if (f)
     fclose(f);
   if (state) {
