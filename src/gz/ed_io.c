@@ -472,14 +472,28 @@ enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
 
 enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
 {
-  enum ed_error e;
   const uint32_t cart_addr = 0xB2000000;
+  enum ed_error e;
+  /* wait for dma busy and disable interrupts */
+  _Bool ie;
+  while (1) {
+    if (pi_regs.status & PI_STATUS_DMA_BUSY)
+      continue;
+    ie = set_int(0);
+    if (pi_regs.status & PI_STATUS_DMA_BUSY) {
+      set_int(ie);
+      continue;
+    }
+    break;
+  }
   /* send read command */
   if (!(card_type & SD_HC))
     lba *= 512;
   e = ed_sd_cmd(SD_CMD_READ_MULTIPLE_BLOCK, lba, NULL);
-  if (e)
+  if (e) {
+    set_int(ie);
     return e;
+  }
   /* dma to cart */
   ed_spi_mode(1, 0, 0);
   ed_regs.cfg;
@@ -492,22 +506,14 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
     ;
   /* stop data transmission */
   e = ed_sd_stop_rw();
-  if (e)
+  if (e) {
+    set_int(ie);
     return e;
+  }
   /* check for dma timeout */
-  if (ed_regs.status & ED_STATE_DMA_TOUT)
+  if (ed_regs.status & ED_STATE_DMA_TOUT) {
+    set_int(ie);
     return ED_ERROR_SD_RD_TIMEOUT;
-  /* wait for dma busy and disable interrupts */
-  _Bool ie;
-  while (1) {
-    if (pi_regs.status & PI_STATUS_DMA_BUSY)
-      continue;
-    ie = set_int(0);
-    if (pi_regs.status & PI_STATUS_DMA_BUSY) {
-      set_int(ie);
-      continue;
-    }
-    break;
   }
   /* dma to ram */
   pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(dst);
