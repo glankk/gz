@@ -393,6 +393,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE478
 #define z64_play_ovl_tab_addr                   0x800FE480
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
+#define z64_enemy_proximity_music_state_addr    0x8010191C
 #define z64_night_sfx_addr                      0x801019E8
 #define z64_song_ptr_addr                       0x80102B3C
 #define z64_sfx_write_pos_addr                  0x80104360
@@ -458,6 +459,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FE638
 #define z64_play_ovl_tab_addr                   0x800FE640
 #define z64_play_ovl_ptr_addr                   0x800FE67C
+#define z64_enemy_proximity_music_state_addr    0x80101ADC
 #define z64_night_sfx_addr                      0x80101BA8
 #define z64_song_ptr_addr                       0x80102CFC
 #define z64_sfx_write_pos_addr                  0x80104520
@@ -523,6 +525,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_letterbox_current_addr              0x800FEAC8
 #define z64_play_ovl_tab_addr                   0x800FEAD0
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
+#define z64_enemy_proximity_music_state_addr    0x80101F5C
 #define z64_night_sfx_addr                      0x80102028
 #define z64_song_ptr_addr                       0x8010317C
 #define z64_sfx_write_pos_addr                  0x801049A0
@@ -1163,6 +1166,9 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* enemy proximity music state */
+  serial_write(&p, (void*)z64_enemy_proximity_music_state_addr, 0x0020);
 
   /* event state */
   serial_write(&p, (void*)z64_event_state_1_addr, 0x0008);
@@ -1889,6 +1895,9 @@ void load_state(void *state)
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
+  /* enemy proximity music state */
+  serial_read(&p, (void*)z64_enemy_proximity_music_state_addr, 0x0020);
+
   /* event state */
   serial_read(&p, (void*)z64_event_state_1_addr, 0x0008);
   serial_read(&p, (void*)z64_event_state_2_addr, 0x0004);
@@ -2092,8 +2101,10 @@ void load_state(void *state)
         sc->prev_seq_idx = seq_idx;
         if (seq_idx == 0xFFFF || !p_seq_active)
           z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
-        else
-          z64_AfxCmdW(0x82000000 | (i << 16) | (seq_idx << 8), 0x00000000);
+        else {
+          z64_AfxCmdW(0x82000000 | (i << 16) | ((seq_idx & 0x00FF) << 8),
+                      0x00000000);
+        }
       }
     }
     /* set sequencer volume */
