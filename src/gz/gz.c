@@ -531,7 +531,7 @@ HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
     --*write_pos;
 #endif
 #if 1
-  if (gz_ready) {
+  if (gz.ready) {
     vector_push_back(&afx_cmd_list, 1, &c);
     if (afx_cmd_list.size > 24)
       vector_erase(&afx_cmd_list, 0, 1);
