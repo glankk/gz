@@ -306,10 +306,12 @@ void command_void(void)
   zu_void();
 }
 
+#ifndef WIIVC
 void command_reset(void)
 {
-  zu_reset();
+  gz.reset_flag = 1;
 }
+#endif
 
 void command_turbo(void)
 {

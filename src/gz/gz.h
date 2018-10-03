@@ -105,6 +105,7 @@ struct gz
   uint8_t               memfile_slot;
   void                 *state_buf[SETTINGS_STATE_MAX];
   uint8_t               state_slot;
+  _Bool                 reset_flag;
   _Bool                 frame_flag;
 };
 
@@ -150,8 +151,8 @@ void          command_loadstate(void);
 void          command_recordmacro(void);
 void          command_playmacro(void);
 
-void          z_to_movie(int movie_frame, z64_input_t *zi);
-void          movie_to_z(int movie_frame, z64_input_t *zi);
+void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
+void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);
 void          gz_movie_rewind(void);
 void          gz_movie_seek(int frame);
 

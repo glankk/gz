@@ -2,7 +2,7 @@
 #include "gz.h"
 #include "z64.h"
 
-void z_to_movie(int movie_frame, z64_input_t *zi)
+void z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset)
 {
   struct movie_input *mi = vector_at(&gz.movie_inputs, movie_frame);
   z64_controller_t *raw_prev;
@@ -22,9 +22,10 @@ void z_to_movie(int movie_frame, z64_input_t *zi)
   mi->pad_delta = (~mi->raw.pad & raw_prev->pad & zi->pad_pressed) |
                   (mi->raw.pad & ~raw_prev->pad & zi->pad_released) |
                   (zi->pad_pressed & zi->pad_released);
+  mi->pad_delta |= reset << 7;
 }
 
-void movie_to_z(int movie_frame, z64_input_t *zi)
+void movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset)
 {
   struct movie_input *mi = vector_at(&gz.movie_inputs, movie_frame);
   z64_controller_t *raw_prev;
@@ -34,10 +35,14 @@ void movie_to_z(int movie_frame, z64_input_t *zi)
     struct movie_input *mi_prev = vector_at(&gz.movie_inputs, movie_frame - 1);
     raw_prev = &mi_prev->raw;
   }
+  uint16_t delta = mi->pad_delta;
+  if (reset)
+    *reset = delta & 0x0080;
+  delta &= ~0x0080;
   zi->raw = mi->raw;
   zi->raw_prev = *raw_prev;
-  zi->pad_pressed = (mi->raw.pad & ~raw_prev->pad) | mi->pad_delta;
-  zi->pad_released = (~mi->raw.pad & raw_prev->pad) | mi->pad_delta;
+  zi->pad_pressed = (mi->raw.pad & ~raw_prev->pad) | delta;
+  zi->pad_released = (~mi->raw.pad & raw_prev->pad) | delta;
   zi->x_diff = mi->raw.x - raw_prev->x;
   zi->y_diff = mi->raw.y - raw_prev->y;
   if (zi->raw.x < 8) {

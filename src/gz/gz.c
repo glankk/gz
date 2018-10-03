@@ -270,7 +270,7 @@ static void main_hook(void)
         gz.movie_frame < gz.movie_inputs.size)
     {
       z64_input_t zi;
-      movie_to_z(gz.movie_frame, &zi);
+      movie_to_z(gz.movie_frame, &zi, NULL);
       d_x = zi.raw.x;
       d_y = zi.raw.y;
       d_pad = zi.raw.pad;
@@ -462,7 +462,7 @@ HOOK void input_hook(void)
           vector_reserve(&gz.movie_inputs, 128);
         vector_push_back(&gz.movie_inputs, 1, NULL);
       }
-      z_to_movie(gz.movie_frame++, zi);
+      z_to_movie(gz.movie_frame++, zi, gz.reset_flag);
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       if (gz.movie_frame >= gz.movie_inputs.size) {
@@ -472,8 +472,10 @@ HOOK void input_hook(void)
           gz.movie_state = MOVIE_IDLE;
       }
       if (gz.movie_state == MOVIE_PLAYING) {
-        movie_to_z(gz.movie_frame++, zi);
+        _Bool reset;
+        movie_to_z(gz.movie_frame++, zi, &reset);
         if (settings->bits.macro_input) {
+          gz.reset_flag |= reset;
           if (abs(zi->raw.x) < 8) {
             zi->raw.x = di.raw.x;
             zi->x_diff = di.x_diff;
@@ -488,6 +490,8 @@ HOOK void input_hook(void)
           zi->pad_pressed |= di.pad_pressed;
           zi->pad_released |= di.pad_released;
         }
+        else
+          gz.reset_flag = reset;
       }
     }
   }
@@ -556,6 +560,11 @@ static void state_main_hook(void)
     }
     /* set frame flag to execute an ocarina frame */
     gz.frame_flag = 1;
+    /* execute a scheduled reset */
+    if (gz.reset_flag) {
+      gz.reset_flag = 0;
+      zu_reset();
+    }
   }
   else {
     z64_gfx_t *gfx = z64_ctxt.gfx;
@@ -647,7 +656,7 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   if (gz.ready && gz.movie_state != MOVIE_IDLE && gz.movie_frame > 0) {
     /* ocarina inputs happen after the movie counter has been advanced,
        so use the previous movie frame */
-    movie_to_z(gz.movie_frame - 1, input);
+    movie_to_z(gz.movie_frame - 1, input, NULL);
   }
 }
 
@@ -724,6 +733,7 @@ static void init(void)
   for (int i = 0; i < SETTINGS_STATE_MAX; ++i)
     gz.state_buf[i] = NULL;
   gz.state_slot = 0;
+  gz.reset_flag = 0;
 
   /* load settings */
   if (input_z_pad() == BUTTON_START || !settings_load(gz.profile))
@@ -747,10 +757,6 @@ static void init(void)
     memcpy((void*)0x800BB04C, hook, sizeof(hook));
   }
 #endif
-
-  /* disable map toggling */
-  *(uint32_t*)z64_minimap_disable_1_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x82C);
-  *(uint32_t*)z64_minimap_disable_2_addr = MIPS_BEQ(MIPS_R0, MIPS_R0, 0x98);
 
   /* create menus */
   {
