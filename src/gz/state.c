@@ -992,6 +992,33 @@ uint32_t save_state(void *state)
   /* allocate metadata */
   serial_skip(&p, sizeof(struct state_meta));
 
+  /* save sequencer info */
+  for (int i = 0; i < 4; ++i) {
+    z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+    char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
+    _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
+    serial_write(&p, &seq_active, sizeof(seq_active));
+    if (seq_active) {
+      serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
+      serial_write(&p, &sc->stop_cmd_count, sizeof(sc->stop_cmd_count));
+      serial_write(&p, &sc->stop_cmd_buf,
+                   sizeof(*sc->stop_cmd_buf) * sc->stop_cmd_count);
+    }
+    serial_write(&p, &sc->seq_idx, sizeof(sc->seq_idx));
+    if (sc->vs_time != 0)
+      serial_write(&p, &sc->vs_target, sizeof(sc->vs_target));
+    else
+      serial_write(&p, &sc->vs_current, sizeof(sc->vs_current));
+    serial_write(&p, &sc->vp_factors, sizeof(sc->vp_factors));
+    uint16_t seq_ch_mute = 0;
+    for (int j = 0; j < 16; ++j) {
+      char *ch = *(void**)(seq + 0x0038 + j * 0x0004);
+      _Bool ch_mute = *(uint8_t*)(ch) & 0x10;
+      seq_ch_mute |= ch_mute << j;
+    }
+    serial_write(&p, &seq_ch_mute, sizeof(seq_ch_mute));
+  }
+
   /* save afx config */
   serial_write(&p, &z64_afx_cfg, sizeof(z64_afx_cfg));
 
@@ -1230,34 +1257,8 @@ uint32_t save_state(void *state)
   else
     serial_write(&p, &eot, sizeof(eot));
 
-  /* save audio state */
-  for (int i = 0; i < 4; ++i) {
-    z64_seq_ctl_t *sc = &z64_seq_ctl[i];
-    char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
-    _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
-    serial_write(&p, &seq_active, sizeof(seq_active));
-    if (seq_active) {
-      serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
-      serial_write(&p, &sc->stop_cmd_count, sizeof(sc->stop_cmd_count));
-      serial_write(&p, &sc->stop_cmd_buf,
-                   sizeof(*sc->stop_cmd_buf) * sc->stop_cmd_count);
-    }
-    serial_write(&p, &sc->seq_idx, sizeof(sc->seq_idx));
-    if (sc->vs_time != 0)
-      serial_write(&p, &sc->vs_target, sizeof(sc->vs_target));
-    else
-      serial_write(&p, &sc->vs_current, sizeof(sc->vs_current));
-    serial_write(&p, &sc->vp_factors, sizeof(sc->vp_factors));
-    uint16_t seq_ch_mute = 0;
-    for (int j = 0; j < 16; ++j) {
-      char *ch = *(void**)(seq + 0x0038 + j * 0x0004);
-      _Bool ch_mute = *(uint8_t*)(ch) & 0x10;
-      seq_ch_mute |= ch_mute << j;
-    }
-    serial_write(&p, &seq_ch_mute, sizeof(seq_ch_mute));
-  }
+  /* save sfx mutes */
   serial_write(&p, (void*)z64_sfx_mute_addr, 0x0008);
-
   /* save pending audio commands */
   {
     uint8_t n_cmd = z64_audio_cmd_write_pos - z64_audio_cmd_read_pos;
@@ -1304,7 +1305,35 @@ void load_state(void *state)
   /* importantly, this removes all sound effect control points, which prevents
      floating-point exception crashes due to dangling pointers in the cp's. */
   z64_StopSfx();
-  /* configure afx */
+
+  /* load sequencer info */
+  struct seq_info
+  {
+    _Bool     p_active;
+    uint32_t  stop_cmd_buf[8];
+    uint8_t   stop_cmd_timer;
+    uint8_t   stop_cmd_count;
+    uint16_t  seq_idx;
+    float     volume;
+    uint8_t   vp_factors[4];
+    uint16_t  ch_mute;
+  } seq_info[4];
+  for (int i = 0; i < 4; ++i) {
+    struct seq_info *si = &seq_info[i];
+    serial_read(&p, &si->p_active, sizeof(si->p_active));
+    if (si->p_active) {
+      serial_read(&p, &si->stop_cmd_timer, sizeof(si->stop_cmd_timer));
+      serial_read(&p, &si->stop_cmd_count, sizeof(si->stop_cmd_count));
+      serial_read(&p, &si->stop_cmd_buf,
+                  sizeof(*si->stop_cmd_buf) * si->stop_cmd_count);
+    }
+    serial_read(&p, &si->seq_idx, sizeof(si->seq_idx));
+    serial_read(&p, &si->volume, sizeof(si->volume));
+    serial_read(&p, &si->vp_factors, sizeof(si->vp_factors));
+    serial_read(&p, &si->ch_mute, sizeof(si->ch_mute));
+  }
+
+  /* configure afx if needed */
   int p_afx_cfg = z64_afx_cfg;
   uint8_t c_afx_cfg;
   serial_read(&p, &c_afx_cfg, sizeof(c_afx_cfg));
@@ -1313,6 +1342,20 @@ void load_state(void *state)
     z64_ConfigureAfx(c_afx_cfg);
     z64_ResetAudio(p_afx_cfg);
     z64_AfxCmdW(0xF8000000, 0x00000000);
+  }
+  else {
+    /* stop sequencers that should not be playing, or should be playing a
+       different sequence */
+    for (int i = 0; i < 4; ++i) {
+      struct seq_info *si = &seq_info[i];
+      z64_seq_ctl_t *sc = &z64_seq_ctl[i];
+      /* sequencer 2 is used for sound effects and should always be playing */
+      if (i == 2)
+        continue;
+      if (si->seq_idx == 0xFFFF || !si->p_active || si->seq_idx != sc->seq_idx)
+        z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
+    }
+    z64_FlushAfxCmd();
   }
 
   /* wait for gfx task to finish */
@@ -2064,57 +2107,43 @@ void load_state(void *state)
 
   /* restore audio state */
   for (int i = 0; i < 4; ++i) {
+    struct seq_info *si = &seq_info[i];
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
-    _Bool c_seq_active = *(uint8_t*)(seq) & 0x80;
-    _Bool p_seq_active;
-    serial_read(&p, &p_seq_active, sizeof(p_seq_active));
-    if (p_seq_active) {
-      serial_read(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
-      serial_read(&p, &sc->stop_cmd_count, sizeof(sc->stop_cmd_count));
-      serial_read(&p, &sc->stop_cmd_buf,
-                  sizeof(*sc->stop_cmd_buf) * sc->stop_cmd_count);
-      if (!c_seq_active && sc->stop_cmd_timer == 0)
+    _Bool c_active = *(uint8_t*)(seq) & 0x80;
+    if (si->p_active) {
+      memcpy(&sc->stop_cmd_timer, &si->stop_cmd_timer,
+             sizeof(si->stop_cmd_timer));
+      memcpy(&sc->stop_cmd_count, &si->stop_cmd_count,
+             sizeof(si->stop_cmd_count));
+      memcpy(&sc->stop_cmd_buf, &si->stop_cmd_buf,
+             sizeof(*si->stop_cmd_buf) * si->stop_cmd_count);
+      if (!c_active && sc->stop_cmd_timer == 0)
         sc->stop_cmd_timer = 1;
     }
     else {
       sc->stop_cmd_timer = 0;
       sc->stop_cmd_count = 0;
     }
-    uint16_t seq_idx;
-    serial_read(&p, &seq_idx, sizeof(seq_idx));
     /* clear sequencer volume effects */
-    float volume;
-    serial_read(&p, &volume, sizeof(volume));
-    serial_read(&p, &sc->vp_factors, sizeof(sc->vp_factors));
-    sc->vs_current = volume;
+    memcpy(&sc->vp_factors, &si->vp_factors, sizeof(si->vp_factors));
+    sc->vs_current = si->volume;
     sc->vs_time = 0;
     sc->vp_start = 0;
     /* play sequence */
-    if (i != 2) {
-      if (i == 0 && seq_idx == 0x0001 && p_seq_active)
-        play_night_sfx();
-      else if (sc->seq_idx != seq_idx || c_afx_cfg != p_afx_cfg ||
-               p_seq_active != c_seq_active)
-      {
-        sc->seq_idx = seq_idx;
-        sc->prev_seq_idx = seq_idx;
-        if (seq_idx == 0xFFFF || !p_seq_active)
-          z64_AfxCmdW(0x83000000 | (i << 16), 0x00000000);
-        else {
-          z64_AfxCmdW(0x82000000 | (i << 16) | ((seq_idx & 0x00FF) << 8),
-                      0x00000000);
-        }
-      }
-    }
+    sc->seq_idx = si->seq_idx;
+    sc->prev_seq_idx = si->seq_idx;
+    uint8_t real_seq_idx = si->seq_idx;
+    if (i == 0 && real_seq_idx == 0x01 && si->p_active)
+      play_night_sfx();
+    else if (si->seq_idx != 0xFFFF && si->p_active && !c_active)
+      z64_AfxCmdW(0x82000000 | (i << 16) | (real_seq_idx << 8), 0x00000000);
     /* set sequencer volume */
-    z64_AfxCmdF(0x41000000 | (i << 16), volume);
+    z64_AfxCmdF(0x41000000 | (i << 16), si->volume);
     /* clear channel volume effects and set channel mutes */
-    uint16_t seq_ch_mute;
-    serial_read(&p, &seq_ch_mute, sizeof(seq_ch_mute));
     for (int j = 0; j < 16; ++j) {
       z64_chan_ctl_t *cc = &sc->channels[j];
-      _Bool ch_mute = seq_ch_mute & (1 << j);
+      _Bool ch_mute = si->ch_mute & (1 << j);
       cc->vs_current = 1.;
       cc->vs_time = 0;
       z64_AfxCmdF(0x01000000 | (i << 16) | (j << 8), 1.f);
@@ -2122,13 +2151,14 @@ void load_state(void *state)
     }
     sc->ch_volume_state = 0;
   }
-  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
   if (z64_game.pause_ctxt.state > 0 && z64_game.pause_ctxt.state < 8)
     z64_AfxCmdW(0xF1000000, 0x00000000);
   else
     z64_AfxCmdW(0xF2000000, 0x00000000);
   z64_FlushAfxCmd();
 
+  /* load sfx mutes */
+  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
   /* restore pending audio commands */
   {
     uint8_t n_cmd;
