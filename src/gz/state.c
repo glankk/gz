@@ -379,8 +379,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_event_camera_addr                   0x800EF254
 #define z64_oob_timer_addr                      0x800EF6AC
 #define z64_cs_message_addr                     0x800EFCD0
-#define z64_weather_effect_addr                 0x800F1640
-#define z64_day_speed_addr                      0x800F1650
+#define z64_weather_state_addr                  0x800F1640
 #define z64_sky_images_addr                     0x800F184C
 #define z64_map_mark_ovl_addr                   0x800F1BF8
 #define z64_minimap_entrance_x_addr             0x800F5530
@@ -445,8 +444,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_event_camera_addr                   0x800EF414
 #define z64_oob_timer_addr                      0x800EF86C
 #define z64_cs_message_addr                     0x800EFE90
-#define z64_weather_effect_addr                 0x800F1800
-#define z64_day_speed_addr                      0x800F1810
+#define z64_weather_state_addr                  0x800F1800
 #define z64_sky_images_addr                     0x800F1A0C
 #define z64_map_mark_ovl_addr                   0x800F1DB8
 #define z64_minimap_entrance_x_addr             0x800F56F0
@@ -511,8 +509,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_event_camera_addr                   0x800EF894
 #define z64_oob_timer_addr                      0x800EFCEC
 #define z64_cs_message_addr                     0x800F0310
-#define z64_weather_effect_addr                 0x800F1C80
-#define z64_day_speed_addr                      0x800F1C90
+#define z64_weather_state_addr                  0x800F1C80
 #define z64_sky_images_addr                     0x800F1E8C
 #define z64_map_mark_ovl_addr                   0x800F2238
 #define z64_minimap_entrance_x_addr             0x800F5B70
@@ -558,7 +555,6 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_actor_ovl_tab       (*(z64_actor_ovl_t(*)[471])   z64_actor_ovl_tab_addr)
 #define z64_letterbox_time      (*(uint32_t*)                 z64_letterbox_time_addr)
 #define z64_oob_timer           (*(int32_t*)                  z64_oob_timer_addr)
-#define z64_day_speed           (*(uint16_t*)                 z64_day_speed_addr)
 #define z64_sky_images          (*(z64_sky_image_t(*)[9])     z64_sky_images_addr)
 #define z64_map_mark_ovl        (*(z64_map_mark_ovl_t*)       z64_map_mark_ovl_addr)
 #define z64_minimap_entrance_x  (*(int16_t*)                  z64_minimap_entrance_x_addr)
@@ -1173,11 +1169,8 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
   serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
-  /* weather effect */
-  serial_write(&p, (void*)z64_weather_effect_addr, 0x0008);
-
-  /* day speed */
-  serial_write(&p, &z64_day_speed, sizeof(z64_day_speed));
+  /* weather / daytime state */
+  serial_write(&p, (void*)z64_weather_state_addr, 0x0018);
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
@@ -1917,11 +1910,8 @@ void load_state(void *state)
   serial_read(&p, &z64_minimap_entrance_y, sizeof(z64_minimap_entrance_y));
   serial_read(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
-  /* weather effect */
-  serial_read(&p, (void*)z64_weather_effect_addr, 0x0008);
-
-  /* day speed */
-  serial_read(&p, &z64_day_speed, sizeof(z64_day_speed));
+  /* weather / daytime state */
+  serial_read(&p, (void*)z64_weather_state_addr, 0x0018);
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
