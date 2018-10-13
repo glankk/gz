@@ -14,7 +14,7 @@ _start:
   sw      $v1, 0x0004($v0)
   la      $v1, ((DMA_SIZE) - 1)
   sw      $v1, 0x000C($v0)
-  /* wait for completion */    
+  /* wait for completion */
   dma_busy_loop:
     lw    $v1, 0x0010($v0)
     andi  $v1, $v1, 0x0001

@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <inttypes.h>
 #include <vector/vector.h>
 #include "input.h"
 #include "mem.h"
 #include "menu.h"
 #include "resource.h"
+#include "util.h"
 
 #define MEM_VIEW_ROWS     16
 #define MEM_VIEW_COLS     8
@@ -14,10 +16,12 @@
 
 static int                view_domain_index;
 static int                view_data_size;
+static _Bool              view_float;
 static struct menu_item  *view_address;
 static struct menu_item  *view_domain_name;
 static struct menu_item  *view_pageup;
 static struct menu_item  *view_pagedown;
+static struct menu_item  *view_cell_header;
 static struct menu_item  *view_rows[MEM_VIEW_ROWS];
 static struct menu_item  *view_cells[MEM_VIEW_SIZE];
 
@@ -66,6 +70,16 @@ static void update_view(void)
         cell->think_proc(cell);
     }
   }
+  int width = 0;
+  switch (view_data_size) {
+    case 1: width = 2; break;
+    case 2: width = 4; break;
+    case 4: width = view_float ? 14 : 8; break;
+  }
+  char *p = view_cell_header->text;
+  for (int i = 0; i < MEM_VIEW_COLS; ++i)
+    if (i % view_data_size == 0)
+      p += sprintf(p, "%-*x", width, (d->view_offset + i) & 0xF);
 }
 
 static int cell_proc(struct menu_item *item,
@@ -112,6 +126,23 @@ static int cell_proc(struct menu_item *item,
   return 0;
 }
 
+static int float_cell_proc(struct menu_item *item,
+                           enum menu_callback_reason reason,
+                           void *data)
+{
+  int cell_index = (int)data;
+  struct mem_domain *d = vector_at(&domains, view_domain_index);
+  float *p = (void*)(d->start + d->view_offset + cell_index);
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    float v = *p;
+    if (is_nan(v) || !isnormal(v) || menu_floatinput_get(item) != v)
+      menu_floatinput_set(item, v);
+  }
+  else if (reason == MENU_CALLBACK_CHANGED)
+    *p = menu_floatinput_get(item);
+  return 0;
+}
+
 static void make_cells(struct menu *menu)
 {
   int n = 0;
@@ -119,10 +150,17 @@ static void make_cells(struct menu *menu)
     for (int x = 0; x < MEM_VIEW_COLS; ++x) {
       if (view_cells[n])
         menu_item_remove(view_cells[n]);
-      if (n % view_data_size == 0)
-        view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
-                                          16, view_data_size * 2,
-                                          cell_proc, (void*)n);
+      if (n % view_data_size == 0) {
+        if (view_float) {
+          view_cells[n] = menu_add_floatinput(menu, 9 + x / 4 * 14, 3 + y,
+                                              7, 2, float_cell_proc, (void*)n);
+        }
+        else {
+          view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
+                                            16, view_data_size * 2,
+                                            cell_proc, (void*)n);
+        }
+      }
       else
         view_cells[n] = NULL;
       ++n;
@@ -138,17 +176,20 @@ static int address_proc(struct menu_item *item,
   return 0;
 }
 
-static int data_size_proc(struct menu_item *item,
+static int data_type_proc(struct menu_item *item,
                           enum menu_callback_reason reason,
                           void *data)
 {
   if (reason == MENU_CALLBACK_DEACTIVATE) {
-    int v = (1 << menu_option_get(item));
-    if (view_data_size != v) {
-      view_data_size = v;
-      make_cells(item->owner);
-      update_view();
+    switch (menu_option_get(item)) {
+      case 0: view_data_size = 1; view_float = 0; break;
+      case 1: view_data_size = 2; view_float = 0; break;
+      case 2: view_data_size = 4; view_float = 0; break;
+      case 3: view_data_size = 4; view_float = 1; break;
     }
+    make_cells(item->owner);
+    struct mem_domain *d = vector_at(&domains, view_domain_index);
+    mem_goto(d->start + d->view_offset);
   }
   return 0;
 }
@@ -188,9 +229,12 @@ void mem_menu_create(struct menu *menu)
   /* initialize data */
   vector_init(&domains, sizeof(struct mem_domain));
   add_domain(0x80000000, 0x00C00000, "k0 rdram");
+#ifndef WIIVC
   add_domain(0xA0000000, 0x00C00000, "k1 rdram");
   add_domain(0xA3F00000, 0x00100000, "rdram regs");
-  add_domain(0xA4000000, 0x00100000, "sp regs");
+  add_domain(0xA4000000, 0x00001000, "sp dmem");
+  add_domain(0xA4001000, 0x00001000, "sp imem");
+  add_domain(0xA4002000, 0x000FE000, "sp regs");
   add_domain(0xA4100000, 0x00100000, "dp com");
   add_domain(0xA4200000, 0x00100000, "dp span");
   add_domain(0xA4300000, 0x00100000, "mi regs");
@@ -200,6 +244,7 @@ void mem_menu_create(struct menu *menu)
   add_domain(0xA4800000, 0x00100000, "si regs");
   add_domain(0xA8000000, 0x08000000, "cart dom2");
   add_domain(0xB0000000, 0x0FC00000, "cart dom1");
+#endif
   add_domain(0xBFC00000, 0x000007C0, "pif rom");
   add_domain(0xBFC007C0, 0x00000040, "pif ram");
   /* initialize menus */
@@ -207,11 +252,10 @@ void mem_menu_create(struct menu *menu)
   menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
   {
     view_address = menu_add_intinput(menu, 0, 1, 16, 8, address_proc, NULL);
-    struct menu_item *data_size = menu_add_option(menu, 9, 1,
-                                                  "byte\0""halfword\0""word\0",
-                                                  data_size_proc, NULL);
-    menu_option_set(data_size, 2);
-    view_data_size = 4;
+    menu_add_option(menu, 9, 1, "byte\0""halfword\0""word\0""float\0",
+                    data_type_proc, NULL);
+    view_data_size = 1;
+    view_float = 0;
     menu_add_button(menu, 18, 1, "<", prev_domain_proc, NULL);
     menu_add_button(menu, 20, 1, ">", next_domain_proc, NULL);
     view_domain_name = menu_add_static(menu, 22, 1, NULL, 0xC0C0C0);
@@ -221,7 +265,8 @@ void mem_menu_create(struct menu *menu)
                                        page_up_proc, NULL);
     view_pagedown = menu_add_button_icon(menu, 2, 2, t_arrow, 1, 0xFFFFFF,
                                          page_down_proc, NULL);
-    menu_add_static(menu, 9, 2, "0 1 2 3 4 5 6 7", 0xC0C0C0);
+    view_cell_header = menu_add_static(menu, 9, 2, NULL, 0xC0C0C0);
+    view_cell_header->text = malloc(32);
     for (int y = 0; y < MEM_VIEW_ROWS; ++y) {
       view_rows[y] = menu_add_static(menu, 0, 3 + y, NULL, 0xC0C0C0);
       view_rows[y]->text = malloc(9);
@@ -233,6 +278,7 @@ void mem_menu_create(struct menu *menu)
 
 void mem_goto(uint32_t address)
 {
+  address &= ~(view_data_size - 1);
   for (int i = 0; i < domains.size; ++i) {
     struct mem_domain *d = vector_at(&domains, i);
     if (address >= d->start && address < d->start + d->size) {

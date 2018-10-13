@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "menu.h"
+#include "util.h"
 
 struct item_data
 {
@@ -51,18 +52,16 @@ static int draw_proc(struct menu_item *item,
     snprintf(item->text, 17, "0x%" PRIx32, *(uint32_t*)address); break;
   case WATCH_TYPE_F32: {
     float v = *(float*)address;
-    if (v == INFINITY)
+    if (is_nan(v))
+      strcpy(item->text, "nan");
+    else if (v == INFINITY)
       strcpy(item->text, "inf");
     else if (v == -INFINITY)
       strcpy(item->text, "-inf");
-    else if (v == NAN)
-      strcpy(item->text, "nan");
     else {
-      float i;
-      float f = modff(v, &i);
-      if (fabsf(f) < FLT_MIN)
-        f = 0.f;
-      snprintf(item->text, 17, "%g", i + f);
+      if (!isnormal(v))
+        v = 0.f;
+      snprintf(item->text, 17, "%g", v);
     }
     break;
   }

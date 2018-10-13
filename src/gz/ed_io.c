@@ -4,26 +4,13 @@
 #include <mips.h>
 #include <n64.h>
 #include "ed.h"
+#include "util.h"
 
 #define CMD_RETRY_MAX   16
 #define DATA_RETRY_MAX  16
 
 static uint32_t card_type;
 static uint32_t spi_cfg;
-
-/* set interrupt enable bit and return previous value */
-static inline _Bool set_int(_Bool enable)
-{
-  uint32_t sr;
-  __asm__ volatile ("mfc0 %0, $12" : "=r"(sr));
-  _Bool ie = sr & MIPS_STATUS_IE;
-  if (enable)
-    sr |= MIPS_STATUS_IE;
-  else
-    sr &= ~MIPS_STATUS_IE;
-  __asm__ volatile ("mtc0 %0, $12" :: "r"(sr));
-  return ie;
-}
 
 static uint16_t *crc16_table()
 {

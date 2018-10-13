@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include "menu.h"
+#include "util.h"
 
 struct item_data
 {
@@ -281,12 +282,14 @@ float menu_floatinput_get(struct menu_item *item)
 
 void menu_floatinput_set(struct menu_item *item, float value)
 {
+  if (is_nan(value) || !isnormal(value))
+    value = 0.f;
   struct item_data *data = item->data;
   data->value = value;
 
   int sig_sign = signbit(value) ? -1 : 1;
   value = fabsf(value);
-  int exp = floorf(log10f(value));
+  int exp = value == 0.f ? 0.f : floorf(log10f(value));
   int sig = value / pow(10., exp - (data->sig_precis - 1)) + 0.5;
   int exp_sign = exp < 0 ? -1 : 1;
   exp *= exp_sign;

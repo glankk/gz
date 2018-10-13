@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <mips.h>
 #include <n64.h>
+#include "util.h"
 
 struct yaz0
 {
@@ -20,20 +21,6 @@ _Alignas(16)
 static uint8_t      yaz0_code_buf[0x400];
 static uint8_t      yaz0_buf[0x1000];
 
-
-/* set interrupt enable bit and return previous value */
-static inline _Bool set_int(_Bool enable)
-{
-  uint32_t sr;
-  __asm__ volatile ("mfc0 %0, $12" : "=r"(sr));
-  _Bool ie = sr & MIPS_STATUS_IE;
-  if (enable)
-    sr |= MIPS_STATUS_IE;
-  else
-    sr &= ~MIPS_STATUS_IE;
-  __asm__ volatile ("mtc0 %0, $12" :: "r"(sr));
-  return ie;
-}
 
 static uint8_t yaz0_get_code(void)
 {
