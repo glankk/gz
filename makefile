@@ -33,10 +33,10 @@ ASMFILES              = *.S
 CFILES                = *.c
 CXXFILES              = *.cpp *.cxx *.cc *.c++
 
-OOT-1.0               = $(OBJ-gz-oot-1.0) $(ELF-gz-oot-1.0) gz-oot-1.0-hooks
-OOT-1.1               = $(OBJ-gz-oot-1.1) $(ELF-gz-oot-1.0) gz-oot-1.1-hooks
-OOT-1.2               = $(OBJ-gz-oot-1.2) $(ELF-gz-oot-1.0) gz-oot-1.2-hooks
-VC                    = $(OBJ-gz-oot-vc) $(ELF-gz-oot-vc) gz-oot-vc-hooks
+OOT-1.0               = $(OBJ-gz-oot-1.0) $(ELF-gz-oot-1.0) $(HOOKS-gz-oot-1.0)
+OOT-1.1               = $(OBJ-gz-oot-1.1) $(ELF-gz-oot-1.0) $(HOOKS-gz-oot-1.1)
+OOT-1.2               = $(OBJ-gz-oot-1.2) $(ELF-gz-oot-1.0) $(HOOKS-gz-oot-1.2)
+VC                    = $(OBJ-gz-oot-vc) $(ELF-gz-oot-vc) $(HOOKS-gz-oot-vc)
 N64                   = $(OOT-1.0) $(OOT-1.1) $(OOT-1.2)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
