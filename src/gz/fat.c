@@ -106,7 +106,7 @@ static _Bool char_is_sfn(char c, enum sfn_case *cse)
   }
   return (c >= '@' && c <= 'Z') || (c >= '0' && c <= '9') ||
          (c >= '#' && c <= ')') || (c >= '^' && c <= '`') ||
-         (c >= 0x80 && c <= 0xFF) ||
+         (c >= '\x80' && c <= '\xFF') ||
          c == ' ' || c == '!' || c == '-' || c == '{' || c == '}' || c == '~';
 }
 
@@ -228,8 +228,8 @@ static void cvt_83(const char *s, char *sfn)
     memcpy(&sfn[0], name, name_length);
     memcpy(&sfn[8], ext, ext_length);
     cvt_upper(sfn, 11);
-    if (sfn[0] == 0xE5)
-      sfn[0] = 0x05;
+    if (sfn[0] == '\xE5')
+      sfn[0] = '\x05';
   }
 }
 
@@ -1051,8 +1051,8 @@ int fat_dir(struct fat_file *dir, struct fat_entry *entry)
       if (get_sfn(&ent_buf[0], entry->short_name, &name_l, &ext_l) == 0)
         continue;
       /* check for 0xE5 escape character */
-      if (entry->short_name[0] == 0x05)
-        entry->short_name[0] = 0xE5;
+      if (entry->short_name[0] == '\x05')
+        entry->short_name[0] = '\xE5';
       /* copy lfn to entry name */
       if (have_lfn) {
         strcpy(entry->name, lfn_buf);

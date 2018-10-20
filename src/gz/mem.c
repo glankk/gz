@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
@@ -27,15 +28,15 @@ static struct menu_item  *view_cells[MEM_VIEW_SIZE];
 
 struct mem_domain
 {
-  size_t      start;
-  size_t      size;
+  uint32_t    start;
+  uint32_t    size;
   const char *name;
   int         view_offset;
 };
 
 static struct vector domains;
 
-static void add_domain(size_t start, size_t size, const char *name)
+static void add_domain(uint32_t start, uint32_t size, const char *name)
 {
   struct mem_domain *domain = vector_push_back(&domains, 1, NULL);
   domain->start = start;
@@ -58,7 +59,7 @@ static void update_view(void)
     struct menu_item *row = view_rows[y];
     row->enabled = (d->view_offset + y * MEM_VIEW_COLS < d->size);
     if (row->enabled)
-      sprintf(view_rows[y]->text, "%08x",
+      sprintf(view_rows[y]->text, "%08" PRIx32,
               d->start + d->view_offset + y * MEM_VIEW_COLS);
     for (int x = 0; x < MEM_VIEW_COLS; ++x) {
       int n = y * MEM_VIEW_COLS + x;

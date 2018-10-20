@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <mips.h>
 #include <n64.h>
 #include <set/set.h>
@@ -1661,7 +1662,7 @@ void load_state(void *state)
       }
       /* object-specific initialization monkaS */
       z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(c_ptr);
-      switch(c_id) {
+      switch (c_id) {
       /* some object files contain collision data. this collision data has
          an associated collision header (z64_col_hdr_t), with segment
          addresses that must be relocated to prevent crashes.
