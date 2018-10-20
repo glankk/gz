@@ -65,6 +65,8 @@ enum ed_error
   ED_ERROR_SD_WR_CRC,
   ED_ERROR_SD_RD_TIMEOUT,
   ED_ERROR_SD_RD_CRC,
+  ED_ERROR_FIFO_WR_TIMEOUT,
+  ED_ERROR_FIFO_RD_TIMEOUT,
 };
 
 typedef struct
@@ -88,10 +90,12 @@ typedef struct
   uint32_t crc;
 } ed_regs_t;
 
+void          ed_open(void);
+void          ed_close(void);
+
 enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_cmd(int cmd, uint32_t arg, void *resp_buf);
 enum ed_error ed_sd_init(void);
-void          ed_close(void);
 
 enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
                            void *dst, uint32_t *n_read);
@@ -101,6 +105,9 @@ enum ed_error ed_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
 enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
 enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst);
 enum ed_error ed_sd_stop_rw(void);
+
+enum ed_error ed_fifo_read(void *dst, uint32_t n_blocks);
+enum ed_error ed_fifo_write(void *src, uint32_t n_blocks);
 
 void          ed_spi_ss(_Bool enable);
 void          ed_spi_mode(_Bool data, _Bool write, _Bool wide);

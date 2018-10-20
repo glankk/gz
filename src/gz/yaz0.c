@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <mips.h>
-#include <n64.h>
 #include "util.h"
 
 struct yaz0
@@ -17,7 +16,7 @@ static uint32_t     yaz0_op;
 static uint8_t      yaz0_group_header;
 static uint32_t     yaz0_group_pos;
 static uint32_t     yaz0_chunk_end;
-_Alignas(16)
+_Alignas(0x10)
 static uint8_t      yaz0_code_buf[0x400];
 static uint8_t      yaz0_buf[0x1000];
 
@@ -25,26 +24,9 @@ static uint8_t      yaz0_buf[0x1000];
 static uint8_t yaz0_get_code(void)
 {
   if ((yaz0_cp & 0x3FF) == 0) {
-    _Bool ie;
-    while (1) {
-      if (pi_regs.status & PI_STATUS_DMA_BUSY)
-        continue;
-      ie = set_int(0);
-      if (pi_regs.status & PI_STATUS_DMA_BUSY) {
-        set_int(ie);
-        continue;
-      }
-      break;
-    }
-    pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(yaz0_code_buf);
-    pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(&yaz0->code[yaz0_cp]);
-    pi_regs.wr_len = 0x3FF;
-    while (pi_regs.status & PI_STATUS_DMA_BUSY)
-      ;
-    pi_regs.status = PI_STATUS_CLR_INTR;
+    _Bool ie = enter_dma_section();
+    dma_read(yaz0_code_buf, (uint32_t)&yaz0->code[yaz0_cp], 0x400);
     set_int(ie);
-    for (int i = 0; i < 0x400; i += 0x10)
-      __asm__ volatile ("cache 0x11, 0x0000(%0) \n" :: "r"(&yaz0_code_buf[i]));
   }
   return yaz0_code_buf[yaz0_cp++ & 0x3FF];
 }

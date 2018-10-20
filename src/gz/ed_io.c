@@ -1,8 +1,6 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <mips.h>
-#include <n64.h>
 #include "ed.h"
 #include "util.h"
 
@@ -96,6 +94,18 @@ static int sd_cmd_resp_type(int cmd)
   }
 }
 
+void ed_open(void)
+{
+  ed_regs.cfg;
+  ed_regs.key = 0x1234;
+}
+
+void ed_close(void)
+{
+  ed_regs.cfg;
+  ed_regs.key = 0;
+}
+
 enum ed_error ed_sd_cmd_r(int cmd, uint32_t arg, void *resp_buf)
 {
   int resp_type = sd_cmd_resp_type(cmd);
@@ -159,9 +169,8 @@ enum ed_error ed_sd_init(void)
   enum ed_error e;
   static uint8_t resp[17];
   /* initialize spi */
+  ed_open();
   spi_cfg = 0;
-  ed_regs.cfg;
-  ed_regs.key = 0x1234;
   ed_regs.cfg;
   ed_regs.spi_cfg = spi_cfg;
   ed_spi_ss(0);
@@ -253,12 +262,6 @@ exit:
   /* restore interrupts */
   set_int(ie);
   return e;
-}
-
-void ed_close(void)
-{
-  ed_regs.cfg;
-  ed_regs.key = 0;
 }
 
 enum ed_error ed_sd_read_r(uint32_t lba, uint32_t n_blocks,
@@ -461,18 +464,8 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
 {
   const uint32_t cart_addr = 0xB2000000;
   enum ed_error e;
-  /* wait for dma busy and disable interrupts */
-  _Bool ie;
-  while (1) {
-    if (pi_regs.status & PI_STATUS_DMA_BUSY)
-      continue;
-    ie = set_int(0);
-    if (pi_regs.status & PI_STATUS_DMA_BUSY) {
-      set_int(ie);
-      continue;
-    }
-    break;
-  }
+  /* disable interrupts */
+  _Bool ie = enter_dma_section();
   /* send read command */
   if (!(card_type & SD_HC))
     lba *= 512;
@@ -503,18 +496,7 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
     return ED_ERROR_SD_RD_TIMEOUT;
   }
   /* dma to ram */
-  pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(dst);
-  pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
-  pi_regs.wr_len = n_blocks * 0x200 - 1;
-  while (pi_regs.status & PI_STATUS_DMA_BUSY)
-    ;
-  pi_regs.status = PI_STATUS_CLR_INTR;
-  /* invalidate cache */
-  for (uint32_t i = 0; i < n_blocks * 0x200; i += 0x20) {
-    __asm__ volatile ("cache 0x10, 0x0000(%0) \n"
-                      "cache 0x11, 0x0000(%0) \n"
-                      "cache 0x11, 0x0010(%0) \n" :: "r"((uint32_t)dst + i));
-  }
+  dma_read(dst, cart_addr, n_blocks * 0x200);
   /* restore interrupts */
   set_int(ie);
   return ED_ERROR_SUCCESS;
@@ -535,6 +517,54 @@ enum ed_error ed_sd_stop_rw(void)
     }
   if (timeout)
     return ED_ERROR_SD_CLOSE_TIMEOUT;
+  return ED_ERROR_SUCCESS;
+}
+
+enum ed_error ed_fifo_read(void *dst, uint32_t n_blocks)
+{
+  const uint32_t cart_addr = 0xB2000000;
+  /* disable interrupts */
+  _Bool ie = enter_dma_section();
+  /* dma fifo to cart */
+  ed_regs.cfg;
+  ed_regs.dma_len = n_blocks - 1;
+  ed_regs.cfg;
+  ed_regs.dma_ram_addr = cart_addr / 0x800;
+  ed_regs.cfg;
+  ed_regs.dma_cfg = ED_DMA_FIFO_TO_RAM;
+  while (ed_regs.status & ED_STATE_DMA_BUSY)
+    ;
+  /* dma cart to ram */
+  dma_read(dst, cart_addr, n_blocks * 0x200);
+  /* restore interrupts */
+  set_int(ie);
+  /* check for dma timeout */
+  if (ed_regs.status & ED_STATE_DMA_TOUT)
+    return ED_ERROR_FIFO_RD_TIMEOUT;
+  return ED_ERROR_SUCCESS;
+}
+
+enum ed_error ed_fifo_write(void *src, uint32_t n_blocks)
+{
+  const uint32_t cart_addr = 0xB2000000;
+  /* disable interrupts */
+  _Bool ie = enter_dma_section();
+  /* dma ram to cart */
+  dma_write(src, cart_addr, n_blocks * 0x200);
+  /* dma cart to fifo */
+  ed_regs.cfg;
+  ed_regs.dma_len = n_blocks - 1;
+  ed_regs.cfg;
+  ed_regs.dma_ram_addr = cart_addr / 0x800;
+  ed_regs.cfg;
+  ed_regs.dma_cfg = ED_DMA_RAM_TO_FIFO;
+  while (ed_regs.status & ED_STATE_DMA_BUSY)
+    ;
+  /* restore interrupts */
+  set_int(ie);
+  /* check for dma timeout */
+  if (ed_regs.status & ED_STATE_DMA_TOUT)
+    return ED_ERROR_FIFO_WR_TIMEOUT;
   return ED_ERROR_SUCCESS;
 }
 
