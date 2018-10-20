@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 
-if [ -z "$AS" ];      then AS="mips64-gcc";           fi
-if [ -z "$CC" ];      then CC="mips64-gcc";           fi
-if [ -z "$NM" ];      then NM="mips64-nm";            fi
-if [ -z "$READELF" ]; then READELF="mips64-readelf";  fi
+AS="${AS:-mips64-gcc}"
+CC="${CC:-mips64-gcc}"
+NM="${NM:-mips64-nm}"
+READELF="${READELF:-mips64-readelf}"
 
 elf="$1"
 if [ -z "$elf" ]; then

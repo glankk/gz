@@ -1,9 +1,5 @@
-ifndef PACKAGE_TARNAME
- PACKAGE_TARNAME      = gz
-endif
-ifndef PACKAGE_URL
- PACKAGE_URL          = github.com/glankk/gz
-endif
+PACKAGE_TARNAME      ?= gz
+PACKAGE_URL          ?= github.com/glankk/gz
 AS                    = mips64-gcc
 CC                    = mips64-gcc
 CXX                   = mips64-g++
