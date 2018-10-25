@@ -220,10 +220,10 @@ static void save_state_proc(struct menu_item *item, void *data)
 
 static void clear_state_proc(struct menu_item *item, void *data)
 {
-    if(gz.state_buf[gz.state_slot]){
-        free(gz.state_buf[gz.state_slot]);
-        gz.state_buf[gz.state_slot] = NULL;
-    }
+  if(gz.state_buf[gz.state_slot]){
+    free(gz.state_buf[gz.state_slot]);
+    gz.state_buf[gz.state_slot] = NULL;
+  }
 }
 
 #ifndef WIIVC
