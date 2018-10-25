@@ -218,6 +218,14 @@ static void save_state_proc(struct menu_item *item, void *data)
   command_savestate();
 }
 
+static void clear_state_proc(struct menu_item *item, void *data)
+{
+    if(gz.state_buf[gz.state_slot]){
+        free(gz.state_buf[gz.state_slot]);
+        gz.state_buf[gz.state_slot] = NULL;
+    }
+}
+
 #ifndef WIIVC
 static int do_import_state(const char *path, void *data)
 {
@@ -335,7 +343,7 @@ static int state_info_draw_proc(struct menu_item *item,
   if (state) {
     gfx_printf(font, x + cw * 2, y,
                "%s", zu_scene_info[state->scene_idx].scene_name);
-    int cx = 2;
+    int cx = 5;
 #ifndef WIIVC
     cx += 6;
 #endif
@@ -432,11 +440,14 @@ struct menu *gz_macro_menu(void)
   item = menu_add_button_icon(&menu, 3, y, t_save, 3, 0xFFFFFF,
                               save_state_proc, NULL);
   item->tooltip = "save state";
+  item = menu_add_button_icon(&menu, 6, y, t_save, 4, 0xFFFFFF,
+                              clear_state_proc, NULL);
+  item->tooltip = "clear state";
 #ifndef WIIVC
-  item = menu_add_button_icon(&menu, 6, y, t_save, 0, 0xFFFFFF,
+  item = menu_add_button_icon(&menu, 9, y, t_save, 0, 0xFFFFFF,
                               import_state_proc, NULL);
   item->tooltip = "import state";
-  item = menu_add_button_icon(&menu, 9, y, t_save, 1, 0xFFFFFF,
+  item = menu_add_button_icon(&menu, 12, y, t_save, 1, 0xFFFFFF,
                               export_state_proc, NULL);
   item->tooltip = "export state";
 #endif
