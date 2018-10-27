@@ -10,6 +10,7 @@
 #include "gz.h"
 #include "mem.h"
 #include "menu.h"
+#include "rdb.h"
 #include "ucode.h"
 #include "z64.h"
 
@@ -456,8 +457,8 @@ static void spawn_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_spawn_info *asi = data;
   z64_SpawnActor(&z64_game.actor_ctxt, &z64_game, asi->actor_no,
-                  asi->x, asi->y, asi->z, asi->rx, asi->ry, asi->rz,
-                  asi->variable);
+                 asi->x, asi->y, asi->z, asi->rx, asi->ry, asi->rz,
+                 asi->variable);
 }
 
 static void fetch_actor_info_proc(struct menu_item *item, void *data)
@@ -471,6 +472,34 @@ static void fetch_actor_info_proc(struct menu_item *item, void *data)
   asi->rz = z64_link.common.rot_2.z;
 }
 
+#ifndef WIIVC
+static void start_rdb_proc(struct menu_item *item, void *data)
+{
+  rdb_start();
+}
+
+static void stop_rdb_proc(struct menu_item *item, void *data)
+{
+  rdb_stop();
+}
+
+static void break_proc(struct menu_item *item, void *data)
+{
+  rdb_interrupt();
+}
+
+static int rdb_draw_proc(struct menu_item *item,
+                         struct menu_draw_params *draw_params)
+{
+  const char *status = rdb_check() ? "running" : "not running";
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
+  gfx_printf(draw_params->font, draw_params->x, draw_params->y,
+             "rdb status: %s", status);
+  return 1;
+}
+#endif
+
 struct menu *gz_debug_menu(void)
 {
   static struct menu menu;
@@ -480,6 +509,9 @@ struct menu *gz_debug_menu(void)
   static struct menu actors;
   static struct menu flags;
   static struct menu mem;
+#ifndef WIIVC
+  static struct menu rdb;
+#endif
   struct menu_item *item;
 
   /* initialize menus */
@@ -488,6 +520,9 @@ struct menu *gz_debug_menu(void)
   menu_init(&disp, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&objects, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&actors, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+#ifndef WIIVC
+  menu_init(&rdb, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+#endif
 
   /* populate debug top menu */
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
@@ -497,6 +532,9 @@ struct menu *gz_debug_menu(void)
   menu_add_submenu(&menu, 0, 4, &actors, "actors");
   menu_add_submenu(&menu, 0, 5, &flags, "flags");
   menu_add_submenu(&menu, 0, 6, &mem, "memory");
+#ifndef WIIVC
+  menu_add_submenu(&menu, 0, 7, &rdb, "rdb");
+#endif
 
   /* populate heap menu */
   heap.selector = menu_add_submenu(&heap, 0, 0, NULL, "return");
@@ -560,6 +598,15 @@ struct menu *gz_debug_menu(void)
   /* create memory menu */
   mem_menu_create(&mem);
   gz.menu_mem = &mem;
+
+#ifndef WIIVC
+  /* populate rdb menu */
+  rdb.selector = menu_add_submenu(&rdb, 0, 0, NULL, "return");
+  menu_add_button(&rdb, 0, 1, "start rdb", start_rdb_proc, NULL);
+  menu_add_button(&rdb, 0, 2, "stop rdb", stop_rdb_proc, NULL);
+  menu_add_button(&rdb, 0, 3, "break", break_proc, NULL);
+  menu_add_static_custom(&rdb, 0, 5, rdb_draw_proc, NULL, 0xC0C0C0);
+#endif
 
   return &menu;
 }
