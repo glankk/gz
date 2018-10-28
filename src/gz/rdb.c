@@ -548,12 +548,12 @@ static void rdb_enable_watch(void)
     watchlo = (rdb.watch_addr & 0x1FFFFFF8) | (rdb.watch_type & 3);
   else
     watchlo = 0;
-  __asm__ volatile ("mtc0 %0, $18;" :: "r"(watchlo));
+  __asm__ volatile ("mtc0  %0, $18;" :: "r"(watchlo));
 }
 
 static void rdb_disable_watch(void)
 {
-  __asm__ volatile ("mtc0 $zero, $18;");
+  __asm__ volatile ("mtc0  $zero, $18;");
 }
 
 static int rdb_nthreads(void)
