@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <string.h>
 #include "gfx.h"
 #include "gz.h"
@@ -87,6 +89,29 @@ void gz_hide_menu(void)
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_L);
   input_reservation_set(0);
+}
+
+void gz_log(const char *fmt, ...)
+{
+  struct log_entry *ent = &gz.log[SETTINGS_LOG_MAX - 1];
+  if (ent->msg)
+    free(ent->msg);
+  for (int i = SETTINGS_LOG_MAX - 1; i > 0; --i)
+    gz.log[i] = gz.log[i - 1];
+
+  va_list va;
+  va_start(va, fmt);
+  int l = vsnprintf(NULL, 0, fmt, va);
+  va_end(va);
+
+  ent = &gz.log[0];
+  ent->msg = malloc(l + 1);
+  if (!ent->msg)
+    return;
+  va_start(va, fmt);
+  vsprintf(ent->msg, fmt, va);
+  va_end(va);
+  ent->age = 0;
 }
 
 void gz_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
@@ -384,23 +409,30 @@ void command_colview(void)
 
 void command_savestate(void)
 {
-  if (gz.state_buf[gz.state_slot])
-    free(gz.state_buf[gz.state_slot]);
-  struct state_meta *state = malloc(368 * 1024);
-  state->z64_version = Z64_VERSION;
-  state->state_version = SETTINGS_STATE_VERSION;
-  state->size = save_state(state);
-  state->scene_idx = z64_game.scene_index;
-  if (gz.movie_state == MOVIE_IDLE)
-    state->movie_frame = -1;
-  else
-    state->movie_frame = gz.movie_frame;
-  gz.state_buf[gz.state_slot] = realloc(state, state->size);
+  if (!zu_in_game())
+    gz_log("can not save here");
+  else {
+    if (gz.state_buf[gz.state_slot])
+      free(gz.state_buf[gz.state_slot]);
+    struct state_meta *state = malloc(368 * 1024);
+    state->z64_version = Z64_VERSION;
+    state->state_version = SETTINGS_STATE_VERSION;
+    state->size = save_state(state);
+    state->scene_idx = z64_game.scene_index;
+    if (gz.movie_state == MOVIE_IDLE)
+      state->movie_frame = -1;
+    else
+      state->movie_frame = gz.movie_frame;
+    gz.state_buf[gz.state_slot] = realloc(state, state->size);
+    gz_log("saved state %i", gz.state_slot);
+  }
 }
 
 void command_loadstate(void)
 {
-  if (gz.state_buf[gz.state_slot]) {
+  if (!zu_in_game())
+    gz_log("can not load here");
+  else if (gz.state_buf[gz.state_slot]) {
     struct state_meta *state = gz.state_buf[gz.state_slot];
     load_state(state);
     if (gz.movie_state != MOVIE_IDLE && state->movie_frame != -1)
@@ -414,7 +446,10 @@ void command_loadstate(void)
     di->pad_released = (di->raw.pad ^ zi->raw.pad) & zi->raw.pad;
     di->x_diff = di->raw.x - zi->raw.x;
     di->y_diff = di->raw.y - zi->raw.y;
+    gz_log("loaded state %i", gz.state_slot);
   }
+  else
+    gz_log("state %i is empty", gz.state_slot);
 }
 
 void command_recordmacro(void)

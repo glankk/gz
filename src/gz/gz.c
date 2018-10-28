@@ -404,6 +404,33 @@ static void main_hook(void)
 #undef STRINGIFY_
   }
 
+  /* draw log */
+  for (int i = SETTINGS_LOG_MAX - 1; i >= 0; --i) {
+    const int fade_begin = 20;
+    const int fade_duration = 20;
+    struct log_entry *ent = &gz.log[i];
+    uint8_t msg_alpha;
+    if (!ent->msg)
+      continue;
+    ++ent->age;
+    if (ent->age > (fade_begin + fade_duration)) {
+      free(ent->msg);
+      ent->msg = NULL;
+      continue;
+    }
+    else if (!settings->bits.log)
+      continue;
+    else if (ent->age > fade_begin)
+      msg_alpha = 0xFF - (ent->age - fade_begin) * 0xFF / fade_duration;
+    else
+      msg_alpha = 0xFF;
+    msg_alpha = msg_alpha * alpha / 0xFF;
+    int msg_x = settings->log_x - cw * strlen(ent->msg);
+    int msg_y = settings->log_y - ch * i;
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0xC0C0C0, msg_alpha));
+    gfx_printf(font, msg_x, msg_y, "%s", ent->msg);
+  }
+
 #if defined(AFX_DEBUG) && (AFX_DEBUG)
   for (int i = 0; i < afx_cmd_list.size; ++i) {
     struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
@@ -705,6 +732,8 @@ static void init(void)
   /* initialize gz variables */
   gz.profile = 0;
   gz.menu_active = 0;
+  for (int i = 0; i < SETTINGS_LOG_MAX; ++i)
+    gz.log[i].msg = NULL;
   gz.entrance_override_once = 0;
   gz.entrance_override_next = 0;
   gz.next_entrance = -1;

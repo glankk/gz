@@ -16,6 +16,7 @@
 #define SETTINGS_MEMFILE_MAX        10
 #define SETTINGS_STATE_MAX          3
 #define SETTINGS_BIND_MAX           COMMAND_MAX
+#define SETTINGS_LOG_MAX            4
 
 #define SETTINGS_LAG_FRAMES         0
 #define SETTINGS_LAG_SECONDS        1
@@ -112,6 +113,7 @@ struct settings_bits
   uint32_t font_resource  : 4;
   uint32_t drop_shadow    : 1;
   uint32_t input_display  : 1;
+  uint32_t log            : 1;
   uint32_t lag_counter    : 1;
   uint32_t lag_unit       : 1;
 #ifndef WIIVC
@@ -145,6 +147,8 @@ struct settings_data
   int16_t               menu_y;
   int16_t               input_display_x;
   int16_t               input_display_y;
+  int16_t               log_x;
+  int16_t               log_y;
   int16_t               lag_counter_x;
   int16_t               lag_counter_y;
 #ifndef WIIVC
