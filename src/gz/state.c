@@ -395,6 +395,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE4BC
 #define z64_sound_state_addr                    0x80101914
 #define z64_night_sfx_addr                      0x801019E8
+#define z64_scarecrow_song_addr                 0x801029FC
 #define z64_song_ptr_addr                       0x80102B3C
 #define z64_sfx_write_pos_addr                  0x80104360
 #define z64_sfx_read_pos_addr                   0x80104364
@@ -460,6 +461,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FE67C
 #define z64_sound_state_addr                    0x80101AD4
 #define z64_night_sfx_addr                      0x80101BA8
+#define z64_scarecrow_song_addr                 0x80102BBC
 #define z64_song_ptr_addr                       0x80102CFC
 #define z64_sfx_write_pos_addr                  0x80104520
 #define z64_sfx_read_pos_addr                   0x80104524
@@ -525,6 +527,7 @@ typedef uint32_t (*z64_LoadOverlay_proc)(uint32_t vrom_start, uint32_t vrom_end,
 #define z64_play_ovl_ptr_addr                   0x800FEB0C
 #define z64_sound_state_addr                    0x80101F54
 #define z64_night_sfx_addr                      0x80102028
+#define z64_scarecrow_song_addr                 0x8010303C
 #define z64_song_ptr_addr                       0x8010317C
 #define z64_sfx_write_pos_addr                  0x801049A0
 #define z64_sfx_read_pos_addr                   0x801049A4
@@ -1273,6 +1276,7 @@ uint32_t save_state(void *state)
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* save song state */
   serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
+  serial_write(&p, (void*)z64_scarecrow_song_addr, 0x0140);
   serial_write(&p, (void*)z64_song_ptr_addr, 0x0004);
   serial_write(&p, (void*)z64_staff_notes_addr, 0x001E);
 
@@ -1311,7 +1315,9 @@ void load_state(void *state)
     float     volume;
     uint8_t   vp_factors[4];
     uint16_t  ch_mute;
+
   } seq_info[4];
+
   for (int i = 0; i < 4; ++i) {
     struct seq_info *si = &seq_info[i];
     serial_read(&p, &si->p_active, sizeof(si->p_active));
@@ -2174,6 +2180,7 @@ void load_state(void *state)
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
   /* load song state */
   serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
+  serial_read(&p, (void*)z64_scarecrow_song_addr, 0x0140);
   serial_read(&p, (void*)z64_song_ptr_addr, 0x0004);
   serial_read(&p, (void*)z64_staff_notes_addr, 0x001E);
   /* fix audio counters */

@@ -8,13 +8,13 @@
 static inline _Bool set_int(_Bool enable)
 {
   uint32_t sr;
-  __asm__ volatile ("mfc0 %0, $12" : "=r"(sr));
+  __asm__ volatile ("mfc0  %0, $12;" : "=r"(sr));
   _Bool ie = sr & MIPS_STATUS_IE;
   if (enable)
     sr |= MIPS_STATUS_IE;
   else
     sr &= ~MIPS_STATUS_IE;
-  __asm__ volatile ("mtc0 %0, $12" :: "r"(sr));
+  __asm__ volatile ("mtc0  %0, $12;" :: "r"(sr));
   return ie;
 }
 
@@ -45,14 +45,14 @@ static inline void dma_read(void *dst, uint32_t cart_addr, uint32_t len)
     ;
   pi_regs.status = PI_STATUS_CLR_INTR;
   for (uint32_t i = 0; i < len; i += 0x10)
-    __asm__ volatile ("cache 0x11, 0x0000(%0)" :: "r"((uint32_t)dst + i));
+    __asm__ volatile ("cache 0x11, 0x0000(%0);" :: "r"((uint32_t)dst + i));
 }
 
 /* flush cache and dma ram to cart */
 static inline void dma_write(void *src, uint32_t cart_addr, uint32_t len)
 {
   for (uint32_t i = 0; i < len; i += 0x10)
-    __asm__ volatile ("cache 0x19, 0x0000(%0)" :: "r"((uint32_t)src + i));
+    __asm__ volatile ("cache 0x19, 0x0000(%0);" :: "r"((uint32_t)src + i));
   pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(src);
   pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
   pi_regs.rd_len = len - 1;

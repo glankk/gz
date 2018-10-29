@@ -126,6 +126,7 @@ void zu_void(void);
 
 void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index);
 void zu_execute_filemenu(void);
+_Bool zu_in_game(void);
 
 void zu_audio_cmd(uint32_t cmd);
 

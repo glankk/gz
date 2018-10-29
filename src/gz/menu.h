@@ -119,11 +119,6 @@ enum watch_type
   WATCH_TYPE_MAX,
 };
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 void                menu_init(struct menu *menu,
                               int cell_width, int cell_height,
                               struct gfx_font *font);
@@ -274,10 +269,5 @@ struct menu_item   *menu_add_checkbox(struct menu *menu, int x, int y,
                                       void *callback_data);
 _Bool               menu_checkbox_get(struct menu_item *item);
 void                menu_checkbox_set(struct menu_item *item, _Bool state);
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

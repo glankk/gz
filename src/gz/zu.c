@@ -336,7 +336,7 @@ void zu_reset(void)
     MIPS_LW(MIPS_T0, 0x07FC, MIPS_T5),
     MIPS_ADDIU(MIPS_T5, MIPS_T5, 0x07C0),
     MIPS_ANDI(MIPS_T0, MIPS_T0, 0x0080),
-    MIPS_BNEZL(MIPS_T0, -4 * 4),
+    MIPS_BNEL(MIPS_T0, MIPS_R0, -4 * 4),
     MIPS_LUI(MIPS_T5, 0xBFC0),
     MIPS_LW(MIPS_T0, 0x0024, MIPS_T5),
     MIPS_LUI(MIPS_T3, 0xB000),
@@ -676,16 +676,21 @@ void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
     z64_file.minigame_state = 3;
   z64_game.entrance_index = entrance_index;
   z64_ctxt.state_continue = 0;
-  z64_ctxt.next_ctor = (void*)z64_ctxt_game_ctor;
-  z64_ctxt.next_size = z64_ctxt_game_size;
+  z64_ctxt.next_ctor = z64_state_ovl_tab[3].vram_ctor;
+  z64_ctxt.next_size = z64_state_ovl_tab[3].ctxt_size;
 }
 
 void zu_execute_filemenu(void)
 {
   z64_file.interface_flag = 0;
   z64_ctxt.state_continue = 0;
-  z64_ctxt.next_ctor = (void*)z64_ctxt_filemenu_ctor;
-  z64_ctxt.next_size = z64_ctxt_filemenu_size;
+  z64_ctxt.next_ctor = z64_state_ovl_tab[5].vram_ctor;
+  z64_ctxt.next_size = z64_state_ovl_tab[5].ctxt_size;
+}
+
+_Bool zu_in_game(void)
+{
+  return (uint32_t)z64_ctxt.state_dtor == z64_state_ovl_tab[3].vram_dtor;
 }
 
 void zu_audio_cmd(uint32_t cmd)

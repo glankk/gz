@@ -91,6 +91,19 @@ static int input_display_proc(struct menu_item *item,
   return 0;
 }
 
+static int log_proc(struct menu_item *item,
+                    enum menu_callback_reason reason,
+                    void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.log = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.log = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.log);
+  return 0;
+}
+
 static int lag_counter_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
@@ -171,28 +184,6 @@ static int break_type_proc(struct menu_item *item,
   return 0;
 }
 
-static int menu_position_proc(struct menu_item *item,
-                              enum menu_callback_reason reason,
-                              void *data)
-{
-  int dist = 2;
-  if (input_pad() & BUTTON_Z)
-    dist *= 2;
-  switch (reason) {
-    case MENU_CALLBACK_ACTIVATE:    input_reserve(BUTTON_Z);  break;
-    case MENU_CALLBACK_DEACTIVATE:  input_free(BUTTON_Z);     break;
-    case MENU_CALLBACK_NAV_UP:      settings->menu_y -= dist; break;
-    case MENU_CALLBACK_NAV_DOWN:    settings->menu_y += dist; break;
-    case MENU_CALLBACK_NAV_LEFT:    settings->menu_x -= dist; break;
-    case MENU_CALLBACK_NAV_RIGHT:   settings->menu_x += dist; break;
-    default:
-      break;
-  }
-  menu_set_pxoffset(gz.menu_main, settings->menu_x);
-  menu_set_pyoffset(gz.menu_main, settings->menu_y);
-  return 0;
-}
-
 static int generic_position_proc(struct menu_item *item,
                                  enum menu_callback_reason reason,
                                  void *data)
@@ -213,6 +204,24 @@ static int generic_position_proc(struct menu_item *item,
       break;
   }
   return 0;
+}
+
+static int menu_position_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  int r = generic_position_proc(item, reason, &settings->menu_x);
+  menu_set_pxoffset(gz.menu_main, settings->menu_x);
+  menu_set_pyoffset(gz.menu_main, settings->menu_y);
+  return r;
+}
+
+static int log_position_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  gz_log("test log message!");
+  return generic_position_proc(item, reason, &settings->log_x);
 }
 
 static void activate_command_proc(struct menu_item *item, void *data)
@@ -281,6 +290,10 @@ struct menu *gz_settings_menu(void)
   menu_add_checkbox(&menu, 16, y, input_display_proc, NULL);
   menu_add_positioning(&menu, 18, y,
                        generic_position_proc, &settings->input_display_x);
+  menu_add_static(&menu, 0, ++y, "log", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, y, log_proc, NULL);
+  menu_add_positioning(&menu, 18, y,
+                       log_position_proc, NULL);
   menu_add_static(&menu, 0, ++y, "lag counter", 0xC0C0C0);
   menu_add_checkbox(&menu, 16, y, lag_counter_proc, NULL);
   menu_add_positioning(&menu, 18, y,

@@ -39,9 +39,9 @@ static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
   uint32_t new_count;
-  __asm__ volatile ("mfc0 $t0, $9 \n"
-                    "nop          \n"
-                    "sw   $t0, %0 \n" : "=m"(new_count) :: "t0");
+  __asm__ volatile ("mfc0  $t0, $9;"
+                    "nop;"
+                    "sw    $t0, %0;" : "=m"(new_count) :: "t0");
   gz.cpu_counter += new_count - count;
   count = new_count;
 }
@@ -404,6 +404,33 @@ static void main_hook(void)
 #undef STRINGIFY_
   }
 
+  /* draw log */
+  for (int i = SETTINGS_LOG_MAX - 1; i >= 0; --i) {
+    const int fade_begin = 20;
+    const int fade_duration = 20;
+    struct log_entry *ent = &gz.log[i];
+    uint8_t msg_alpha;
+    if (!ent->msg)
+      continue;
+    ++ent->age;
+    if (ent->age > (fade_begin + fade_duration)) {
+      free(ent->msg);
+      ent->msg = NULL;
+      continue;
+    }
+    else if (!settings->bits.log)
+      continue;
+    else if (ent->age > fade_begin)
+      msg_alpha = 0xFF - (ent->age - fade_begin) * 0xFF / fade_duration;
+    else
+      msg_alpha = 0xFF;
+    msg_alpha = msg_alpha * alpha / 0xFF;
+    int msg_x = settings->log_x - cw * strlen(ent->msg);
+    int msg_y = settings->log_y - ch * i;
+    gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0xC0C0C0, msg_alpha));
+    gfx_printf(font, msg_x, msg_y, "%s", ent->msg);
+  }
+
 #if defined(AFX_DEBUG) && (AFX_DEBUG)
   for (int i = 0; i < afx_cmd_list.size; ++i) {
     struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
@@ -440,9 +467,9 @@ HOOK void entrance_offset_hook(void)
     gz.entrance_override_next = 0;
   }
   gz.next_entrance = -1;
-  __asm__ volatile (".set noat  \n"
-                    "lw $v1, %0 \n"
-                    "la $at, %1 \n" :: "m"(offset), "i"(0x51));
+  __asm__ volatile (".set  noat;"
+                    "lw    $v1, %0;"
+                    "la    $at, %1;" :: "m"(offset), "i"(0x51));
 }
 
 HOOK void input_hook(void)
@@ -563,6 +590,8 @@ static void state_main_hook(void)
     /* execute a scheduled reset */
     if (gz.reset_flag) {
       gz.reset_flag = 0;
+      gz.lag_vi_offset += (int32_t)z64_vi_counter - gz.frame_counter;
+      gz.frame_counter = 0;
       zu_reset();
     }
   }
@@ -665,26 +694,27 @@ HOOK void ocarina_sync_hook(void)
   init_gp();
   /* don't sync when recording or playing a macro, or when frame advancing */
   __asm__ volatile (/* this check is normally done by the game */
-                    "beq    $t6, $zero, .Lnosync  \n"
+                    "beq   $t6, $zero, .Lnosync;"
                     /* check gz ready */
-                    "la     $v0, %0               \n"
-                    "lw     $v0, 0($v0)           \n"
-                    "beq    $v0, $zero, .Lsync    \n"
+                    "la    $v0, %0;"
+                    "lw    $v0, 0($v0);"
+                    "beq   $v0, $zero, .Lsync;"
                     /* check movie_state */
-                    "la     $v0, %1               \n"
-                    "lw     $v0, 0($v0)           \n"
-                    "bne    $v0, $zero, .Lnosync  \n"
+                    "la    $v0, %1;"
+                    "lw    $v0, 0($v0);"
+                    "bne   $v0, $zero, .Lnosync;"
                     /* check frames_queued */
-                    "la     $v0, %2               \n"
-                    "lw     $v0, 0($v0)           \n"
-                    "bge    $v0, $zero, .Lnosync  \n"
+                    "la    $v0, %2;"
+                    "lw    $v0, 0($v0);"
+                    "bge   $v0, $zero, .Lnosync;"
                     /* sync by default */
-                    ".Lsync:                      \n"
-                    "  la   $v0, 0                \n"
-                    "  jr   $ra                   \n"
-                    ".Lnosync:                    \n"
-                    "  la   $v0, 1                \n"
-                    "  jr   $ra                   \n"
+                    ".Lsync:"
+                    "  la  $v0, 0;"
+                    "  b   .Lreturn;"
+                    ".Lnosync:"
+                    "  la  $v0, 1;"
+                    "  b   .Lreturn;"
+                    ".Lreturn:"
                     ::
                     "i"(&gz.ready),
                     "i"(&gz.movie_state),
@@ -705,6 +735,8 @@ static void init(void)
   /* initialize gz variables */
   gz.profile = 0;
   gz.menu_active = 0;
+  for (int i = 0; i < SETTINGS_LOG_MAX; ++i)
+    gz.log[i].msg = NULL;
   gz.entrance_override_once = 0;
   gz.entrance_override_next = 0;
   gz.next_entrance = -1;
@@ -808,13 +840,13 @@ static void stack_thunk(void (*func)(void))
 {
   static __attribute__((section(".stack"))) _Alignas(8)
   char stack[0x2000];
-  __asm__ volatile ("la     $t0, %1       \n"
-                    "sw     $sp, -4($t0)  \n"
-                    "sw     $ra, -8($t0)  \n"
-                    "addiu  $sp, $t0, -8  \n"
-                    "jalr   %0            \n"
-                    "lw     $ra, 0($sp)   \n"
-                    "lw     $sp, 4($sp)   \n"
+  __asm__ volatile ("la    $t0, %1;"
+                    "sw    $sp, -4($t0);"
+                    "sw    $ra, -8($t0);"
+                    "addiu $sp, $t0, -8;"
+                    "jalr  %0;\n"
+                    "lw    $ra, 0($sp);"
+                    "lw    $sp, 4($sp);"
                     ::
                     "r"(func),
                     "i"(&stack[sizeof(stack)]));

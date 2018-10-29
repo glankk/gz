@@ -65,6 +65,12 @@ struct movie_seed
   uint32_t              new_seed;
 };
 
+struct log_entry
+{
+  char                 *msg;
+  int                   age;
+};
+
 struct gz
 {
   _Bool                 ready;
@@ -75,6 +81,7 @@ struct gz
   struct menu          *menu_mem;
   struct menu_item     *menu_watchlist;
   _Bool                 menu_active;
+  struct log_entry      log[SETTINGS_LOG_MAX];
   _Bool                 entrance_override_once;
   _Bool                 entrance_override_next;
   int32_t               next_entrance;
@@ -112,6 +119,7 @@ struct gz
 void          gz_apply_settings();
 void          gz_show_menu(void);
 void          gz_hide_menu(void);
+void          gz_log(const char *fmt, ...);
 void          gz_save_memfile(struct memory_file *memfile);
 void          gz_load_memfile(struct memory_file *memfile);
 void          gz_warp(int16_t entrance_index,

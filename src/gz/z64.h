@@ -91,6 +91,21 @@ typedef struct
 
 typedef struct
 {
+  void             *ptr;                      /* 0x0000 */
+  uint32_t          vrom_start;               /* 0x0004 */
+  uint32_t          vrom_end;                 /* 0x0008 */
+  uint32_t          vram_start;               /* 0x000C */
+  uint32_t          vram_end;                 /* 0x0010 */
+  char              unk_00_[0x0004];          /* 0x0014 */
+  uint32_t          vram_ctor;                /* 0x0018 */
+  uint32_t          vram_dtor;                /* 0x001C */
+  char              unk_01_[0x000C];          /* 0x0020 */
+  char              ctxt_size;                /* 0x002C */
+                                              /* 0x0030 */
+} z64_state_ovl_t;
+
+typedef struct
+{
   uint32_t          vrom_start;               /* 0x0000 */
   uint32_t          vrom_end;                 /* 0x0004 */
   uint32_t          vram_start;               /* 0x0008 */
@@ -951,7 +966,7 @@ struct z64_ctxt
   z64_gfx_t        *gfx;                      /* 0x0000 */
   z64_ctxt_proc_t   state_main;               /* 0x0004 */
   z64_ctxt_proc_t   state_dtor;               /* 0x0008 */
-  z64_ctxt_proc_t   next_ctor;                /* 0x000C */
+  uint32_t          next_ctor;                /* 0x000C */
   uint32_t          next_size;                /* 0x0010 */
   z64_input_t       input[4];                 /* 0x0014 */
   uint32_t          state_heap_size;          /* 0x0074 */
@@ -1535,6 +1550,7 @@ typedef struct
 #define z64_guPerspectiveF_camo_addr            0x800D035C
 #define z64_guPerspective_camo_addr             0x800D0590
 #define gspF3DEX2_NoN_fifoTextStart             0x800E3F70
+#define z64_state_ovl_tab_addr                  0x800F1340
 #define z64_day_speed_addr                      0x800F1650
 #define z64_light_handlers_addr                 0x800F1B40
 #define z64_object_table_addr                   0x800F8FF8
@@ -1557,22 +1573,6 @@ typedef struct
 #define z64_ctxt_addr                           0x801C84A0
 #define z64_link_addr                           0x801DAA30
 #define z64_cimg_addr                           0x803B5000
-
-/* rom addresses */
-#define z64_icon_item_static_vaddr              0x007BD000
-#define z64_icon_item_static_vsize              0x000888A0
-#define z64_icon_item_24_static_vaddr           0x00846000
-#define z64_icon_item_24_static_vsize           0x0000B400
-#define z64_nes_font_static_vaddr               0x00928000
-#define z64_nes_font_static_vsize               0x00004580
-#define z64_parameter_static_vaddr              0x01A3C000
-#define z64_parameter_static_vsize              0x00003B00
-
-/* context info */
-#define z64_ctxt_filemenu_ctor                  0x80812394
-#define z64_ctxt_filemenu_size                  0x0001CAD0
-#define z64_ctxt_game_ctor                      0x8009A750
-#define z64_ctxt_game_size                      0x00012518
 
 #elif Z64_VERSION == Z64_OOT11
 
@@ -1613,6 +1613,7 @@ typedef struct
 #define z64_guPerspectiveF_camo_addr            0x800D051C
 #define z64_guPerspective_camo_addr             0x800D0750
 #define gspF3DEX2_NoN_fifoTextStart             0x800E4130
+#define z64_state_ovl_tab_addr                  0x800F1500
 #define z64_day_speed_addr                      0x800F1810
 #define z64_light_handlers_addr                 0x800F1D00
 #define z64_object_table_addr                   0x800F91B8
@@ -1635,22 +1636,6 @@ typedef struct
 #define z64_ctxt_addr                           0x801C8660
 #define z64_link_addr                           0x801DABF0
 #define z64_cimg_addr                           0x803B5000
-
-/* rom addresses */
-#define z64_icon_item_static_vaddr              0x007BD000
-#define z64_icon_item_static_vsize              0x000888A0
-#define z64_icon_item_24_static_vaddr           0x00846000
-#define z64_icon_item_24_static_vsize           0x0000B400
-#define z64_nes_font_static_vaddr               0x008ED000
-#define z64_nes_font_static_vsize               0x00004580
-#define z64_parameter_static_vaddr              0x01A3C000
-#define z64_parameter_static_vsize              0x00003B00
-
-/* context info */
-#define z64_ctxt_filemenu_ctor                  0x80812394
-#define z64_ctxt_filemenu_size                  0x0001CAD0
-#define z64_ctxt_game_ctor                      0x8009A760
-#define z64_ctxt_game_size                      0x00012518
 
 #elif Z64_VERSION == Z64_OOT12
 
@@ -1691,6 +1676,7 @@ typedef struct
 #define z64_guPerspectiveF_camo_addr            0x800D0B9C
 #define z64_guPerspective_camo_addr             0x800D0DD0
 #define gspF3DEX2_NoN_fifoTextStart             0x800E45B0
+#define z64_state_ovl_tab_addr                  0x800F1980
 #define z64_day_speed_addr                      0x800F1C90
 #define z64_light_handlers_addr                 0x800F2180
 #define z64_object_table_addr                   0x800F9648
@@ -1713,22 +1699,6 @@ typedef struct
 #define z64_ctxt_addr                           0x801C8D60
 #define z64_link_addr                           0x801DB2F0
 #define z64_cimg_addr                           0x803B5000
-
-/* rom addresses */
-#define z64_icon_item_static_vaddr              0x007BD000
-#define z64_icon_item_static_vsize              0x000888A0
-#define z64_icon_item_24_static_vaddr           0x00846000
-#define z64_icon_item_24_static_vsize           0x0000B400
-#define z64_nes_font_static_vaddr               0x008ED000
-#define z64_nes_font_static_vsize               0x00004580
-#define z64_parameter_static_vaddr              0x01A3C000
-#define z64_parameter_static_vsize              0x00003B00
-
-/* context info */
-#define z64_ctxt_filemenu_ctor                  0x80812394
-#define z64_ctxt_filemenu_size                  0x0001CAD0
-#define z64_ctxt_game_ctor                      0x8009AE40
-#define z64_ctxt_game_size                      0x00012518
 
 #endif
 
@@ -1759,6 +1729,8 @@ typedef void (*z64_SceneConfig_proc)      (z64_game_t *game);
 #define z64_file_mq             (*(OSMesgQueue*)      z64_file_mq_addr)
 #define z64_vi_counter          (*(uint32_t*)         z64_vi_counter_addr)
 #define z64_ftab                (*(z64_ftab_t(*)[])   z64_ftab_addr)
+#define z64_state_ovl_tab       (*(z64_state_ovl_t(*)[6])                     \
+                                                      z64_state_ovl_tab_addr)
 #define z64_stab                (*(z64_stab_t*)       z64_stab_addr)
 #define z64_audio_cmd_buf       (*(uint32_t(*)[0x100])z64_audio_cmd_buf_addr)
 #define z64_scene_table         ( (z64_scene_table_t*)z64_scene_table_addr)

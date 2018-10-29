@@ -11,10 +11,10 @@ GENHOOKS              = ./genhooks
 LUAPATCH              = luapatch
 GRC                   = grc
 LDSCRIPT              = gl-n64.ld
-CPPFLAGS              = -DPACKAGE_TARNAME="$(PACKAGE_TARNAME)" -DPACKAGE_URL="$(PACKAGE_URL)" $(VER_CPPFLAGS)
-CFLAGS                = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(VER_CFLAGS)
-CXXFLAGS              = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(VER_CXXFLAGS)
-LDFLAGS               = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(VER_LDFLAGS)
+ALL_CPPFLAGS          = -DPACKAGE_TARNAME="$(PACKAGE_TARNAME)" -DPACKAGE_URL="$(PACKAGE_URL)" $(CPPFLAGS)
+ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(CFLAGS)
+ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(CXXFLAGS)
+ALL_LDFLAGS           = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(LDFLAGS)
 LDLIBS                =
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
 RESDESC               = $(RESDIR)/resources.json
@@ -68,7 +68,7 @@ define bin_template   =
  BUILD-$(1)           = $(1)
  CLEAN-$(1)           = clean-$(1)
  -include $$(DEPS-$(1))
- $$(ELF-$(1))         : LDFLAGS              += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
+ $$(ELF-$(1))         : ALL_LDFLAGS          += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
  $$(BUILD-$(1))       : $$(BIN-$(1))
  $$(CLEAN-$(1))       :
 	rm -rf $$(OBJDIR-$(1)) $$(BINDIR-$(1))
@@ -76,13 +76,13 @@ define bin_template   =
  $$(BIN-$(1))         : $$(ELF-$(1)) | $$$$(dir $$$$@)
 	$$(OBJCOPY) -S -O binary $$< $$@
  $$(ELF-$(1))         : $$(OBJ-$(1)) | $$$$(dir $$$$@)
-	$$(LD) $$(LDFLAGS) $$^ $$(LDLIBS) -o $$@
+	$$(LD) $$(ALL_LDFLAGS) $$^ $$(LDLIBS) -o $$@
  $$(ASMOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(AS) -c -MMD -MP $$(CPPFLAGS) $$< -o $$@
+	$$(AS) -c -MMD -MP $$(ALL_CPPFLAGS) $$< -o $$@
  $$(COBJ-$(1))        : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CC) -c -MMD -MP $$(CPPFLAGS) $$(CFLAGS) $$< -o $$@
+	$$(CC) -c -MMD -MP $$(ALL_CPPFLAGS) $$(ALL_CFLAGS) $$< -o $$@
  $$(CXXOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
-	$$(CXX) -c -MMD -MP $$(CPPFLAGS) $$(CXXFLAGS) $$< -o $$@
+	$$(CXX) -c -MMD -MP $$(ALL_CPPFLAGS) $$(ALL_CXXFLAGS) $$< -o $$@
  $$(RESOBJ-$(1))      : $$(OBJDIR-$(1))/$$(RESDIR)/%.o: $$(RESDIR-$(1))/% $$(RESDESC) | $$$$(dir $$$$@)
 	$$(GRC) $$< -d $$(RESDESC) -o $$@
 
@@ -118,15 +118,15 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
  $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
 
-$(OOT-1.0)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT10
-$(OOT-1.1)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT11
-$(OOT-1.2)            : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT12
-$(VC)                 : VER_CPPFLAGS          = -DZ64_VERSION=Z64_OOT12 -DWIIVC
-$(N64)                : VER_CFLAGS            = -O3 -flto -ffat-lto-objects
-$(VC)                 : VER_CFLAGS            = -O1 -fno-reorder-blocks
-$(N64)                : VER_CXXFLAGS          = -O3 -flto -ffat-lto-objects
-$(VC)                 : VER_CXXFLAGS          = -O1 -fno-reorder-blocks
-$(N64)                : VER_LDFLAGS           = -O3 -flto
+$(OOT-1.0)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT10
+$(OOT-1.1)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT11
+$(OOT-1.2)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT12
+$(VC)                 : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT12 -DWIIVC
+$(N64)                : CFLAGS               ?= -O3 -flto -ffat-lto-objects
+$(VC)                 : CFLAGS               ?= -O1 -fno-reorder-blocks
+$(N64)                : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
+$(VC)                 : CXXFLAGS             ?= -O1 -fno-reorder-blocks
+$(N64)                : LDFLAGS              ?= -O3 -flto
 
 $(eval $(call bin_template,ldr,ldr,,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(LDR_ADDRESS)))
 

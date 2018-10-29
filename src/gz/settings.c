@@ -37,6 +37,7 @@ void settings_load_default(void)
   d->bits.font_resource = RES_FONT_PRESSSTART2P;
   d->bits.drop_shadow = 1;
   d->bits.input_display = 1;
+  d->bits.log = 1;
   d->bits.lag_counter = 0;
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
 #ifndef WIIVC
@@ -60,6 +61,8 @@ void settings_load_default(void)
   d->menu_y = 64;
   d->input_display_x = 16;
   d->input_display_y = Z64_SCREEN_HEIGHT - 6;
+  d->log_x = Z64_SCREEN_WIDTH - 12;
+  d->log_y = Z64_SCREEN_HEIGHT - 14;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
   d->lag_counter_y = 20;
 #ifndef WIIVC
@@ -86,8 +89,8 @@ void settings_load_default(void)
   d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
   d->binds[COMMAND_SAVEPOS] = input_bind_make(0);
   d->binds[COMMAND_LOADPOS] = input_bind_make(0);
-  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
-  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
+  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(0);
+  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(0);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                BUTTON_D_RIGHT);
 #ifndef WIIVC
@@ -105,7 +108,7 @@ void settings_load_default(void)
   d->binds[COMMAND_RESET] = input_bind_make(0);
 #endif
   d->binds[COMMAND_TURBO] = input_bind_make(0);
-  d->binds[COMMAND_FALL] = input_bind_make(0);
+  d->binds[COMMAND_FALL] = input_bind_make(2, BUTTON_Z, BUTTON_L);
   d->binds[COMMAND_AGE] = input_bind_make(0);
 #ifndef WIIVC
   d->binds[COMMAND_STARTTIMER] = input_bind_make(0);

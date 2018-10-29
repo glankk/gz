@@ -220,7 +220,11 @@ static void save_state_proc(struct menu_item *item, void *data)
 
 static void clear_state_proc(struct menu_item *item, void *data)
 {
+<<<<<<< HEAD
   if(gz.state_buf[gz.state_slot]){
+=======
+  if (gz.state_buf[gz.state_slot]) {
+>>>>>>> aba5b88390b50e4327edea753e9f4646cac5e577
     free(gz.state_buf[gz.state_slot]);
     gz.state_buf[gz.state_slot] = NULL;
   }
