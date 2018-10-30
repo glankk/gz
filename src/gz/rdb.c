@@ -14,75 +14,9 @@
 #include "util.h"
 #include "z64.h"
 
-#if Z64_VERSION == Z64_OOT10
-
-#define z64_osStopThread            ( (osStopThread_t)            0x80001F70)
-#define z64_osDestroyThread         ( (osDestroyThread_t)         0x80002D70)
-#define z64_osCreateThread          ( (osCreateThread_t)          0x80002F20)
-#define z64_osSetEventMesg          ( (osSetEventMesg_t)          0x80003FB0)
-#define z64_osStartThread           ( (osStartThread_t)           0x80005EC0)
-#define z64_osGetCurrFaultedThread  ( (osGetCurrFaultedThread_t)  0x800D5AD0)
-
-#define z64_thread_idle             (*(OSThread*)                 0x80006850)
-#define z64_thread_main             (*(OSThread*)                 0x80007220)
-#define z64_thread_dmamgr           (*(OSThread*)                 0x80007DD8)
-#define z64_thread_pimgr            (*(OSThread*)                 0x80008A60)
-#define z64_thread_vimgr            (*(OSThread*)                 0x80009F20)
-#define z64_thread_sched            (*(OSThread*)                 0x8011D318)
-#define z64_thread_padmgr           (*(OSThread*)                 0x8011D580)
-#define z64_thread_irqmgr           (*(OSThread*)                 0x8011DA00)
-#define z64_thread_graph            (*(OSThread*)                 0x8011DBE8)
-#define z64_thread_audio            (*(OSThread*)                 0x80120D60)
-#define z64_thread_fault            (*(OSThread*)                 0x80121290)
-
-#elif Z64_VERSION == Z64_OOT11
-
-#define z64_osStopThread            ( (osStopThread_t)            0x80001F70)
-#define z64_osDestroyThread         ( (osDestroyThread_t)         0x80002D70)
-#define z64_osCreateThread          ( (osCreateThread_t)          0x80002F20)
-#define z64_osSetEventMesg          ( (osSetEventMesg_t)          0x80003FB0)
-#define z64_osStartThread           ( (osStartThread_t)           0x80005EC0)
-#define z64_osGetCurrFaultedThread  ( (osGetCurrFaultedThread_t)  0x800D5C90)
-
-#define z64_thread_idle             (*(OSThread*)                 0x80006850)
-#define z64_thread_main             (*(OSThread*)                 0x80007220)
-#define z64_thread_dmamgr           (*(OSThread*)                 0x80007DD8)
-#define z64_thread_pimgr            (*(OSThread*)                 0x80008A60)
-#define z64_thread_vimgr            (*(OSThread*)                 0x80009F20)
-#define z64_thread_sched            (*(OSThread*)                 0x8011D4D8)
-#define z64_thread_padmgr           (*(OSThread*)                 0x8011D740)
-#define z64_thread_irqmgr           (*(OSThread*)                 0x8011DBC0)
-#define z64_thread_graph            (*(OSThread*)                 0x8011DDA8)
-#define z64_thread_audio            (*(OSThread*)                 0x80120F20)
-#define z64_thread_fault            (*(OSThread*)                 0x80121450)
-
-#elif Z64_VERSION == Z64_OOT12
-
-#define z64_osStopThread            ( (osStopThread_t)            0x80002120)
-#define z64_osDestroyThread         ( (osDestroyThread_t)         0x80002F30)
-#define z64_osCreateThread          ( (osCreateThread_t)          0x800030E0)
-#define z64_osSetEventMesg          ( (osSetEventMesg_t)          0x80004170)
-#define z64_osStartThread           ( (osStartThread_t)           0x80006240)
-#define z64_osGetCurrFaultedThread  ( (osGetCurrFaultedThread_t)  0x800D6160)
-
-#define z64_thread_idle             (*(OSThread*)                 0x80006D80)
-#define z64_thread_main             (*(OSThread*)                 0x80007750)
-#define z64_thread_dmamgr           (*(OSThread*)                 0x80008360)
-#define z64_thread_pimgr            (*(OSThread*)                 0x800090A0)
-#define z64_thread_vimgr            (*(OSThread*)                 0x8000A560)
-#define z64_thread_sched            (*(OSThread*)                 0x8011D9E8)
-#define z64_thread_padmgr           (*(OSThread*)                 0x8011DC50)
-#define z64_thread_irqmgr           (*(OSThread*)                 0x8011E0D0)
-#define z64_thread_graph            (*(OSThread*)                 0x8011E2B8)
-#define z64_thread_audio            (*(OSThread*)                 0x80121630)
-#define z64_thread_fault            (*(OSThread*)                 0x80121B60)
-
-#endif
-
 #define RDB_DEBUG_FAULT 0
 #define RDB_DEBUG_SCHED 1
 #define RDB_SWBKP_MAX   16
-
 
 struct fifo_pkt
 {
