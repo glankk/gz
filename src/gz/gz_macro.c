@@ -395,7 +395,7 @@ struct menu *gz_macro_menu(void)
                          t_macro, 0, 0xFF0000, t_macro, 0, 0xFFFFFF, 1.f, 0,
                          pause_switch_proc, NULL);
   item->tooltip = "pause";
-  item = menu_add_switch(&menu, 2, y,
+  item = menu_add_switch(&menu, 3, y,
                          t_macro, 1, 0xFFFFFF, t_macro, 1, 0xFFFFFF, 1.f, 0,
                          advance_switch_proc, NULL);
   item->tooltip = "frame advance";
@@ -404,17 +404,17 @@ struct menu *gz_macro_menu(void)
                          t_macro, 2, 0xFF0000, t_macro, 2, 0xFFFFFF, 1.f, 0,
                          record_switch_proc, NULL);
   item->tooltip = "record macro";
-  item = menu_add_switch(&menu, 2, y,
+  item = menu_add_switch(&menu, 3, y,
                          t_macro, 3, 0xFF0000, t_macro, 3, 0xFFFFFF, 1.f, 0,
                          play_switch_proc, NULL);
   item->tooltip = "play macro";
-  item = menu_add_switch(&menu, 4, y,
+  item = menu_add_switch(&menu, 6, y,
                          t_macro, 4, 0xFFFFFF, t_macro, 4, 0xFFFFFF, 1.f, 0,
                          trim_switch_proc, NULL);
   item->tooltip = "trim macro";
-  item = menu_add_intinput(&menu, 6, y, 10, 6, movie_pos_proc, NULL);
+  item = menu_add_intinput(&menu, 9, y, 10, 6, movie_pos_proc, NULL);
   item->tooltip = "macro frame";
-  menu_add_watch(&menu, 13, y, (uint32_t)&gz.movie_inputs.size,
+  menu_add_watch(&menu, 16, y, (uint32_t)&gz.movie_inputs.size,
                  WATCH_TYPE_U32);
 #ifndef WIIVC
   y += 2;
@@ -430,9 +430,9 @@ struct menu *gz_macro_menu(void)
   y += 2;
   menu_add_button_icon(&menu, 0, y, t_arrow, 3, 0xFFFFFF,
                        prev_state_proc, NULL);
-  menu_add_button_icon(&menu, 2, y, t_arrow, 2, 0xFFFFFF,
+  menu_add_button_icon(&menu, 3, y, t_arrow, 2, 0xFFFFFF,
                        next_state_proc, NULL);
-  menu_add_static_custom(&menu, 4, y, state_info_draw_proc, NULL, 0xC0C0C0);
+  menu_add_static_custom(&menu, 6, y, state_info_draw_proc, NULL, 0xC0C0C0);
   y += 2;
   item = menu_add_button_icon(&menu, 0, y, t_save, 2, 0xFFFFFF,
                               load_state_proc, NULL);

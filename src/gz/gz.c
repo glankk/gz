@@ -17,22 +17,11 @@
 #include "z64.h"
 #include "zu.h"
 
-#define AFX_DEBUG 0
-
 __attribute__((section(".data")))
 struct gz gz =
 {
   .ready = 0,
 };
-
-#if defined(AFX_DEBUG) && (AFX_DEBUG)
-struct afx_cmd
-{
-  uint32_t hi;
-  uint32_t lo;
-};
-static struct vector afx_cmd_list;
-#endif
 
 #ifndef WIIVC
 static void update_cpu_counter(void)
@@ -431,13 +420,6 @@ static void main_hook(void)
     gfx_printf(font, msg_x, msg_y, "%s", ent->msg);
   }
 
-#if defined(AFX_DEBUG) && (AFX_DEBUG)
-  for (int i = 0; i < afx_cmd_list.size; ++i) {
-    struct afx_cmd *cmd = vector_at(&afx_cmd_list, i);
-    gfx_printf(font, 16, 16 + ch * i, "%08x %08x", cmd->hi, cmd->lo);
-  }
-#endif
-
   /* finish frame */
   gfx_flush();
 }
@@ -547,29 +529,6 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
   disp_buf->p = buf;
   disp_buf->d = (void*)((char*)buf + size);
 }
-
-#if defined(AFX_DEBUG) && (AFX_DEBUG)
-HOOK void afx_cmd_hook(uint32_t a0, uint32_t *a1)
-{
-  init_gp();
-  uint8_t *write_pos = (void*)0x8012B208;
-  uint8_t *read_pos = (void*)0x8012B209;
-  struct afx_cmd *buf = (void*)0x8012B280;
-  struct afx_cmd c = {a0, *a1};
-#if 1
-  buf[(*write_pos)++] = c;
-  if (*write_pos == *read_pos)
-    --*write_pos;
-#endif
-#if 1
-  if (gz.ready) {
-    vector_push_back(&afx_cmd_list, 1, &c);
-    if (afx_cmd_list.size > 24)
-      vector_erase(&afx_cmd_list, 0, 1);
-  }
-#endif
-}
-#endif
 
 static void state_main_hook(void)
 {
@@ -777,18 +736,6 @@ static void init(void)
   gfx_mode_configure(GFX_MODE_FILTER, G_TF_POINT);
   gfx_mode_configure(GFX_MODE_COMBINE, G_CC_MODE(G_CC_MODULATEIA_PRIM,
                                                  G_CC_MODULATEIA_PRIM));
-
-#if defined(AFX_DEBUG) && (AFX_DEBUG)
-  {
-    vector_init(&afx_cmd_list, sizeof(struct afx_cmd));
-    uint32_t hook[] =
-    {
-      MIPS_J(afx_cmd_hook),
-      MIPS_NOP,
-    };
-    memcpy((void*)0x800BB04C, hook, sizeof(hook));
-  }
-#endif
 
   /* create menus */
   {
