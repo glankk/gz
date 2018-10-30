@@ -30,6 +30,15 @@ Console using a WAD manager. The original Ocarina of Time channel can be
 installed alongside the patched WAD, and will not be overwritten. Homebrewing a
 Wii console and using a WAD manager is not covered by this guide.
 
+### Enabling line features on N64
+**Windows:** Select both your patched rom and a microcode rom, then drag and
+drop them onto the `inject_ucode.bat` script.
+
+**GNU/Linux:** Run `./inject_ucode <patched-rom> <ucode-rom>`.
+
+The currently known and supported microcode roms are `Hey You, Pikachu! (U)`
+and `Hey You, Pikachu! (J)`.
+
 ### Using gz with a Gameshark
 *Note: Gameshark support has been deprecated. It is still provided, but without
 guarantees.*
