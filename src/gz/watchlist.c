@@ -227,7 +227,7 @@ static int remove_member(struct item_data *data, int position)
 static void add_button_proc(struct menu_item *item, void *data)
 {
   struct item_data *item_data = data;
-  uint32_t address = 0x00000000;
+  uint32_t address = 0x80000000;
   enum watch_type type = WATCH_TYPE_U8;
   if (item_data->members.size > 0) {
     struct member_data *member_data = get_member(item_data,
