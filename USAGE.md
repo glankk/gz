@@ -25,7 +25,6 @@
     -   [5.2 Ocarina notes](#52-ocarina-notes)
     -   [5.3 Ocarina input](#53-ocarina-input)
     -   [5.4 RNG seeds](#54-rng-seeds)
-    -   [5.5 VC emulator bugs](#55-vc-emulator-bugs)
 
 ## 1 Introduction
 *Note: If you're using gz on the Wii VC, you should read the
@@ -250,10 +249,11 @@ game one frame at a time, allowing for precise input control. Start recording
 your inputs by pressing **record macro**, and play back your recorded inputs by
 pressing **play macro**. The **macro frame** control shows the number of the
 current frame which your inputs are being recorded to / played back from. You
-can edit this value to seek to a specific frame of input. The total number of
-input frames recorded in the current macro is displayed on the right. Press
-**trim macro** to delete all recorded inputs after the current macro frame,
-should you feel that you've recorded too far.
+can edit this value to seek to a specific frame of input, or press
+**rewind macro** to seek to frame 0. The total number of input frames recorded
+in the current macro is displayed on the right. Press **trim macro** to delete
+all recorded inputs after the current macro frame, should you feel that you've
+recorded too far.
 
 Use the arrows to select a savestate slot, and save the current state of the
 game to that slot by pressing **save state**. You can then return to that state
@@ -266,6 +266,11 @@ macro frame stored in the state, your macro will not be affected.
 about the state saved in the current slot is displayed; the scene in which it
 was saved, the size of the state, and the macro frame (if any) on which it was
 saved.
+
+**quick record movie** is a convenience option to start recording a macro, save
+a state to slot 0 for playing back the macro from the start, and then switch to
+slot 1 to use for rerecording. **quick play movie** will start macro playback
+from the start and load the state in slot 0.
 
 Macros and savestates can be saved to and loaded from an ED64 SD card using
 **export macro** / **import macro** and **export state** / **import state**.
@@ -409,21 +414,40 @@ The following commands are available:
 -   **break free:** Attempts to break any effect that removes control of Link.
     *Default: `C-Up + L`* *VC Default: `Start + L`*
 -   **levitate:** The classic L to levitate command. *Default: `L`*
+-   **fall:** Makes Link fall through the floor, as if there was no floor.
+    *Default: `Z + L`*
+-   **turbo:** Sets Link's linear velocity to 27. *Default: `unbound`*
+-   **file select:** Returns (or proceeds) to the game's file select menu.
+    *Default: `B + L`*
+-   **reload scene:** Reloads the current scene, starting from the last scene
+    entrance. *Default: `A + L`*
+-   **void out:** Reloads the current scene, starting from the last room
+    entrance as if Link voided out. *Default: `A + B + L`*
+-   **toggle age:** Toggles between Adult and Child Link. Takes effect when
+    entering a new area. *Default: `unbound`*
+-   **save state:** Save the state of the game to the currently selected state
+    slot. *Default: `D-Left`*
+-   **load state:** Load the state saved in the currently selected state slot.
+    *Default: `D-Right`*
+-   **save memfile:** Saves the current state of the game to the memory file in
+    the current memory file slot. Everything that would be saved when saving
+    the game normally is saved to the memory file. *Default: `Unbound`*
+-   **load memfile:** Loads the state of the current memory file.
+    *Default: `Unbound`*
 -   **save position:** Saves Link's current position and orientation to the
     current position slot. *Default: `Unbound`*
 -   **load position:** Teleports Link to the position in the current position
     slot. *Default: `Unbound`*
--   **save memfile:** Saves the current state of the game to the memory file in
-    the current memory file slot. Everything that would be saved when saving
-    the game normally is saved to the memory file. *Default: `Unbound`*
--   **load memfile:** Loads the state of the current memory file. *Default:
-    `Unbound`*
--   **reset lag counter:** Resets the number of lag frames recorded to zero.
-    *Default: `R + B + D-Right`*
--   **start/stop timer:** Starts the on-screen timer if it is stopped, stops it
-    if it's running. *Default: `R + A + D-Left`*
--   **reset timer:** Sets the time of the on-screen timer to zero. *Default:
-    `R + B + D-Left`*
+-   **previous state:** Selects the previous savestate slot.
+    *Default: `unbound`*
+-   **next state:** Selects the next savestate slot. *Default: `unbound`*
+-   **previous memfile:** Selects the previous memory file slot.
+    *Default: `unbound`*
+-   **next memfile:** Selects the next memory file slot. *Default: `unbound`*
+-   **previous position:** Selects the previous position slot to be used for
+    teleportation. *Default: `unbound`*
+-   **next position:** Selects the next position slot to be used for
+    teleportation. *Default: `unbound`*
 -   **pause/unpause:** Pauses the gameplay, effectively freezing the state of
     the game. If the game is already frozen, resumes gameplay as normal. While
     the game is frozen, a pause icon will appear on the top-left of the screen
@@ -431,41 +455,27 @@ The following commands are available:
 -   **frame advance:** If the game is frozen by the pause command, advances one
     frame of gameplay. Otherwise, freezes the game as if the pause command was
     activated. *Default: `D-Up`*
--   **file select:** Returns (or proceeds) to the game's file select menu.
-    *Default: `B + L`*
--   **reload scene:** Reloads the current scene, starting from the last scene
-    entrance. *Default: `A + L`*
--   **void out:** Reloads the current scene, starting from the last room
-    entrance as if Link voided out. *Default: `A + B + L`*
--   **reset:** Reset the game, as if the reset button had been pressed. All
-    unsaved settings will be lost. *Default: `unbound`*
--   **turbo:** Sets Link's linear velocity to 27. *Default: `unbound`*
--   **fall:** Makes Link fall through the floor, as if there was no floor.
-    *Default: `Z + L`*
--   **toggle age:** Toggles between Adult and Child Link. Takes effect when
-    entering a new area. *Default: `unbound`*
--   **start timer:** Starts the on-screen timer if it is stopped. *Default:
-    `unbound`*
--   **stop timer:** Stops the on-screen timer if it is running. *Default:
-    `unbound`*
--   **previous position:** Selects the previous position slot to be used for
-    teleportation. *Default: `unbound`*
--   **next position:** Selects the next position slot to be used for
-    teleportation. *Default: `unbound`*
--   **previous memfile:** Selects the previous memory file slot. *Default:
-    `unbound`*
--   **next memfile:** Selects the next memory file slot. *Default: `unbound`*
--   **save state:** Save the state of the game to the currently selected state
-    slot. *Default: `D-Left`*
--   **load state:** Load the state saved in the currently selected state slot.
-    *Default: `D-Right`*
 -   **record macro:** Start/stop input macro recording. *Default: `unbound`*
 -   **play macro:** Start/stop input macro playback. This command can be held
     down to loop the macro. *Default: `unbound`*
+-   **collision view:** Toggle the collision view on or off.
+    *Default: `unbound`*
 -   **explore prev room:** Loads the previous room while using the scene
     explorer. *Default: `R + D-Down`*
 -   **explore next room:** Loads the next room while using the scene explorer.
     *Default: `R + D-Up`*
+-   **reset lag counter:** Resets the number of lag frames recorded to zero.
+    *Default: `R + B + D-Right`*
+-   **start/stop timer:** Starts the on-screen timer if it is stopped, stops it
+    if it's running. *Default: `R + A + D-Left`*
+-   **reset timer:** Sets the time of the on-screen timer to zero.
+    *Default: `R + B + D-Left`*
+-   **start timer:** Starts the on-screen timer if it is stopped.
+    *Default: `unbound`*
+-   **stop timer:** Stops the on-screen timer if it is running.
+    *Default: `unbound`*
+-   **reset:** Reset the game, as if the reset button had been pressed.
+    *Default: `unbound`*
 
 **_Warning:_** Unbinding the *show/hide menu* or *return from menu* commands,
 or binding them to a button combination that will interfere with menu
@@ -592,14 +602,3 @@ following conditions hold;
 
 If either of these would fail, the RNG is reseeded as normal with an
 unpredictable value.
-
-### 5.5 VC emulator bugs
-VC optimizes the emulation of some known functions in the game's code by
-executing a custom implementation of them, instead of recompiling or
-interpreting them. One such reimplementation in particular (the
-`guPerspectiveF` function) has a bug where one of the arguments to the function
-is ignored.
-
-This bug sometimes erroneously causes actors to be considered too far off
-camera to be active. gz permanently disables this optimization to ensure
-consistent behavior of macros across platforms.

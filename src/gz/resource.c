@@ -224,6 +224,11 @@ static void *rc_icon_macro(void)
   return resource_load_grc_texture("macro_icons");
 }
 
+static void *rc_icon_movie(void)
+{
+  return resource_load_grc_texture("movie_icons");
+}
+
 static void *rc_icon_arrow(void)
 {
   return resource_load_grc_texture("arrow_icons");
@@ -277,6 +282,7 @@ static void *(*res_ctor[RES_MAX])(void) =
   rc_icon_buttons,
   rc_icon_pause,
   rc_icon_macro,
+  rc_icon_movie,
   rc_icon_arrow,
   rc_icon_file,
   rc_icon_save,
@@ -301,6 +307,7 @@ static void (*res_dtor[RES_MAX])() =
   gfx_texture_free,
   gfx_texture_free,
   rd_font_generic,
+  gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,
   gfx_texture_free,

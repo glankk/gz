@@ -53,6 +53,15 @@ static int play_switch_proc(struct menu_item *item,
   return 0;
 }
 
+static int rewind_switch_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED)
+    gz_movie_rewind();
+  return 0;
+}
+
 static int trim_switch_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
@@ -374,6 +383,37 @@ static int state_info_draw_proc(struct menu_item *item,
   return 1;
 }
 
+static void quick_record_proc(struct menu_item *item, void *data)
+{
+  if (!zu_in_game())
+    gz_log("can not save here");
+  else {
+    gz_movie_rewind();
+    gz.movie_state = MOVIE_RECORDING;
+    gz.state_slot = 0;
+    command_savestate();
+    gz.state_slot = 1;
+    command_savestate();
+  }
+}
+
+static void quick_play_proc(struct menu_item *item, void *data)
+{
+  struct state_meta *state = gz.state_buf[0];
+  if (!zu_in_game())
+    gz_log("can not load here");
+  else if (!state || state->movie_frame != 0 || gz.movie_inputs.size == 0)
+    gz_log("no movie recorded");
+  else {
+    gz_movie_rewind();
+    gz.movie_state = MOVIE_PLAYING;
+    int slot = gz.state_slot;
+    gz.state_slot = 0;
+    command_loadstate();
+    gz.state_slot = slot;
+  }
+}
+
 struct menu *gz_macro_menu(void)
 {
   static struct menu menu;
@@ -386,6 +426,7 @@ struct menu *gz_macro_menu(void)
 
   /* load textures */
   struct gfx_texture *t_macro = resource_get(RES_ICON_MACRO);
+  struct gfx_texture *t_movie = resource_get(RES_ICON_MOVIE);
   struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
   struct gfx_texture *t_save = resource_get(RES_ICON_SAVE);
 
@@ -410,11 +451,15 @@ struct menu *gz_macro_menu(void)
   item->tooltip = "play macro";
   item = menu_add_switch(&menu, 6, y,
                          t_macro, 4, 0xFFFFFF, t_macro, 4, 0xFFFFFF, 1.f, 0,
+                         rewind_switch_proc, NULL);
+  item->tooltip = "rewind macro";
+  item = menu_add_switch(&menu, 9, y,
+                         t_macro, 5, 0xFFFFFF, t_macro, 5, 0xFFFFFF, 1.f, 0,
                          trim_switch_proc, NULL);
   item->tooltip = "trim macro";
-  item = menu_add_intinput(&menu, 9, y, 10, 6, movie_pos_proc, NULL);
+  item = menu_add_intinput(&menu, 12, y, 10, 6, movie_pos_proc, NULL);
   item->tooltip = "macro frame";
-  menu_add_watch(&menu, 16, y, (uint32_t)&gz.movie_inputs.size,
+  menu_add_watch(&menu, 19, y, (uint32_t)&gz.movie_inputs.size,
                  WATCH_TYPE_U32);
 #ifndef WIIVC
   y += 2;
@@ -451,6 +496,15 @@ struct menu *gz_macro_menu(void)
                               export_state_proc, NULL);
   item->tooltip = "export state";
 #endif
+
+  /* create movie controls */
+  y += 3;
+  item = menu_add_button_icon(&menu, 0, y, t_movie, 0, 0xFFFFFF,
+                              quick_record_proc, NULL);
+  item->tooltip = "quick record movie";
+  item = menu_add_button_icon(&menu, 3, y, t_movie, 1, 0xFFFFFF,
+                              quick_play_proc, NULL);
+  item->tooltip = "quick play movie";
 
   /* create tooltip */
   y += 2;

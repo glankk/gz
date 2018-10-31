@@ -138,6 +138,13 @@
     "format":       "ia8",
     "tile_height":  8
   },
+  "movie_icons.png":
+  {
+    "type":         "texture",
+    "name":         "movie_icons",
+    "format":       "rgba16",
+    "tile_height":  15
+  },
   "arrow_icons.png":
   {
     "type":         "texture",

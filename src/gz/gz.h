@@ -127,37 +127,37 @@ void          gz_warp(int16_t entrance_index,
 
 void          command_break(void);
 void          command_levitate(void);
-void          command_savepos(void);
-void          command_loadpos(void);
+void          command_fall(void);
+void          command_turbo(void);
+void          command_fileselect(void);
+void          command_reload(void);
+void          command_void(void);
+void          command_age(void);
+void          command_savestate(void);
+void          command_loadstate(void);
 void          command_savememfile(void);
 void          command_loadmemfile(void);
+void          command_savepos(void);
+void          command_loadpos(void);
+void          command_prevstate(void);
+void          command_nextstate(void);
+void          command_prevfile(void);
+void          command_nextfile(void);
+void          command_prevpos(void);
+void          command_nextpos(void);
+void          command_pause(void);
+void          command_advance(void);
+void          command_recordmacro(void);
+void          command_playmacro(void);
+void          command_colview(void);
 void          command_resetlag(void);
 #ifndef WIIVC
 void          command_timer(void);
 void          command_resettimer(void);
-#endif
-void          command_pause(void);
-void          command_advance(void);
-void          command_fileselect(void);
-void          command_reload(void);
-void          command_void(void);
-void          command_reset(void);
-void          command_turbo(void);
-void          command_fall(void);
-void          command_age(void);
-#ifndef WIIVC
 void          command_starttimer(void);
 void          command_stoptimer(void);
+void          command_reset(void);
 #endif
-void          command_prevpos(void);
-void          command_nextpos(void);
-void          command_prevfile(void);
-void          command_nextfile(void);
-void          command_colview(void);
-void          command_savestate(void);
-void          command_loadstate(void);
-void          command_recordmacro(void);
-void          command_playmacro(void);
 
 void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
 void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);

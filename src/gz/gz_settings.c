@@ -245,18 +245,24 @@ static void save_settings_proc(struct menu_item *item, void *data)
 {
   watchlist_store(gz.menu_watchlist);
   settings_save(gz.profile);
+  gz_log("saved profile %i", gz.profile);
 }
 
 static void load_settings_proc(struct menu_item *item, void *data)
 {
-  if (settings_load(gz.profile))
+  if (settings_load(gz.profile)) {
     gz_apply_settings();
+    gz_log("loaded profile %i", gz.profile);
+  }
+  else
+    gz_log("could not load");
 }
 
 static void restore_settings_proc(struct menu_item *item, void *data)
 {
   settings_load_default();
   gz_apply_settings();
+  gz_log("loaded defaults");
 }
 
 struct menu *gz_settings_menu(void)

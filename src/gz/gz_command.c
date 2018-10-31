@@ -19,41 +19,39 @@ struct command_info command_info[COMMAND_MAX] =
   {"return from menu",  NULL,                 CMDACT_PRESS_ONCE},
   {"break free",        command_break,        CMDACT_HOLD},
   {"levitate",          command_levitate,     CMDACT_HOLD},
-  {"save position",     command_savepos,      CMDACT_HOLD},
-  {"load position",     command_loadpos,      CMDACT_HOLD},
+  {"fall",              command_fall,         CMDACT_HOLD},
+  {"turbo",             command_turbo,        CMDACT_HOLD},
+  {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
+  {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
+  {"void out",          command_void,         CMDACT_PRESS_ONCE},
+  {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
+  {"save state",        command_savestate,    CMDACT_PRESS_ONCE},
+  {"load state",        command_loadstate,    CMDACT_PRESS_ONCE},
   {"save memfile",      command_savememfile,  CMDACT_PRESS_ONCE},
   {"load memfile",      command_loadmemfile,  CMDACT_PRESS_ONCE},
+  {"save position",     command_savepos,      CMDACT_HOLD},
+  {"load position",     command_loadpos,      CMDACT_HOLD},
+  {"previous state",    command_prevstate,    CMDACT_PRESS_ONCE},
+  {"next state",        command_nextstate,    CMDACT_PRESS_ONCE},
+  {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
+  {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
+  {"previous position", command_prevpos,      CMDACT_PRESS_ONCE},
+  {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
+  {"pause/unpause",     command_pause,        CMDACT_PRESS_ONCE},
+  {"frame advance",     command_advance,      CMDACT_PRESS},
+  {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
+  {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
+  {"collision view",    command_colview,      CMDACT_PRESS_ONCE},
+  {"explore prev room", NULL,                 CMDACT_PRESS},
+  {"explore next room", NULL,                 CMDACT_PRESS},
   {"reset lag counter", command_resetlag,     CMDACT_HOLD},
 #ifndef WIIVC
   {"start/stop timer",  command_timer,        CMDACT_PRESS_ONCE},
   {"reset timer",       command_resettimer,   CMDACT_HOLD},
-#endif
-  {"pause/unpause",     command_pause,        CMDACT_PRESS_ONCE},
-  {"frame advance",     command_advance,      CMDACT_PRESS},
-  {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
-  {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
-  {"void out",          command_void,         CMDACT_PRESS_ONCE},
-#ifndef WIIVC
-  {"reset",             command_reset,        CMDACT_PRESS_ONCE},
-#endif
-  {"turbo",             command_turbo,        CMDACT_HOLD},
-  {"fall",              command_fall,         CMDACT_HOLD},
-  {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
-#ifndef WIIVC
   {"start timer",       command_starttimer,   CMDACT_PRESS_ONCE},
   {"stop timer",        command_stoptimer,    CMDACT_PRESS_ONCE},
+  {"reset",             command_reset,        CMDACT_PRESS_ONCE},
 #endif
-  {"previous position", command_prevpos,      CMDACT_PRESS_ONCE},
-  {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
-  {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
-  {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
-  {"collision view",    command_colview,      CMDACT_PRESS_ONCE},
-  {"save state",        command_savestate,    CMDACT_PRESS_ONCE},
-  {"load state",        command_loadstate,    CMDACT_PRESS_ONCE},
-  {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
-  {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
-  {"explore prev room", NULL,                 CMDACT_PRESS},
-  {"explore next room", NULL,                 CMDACT_PRESS},
 };
 
 void gz_apply_settings()
@@ -247,68 +245,14 @@ void command_levitate(void)
   z64_link.common.vel_1.y = 6.34375f;
 }
 
-void command_savepos(void)
+void command_fall(void)
 {
-  uint8_t slot = settings->teleport_slot;
-  settings->teleport_pos[slot] = z64_link.common.pos_2;
-  settings->teleport_rot[slot] = z64_link.common.rot_2.y;
+  z64_link.common.pos_1.y = -32768.f;
 }
 
-void command_loadpos(void)
+void command_turbo(void)
 {
-  uint8_t slot = settings->teleport_slot;
-  z64_link.common.pos_1 = settings->teleport_pos[slot];
-  z64_link.common.pos_2 = settings->teleport_pos[slot];
-  z64_link.common.rot_2.y = settings->teleport_rot[slot];
-  z64_link.target_yaw = settings->teleport_rot[slot];
-}
-
-void command_savememfile(void)
-{
-  gz_save_memfile(&gz.memfile[gz.memfile_slot]);
-  gz.memfile_saved[gz.memfile_slot] = 1;
-}
-
-void command_loadmemfile(void)
-{
-  if (!gz.memfile_saved[gz.memfile_slot])
-    return;
-  gz_load_memfile(&gz.memfile[gz.memfile_slot]);
-}
-
-void command_resetlag(void)
-{
-  gz.frame_counter = 0;
-  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
-}
-
-#ifndef WIIVC
-void command_timer(void)
-{
-  gz.timer_active = !gz.timer_active;
-}
-
-void command_resettimer(void)
-{
-  gz.timer_counter_offset = -gz.cpu_counter;
-  gz.timer_counter_prev = gz.cpu_counter;
-}
-#endif
-
-void command_pause(void)
-{
-  if (gz.frames_queued >= 0)
-    gz.frames_queued = -1;
-  else
-    gz.frames_queued = 0;
-}
-
-void command_advance(void)
-{
-  if (gz.frames_queued >= 0)
-    ++gz.frames_queued;
-  else
-    command_pause();
+  z64_link.linear_vel = 27.f;
 }
 
 void command_fileselect(void)
@@ -331,23 +275,6 @@ void command_void(void)
   zu_void();
 }
 
-#ifndef WIIVC
-void command_reset(void)
-{
-  gz.reset_flag = 1;
-}
-#endif
-
-void command_turbo(void)
-{
-  z64_link.linear_vel = 27.f;
-}
-
-void command_fall(void)
-{
-  z64_link.common.pos_1.y = -32768.f;
-}
-
 void command_age(void)
 {
   int age = z64_file.link_age;
@@ -359,52 +286,6 @@ void command_age(void)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
       z64_UpdateItemButton(&z64_game, i);
   z64_UpdateEquipment(&z64_game, &z64_link);
-}
-
-#ifndef WIIVC
-void command_starttimer(void)
-{
-  if (!gz.timer_active)
-    command_timer();
-}
-
-void command_stoptimer(void)
-{
-  if (gz.timer_active)
-    command_timer();
-}
-#endif
-
-void command_prevpos(void)
-{
-  settings->teleport_slot += SETTINGS_TELEPORT_MAX - 1;
-  settings->teleport_slot %= SETTINGS_TELEPORT_MAX;
-}
-
-void command_nextpos(void)
-{
-  settings->teleport_slot += 1;
-  settings->teleport_slot %= SETTINGS_TELEPORT_MAX;
-}
-
-void command_prevfile(void)
-{
-  gz.memfile_slot += SETTINGS_MEMFILE_MAX - 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
-}
-
-void command_nextfile(void)
-{
-  gz.memfile_slot += 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
-}
-
-void command_colview(void)
-{
-  if (gz.col_view_state == 0)
-    gz.col_view_state = 1;
-  else if (gz.col_view_state == 2)
-    gz.col_view_state = 3;
 }
 
 void command_savestate(void)
@@ -452,22 +333,155 @@ void command_loadstate(void)
     gz_log("state %i is empty", gz.state_slot);
 }
 
+void command_savememfile(void)
+{
+  gz_save_memfile(&gz.memfile[gz.memfile_slot]);
+  gz.memfile_saved[gz.memfile_slot] = 1;
+  gz_log("saved memfile %i", gz.memfile_slot);
+}
+
+void command_loadmemfile(void)
+{
+  if (gz.memfile_saved[gz.memfile_slot]) {
+    gz_load_memfile(&gz.memfile[gz.memfile_slot]);
+    gz_log("loaded memfile %i", gz.memfile_slot);
+  }
+  else
+    gz_log("memfile %i is empty", gz.memfile_slot);
+}
+
+void command_savepos(void)
+{
+  uint8_t slot = settings->teleport_slot;
+  settings->teleport_pos[slot] = z64_link.common.pos_2;
+  settings->teleport_rot[slot] = z64_link.common.rot_2.y;
+  gz_log("saved position %i", slot);
+}
+
+void command_loadpos(void)
+{
+  uint8_t slot = settings->teleport_slot;
+  z64_link.common.pos_1 = settings->teleport_pos[slot];
+  z64_link.common.pos_2 = settings->teleport_pos[slot];
+  z64_link.common.rot_2.y = settings->teleport_rot[slot];
+  z64_link.target_yaw = settings->teleport_rot[slot];
+  gz_log("loaded position %i", slot);
+}
+
+void command_prevstate(void)
+{
+  gz.state_slot += SETTINGS_STATE_MAX - 1;
+  gz.state_slot %= SETTINGS_STATE_MAX;
+  gz_log("state %i", gz.state_slot);
+}
+
+void command_nextstate(void)
+{
+  gz.state_slot += 1;
+  gz.state_slot %= SETTINGS_STATE_MAX;
+  gz_log("state %i", gz.state_slot);
+}
+
+void command_prevfile(void)
+{
+  gz.memfile_slot += SETTINGS_MEMFILE_MAX - 1;
+  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
+  gz_log("memfile %i", gz.memfile_slot);
+}
+
+void command_nextfile(void)
+{
+  gz.memfile_slot += 1;
+  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
+  gz_log("memfile %i", gz.memfile_slot);
+}
+
+void command_prevpos(void)
+{
+  settings->teleport_slot += SETTINGS_TELEPORT_MAX - 1;
+  settings->teleport_slot %= SETTINGS_TELEPORT_MAX;
+  gz_log("position %i", settings->teleport_slot);
+}
+
+void command_nextpos(void)
+{
+  settings->teleport_slot += 1;
+  settings->teleport_slot %= SETTINGS_TELEPORT_MAX;
+  gz_log("position %i", settings->teleport_slot);
+}
+
+void command_pause(void)
+{
+  if (gz.frames_queued >= 0)
+    gz.frames_queued = -1;
+  else
+    gz.frames_queued = 0;
+}
+
+void command_advance(void)
+{
+  if (gz.frames_queued >= 0)
+    ++gz.frames_queued;
+  else
+    command_pause();
+}
+
 void command_recordmacro(void)
 {
   if (gz.movie_state == MOVIE_RECORDING)
     gz.movie_state = MOVIE_IDLE;
-  else {
+  else
     gz.movie_state = MOVIE_RECORDING;
-    gz_movie_rewind();
-  }
 }
 
 void command_playmacro(void)
 {
   if (gz.movie_state == MOVIE_PLAYING)
     gz.movie_state = MOVIE_IDLE;
-  else if (gz.movie_inputs.size > 0) {
+  else if (gz.movie_inputs.size > 0)
     gz.movie_state = MOVIE_PLAYING;
-    gz_movie_rewind();
-  }
 }
+
+void command_colview(void)
+{
+  if (gz.col_view_state == 0)
+    gz.col_view_state = 1;
+  else if (gz.col_view_state == 2)
+    gz.col_view_state = 3;
+}
+
+void command_resetlag(void)
+{
+  gz.frame_counter = 0;
+  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+}
+
+#ifndef WIIVC
+void command_timer(void)
+{
+  gz.timer_active = !gz.timer_active;
+}
+
+void command_resettimer(void)
+{
+  gz.timer_counter_offset = -gz.cpu_counter;
+  gz.timer_counter_prev = gz.cpu_counter;
+}
+
+void command_starttimer(void)
+{
+  if (!gz.timer_active)
+    command_timer();
+}
+
+void command_stoptimer(void)
+{
+  if (gz.timer_active)
+    command_timer();
+}
+
+void command_reset(void)
+{
+  gz.reset_flag = 1;
+}
+#endif
