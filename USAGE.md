@@ -431,13 +431,13 @@ The following commands are available:
     *Default: `D-Right`*
 -   **save memfile:** Saves the current state of the game to the memory file in
     the current memory file slot. Everything that would be saved when saving
-    the game normally is saved to the memory file. *Default: `Unbound`*
+    the game normally is saved to the memory file. *Default: `unbound`*
 -   **load memfile:** Loads the state of the current memory file.
-    *Default: `Unbound`*
+    *Default: `unbound`*
 -   **save position:** Saves Link's current position and orientation to the
-    current position slot. *Default: `Unbound`*
+    current position slot. *Default: `unbound`*
 -   **load position:** Teleports Link to the position in the current position
-    slot. *Default: `Unbound`*
+    slot. *Default: `unbound`*
 -   **previous state:** Selects the previous savestate slot.
     *Default: `unbound`*
 -   **next state:** Selects the next savestate slot. *Default: `unbound`*
