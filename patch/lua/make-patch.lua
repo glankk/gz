@@ -1,6 +1,6 @@
 local arg = {...}
 if #arg < 1 then
-  print("usage: `make-patch <rom-file>`")
+  print("usage: `make-patch <rom-file>...`")
   return
 end
 local make = loadfile("patch/lua/make.lua")
@@ -9,7 +9,9 @@ for i = 1, #arg do
   local rom_info, rom, patched_rom = make(arg[i])
   if rom_info ~= nil then
     print("saving patch")
-    local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
+    local rom_id = rom_info.game .. "-" ..
+                   rom_info.version .. "-" ..
+                   rom_info.region
     gru.ups_create(rom, patched_rom):save("patch/ups/gz-" .. rom_id .. ".ups")
   end
 end

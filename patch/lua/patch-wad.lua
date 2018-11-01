@@ -1,7 +1,36 @@
+-- parse arguments
 local arg = {...}
+local opt_id
+local opt_title
+local opt_region
+local opt_raphnet
+local opt_disable_controller_remappings
+while arg[1] do
+  if arg[1] == "-i" or arg[1] == "--channelid" then
+    opt_id = arg[2]
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif arg[1] == "-t" or arg[1] == "--channeltitle" then
+    opt_title = arg[2]
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif arg[1] == "-r" or arg[1] == "--region" then
+    opt_region = arg[2]
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif arg[1] == "--raphnet" then
+    opt_raphnet = true
+    table.remove(arg, 1)
+  elseif arg[1] == "--disable-controller-remappings" then
+    opt_disable_controller_remappings = true
+    table.remove(arg, 1)
+  else
+    break
+  end
+end
 if #arg < 1 then
-  print("usage: `patch-wad <wad-file>` " ..
-       "(or drag and drop a wad onto the patch script)")
+  print("usage: `patch-wad [<gzinject-arg>...] <wad-file>...`" ..
+        " (or drag and drop a wad onto the patch script)")
   local line = io.read()
   if line ~= nil and line:sub(1, 1) == "\"" and line:sub(-1, -1) == "\"" then
     line = line:sub(2, -2)
@@ -9,46 +38,86 @@ if #arg < 1 then
   if line == nil or line == "" then return end
   arg[1] = line
 end
+
 local gzinject = os.getenv("GZINJECT")
 if gzinject == nil or gzinject == "" then
   gzinject = "gzinject"
 end
+
 wiivc = true
 require("lua/rom_table")
-local n = 0
+
+local n_patched = 0
 for i = 1, #arg do
+  -- extract wad
   io.write("making patched wad from `" .. arg[i] .. "`...")
   gru.os_rm("wadextract")
-  local _,_,gzinject_result = os.execute(gzinject .. " -a extract -k common-key.bin -w \"" .. arg[i] ..
-                                         "\" -d wadextract")
+  local _,_,gzinject_result = os.execute(gzinject ..
+                                         " -a extract" ..
+                                         " -k common-key.bin" ..
+                                         " -d wadextract" ..
+                                         " -w \"" .. arg[i] .. "\"")
   if gzinject_result ~= 0 then
     error(" unpacking failed", 0)
   end
+  -- check rom id
   local rom = gru.n64rom_load("wadextract/content5/rom")
   local rom_info = rawget(rom_table, rom:crc32())
   if rom_info == nil then
     print(" unrecognized rom, skipping")
   else
-    local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
+    -- patch rom
+    local rom_id = rom_info.game .. "-" ..
+                   rom_info.version .. "-" ..
+                   rom_info.region
     local patch = gru.ups_load("ups/gz-" .. rom_id .. ".ups")
     patch:apply(rom)
     rom:save_file("wadextract/content5/rom")
-    local _,_,gzinject_result = os.execute(gzinject .. " -a pack -k common-key.bin -w gz-" .. rom_id ..
-                                           ".wad -d wadextract -i " .. rom_info.title_id .. " -t gz-" .. rom_id ..
-                                           " -r 3")
+    -- build gzinject pack command string
+    local gzinject_cmd = gzinject ..
+                         " -a pack" ..
+                         " -k common-key.bin" ..
+                         " -d wadextract"
+    if opt_id then
+      gzinject_cmd = gzinject_cmd .. " -i \"" .. opt_id .. "\""
+    else
+      gzinject_cmd = gzinject_cmd .. " -i " .. rom_info.title_id
+    end
+    if opt_title then
+      gzinject_cmd = gzinject_cmd .. " -w \"" .. opt_title .. ".wad\""
+      gzinject_cmd = gzinject_cmd .. " -t \"" .. opt_title .. "\""
+    else
+      gzinject_cmd = gzinject_cmd .. " -w gz-" .. rom_id .. ".wad"
+      gzinject_cmd = gzinject_cmd .. " -t gz-" .. rom_id
+    end
+    if opt_region then
+      gzinject_cmd = gzinject_cmd .. " -r \"" .. opt_region .. "\""
+    else
+      gzinject_cmd = gzinject_cmd .. " -r 3"
+    end
+    if opt_raphnet then
+      gzinject_cmd = gzinject_cmd .. " --raphnet"
+    end
+    if opt_disable_controller_remappings then
+      gzinject_cmd = gzinject_cmd .. " --disable-controller-remappings"
+    end
+    -- execute
+    local _,_,gzinject_result = os.execute(gzinject_cmd)
     if gzinject_result ~= 0 then
       error(" packing failed", 0)
     end
-    n = n + 1
+    n_patched = n_patched + 1
     print(" done")
   end
 end
-if n == 0 then
+
+if n_patched == 0 then
   print("no wads were patched")
-elseif n == 1 then
-  print(n .. " wad was patched")
+elseif n_patched == 1 then
+  print(n_patched .. " wad was patched")
 else
-  print(n .. " wads were patched")
+  print(n_patched .. " wads were patched")
 end
+
 print("press enter to continue")
 io.read()

@@ -41,7 +41,7 @@ function quit(code)
 end
 
 if #arg < 2 then
-  print("usage: `inject_ucode <dst-file> <src-file>`")
+  print("usage: `inject_ucode [-y] <dst-file> <src-file>`")
   quit(1)
 end
 local dst = gru.n64rom_load(arg[1])
@@ -63,7 +63,8 @@ for i=1,2 do
   arg[1], arg[2] = arg[2], arg[1]
 end
 if text_insert then
-  print(string.format("found text insertion point at 0x%08X in `%s`", text_insert, arg[1]))
+  print(string.format("found text insertion point at 0x%08X in `%s`",
+                      text_insert, arg[1]))
 else
   print("unable find text insertion point")
   quit(1)
@@ -74,7 +75,8 @@ local data_search = gru:blob_create()
 data_search:writestring(0, "gspL3DEX2_fifoDataStart")
 data_insert = dst:find(data_search)
 if data_insert then
-  print(string.format("found data insertion point at 0x%08X in `%s`", data_insert, arg[1]))
+  print(string.format("found data insertion point at 0x%08X in `%s`",
+                      data_insert, arg[1]))
 else
   print("unable find data insertion point")
   quit(1)

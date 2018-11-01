@@ -1,7 +1,7 @@
 local arg = {...}
 if #arg < 1 then
-  print("usage: `patch <rom-file>` " ..
-       "(or drag and drop a rom onto the patch script)")
+  print("usage: `patch[-vc] <rom-file>...`" ..
+        " (or drag and drop a rom onto the patch script)")
   local line = io.read()
   if line ~= nil and line:sub(1, 1) == "\"" and line:sub(-1, -1) == "\"" then
     line = line:sub(2, -2)
@@ -18,7 +18,9 @@ for i = 1, #arg do
   if rom_info == nil then
     print(" unrecognized rom, skipping")
   else
-    local rom_id = rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region
+    local rom_id = rom_info.game .. "-" ..
+                   rom_info.version .. "-" ..
+                   rom_info.region
     local patch = gru.ups_load("ups/gz-" .. rom_id .. ".ups")
     patch:apply(rom)
     rom:save_file("gz-" .. rom_id ..  ".z64")

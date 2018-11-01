@@ -5,4 +5,4 @@ cd $(dirname $(readlink -f $0))
 export PATH="$(readlink -f ./bin):$PATH"
 echo 45e | gzinject -a genkey -k common-key.bin > /dev/null
 gru lua/patch-wad.lua "$@" || true
-rm -rf common-key.bin patch/wadextract
+rm -rf common-key.bin wadextract

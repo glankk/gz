@@ -70,7 +70,9 @@ setmetatable(rom_table, {__index = function(t)
   local keys = {}
   for k,v in pairs(t) do
     keys[#keys + 1] = k
-    io.write(string.format("  %d. treat as `%s`\n", #keys, v.game .. "-" .. v.version .. "-" .. v.region))
+    io.write(string.format("  %d. treat as `%s`\n",
+                           #keys,
+                           v.game .. "-" .. v.version .. "-" .. v.region))
   end
   io.flush()
   local n = io.read("n")
