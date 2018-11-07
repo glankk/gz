@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 set -e
 
-cd $(dirname $(readlink -f $0))/..
+REALPATH="$0"
+while test -L "$REALPATH"; do
+  REALPATH="`readlink "$REALPATH"`"
+done
+REALPATH="`cd "\`dirname "$REALPATH"\`" && pwd -P`"
+
+cd "$REALPATH/.."
 gru patch/lua/make-rom.lua "$@"
