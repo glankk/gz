@@ -43,15 +43,14 @@ distclean             :
 	rm -rf patch/ups patch/*.z64 patch/*.wad
 .PHONY                : all clean distclean
 
-.SECONDEXPANSION      :
-
-define bin_template   =
+define bin_template
  NAME-$(1)            = $(2)
  DIR-$(1)             = $(3)
  SRCDIR-$(1)          = $(4)
  RESDIR-$(1)          = $(5)
  OBJDIR-$(1)          = $(6)
  BINDIR-$(1)          = $(7)
+ OUTDIR-$(1)          = $$(OBJDIR-$(1)) $$(OBJDIR-$(1))/$$(RESDIR) $$(BINDIR-$(1))
  ADDRESS-$(1)         = $(8)
  ASMSRC-$(1)         := $$(foreach s,$$(ASMFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
  CSRC-$(1)           := $$(foreach s,$$(CFILES),$$(wildcard $$(SRCDIR-$(1))/$$(s)))
@@ -71,24 +70,26 @@ define bin_template   =
  $$(ELF-$(1))         : ALL_LDFLAGS          += -Wl,--defsym,start=0x$$(ADDRESS-$(1))
  $$(BUILD-$(1))       : $$(BIN-$(1))
  $$(CLEAN-$(1))       :
-	rm -rf $$(OBJDIR-$(1)) $$(BINDIR-$(1))
+	rm -rf $$(OUTDIR-$(1))
  .PHONY               : $$(BUILD-$(1)) $$(CLEAN-$(1))
- $$(BIN-$(1))         : $$(ELF-$(1)) | $$$$(dir $$$$@)
+ $$(BIN-$(1))         : $$(ELF-$(1)) | $$(BINDIR-$(1))
 	$$(OBJCOPY) -S -O binary $$< $$@
- $$(ELF-$(1))         : $$(OBJ-$(1)) | $$$$(dir $$$$@)
+ $$(ELF-$(1))         : $$(OBJ-$(1)) | $$(BINDIR-$(1))
 	$$(LD) $$(ALL_LDFLAGS) $$^ $$(LDLIBS) -o $$@
- $$(ASMOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
+ $$(ASMOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$(OBJDIR-$(1))
 	$$(AS) -c -MMD -MP $$(ALL_CPPFLAGS) $$< -o $$@
- $$(COBJ-$(1))        : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
+ $$(COBJ-$(1))        : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$(OBJDIR-$(1))
 	$$(CC) -c -MMD -MP $$(ALL_CPPFLAGS) $$(ALL_CFLAGS) $$< -o $$@
- $$(CXXOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$$$(dir $$$$@)
+ $$(CXXOBJ-$(1))      : $$(OBJDIR-$(1))/%.o: $$(SRCDIR-$(1))/% | $$(OBJDIR-$(1))
 	$$(CXX) -c -MMD -MP $$(ALL_CPPFLAGS) $$(ALL_CXXFLAGS) $$< -o $$@
- $$(RESOBJ-$(1))      : $$(OBJDIR-$(1))/$$(RESDIR)/%.o: $$(RESDIR-$(1))/% $$(RESDESC) | $$$$(dir $$$$@)
+ $$(RESOBJ-$(1))      : $$(OBJDIR-$(1))/$$(RESDIR)/%.o: $$(RESDIR-$(1))/% $$(RESDESC) | $$(OBJDIR-$(1))/$$(RESDIR)
 	$$(GRC) $$< -d $$(RESDESC) -o $$@
+ $$(OUTDIR-$(1))      :
+	mkdir -p $$@
 
 endef
 
-define hooks_template =
+define hooks_template
  HOOKS-$(1)           = $$(DIR-$(1))/hooks.gsc
  $$(HOOKS-$(1))       : $$(ELF-$(1))
 	AS="$$(AS)" CC="$$(CC)" NM="$$(NM)" READELF="$$(READELF)" CPPFLAGS="$$(subst ",\",$$(CPPFLAGS))" $$(GENHOOKS) $$< > $$@
@@ -99,7 +100,7 @@ define hooks_template =
 
 endef
 
-define lua_template   =
+define lua_template
  BUILD-$(1)-lua       = $(1)-lua
  CLEAN-$(1)-lua       = clean-$(1)-lua
  $(1)-lua             : $(1)
@@ -129,6 +130,3 @@ $(VC)                 : CXXFLAGS             ?= -O1 -fno-reorder-blocks
 $(N64)                : LDFLAGS              ?= -O3 -flto
 
 $(eval $(call bin_template,ldr,ldr,,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(LDR_ADDRESS)))
-
-%/                    :
-	mkdir -p $@
