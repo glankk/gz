@@ -802,7 +802,7 @@ static void rdb_main(void *arg)
       rdb_putpkt(0, "OK");
     }
     else if (sscanf(pkt, "p%" SCNx32 "%n", &addr, &n) == 1 && pkt[n] == 0) {
-      rdb_putpkt(0, "%016" PRIx32, rdb_get_reg(rdb.gthread, addr));
+      rdb_putpkt(0, "%016" PRIx64, rdb_get_reg(rdb.gthread, addr));
     }
     else if (sscanf(pkt, "P%" SCNx32 "=%16" SCNx64 "%n",
                     &addr, &value, &n) == 2
