@@ -887,27 +887,56 @@ struct z64_actor_s
   float             xz_speed;                 /* 0x0068 */
   float             gravity;                  /* 0x006C */
   float             min_vel_y;                /* 0x0070 */
-  void             *unk_08_;                  /* 0x0074 */
+  /* struct bgcheck common */
+  z64_col_poly_t   *wall_poly;                /* 0x0074 */
   z64_col_poly_t   *floor_poly;               /* 0x0078 */
-  char              unk_0A_[0x001C];          /* 0x007C */
+  uint8_t           wall_poly_source;         /* 0x007C */
+  uint8_t           floor_poly_source;        /* 0x007D */
+  int16_t           wall_rot;                 /* 0x007E */
+  float             floor_height;             /* 0x0080 */ //maybe?
+  float             water_surface_dist;       /* 0x0084 */
+  uint16_t          bgcheck_flags;            /* 0x0088 */
+  int16_t           unk_0x8A_rot;             /* 0x008A */
+  float             unk_0x8C;                 /* 0x008C */
+  float             dist_from_link_xz;        /* 0x0090 */
+  float             dist_from_link_y;         /* 0x0094 */
+  /* struct collision_check common */
   void             *damage_table;             /* 0x0098 */
   z64_xyzf_t        vel_2;                    /* 0x009C */
   char              unk_0B_[0x0006];          /* 0x00A8 */
-  int16_t           health;                   /* 0x00AE */
-  char              unk_0C_;                  /* 0x00B0 */
+  uint8_t           mass;                     /* 0x00AE */
+  uint8_t           health;                   /* 0x00AF */
+  uint8_t           damage;                   /* 0x00B0 */
   uint8_t           damage_effect;            /* 0x00B1 */
-  char              unk_0D_[0x0002];          /* 0x00B2 */
+  uint8_t           impact_effect;            /* 0x00B2 */
+  char              unk_0D;                   /* 0x00B3 */
+  /* end CollisionCheck common */
+  /* struct start */
   z64_rot_t         rot_2;                    /* 0x00B4 */
-  char              unk_0E_[0x0046];          /* 0x00BA */
+  char              unk_0E_[0x0002];          /* 0x00BA */
+  float             unk_0xBC;                 /* 0x00BC */
+  void             *draw_drop_shadow;         /* 0x00C0 */
+  float             unk_0xC4;                 /* 0x00C4 */
+  uint8_t           unk_0xC8;                 /* 0x00C8 */
+  char              pad_0xC9_[0x0003];        /* 0x00C9 */
+  /* struct end */
+  z64_xyzf_t        unk_0xCC;                 /* 0x00CC */
+  z64_xyzf_t        unk_0xD8;                 /* 0x00D8 */
+  z64_xyzf_t        unk_0xE4;                 /* 0x00E4 */
+  float             unk_0xF0;                 /* 0x00F0 */
+  float             unk_0xF4;                 /* 0x00F4 */
+  float             unk_0xF8;                 /* 0x00F8 */
+  float             unk_0xFC;                 /* 0x00FC */
   z64_xyzf_t        pos_4;                    /* 0x0100 */
   uint16_t          unk_0F_;                  /* 0x010C */
   uint16_t          text_id;                  /* 0x010E */
   int16_t           frozen;                   /* 0x0110 */
   char              unk_10_[0x0003];          /* 0x0112 */
   uint8_t           active;                   /* 0x0115 */
-  char              unk_11_[0x0002];          /* 0x0116 */
-  z64_actor_t      *unk_12_;                  /* 0x0118 */
-  char              unk_13_[0x0004];          /* 0x011C */
+  uint8_t           unk_11_;                  /* 0x0116 */
+  uint8_t           navi_enemy_text_id;       /* 0x0117 */
+  z64_actor_t      *attached_a;               /* 0x0118 */
+  z64_actor_t      *attached_b;               /* 0x011C */
   z64_actor_t      *prev;                     /* 0x0120 */
   z64_actor_t      *next;                     /* 0x0124 */
   void             *ctor;                     /* 0x0128 */
