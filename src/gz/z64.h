@@ -461,43 +461,46 @@ typedef struct
   int16_t           run_speed_max_anim;       /* 0x0074 */
   char              unk_02_[0x0026];          /* 0x0076 */
   int16_t           gravity;                  /* 0x009C */
-  char              unk_03_[0x0072];          /* 0x009E */
+  char              unk_03_[0x0036];          /* 0x009E */
+  uint16_t          enable_profiler;          /* 0x00D4 */
+  char              unk_04_[0x003A];          /* 0x00D6 */
   uint16_t          update_rate;              /* 0x0110 */
-  char              unk_04_[0x0022];          /* 0x0112 */
+  char              unk_05_[0x0022];          /* 0x0112 */
   int16_t           override_aspect;          /* 0x0134 */
   uint16_t          aspect_width;             /* 0x0136 */
   uint16_t          aspect_height;            /* 0x0138 */
-  char              unk_05_[0x0050];          /* 0x013A */
+  char              unk_06_[0x0050];          /* 0x013A */
   int16_t           game_playing;             /* 0x018A */
-  char              unk_06_[0x0004];          /* 0x018C */
+  char              unk_07_[0x0004];          /* 0x018C */
   int16_t           screenshot_state;         /* 0x0190 */
-  char              unk_07_[0x03B2];          /* 0x0192 */
+  char              unk_08_[0x03B2];          /* 0x0192 */
   uint16_t          c_up_icon_x;              /* 0x0544 */
   uint16_t          c_up_icon_y;              /* 0x0546 */
-  char              unk_08_[0x021C];          /* 0x0548 */
+  char              unk_09_[0x021C];          /* 0x0548 */
   uint16_t          game_freeze;              /* 0x0764 */
-  char              unk_09_[0x002E];          /* 0x0766 */
+  char              unk_0A_[0x002E];          /* 0x0766 */
   uint16_t          magic_fill_r;             /* 0x0794 */
   uint16_t          magic_fill_g;             /* 0x0796 */
   uint16_t          magic_fill_b;             /* 0x0798 */
-  char              unk_0A_[0x004A];          /* 0x079A */
-  uint16_t          c_button_r;               /* 0x07E4 */
-  uint16_t          c_button_g;               /* 0x07E6 */
-  uint16_t          c_button_b;               /* 0x07E8 */
+  char              unk_0B_[0x0048];          /* 0x079A */
+  uint16_t          c_button_r;               /* 0x07E2 */
+  uint16_t          c_button_g;               /* 0x07E4 */
+  uint16_t          c_button_b;               /* 0x07E6 */
+  char              unk_0C_[0x0002];          /* 0x07E8 */
   uint16_t          b_button_r;               /* 0x07EA */
   uint16_t          b_button_g;               /* 0x07EC */
   uint16_t          b_button_b;               /* 0x07EE */
-  char              unk_0B_[0x0004];          /* 0x07F0 */
-  qs510_t           start_icon_dd;            /* 0x07F4 */
-  int16_t           start_icon_scale;         /* 0x07F6 */
-  char              unk_0C_[0x0006];          /* 0x07F8 */
-  uint16_t          start_icon_y;             /* 0x07FE */
-  char              unk_0D_[0x0002];          /* 0x0800 */
-  uint16_t          start_icon_x;             /* 0x0802 */
-  char              unk_0E_[0x000C];          /* 0x0804 */
+  char              unk_0D_[0x0006];          /* 0x07F0 */
+  qs510_t           start_icon_dd;            /* 0x07F6 */
+  int16_t           start_icon_scale;         /* 0x07F8 */
+  char              unk_0E_[0x0006];          /* 0x07FA */
+  uint16_t          start_icon_y;             /* 0x0800 */
+  char              unk_0F_[0x0002];          /* 0x0802 */
+  uint16_t          start_icon_x;             /* 0x0804 */
+  char              unk_10_[0x000A];          /* 0x0806 */
   uint16_t          c_up_button_x;            /* 0x0810 */
   uint16_t          c_up_button_y;            /* 0x0812 */
-  char              unk_0F_[0x0008];          /* 0x0814 */
+  char              unk_11_[0x0008];          /* 0x0814 */
   uint16_t          start_button_x;           /* 0x081C */
   uint16_t          start_button_y;           /* 0x081E */
   uint16_t          item_button_x[4];         /* 0x0820 */
@@ -506,31 +509,58 @@ typedef struct
   uint16_t          item_icon_x[4];           /* 0x0838 */
   uint16_t          item_icon_y[4];           /* 0x0840 */
   qs510_t           item_icon_dd[4];          /* 0x0848 */
-  char              unk_10_[0x0264];          /* 0x0850 */
+  char              unk_12_[0x0264];          /* 0x0850 */
   uint16_t          a_button_y;               /* 0x0AB4 */
   uint16_t          a_button_x;               /* 0x0AB6 */
-  char              unk_11_[0x0002];          /* 0x0AB8 */
+  int16_t           a_button_scale;           /* 0x0AB8 */
   uint16_t          a_button_icon_y;          /* 0x0ABA */
   uint16_t          a_button_icon_x;          /* 0x0ABC */
-  char              unk_12_[0x0002];          /* 0x0ABE */
+  uint16_t          a_button_icon_width;      /* 0x0ABE */
   uint16_t          a_button_r;               /* 0x0AC0 */
   uint16_t          a_button_g;               /* 0x0AC2 */
   uint16_t          a_button_b;               /* 0x0AC4 */
-  char              unk_13_[0x0030];          /* 0x0AC6 */
+  char              unk_13_[0x0006];          /* 0x0AC6 */
+  uint16_t          a_button_icon_width;      /* 0x0ACC */
+  char              unk_14_[0x0028];          /* 0x0ACE */
   uint16_t          magic_bar_x;              /* 0x0AF6 */
   uint16_t          magic_bar_y;              /* 0x0AF8 */
   uint16_t          magic_fill_x;             /* 0x0AFA */
-  char              unk_14_[0x02D6];          /* 0x0AFC */
+  char              unk_15_[0x029C];          /* 0x0AFC */
+  uint16_t          start_menu_height;        /* 0x0D98 */
+  int16_t           start_menu_panel_scale;   /* 0x0D9A */
+  char              unk_16_[0x000A];          /* 0x0D9C */
+  int16_t           b_button_icon_scale;      /* 0x0DA6 */
+  char              unk_17_[0x0002];          /* 0x0DA8 */
+  uint16_t          b_button_icon_x;          /* 0x0DAA */
+  char              unk_18_[0x0002];          /* 0x0DAC */
+  uint16_t          b_button_icon_y;          /* 0x0DAE */
+  char              unk_19_[0x0002];          /* 0x0DB0 */
+  int16_t           a_button_icon_scale;      /* 0x0DB2 */
+  int16_t           start_arrow_left_x;       /* 0x0DB4 */
+  int16_t           start_arrow_right_x;      /* 0x0DB6 */
+  int16_t           start_arrows_y;           /* 0x0DB8 */
+  char              unk_1A_[0x000C];          /* 0x0DBA */
+  int16_t           start_arrow_left_anim;    /* 0x0DC6 */
+  int16_t           start_arrow_right_anim;   /* 0x0DC8 */
+  char              unk_1B_[0x0004];          /* 0x0DCA */
+  uint16_t          minimap_x;                /* 0x0DCE */
+  uint16_t          minimap_y;                /* 0x0DD0 */
   int16_t           minimap_disabled;         /* 0x0DD2 */
-  char              unk_15_[0x015A];          /* 0x0DD4 */
+  char              unk_1C_[0x008C];          /* 0x0DD4 */
+  uint16_t          load_scene_on_epona;      /* 0x0E60 */
+  char              unk_1D_[0x00D6];          /* 0x0E62 */
+  uint16_t          minimap_r;                /* 0x0E64 */
+  uint16_t          minimap_g;                /* 0x0E66 */
+  uint16_t          minimap_b;                /* 0x0E68 */
+  char              unk_1E_[0x00C4];          /* 0x0E6A */
   int16_t           dungeon_map_floor;        /* 0x0F2E */
-  char              unk_16_[0x0064];          /* 0x0F30 */
+  char              unk_1F_[0x0064];          /* 0x0F30 */
   uint16_t          item_ammo_x[4];           /* 0x0F94 */
   uint16_t          item_ammo_y[4];           /* 0x0F9C */
-  char              unk_17_[0x0008];          /* 0x0FA4 */
+  char              unk_20_[0x0008];          /* 0x0FA4 */
   uint16_t          item_icon_space[4];       /* 0x0FAC */
   uint16_t          item_button_space[4];     /* 0x0FB4 */
-  char              unk_18_[0x0618];          /* 0x0FBC */
+  char              unk_21_[0x0618];          /* 0x0FBC */
                                               /* 0x15D4 */
 } z64_gameinfo_t;
 
