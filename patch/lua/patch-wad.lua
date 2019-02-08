@@ -107,7 +107,7 @@ for i = 1, #arg do
       error(" packing failed", 0)
     end
     n_patched = n_patched + 1
-    print(" done")
+    print(" done, saved as " .. rom_id .. ".wad")
   end
 end
 

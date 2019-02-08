@@ -25,7 +25,7 @@ for i = 1, #arg do
     patch:apply(rom)
     rom:save_file("gz-" .. rom_id ..  ".z64")
     n = n + 1
-    print(" done")
+    print(" done, saved as " .. rom_id .. ".z64")
   end
 end
 if n == 0 then
