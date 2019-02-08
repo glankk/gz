@@ -1,12 +1,16 @@
 -- parse arguments
 local arg = {...}
+local opt_y = false
 local opt_id
 local opt_title
 local opt_region
 local opt_raphnet
 local opt_disable_controller_remappings
 while arg[1] do
-  if arg[1] == "-i" or arg[1] == "--channelid" then
+  if arg[1] == "-y" then
+    opt_y = true
+    table.remove(arg, 1)
+  elseif arg[1] == "-i" or arg[1] == "--channelid" then
     opt_id = arg[2]
     table.remove(arg, 1)
     table.remove(arg, 1)
@@ -28,9 +32,19 @@ while arg[1] do
     break
   end
 end
+
+function quit(code)
+  if not opt_y then
+    print("press enter to continue")
+    io.read()
+  end
+  os.exit(code)
+end
+
 if #arg < 1 then
-  print("usage: `patch-wad [<gzinject-arg>...] <wad-file>...`" ..
+  print("usage: `patch-wad [-y] [<gzinject-arg>...] <wad-file>...`" ..
         " (or drag and drop a wad onto the patch script)")
+  if opt_y then return 0 end
   local line = io.read()
   if line ~= nil and line:sub(1, 1) == "\"" and line:sub(-1, -1) == "\"" then
     line = line:sub(2, -2)
@@ -58,7 +72,8 @@ for i = 1, #arg do
                                          " -d wadextract" ..
                                          " -w \"" .. arg[i] .. "\"")
   if gzinject_result ~= 0 then
-    error(" unpacking failed", 0)
+    print(" unpacking failed")
+    quit(1)
   end
   -- check rom id
   local rom = gru.n64rom_load("wadextract/content5/rom")
@@ -104,7 +119,8 @@ for i = 1, #arg do
     -- execute
     local _,_,gzinject_result = os.execute(gzinject_cmd)
     if gzinject_result ~= 0 then
-      error(" packing failed", 0)
+      print(" packing failed")
+      quit(1)
     end
     n_patched = n_patched + 1
     print(" done, saved as " .. rom_id .. ".wad")
@@ -119,5 +135,4 @@ else
   print(n_patched .. " wads were patched")
 end
 
-print("press enter to continue")
-io.read()
+quit(0)

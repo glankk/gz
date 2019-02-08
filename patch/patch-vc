@@ -3,4 +3,4 @@ set -e
 
 cd $(dirname $(readlink -f $0))
 export PATH="$(readlink -f ./bin):$PATH"
-gru lua/patch-vc.lua "$@"
+gru lua/patch-vc.lua -y "$@"
