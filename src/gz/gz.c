@@ -680,6 +680,24 @@ HOOK void ocarina_sync_hook(void)
                     "i"(&gz.frames_queued));
 }
 
+HOOK uint32_t afx_rand_hook(void)
+{
+  if (gz.movie_state == MOVIE_IDLE) {
+    /* produce a number using the audio rng, as normal */
+    uint32_t (*z64_afx_rand_func)(void) = (void*)z64_afx_rand_func_addr;
+    return z64_afx_rand_func();
+  }
+  else {
+    /* produce a number that is deterministic within gz movies */
+    uint8_t *song_length = (void*)(z64_ocarina_state_addr + 0x0068);
+    int n = *song_length + 1;
+    uint32_t v = z64_random;
+    for (int i = 0; i < n; ++i)
+      v = v * 0x0019660D + 0x3C6EF35F;
+    return v;
+  }
+}
+
 static void main_return_proc(struct menu_item *item, void *data)
 {
   gz_hide_menu();

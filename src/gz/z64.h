@@ -1889,8 +1889,10 @@ typedef struct
 #define z64_AfxCmdW_addr                        0x800BB0BC
 #define z64_FlushAfxCmd_addr                    0x800BB140
 #define z64_ConfigureAfx_addr                   0x800BB548
+#define z64_afx_rand_func_addr                  0x800BBD80
 #define z64_ocarina_input_call_addr             0x800C1F40
 #define z64_ocarina_sync_hook_addr              0x800C2EA0
+#define z64_afx_rand_call_addr                  0x800C3A50
 #define z64_ocarina_update_func_addr            0x800C3DC8
 #define z64_ResetAudio_addr                     0x800C7E98
 #define z64_CheckAfxConfigBusy_addr             0x800CB798
@@ -2031,8 +2033,10 @@ typedef struct
 #define z64_AfxCmdW_addr                        0x800BB0DC
 #define z64_FlushAfxCmd_addr                    0x800BB160
 #define z64_ConfigureAfx_addr                   0x800BB568
+#define z64_afx_rand_func_addr                  0x800BBDA0
 #define z64_ocarina_input_call_addr             0x800C1F90
 #define z64_ocarina_sync_hook_addr              0x800C2EFC
+#define z64_afx_rand_call_addr                  0x800C3AC0
 #define z64_ocarina_update_func_addr            0x800C3E38
 #define z64_ResetAudio_addr                     0x800C8070
 #define z64_CheckAfxConfigBusy_addr             0x800CB958
@@ -2173,8 +2177,10 @@ typedef struct
 #define z64_AfxCmdW_addr                        0x800BB740
 #define z64_FlushAfxCmd_addr                    0x800BB7C4
 #define z64_ConfigureAfx_addr                   0x800BBBCC
+#define z64_afx_rand_func_addr                  0x800BC404
 #define z64_ocarina_input_call_addr             0x800C25F0
 #define z64_ocarina_sync_hook_addr              0x800C355C
+#define z64_afx_rand_call_addr                  0x800C4118
 #define z64_ocarina_update_func_addr            0x800C4490
 #define z64_ResetAudio_addr                     0x800C86E8
 #define z64_CheckAfxConfigBusy_addr             0x800CBFD8

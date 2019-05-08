@@ -707,6 +707,8 @@ uint32_t save_state(void *state)
 
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  serial_write(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
+  serial_write(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
   /* save song state */
   serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
   serial_write(&p, (void*)z64_scarecrow_song_addr, 0x0140);
@@ -1611,6 +1613,8 @@ void load_state(void *state)
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  serial_read(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
+  serial_read(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
   /* load song state */
   serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
   serial_read(&p, (void*)z64_scarecrow_song_addr, 0x0140);
