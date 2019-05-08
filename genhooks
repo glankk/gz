@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
-AS="${AS:-mips64-gcc}"
-CC="${CC:-mips64-gcc}"
+AS="${AS:-mips64-as}"
+CPP="${CPP:-mips64-cpp}"
 NM="${NM:-mips64-nm}"
 READELF="${READELF:-mips64-readelf}"
 
@@ -13,7 +13,7 @@ fi
 
 z64def()
 {
-  printf "#include \"src/gz/z64.h\"\n$1" | $CC -E - $CPPFLAGS | tail -n 1 | sed -e s/^M//g
+  printf "#include \"src/gz/z64.h\"\n$1" | $CPP - $CPPFLAGS | tail -n 1 | sed -e s/^M//g
 }
 
 gzsym()
@@ -26,7 +26,7 @@ asmgsc()
   addr="$(printf "%d" "$1")"
   addr="$(expr "$addr" % 536870912 + 2164260864)" # addr = addr & 0x1FFFFFFF | 0x81000000
   tmpfile="$(mktemp)"
-  echo ".set noreorder; .set noat; $2" | $AS -x assembler -c - -o "$tmpfile"
+  echo ".set noreorder; .set noat; $2" | $AS - -o "$tmpfile"
   $READELF -x .text "$tmpfile" | grep "0x[0-9A-Fa-f]\{8\}" | grep -o " [0-9A-Fa-f]\{8\}" |
   while read -r line; do
     printf "%08X %04X\n" "$addr" "0x`echo "$line" | sed -e "s/\(....\)..../\1/"`"
