@@ -9,7 +9,7 @@ LD                    = mips64-g++
 OBJCOPY               = mips64-objcopy
 NM                    = mips64-nm
 READELF               = mips64-readelf
-GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ',\',$(CPPFLAGS))' ./genhooks
+GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ','\'',$(CPPFLAGS))' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
