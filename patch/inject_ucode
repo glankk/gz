@@ -1,12 +1,5 @@
 #!/usr/bin/env sh
 set -e
 
-REALPATH="$0"
-while test -L "$REALPATH"; do
-  REALPATH="`readlink "$REALPATH"`"
-done
-REALPATH="`cd "\`dirname "$REALPATH"\`" && pwd -P`"
-
-cd "$REALPATH"
-export PATH="$REALPATH/bin:$PATH"
+export PATH="$PWD/bin:$PATH"
 gru lua/inject_ucode.lua "$@"

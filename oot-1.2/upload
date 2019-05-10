@@ -1,12 +1,5 @@
 #!/usr/bin/env sh
 set -e
 
-REALPATH="$0"
-while test -L "$REALPATH"; do
-  REALPATH="`readlink "$REALPATH"`"
-done
-REALPATH="`cd "\`dirname "$REALPATH"\`" && pwd -P`"
-
-cd "$REALPATH"
-export PATH="$REALPATH/../bin:$PATH"
+export PATH="$PWD/../bin:$PATH"
 gs -w bin 0x80400060 1024 ../bin/gz/oot-1.2/gz.bin -w text hooks.gsc -u

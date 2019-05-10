@@ -1,13 +1,6 @@
 #!/usr/bin/env sh
 set -e
 
-REALPATH="$0"
-while test -L "$REALPATH"; do
-  REALPATH="`readlink "$REALPATH"`"
-done
-REALPATH="`cd "\`dirname "$REALPATH"\`" && pwd -P`"
-
-cd "$REALPATH/.."
 echo 45e | gzinject -a genkey -k patch/common-key.bin >/dev/null
 gru patch/lua/make-wad.lua "$@" || true
 rm -rf patch/common-key.bin patch/wadextract

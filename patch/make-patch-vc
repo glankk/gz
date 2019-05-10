@@ -1,12 +1,5 @@
 #!/usr/bin/env sh
 set -e
 
-REALPATH="$0"
-while test -L "$REALPATH"; do
-  REALPATH="`readlink "$REALPATH"`"
-done
-REALPATH="`cd "\`dirname "$REALPATH"\`" && pwd -P`"
-
-cd "$REALPATH/.."
 if test ! -d patch/ups; then mkdir patch/ups; fi
 gru patch/lua/make-patch-vc.lua "$@"
