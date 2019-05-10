@@ -643,6 +643,15 @@ uint32_t save_state(void *state)
   /* rng */
   serial_write(&p, &z64_random, sizeof(z64_random));
 
+  /* spell states */
+  serial_write(&p, (void*)z64_dins_state_1_addr, 0x0004);
+  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0006), 0x0002);
+  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0014), 0x0004);
+  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0020), 0x0004);
+  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x003C), 0x0004);
+  serial_write(&p, (void*)z64_fw_state_1_addr, 0x0004);
+  serial_write(&p, (void*)z64_fw_state_2_addr, 0x0004);
+
   /* camera state */
   serial_write(&p, (void*)z64_camera_state_addr, 0x0020);
 
@@ -707,6 +716,7 @@ uint32_t save_state(void *state)
 
   /* save ocarina state */
   serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  /* ocarina minigame parameters */
   serial_write(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
   serial_write(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
   /* save song state */
@@ -1389,6 +1399,15 @@ void load_state(void *state)
   /* rng */
   serial_read(&p, &z64_random, sizeof(z64_random));
 
+  /* spell states */
+  serial_read(&p, (void*)z64_dins_state_1_addr, 0x0004);
+  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0006), 0x0002);
+  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0014), 0x0004);
+  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0020), 0x0004);
+  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x003C), 0x0004);
+  serial_read(&p, (void*)z64_fw_state_1_addr, 0x0004);
+  serial_read(&p, (void*)z64_fw_state_2_addr, 0x0004);
+
   /* camera state */
   serial_read(&p, (void*)z64_camera_state_addr, 0x0020);
 
@@ -1613,6 +1632,7 @@ void load_state(void *state)
 
   /* load ocarina state */
   serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  /* ocarina minigame parameters */
   serial_read(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
   serial_read(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
   /* load song state */
