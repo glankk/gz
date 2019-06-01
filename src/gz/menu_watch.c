@@ -12,6 +12,7 @@ struct item_data
 {
   uint32_t        address;
   enum watch_type type;
+  _Bool           visible;
 };
 
 static int watch_type_size[] =
@@ -29,6 +30,8 @@ static int draw_proc(struct menu_item *item,
   uint32_t address = data->address;
   if (address < 0x80000000 || address >= 0x80800000 ||
       data->type < 0 || data->type >= WATCH_TYPE_MAX)
+    return 1;
+  if (!data->visible)
     return 1;
   address -= address % watch_type_size[data->type];
   switch (data->type) {
@@ -77,6 +80,7 @@ struct menu_item *menu_add_watch(struct menu *menu, int x, int y,
   struct item_data *data = malloc(sizeof(*data));
   data->address = address;
   data->type = type;
+  data->visible = 1;
   struct menu_item *item = menu_item_add(menu, x, y, NULL, 0xC0C0C0);
   item->text = malloc(17);
   item->selectable = 0;
@@ -95,6 +99,18 @@ void menu_watch_set_address(struct menu_item *item, uint32_t address)
 {
   struct item_data *data = item->data;
   data->address = address;
+}
+
+void menu_watch_set_visible(struct menu_item *item, _Bool visible)
+{
+  struct item_data *data = item->data;
+  data->visible = visible;
+}
+
+_Bool menu_watch_get_visible(struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  return data->visible;
 }
 
 enum watch_type menu_watch_get_type(struct menu_item *item)

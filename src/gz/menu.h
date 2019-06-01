@@ -234,6 +234,8 @@ void                menu_watch_set_address(struct menu_item *item,
 enum watch_type     menu_watch_get_type(struct menu_item *item);
 void                menu_watch_set_type(struct menu_item *item,
                                         enum watch_type type);
+void                menu_watch_set_visible(struct menu_item *item, _Bool visible);
+_Bool               menu_watch_get_visible(struct menu_item *item);
 struct menu_item   *menu_add_userwatch(struct menu *menu, int x, int y,
                                        uint32_t address, enum watch_type type);
 struct menu_item   *menu_userwatch_address(struct menu_item *item);

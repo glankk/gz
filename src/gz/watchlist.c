@@ -262,12 +262,38 @@ static int destroy_proc(struct menu_item *item)
   return 0;
 }
 
+static int toggle_visibility_proc(struct menu_item *item,
+                      enum menu_callback_reason reason,
+                      void *data)
+{
+  struct item_data *item_data = data;
+  if (reason == MENU_CALLBACK_THINK) {
+    _Bool visible = 1;
+    if (item_data->members.size > 0) {
+      struct member_data *member_data = get_member(item_data, 0);
+      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+      visible = menu_watch_get_visible(watch);
+    }
+    menu_checkbox_set(item, visible);
+  } else if (reason == MENU_CALLBACK_SWITCH_ON || reason == MENU_CALLBACK_SWITCH_OFF) {
+    _Bool visible = reason == MENU_CALLBACK_SWITCH_ON ? 1 : 0;
+
+    for (int i = 0; i < item_data->members.size; i++) {
+      struct member_data *member_data = get_member(item_data, i);
+      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+      menu_watch_set_visible(watch, visible);
+    }
+    menu_checkbox_set(item, visible);
+  }
+  return 0;
+}
+
 struct menu_item *watchlist_create(struct menu *menu,
                                    struct menu *menu_release,
                                    int x, int y)
 {
   struct menu *imenu;
-  struct menu_item *item = menu_add_imenu(menu, x, y, &imenu);
+  struct menu_item *item = menu_add_imenu(menu, x, y+1, &imenu);
   struct item_data *data = malloc(sizeof(*data));
   data->menu_release = menu_release;
   data->imenu = imenu;
@@ -277,6 +303,10 @@ struct menu_item *watchlist_create(struct menu *menu,
   data->add_button = menu_add_button_icon(imenu, 0, 0,
                                           list_icons, 0, 0x00FF00,
                                           add_button_proc, data);
+
+  menu_add_static(menu, x, y, "visible", 0xC0C0C0);
+  menu_add_checkbox(menu, x+8, y, toggle_visibility_proc, data);
+
 #ifndef WIIVC
   struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
   data->import_button = menu_add_button_icon(imenu, 2, 0,
