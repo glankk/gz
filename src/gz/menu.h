@@ -168,7 +168,6 @@ struct menu_item   *menu_item_add(struct menu *menu, int x, int y,
                                   const char *text, uint32_t color);
 void                menu_item_enable(struct menu_item *item);
 void                menu_item_disable(struct menu_item *item);
-_Bool               menu_item_get_enabled(struct menu_item *item);
 void                menu_item_transfer(struct menu_item *item,
                                        struct menu *menu);
 void                menu_item_remove(struct menu_item *item);

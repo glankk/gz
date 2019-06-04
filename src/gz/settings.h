@@ -108,29 +108,30 @@ struct watch_info
 
 struct settings_bits
 {
-  uint32_t font_resource  : 4;
-  uint32_t drop_shadow    : 1;
-  uint32_t input_display  : 1;
-  uint32_t log            : 1;
-  uint32_t lag_counter    : 1;
-  uint32_t lag_unit       : 1;
+  uint32_t font_resource   : 4;
+  uint32_t drop_shadow     : 1;
+  uint32_t input_display   : 1;
+  uint32_t log             : 1;
+  uint32_t lag_counter     : 1;
+  uint32_t lag_unit        : 1;
 #ifndef WIIVC
-  uint32_t timer          : 1;
+  uint32_t timer           : 1;
 #endif
-  uint32_t pause_display  : 1;
-  uint32_t macro_input    : 1;
-  uint32_t break_type     : 1;
-  uint32_t warp_age       : 2;
-  uint32_t warp_cutscene  : 5;
+  uint32_t pause_display   : 1;
+  uint32_t macro_input     : 1;
+  uint32_t break_type      : 1;
+  uint32_t warp_age        : 2;
+  uint32_t warp_cutscene   : 5;
 #ifndef WIIVC
-  uint32_t load_to        : 2;
-  uint32_t on_load        : 2;
+  uint32_t load_to         : 2;
+  uint32_t on_load         : 2;
 #endif
-  uint32_t col_view_mode  : 1;
-  uint32_t col_view_xlu   : 1;
-  uint32_t col_view_line  : 1;
-  uint32_t col_view_shade : 1;
-  uint32_t col_view_rd    : 1;
+  uint32_t col_view_mode   : 1;
+  uint32_t col_view_xlu    : 1;
+  uint32_t col_view_line   : 1;
+  uint32_t col_view_shade  : 1;
+  uint32_t col_view_rd     : 1;
+  uint32_t watches_visible : 1;
 };
 
 struct settings_data

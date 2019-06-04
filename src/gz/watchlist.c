@@ -275,31 +275,19 @@ static int toggle_visibility_proc(struct menu_item *item,
 {
   struct item_data *item_data = data;
   if (reason == MENU_CALLBACK_THINK) {
-    _Bool enabled;
-    if (item_data->members.size > 0) {
-      struct member_data *member_data = get_member(item_data, 0);
-      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      enabled = menu_item_get_enabled(watch);
-    } else {
-      enabled = menu_checkbox_get(item);
-    }
-    menu_checkbox_set(item, enabled);
+    menu_checkbox_set(item, settings->bits.watches_visible);
   }
-  else if (reason == MENU_CALLBACK_SWITCH_ON) {
+  else if (reason == MENU_CALLBACK_CHANGED) {
+    settings->bits.watches_visible = menu_checkbox_get(item);
     for (int i = 0; i < item_data->members.size; i++) {
       struct member_data *member_data = get_member(item_data, i);
       struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      menu_item_enable(watch);
+      if (settings->bits.watches_visible)
+        menu_item_enable(watch);
+      else
+        menu_item_disable(watch);
     }
-    menu_checkbox_set(item, 1);
-  }
-  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
-    for (int i = 0; i < item_data->members.size; i++) {
-      struct member_data *member_data = get_member(item_data, i);
-      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      menu_item_disable(watch);
-    }
-    menu_checkbox_set(item, 0);
+    menu_checkbox_set(item, settings->bits.watches_visible);
   }
   return 0;
 }
@@ -315,7 +303,7 @@ struct menu_item *watchlist_create(struct menu *menu,
   menu_add_static(menu, x, y, "visible", 0xC0C0C0);
   data->visibility_checkbox = menu_add_checkbox(menu, x+8, y,
                                                 toggle_visibility_proc, data);
-  menu_checkbox_set(data->visibility_checkbox, 1);
+  menu_checkbox_set(data->visibility_checkbox, settings->bits.watches_visible);
 
   data->menu_release = menu_release;
   data->imenu = imenu;

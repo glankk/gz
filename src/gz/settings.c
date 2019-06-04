@@ -57,6 +57,7 @@ void settings_load_default(void)
   d->bits.col_view_line = 0;
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;
+  d->bits.watches_visible = 1;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;
