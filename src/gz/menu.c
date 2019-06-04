@@ -481,6 +481,11 @@ void menu_item_disable(struct menu_item *item)
   menu_deselect(item->owner, item);
 }
 
+_Bool menu_item_get_enabled(struct menu_item *item)
+{
+  return item->enabled;
+}
+
 void menu_item_transfer(struct menu_item *item, struct menu *menu)
 {
   if (menu == item->owner)

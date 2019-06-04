@@ -17,6 +17,7 @@ struct item_data
 #ifndef WIIVC
   struct menu_item *import_button;
 #endif
+  struct menu_item *visibility_checkbox;
 };
 
 struct member_data
@@ -191,6 +192,12 @@ static int add_member(struct item_data *data,
   member_data->position_set = 1;
   menu_add_button_icon(imenu, 0, 0, list_icons, 1, 0xFF0000,
                        remove_button_proc, member_data);
+
+  if (!menu_checkbox_get(data->visibility_checkbox)) {
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    menu_item_disable(watch);
+  }
+
   if (anchored)
     menu_item_disable(member_data->positioning);
   else
@@ -268,22 +275,31 @@ static int toggle_visibility_proc(struct menu_item *item,
 {
   struct item_data *item_data = data;
   if (reason == MENU_CALLBACK_THINK) {
-    _Bool visible = 1;
+    _Bool enabled;
     if (item_data->members.size > 0) {
       struct member_data *member_data = get_member(item_data, 0);
       struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      visible = menu_watch_get_visible(watch);
+      enabled = menu_item_get_enabled(watch);
+    } else {
+      enabled = menu_checkbox_get(item);
     }
-    menu_checkbox_set(item, visible);
-  } else if (reason == MENU_CALLBACK_SWITCH_ON || reason == MENU_CALLBACK_SWITCH_OFF) {
-    _Bool visible = reason == MENU_CALLBACK_SWITCH_ON ? 1 : 0;
-
+    menu_checkbox_set(item, enabled);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_ON) {
     for (int i = 0; i < item_data->members.size; i++) {
       struct member_data *member_data = get_member(item_data, i);
       struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      menu_watch_set_visible(watch, visible);
+      menu_item_enable(watch);
     }
-    menu_checkbox_set(item, visible);
+    menu_checkbox_set(item, 1);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    for (int i = 0; i < item_data->members.size; i++) {
+      struct member_data *member_data = get_member(item_data, i);
+      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+      menu_item_disable(watch);
+    }
+    menu_checkbox_set(item, 0);
   }
   return 0;
 }
@@ -295,6 +311,12 @@ struct menu_item *watchlist_create(struct menu *menu,
   struct menu *imenu;
   struct menu_item *item = menu_add_imenu(menu, x, y+1, &imenu);
   struct item_data *data = malloc(sizeof(*data));
+
+  menu_add_static(menu, x, y, "visible", 0xC0C0C0);
+  data->visibility_checkbox = menu_add_checkbox(menu, x+8, y,
+                                                toggle_visibility_proc, data);
+  menu_checkbox_set(data->visibility_checkbox, 1);
+
   data->menu_release = menu_release;
   data->imenu = imenu;
   vector_init(&data->members, sizeof(struct member_data*));
@@ -304,8 +326,6 @@ struct menu_item *watchlist_create(struct menu *menu,
                                           list_icons, 0, 0x00FF00,
                                           add_button_proc, data);
 
-  menu_add_static(menu, x, y, "visible", 0xC0C0C0);
-  menu_add_checkbox(menu, x+8, y, toggle_visibility_proc, data);
 
 #ifndef WIIVC
   struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
