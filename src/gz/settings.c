@@ -57,6 +57,7 @@ void settings_load_default(void)
   d->bits.col_view_line = 0;
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;
+  d->bits.watches_visible = 1;
   d->menu_x = 16;
   d->menu_y = 64;
   d->input_display_x = 16;
@@ -114,6 +115,7 @@ void settings_load_default(void)
   d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                BUTTON_D_RIGHT);
+  d->binds[COMMAND_TOGGLEWATCHES] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
 #ifndef WIIVC
   d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
                                             BUTTON_D_LEFT);

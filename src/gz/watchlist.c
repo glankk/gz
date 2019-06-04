@@ -17,6 +17,7 @@ struct item_data
 #ifndef WIIVC
   struct menu_item *import_button;
 #endif
+  struct menu_item *visibility_checkbox;
 };
 
 struct member_data
@@ -191,6 +192,12 @@ static int add_member(struct item_data *data,
   member_data->position_set = 1;
   menu_add_button_icon(imenu, 0, 0, list_icons, 1, 0xFF0000,
                        remove_button_proc, member_data);
+
+  if (!settings->bits.watches_visible) {
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    menu_item_disable(watch);
+  }
+
   if (anchored)
     menu_item_disable(member_data->positioning);
   else
@@ -262,13 +269,54 @@ static int destroy_proc(struct menu_item *item)
   return 0;
 }
 
+void watchlist_show(struct menu_item *watchlist) {
+  struct item_data *data = watchlist->data;
+  for (int i = 0; i < data->members.size; i++) {
+    struct member_data *member_data = get_member(data, i);
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    menu_item_enable(watch);
+  }
+}
+
+void watchlist_hide(struct menu_item *watchlist) {
+  struct item_data *data = watchlist->data;
+  for (int i = 0; i < data->members.size; i++) {
+    struct member_data *member_data = get_member(data, i);
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    menu_item_disable(watch);
+  }
+}
+
+static int toggle_visibility_proc(struct menu_item *item,
+                      enum menu_callback_reason reason,
+                      void *data)
+{
+  struct menu_item *watchlist = data;
+  if (reason == MENU_CALLBACK_CHANGED) {
+    settings->bits.watches_visible = menu_checkbox_get(item);
+    if (settings->bits.watches_visible)
+      watchlist_show(watchlist);
+    else
+      watchlist_hide(watchlist);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    menu_checkbox_set(item, settings->bits.watches_visible);
+  }
+  return 0;
+}
+
 struct menu_item *watchlist_create(struct menu *menu,
                                    struct menu *menu_release,
                                    int x, int y)
 {
   struct menu *imenu;
-  struct menu_item *item = menu_add_imenu(menu, x, y, &imenu);
+  struct menu_item *item = menu_add_imenu(menu, x, y+1, &imenu);
   struct item_data *data = malloc(sizeof(*data));
+
+  menu_add_static(menu, x, y, "visible", 0xC0C0C0);
+  data->visibility_checkbox = menu_add_checkbox(menu, x+8, y,
+                                                toggle_visibility_proc, item);
+
   data->menu_release = menu_release;
   data->imenu = imenu;
   vector_init(&data->members, sizeof(struct member_data*));
@@ -277,6 +325,8 @@ struct menu_item *watchlist_create(struct menu *menu,
   data->add_button = menu_add_button_icon(imenu, 0, 0,
                                           list_icons, 0, 0x00FF00,
                                           add_button_proc, data);
+
+
 #ifndef WIIVC
   struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
   data->import_button = menu_add_button_icon(imenu, 2, 0,
