@@ -151,6 +151,7 @@ void          command_recordmacro(void);
 void          command_playmacro(void);
 void          command_colview(void);
 void          command_resetlag(void);
+void          command_togglewatches(void);
 #ifndef WIIVC
 void          command_timer(void);
 void          command_resettimer(void);

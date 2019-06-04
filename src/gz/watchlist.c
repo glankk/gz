@@ -273,22 +273,21 @@ static int toggle_visibility_proc(struct menu_item *item,
                       enum menu_callback_reason reason,
                       void *data)
 {
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.watches_visible = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.watches_visible = 0;
+
   struct item_data *item_data = data;
-  if (reason == MENU_CALLBACK_THINK) {
-    menu_checkbox_set(item, settings->bits.watches_visible);
+  for (int i = 0; i < item_data->members.size; i++) {
+    struct member_data *member_data = get_member(item_data, i);
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    if (settings->bits.watches_visible)
+      menu_item_enable(watch);
+    else
+      menu_item_disable(watch);
   }
-  else if (reason == MENU_CALLBACK_CHANGED) {
-    settings->bits.watches_visible = menu_checkbox_get(item);
-    for (int i = 0; i < item_data->members.size; i++) {
-      struct member_data *member_data = get_member(item_data, i);
-      struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-      if (settings->bits.watches_visible)
-        menu_item_enable(watch);
-      else
-        menu_item_disable(watch);
-    }
-    menu_checkbox_set(item, settings->bits.watches_visible);
-  }
+  menu_checkbox_set(item, settings->bits.watches_visible);
   return 0;
 }
 

@@ -15,42 +15,43 @@
 
 struct command_info command_info[COMMAND_MAX] =
 {
-  {"show/hide menu",    NULL,                 CMDACT_PRESS_ONCE},
-  {"return from menu",  NULL,                 CMDACT_PRESS_ONCE},
-  {"break free",        command_break,        CMDACT_HOLD},
-  {"levitate",          command_levitate,     CMDACT_HOLD},
-  {"fall",              command_fall,         CMDACT_HOLD},
-  {"turbo",             command_turbo,        CMDACT_HOLD},
-  {"file select",       command_fileselect,   CMDACT_PRESS_ONCE},
-  {"reload scene",      command_reload,       CMDACT_PRESS_ONCE},
-  {"void out",          command_void,         CMDACT_PRESS_ONCE},
-  {"toggle age",        command_age,          CMDACT_PRESS_ONCE},
-  {"save state",        command_savestate,    CMDACT_PRESS_ONCE},
-  {"load state",        command_loadstate,    CMDACT_PRESS_ONCE},
-  {"save memfile",      command_savememfile,  CMDACT_PRESS_ONCE},
-  {"load memfile",      command_loadmemfile,  CMDACT_PRESS_ONCE},
-  {"save position",     command_savepos,      CMDACT_HOLD},
-  {"load position",     command_loadpos,      CMDACT_HOLD},
-  {"previous state",    command_prevstate,    CMDACT_PRESS_ONCE},
-  {"next state",        command_nextstate,    CMDACT_PRESS_ONCE},
-  {"previous memfile",  command_prevfile,     CMDACT_PRESS_ONCE},
-  {"next memfile",      command_nextfile,     CMDACT_PRESS_ONCE},
-  {"previous position", command_prevpos,      CMDACT_PRESS_ONCE},
-  {"next position",     command_nextpos,      CMDACT_PRESS_ONCE},
-  {"pause/unpause",     command_pause,        CMDACT_PRESS_ONCE},
-  {"frame advance",     command_advance,      CMDACT_PRESS},
-  {"record macro",      command_recordmacro,  CMDACT_PRESS_ONCE},
-  {"play macro",        command_playmacro,    CMDACT_PRESS_ONCE},
-  {"collision view",    command_colview,      CMDACT_PRESS_ONCE},
-  {"explore prev room", NULL,                 CMDACT_PRESS},
-  {"explore next room", NULL,                 CMDACT_PRESS},
-  {"reset lag counter", command_resetlag,     CMDACT_HOLD},
+  {"show/hide menu",    NULL,                  CMDACT_PRESS_ONCE},
+  {"return from menu",  NULL,                  CMDACT_PRESS_ONCE},
+  {"break free",        command_break,         CMDACT_HOLD},
+  {"levitate",          command_levitate,      CMDACT_HOLD},
+  {"fall",              command_fall,          CMDACT_HOLD},
+  {"turbo",             command_turbo,         CMDACT_HOLD},
+  {"file select",       command_fileselect,    CMDACT_PRESS_ONCE},
+  {"reload scene",      command_reload,        CMDACT_PRESS_ONCE},
+  {"void out",          command_void,          CMDACT_PRESS_ONCE},
+  {"toggle age",        command_age,           CMDACT_PRESS_ONCE},
+  {"save state",        command_savestate,     CMDACT_PRESS_ONCE},
+  {"load state",        command_loadstate,     CMDACT_PRESS_ONCE},
+  {"save memfile",      command_savememfile,   CMDACT_PRESS_ONCE},
+  {"load memfile",      command_loadmemfile,   CMDACT_PRESS_ONCE},
+  {"save position",     command_savepos,       CMDACT_HOLD},
+  {"load position",     command_loadpos,       CMDACT_HOLD},
+  {"previous state",    command_prevstate,     CMDACT_PRESS_ONCE},
+  {"next state",        command_nextstate,     CMDACT_PRESS_ONCE},
+  {"previous memfile",  command_prevfile,      CMDACT_PRESS_ONCE},
+  {"next memfile",      command_nextfile,      CMDACT_PRESS_ONCE},
+  {"previous position", command_prevpos,       CMDACT_PRESS_ONCE},
+  {"next position",     command_nextpos,       CMDACT_PRESS_ONCE},
+  {"pause/unpause",     command_pause,         CMDACT_PRESS_ONCE},
+  {"frame advance",     command_advance,       CMDACT_PRESS},
+  {"record macro",      command_recordmacro,   CMDACT_PRESS_ONCE},
+  {"play macro",        command_playmacro,     CMDACT_PRESS_ONCE},
+  {"collision view",    command_colview,       CMDACT_PRESS_ONCE},
+  {"explore prev room", NULL,                  CMDACT_PRESS},
+  {"explore next room", NULL,                  CMDACT_PRESS},
+  {"reset lag counter", command_resetlag,      CMDACT_HOLD},
+  {"toggle watches",    command_togglewatches, CMDACT_PRESS},
 #ifndef WIIVC
-  {"start/stop timer",  command_timer,        CMDACT_PRESS_ONCE},
-  {"reset timer",       command_resettimer,   CMDACT_HOLD},
-  {"start timer",       command_starttimer,   CMDACT_PRESS_ONCE},
-  {"stop timer",        command_stoptimer,    CMDACT_PRESS_ONCE},
-  {"reset",             command_reset,        CMDACT_PRESS_ONCE},
+  {"start/stop timer",  command_timer,         CMDACT_PRESS_ONCE},
+  {"reset timer",       command_resettimer,    CMDACT_HOLD},
+  {"start timer",       command_starttimer,    CMDACT_PRESS_ONCE},
+  {"stop timer",        command_stoptimer,     CMDACT_PRESS_ONCE},
+  {"reset",             command_reset,         CMDACT_PRESS_ONCE},
 #endif
 };
 
@@ -454,6 +455,13 @@ void command_resetlag(void)
 {
   gz.frame_counter = 0;
   gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+}
+
+void command_togglewatches(void)
+{
+  settings->bits.watches_visible = !settings->bits.watches_visible;
+  menu_think(gz.menu_main);
+  menu_think(gz.menu_watchlist);
 }
 
 #ifndef WIIVC

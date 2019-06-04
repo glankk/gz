@@ -115,6 +115,7 @@ void settings_load_default(void)
   d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                BUTTON_D_RIGHT);
+  d->binds[COMMAND_TOGGLEWATCHES] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
 #ifndef WIIVC
   d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
                                             BUTTON_D_LEFT);
