@@ -460,8 +460,10 @@ void command_resetlag(void)
 void command_togglewatches(void)
 {
   settings->bits.watches_visible = !settings->bits.watches_visible;
-  menu_think(gz.menu_main);
-  menu_think(gz.menu_global);
+  if (settings->bits.watches_visible)
+    watchlist_show(gz.menu_watchlist);
+  else
+    watchlist_hide(gz.menu_watchlist);
 }
 
 #ifndef WIIVC
