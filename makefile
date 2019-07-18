@@ -1,14 +1,16 @@
 PACKAGE_TARNAME      ?= gz
 PACKAGE_URL          ?= github.com/glankk/gz
-AS                    = mips64-as
-CCAS                  = mips64-gcc -x assembler-with-cpp
-CPP                   = mips64-cpp
-CC                    = mips64-gcc
-CXX                   = mips64-g++
-LD                    = mips64-g++
-OBJCOPY               = mips64-objcopy
-NM                    = mips64-nm
-READELF               = mips64-readelf
+target                = mips64
+program_prefix        = $(target)-
+AS                    = $(program_prefix)as
+CCAS                  = $(program_prefix)gcc -x assembler-with-cpp
+CPP                   = $(program_prefix)cpp
+CC                    = $(program_prefix)gcc
+CXX                   = $(program_prefix)g++
+LD                    = $(program_prefix)g++
+OBJCOPY               = $(program_prefix)objcopy
+NM                    = $(program_prefix)nm
+READELF               = $(program_prefix)readelf
 GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ','\'',$(CPPFLAGS))' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
