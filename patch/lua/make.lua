@@ -5,16 +5,17 @@ local rom_info = rom_table[rom:crc32()]
 if rom_info == nil then
   return nil
 end
-local rom_id = rom_info.game .. "-" .. rom_info.version
-print("rom is " .. rom_id .. "-" .. rom_info.region)
+local gz_version = rom_info.gz_version
+print("rom is " ..
+      rom_info.game .. "-" .. rom_info.version .. "-" .. rom_info.region)
 print("building gz")
 local make = os.getenv("MAKE")
 if make == nil or make == "" then
   make = "make"
 end
 local _,_,make_result = os.execute(make ..
-                                   " gz-" .. rom_id ..
-                                   " gz-" .. rom_id .. "-hooks")
+                                   " gz-" .. gz_version ..
+                                   " gz-" .. gz_version .. "-hooks")
 if make_result ~= 0 then
   error("failed to build gz", 0)
 end
@@ -22,17 +23,17 @@ print("loading file system")
 local fs = gru.z64fs_load_blob(rom)
 print("patching code file")
 local code_file = fs:get(rom_info.code_ind)
-local hooks = gru.gsc_load(rom_id .. "/hooks.gsc")
+local hooks = gru.gsc_load(gz_version .. "/hooks.gsc")
 hooks:shift(-rom_info.code_ram)
 hooks:apply_be(code_file)
-local ups_size_patch = gru.gsc_load(rom_id .. "/patch/ups_size_patch.gsc")
+local ups_size_patch = gru.gsc_load(gz_version .. "/patch/ups_size_patch.gsc")
 ups_size_patch:shift(-rom_info.code_ram)
 ups_size_patch:apply_be(code_file)
 fs:replace(rom_info.code_ind, code_file, fs:compressed(rom_info.code_ind))
 print("reassembling rom")
 local patched_rom = fs:assemble_rom()
 print("building ldr")
-local gz = gru.blob_load("bin/gz/" .. rom_id .. "/gz.bin")
+local gz = gru.blob_load("bin/gz/" .. gz_version .. "/gz.bin")
 local payload_rom = fs:prom_tail()
 local payload_ram = 0x80400060 - 0x60
 local payload_size = gz:size() + 0x60
@@ -49,7 +50,7 @@ if make_result ~= 0 then
   error("failed to build ldr", 0)
 end
 print("inserting payload")
-gru.gsc_load(rom_id .. "/patch/mem_patch.gsc"):apply_be(patched_rom)
+gru.gsc_load(gz_version .. "/patch/mem_patch.gsc"):apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)
 patched_rom:write(0x1000, ldr)

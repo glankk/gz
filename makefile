@@ -22,7 +22,7 @@ ALL_LDFLAGS           = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc
 ALL_LDLIBS            = $(LDLIBS)
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
 RESDESC               = $(RESDIR)/resources.json
-GZ_VERSIONS           = oot-1.0 oot-1.1 oot-1.2 oot-vc
+GZ_VERSIONS           = oot-1.0 oot-1.1 oot-1.2 oot-mq-j oot-1.2-vc oot-mq-j-vc
 GZ_ADDRESS            = 80400060
 LDR_ADDRESS           = 80000400
 SRCDIR                = src
@@ -36,13 +36,20 @@ CXXFILES              = *.cpp *.cxx *.cc *.c++
 OOT-1.0               = $(OBJ-gz-oot-1.0) $(ELF-gz-oot-1.0) $(HOOKS-gz-oot-1.0)
 OOT-1.1               = $(OBJ-gz-oot-1.1) $(ELF-gz-oot-1.1) $(HOOKS-gz-oot-1.1)
 OOT-1.2               = $(OBJ-gz-oot-1.2) $(ELF-gz-oot-1.2) $(HOOKS-gz-oot-1.2)
-VC                    = $(OBJ-gz-oot-vc) $(ELF-gz-oot-vc) $(HOOKS-gz-oot-vc)
-N64                   = $(OOT-1.0) $(OOT-1.1) $(OOT-1.2)
+OOT-MQ-J              = $(OBJ-gz-oot-mq-j) $(ELF-gz-oot-mq-j) $(HOOKS-gz-oot-mq-j)
+N64                   = $(OOT-1.0) $(OOT-1.1) $(OOT-1.2) $(OOT-MQ-J)
+OOT-1.2-VC            = $(OBJ-gz-oot-1.2-vc) $(ELF-gz-oot-1.2-vc) $(HOOKS-gz-oot-1.2-vc)
+OOT-MQ-J-VC           = $(OBJ-gz-oot-mq-j-vc) $(ELF-gz-oot-mq-j-vc) $(HOOKS-gz-oot-mq-j-vc)
+VC                    = $(OOT-1.2-VC) $(OOT-MQ-J-VC)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
+HOOKS                 = $(foreach v,$(GZ_VERSIONS),gz-$(v)-hooks)
+LUA                   = $(foreach v,$(GZ_VERSIONS),gz-$(v)-lua)
 all                   : $(GZ)
-clean                 : $(foreach v,$(GZ_VERSIONS),clean-gz-$(v)-hooks)
+all-hooks             : $(HOOKS)
+clean                 : clean-hooks
 	rm -rf $(OBJDIR) $(BINDIR)
+clean-hooks           : $(foreach v,$(HOOKS),clean-$(v))
 distclean             :
 	rm -rf patch/ups patch/*.z64 patch/*.wad
 .PHONY                : all clean distclean
@@ -96,7 +103,7 @@ endef
 define hooks_template
  HOOKS-$(1)           = $$(DIR-$(1))/hooks.gsc
  $$(HOOKS-$(1))       : $$(ELF-$(1))
-	$$(GENHOOKS) $$< > $$@
+	$$(GENHOOKS) $$< >$$@
  $(1)-hooks           : $$(HOOKS-$(1))
  clean-$(1)-hooks     :
 	rm -f $$(HOOKS-$(1))
@@ -126,7 +133,9 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
 $(OOT-1.0)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT10
 $(OOT-1.1)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT11
 $(OOT-1.2)            : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT12
-$(VC)                 : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT12 -DWIIVC
+$(OOT-MQ-J)           : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOTMQJ
+$(OOT-1.2-VC)         : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOT12 -DWIIVC
+$(OOT-MQ-J-VC)        : CPPFLAGS             ?= -DZ64_VERSION=Z64_OOTMQJ -DWIIVC
 $(N64)                : CFLAGS               ?= -O3 -flto -ffat-lto-objects
 $(VC)                 : CFLAGS               ?= -O1 -fno-reorder-blocks
 $(N64)                : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects

@@ -9,10 +9,7 @@ for i = 1, #arg do
   local rom_info, rom, patched_rom = make(arg[i])
   if rom_info ~= nil then
     print("saving rom")
-    local rom_id = rom_info.game .. "-" ..
-                   rom_info.version .. "-" ..
-                   rom_info.region
-    patched_rom:save_file("patch/gz-" .. rom_id ..  ".z64")
+    patched_rom:save_file("patch/" .. rom_info.gz_name ..  ".z64")
   end
 end
 print("done")

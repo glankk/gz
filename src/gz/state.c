@@ -193,150 +193,150 @@ static void load_sky_image(void)
 
     case 0x0002:
       /* bazaar */
-      zu_getfile_idx(977, sky_ctxt->textures[0]);
-      zu_getfile_idx(978, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_SP1a_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_SP1a_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0003:
       /* overcast sunset */
-      zu_getfile_idx(953, sky_ctxt->textures[0]);
-      zu_getfile_idx(953, sky_ctxt->textures[1]);
-      zu_getfile_idx(954, sky_ctxt->palettes);
-      zu_getfile_idx(954, sky_ctxt->palettes + 0x100);
+      zu_getfile_idx(z64_vr_cloud2_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_cloud2_static, sky_ctxt->textures[1]);
+      zu_getfile_idx(z64_vr_cloud2_pal_static, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_cloud2_pal_static, sky_ctxt->palettes + 0x100);
       break;
 
     case 0x0004:
       /* market ruins */
-      zu_getfile_idx(965, sky_ctxt->textures[0]);
-      zu_getfile_idx(966, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_RUVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_RUVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0005:
       /* cutscene map */
-      zu_getfile_idx(957, sky_ctxt->textures[0]);
-      zu_getfile_idx(959, sky_ctxt->textures[1]);
-      zu_getfile_idx(958, sky_ctxt->palettes);
-      zu_getfile_idx(960, sky_ctxt->palettes + 0x100);
+      zu_getfile_idx(z64_vr_holy0_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_holy1_static, sky_ctxt->textures[1]);
+      zu_getfile_idx(z64_vr_holy0_pal_static, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_holy1_pal_static, sky_ctxt->palettes + 0x100);
       break;
 
     case 0x0007:
       /* link's house */
-      zu_getfile_idx(967, sky_ctxt->textures[0]);
-      zu_getfile_idx(968, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_LHVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_LHVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0009:
       /* market day */
-      zu_getfile_idx(961, sky_ctxt->textures[0]);
-      zu_getfile_idx(962, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_MDVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_MDVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x000A:
       /* market night */
-      zu_getfile_idx(963, sky_ctxt->textures[0]);
-      zu_getfile_idx(964, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_MNVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_MNVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x000B:
       /* happy mask shop */
-      zu_getfile_idx(1003, sky_ctxt->textures[0]);
-      zu_getfile_idx(1004, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_FCVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_FCVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x000C:
       /* know-it-all brothers' house */
-      zu_getfile_idx(969, sky_ctxt->textures[0]);
-      zu_getfile_idx(970, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_KHVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_KHVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x000E:
       /* house of twins */
-      zu_getfile_idx(971, sky_ctxt->textures[0]);
-      zu_getfile_idx(972, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_K3VR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_K3VR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x000F:
       /* stable */
-      zu_getfile_idx(979, sky_ctxt->textures[0]);
-      zu_getfile_idx(980, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_MLVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_MLVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0010:
       /* carpenter's house */
-      zu_getfile_idx(981, sky_ctxt->textures[0]);
-      zu_getfile_idx(982, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_KKRVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_KKRVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0011:
       /* kokiri shop */
-      zu_getfile_idx(987, sky_ctxt->textures[0]);
-      zu_getfile_idx(988, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_KSVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_KSVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0013:
       /* goron shop */
-      zu_getfile_idx(989, sky_ctxt->textures[0]);
-      zu_getfile_idx(990, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_GLVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_GLVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0014:
       /* zora shop */
-      zu_getfile_idx(991, sky_ctxt->textures[0]);
-      zu_getfile_idx(992, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_ZRVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_ZRVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0016:
       /* kakariko potion shop */
-      zu_getfile_idx(993, sky_ctxt->textures[0]);
-      zu_getfile_idx(994, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_DGVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_DGVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0017:
       /* market potion shop */
-      zu_getfile_idx(995, sky_ctxt->textures[0]);
-      zu_getfile_idx(996, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_ALVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_ALVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0018:
       /* bombchu shop */
-      zu_getfile_idx(997, sky_ctxt->textures[0]);
-      zu_getfile_idx(998, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_NSVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_NSVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x001A:
       /* richard's house */
-      zu_getfile_idx(985, sky_ctxt->textures[0]);
-      zu_getfile_idx(986, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_IPVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_IPVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x001B:
       /* impa's house */
-      zu_getfile_idx(999, sky_ctxt->textures[0]);
-      zu_getfile_idx(1000, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_LBVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_LBVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x001C:
       /* carpenter's tent */
-      zu_getfile_idx(1001, sky_ctxt->textures[0]);
-      zu_getfile_idx(1002, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_TTVR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_TTVR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0020:
       /* mido's house */
-      zu_getfile_idx(973, sky_ctxt->textures[0]);
-      zu_getfile_idx(974, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_K4VR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_K4VR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0021:
       /* saria's house */
-      zu_getfile_idx(975, sky_ctxt->textures[0]);
-      zu_getfile_idx(976, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_K5VR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_K5VR_pal_static, sky_ctxt->palettes);
       break;
 
     case 0x0022:
       /* guy's house */
-      zu_getfile_idx(983, sky_ctxt->textures[0]);
-      zu_getfile_idx(984, sky_ctxt->palettes);
+      zu_getfile_idx(z64_vr_KR3VR_static, sky_ctxt->textures[0]);
+      zu_getfile_idx(z64_vr_KR3VR_pal_static, sky_ctxt->palettes);
       break;
   }
 }
@@ -914,10 +914,14 @@ void load_state(void *state)
   serial_read(&p, &next_ent, sizeof(next_ent));
   while (node) {
     node->magic = 0x7373;
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
     node->arena = &z64_game_arena;
     node->filename = NULL,
     node->line = 0;
     node->thread_id = 4;
+#endif
     serial_read(&p, &node->free, sizeof(node->free));
     serial_read(&p, &node->size, sizeof(node->size));
     char *data = node->data;
@@ -1043,42 +1047,50 @@ void load_state(void *state)
   _Bool dungeon_map = si < 0x000A || (si > 0x0010 && si < 0x0019);
   if (c_pause_objects) {
     /* gameover-specific states */
-    if (c_gameover)
-      zu_getfile_idx(12, z64_game.pause_ctxt.icon_item_s);
+    if (c_gameover) {
+      zu_getfile_idx(z64_icon_item_gameover_static,
+                     z64_game.pause_ctxt.icon_item_s);
+    }
     else {
       z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
                            &z64_game.pause_ctxt.s27C);
       if (dungeon_map) {
-        zu_getfile_idx(11, z64_game.pause_ctxt.icon_item_s);
-        uint32_t vaddr = z64_ftab[26].vrom_start;
+        zu_getfile_idx(z64_icon_item_dungeon_static,
+                       z64_game.pause_ctxt.icon_item_s);
+        uint32_t vaddr = z64_ftab[z64_map_48x85_static].vrom_start;
         vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture, 0x07F8);
         vaddr += 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture + 0x0800, 0x07F8);
       }
       else
-        zu_getfile_idx(10, z64_game.pause_ctxt.icon_item_s);
+        zu_getfile_idx(z64_icon_item_field_static,
+                       z64_game.pause_ctxt.icon_item_s);
       if (z64_game.pause_ctxt.screen_idx == 1) {
-        uint32_t vaddr = z64_ftab[16].vrom_start;
+        uint32_t vaddr = z64_ftab[z64_map_name_static].vrom_start;
         if (z64_file.language != 0)
           vaddr += 0x000C * 0x0400;
         vaddr += z64_game.pause_ctxt.item_id * 0x400;
         zu_getfile(vaddr, z64_game.pause_ctxt.name_texture, 0x0400);
       }
       else {
-        uint32_t vaddr = z64_ftab[15].vrom_start;
+        uint32_t vaddr = z64_ftab[z64_item_name_static].vrom_start;
         if (z64_file.language != 0)
           vaddr += 0x007B * 0x0400;
         vaddr += z64_game.pause_ctxt.item_id * 0x400;
         zu_getfile(vaddr, z64_game.pause_ctxt.name_texture, 0x0400);
       }
     }
-    if (z64_file.language == 0)
-      zu_getfile_idx(13, z64_game.pause_ctxt.icon_item_lang);
-    else
-      zu_getfile_idx(14, z64_game.pause_ctxt.icon_item_lang);
-    zu_getfile_idx(8, z64_game.pause_ctxt.icon_item);
-    zu_getfile_idx(9, z64_game.pause_ctxt.icon_item_24);
+    if (z64_file.language == 0) {
+      zu_getfile_idx(z64_icon_item_jpn_static,
+                     z64_game.pause_ctxt.icon_item_lang);
+    }
+    else {
+      zu_getfile_idx(z64_icon_item_nes_static,
+                     z64_game.pause_ctxt.icon_item_lang);
+    }
+    zu_getfile_idx(z64_icon_item_static, z64_game.pause_ctxt.icon_item);
+    zu_getfile_idx(z64_icon_item_24_static, z64_game.pause_ctxt.icon_item_24);
     /* gray out restricted items */
     char *p = z64_play_ovl_tab[0].ptr;
     p += (z64_item_highlight_vram_addr - z64_play_ovl_tab[0].vram_start);
@@ -1420,7 +1432,7 @@ void load_state(void *state)
   serial_read(&p, (void*)z64_message_state_addr, 0x0028);
 
   /* load textures */
-  zu_getfile_idx(940, z64_game.if_ctxt.parameter);
+  zu_getfile_idx(z64_parameter_static, z64_game.if_ctxt.parameter);
   /* item button icons */
   for (int i = 0; i < 4; ++i)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
@@ -1437,7 +1449,7 @@ void load_state(void *state)
   /* message stuff */
   if (z64_game.message_state_1 != 0) {
     char *tex_buf = z64_game.message_texture;
-    uint32_t message_static = z64_ftab[18].vrom_start;
+    uint32_t message_static = z64_ftab[z64_message_static].vrom_start;
     /* load message background */
     switch (z64_game.message_type) {
       case 0:   zu_getfile(message_static + 0x0000, tex_buf, 0x1000); break;
@@ -1474,14 +1486,17 @@ void load_state(void *state)
         break;
       }
     }
-    if (foreground_image == 0)
-      zu_getfile(z64_ftab[20].vrom_start, tex_buf + 0x1000, 0x1200);
+    if (foreground_image == 0) {
+      zu_getfile(z64_ftab[z64_message_texture_static].vrom_start,
+                 tex_buf + 0x1000, 0x1200);
+    }
     else if (icon_idx >= 0x66) {
-      zu_getfile(z64_ftab[9].vrom_start + (icon_idx - 0x66) * 0x900,
+      zu_getfile(z64_ftab[z64_icon_item_24_static].vrom_start
+                 + (icon_idx - 0x66) * 0x900,
                  tex_buf + 0x1000, 0x900);
     }
     else if (icon_idx >= 0x00) {
-      zu_getfile(z64_ftab[8].vrom_start + icon_idx * 0x1000,
+      zu_getfile(z64_ftab[z64_icon_item_static].vrom_start + icon_idx * 0x1000,
                  tex_buf + 0x1000, 0x1000);
     }
   }

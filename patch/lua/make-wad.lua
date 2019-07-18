@@ -5,6 +5,7 @@ local opt_title
 local opt_region
 local opt_raphnet
 local opt_disable_controller_remappings
+local opt_wad
 while arg[1] do
   if arg[1] == "-i" or arg[1] == "--channelid" then
     opt_id = arg[2]
@@ -24,12 +25,18 @@ while arg[1] do
   elseif arg[1] == "--disable-controller-remappings" then
     opt_disable_controller_remappings = true
     table.remove(arg, 1)
+  elseif arg[1] == "-w" then
+    opt_wad = arg[2]
+    table.remove(arg, 1)
+    table.remove(arg, 1)
   else
     break
   end
 end
 if #arg < 1 then
-  print("usage: `make-wad [<gzinject-arg>...] <wad-file>...`")
+  print("usage: \n"
+        .. "  `make-wad [<gzinject-arg>...] <wad-file>...`\n"
+        .. "  `make-wad [<gzinject-arg>...] -w <wad-file> <rom-file>...`")
   return
 end
 
@@ -42,8 +49,18 @@ wiivc = true
 local make = loadfile("patch/lua/make.lua")
 
 for i = 1, #arg do
+  local input_rom
+  local input_wad
+  if opt_wad ~= nil then
+    input_rom = arg[i]
+    input_wad = opt_wad
+    print("making wad from `" .. input_wad .. "` with `" .. input_rom .. "`...")
+  else
+    input_rom = "patch/wadextract/content5/rom"
+    input_wad = arg[i]
+    print("making wad from `" .. input_wad .. "`...")
+  end
   -- extract wad
-  print("making wad from `" .. arg[i] .. "`...")
   print("unpacking wad")
   gru.os_rm("patch/wadextract")
   local _,_,gzinject_result = os.execute(gzinject ..
@@ -51,20 +68,17 @@ for i = 1, #arg do
                                          " -k patch/common-key.bin" ..
                                          " -d patch/wadextract" ..
                                          " --verbose" ..
-                                         " -w \"" .. arg[i] .. "\"")
+                                         " -w \"" .. input_wad .. "\"")
   if gzinject_result ~= 0 then
     error("unpacking failed", 0)
   end
   -- make rom
   print("making rom")
-  local rom_info, rom, patched_rom = make("patch/wadextract/content5/rom")
+  local rom_info, rom, patched_rom = make(input_rom)
   if rom_info ~= nil then
     print("saving rom")
     patched_rom:save_file("patch/wadextract/content5/rom")
     -- build gzinject pack command string
-    local rom_id = rom_info.game .. "-" ..
-                   rom_info.version .. "-" ..
-                   rom_info.region
     local gzinject_cmd = gzinject ..
                          " -a pack" ..
                          " -k patch/common-key.bin" ..
@@ -79,8 +93,8 @@ for i = 1, #arg do
       gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. opt_title .. ".wad\""
       gzinject_cmd = gzinject_cmd .. " -t \"" .. opt_title .. "\""
     else
-      gzinject_cmd = gzinject_cmd .. " -w patch/gz-" .. rom_id .. ".wad"
-      gzinject_cmd = gzinject_cmd .. " -t gz-" .. rom_id
+      gzinject_cmd = gzinject_cmd .. " -w patch/" .. rom_info.gz_name .. ".wad"
+      gzinject_cmd = gzinject_cmd .. " -t " .. rom_info.gz_name
     end
     if opt_region then
       gzinject_cmd = gzinject_cmd .. " -r \"" .. opt_region .. "\""

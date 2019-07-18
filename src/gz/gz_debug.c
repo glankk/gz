@@ -77,16 +77,15 @@ static int word_mod_proc(struct menu_item *item,
 
 static _Bool heap_node_validate(z64_arena_node_t *node)
 {
+  uint32_t addr = (uint32_t)node;
+  uint32_t size = node->size + sizeof(z64_arena_node_t);
+  uint32_t prev = (uint32_t)node->prev;
+  uint32_t next = (uint32_t)node->next;
   return node->magic == 0x7373 &&
-         (!node->next ||
-          ((uint32_t)node->next >= 0x80000000 &&
-           (uint32_t)node->next < 0x80400000 &&
-           (uint32_t)node->next > (uint32_t)node &&
-           (uint32_t)node->next - (uint32_t)node == node->size + 0x30)) &&
-         (!node->prev ||
-          ((uint32_t)node->prev >= 0x80000000 &&
-           (uint32_t)node->prev < 0x80400000 &&
-           (uint32_t)node->prev < (uint32_t)node));
+         (!next || (next >= 0x80000000 && next < 0x80400000 &&
+                    next > addr && next - addr == size)) &&
+         (!prev || (prev >= 0x80000000 && prev < 0x80400000 &&
+                    prev < addr));
 }
 
 static int heap_draw_proc(struct menu_item *item,
@@ -99,7 +98,7 @@ static int heap_draw_proc(struct menu_item *item,
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
   /* collect heap data */
-  const uint32_t heap_start = (uint32_t)&z64_link - 0x30;
+  const uint32_t heap_start = (uint32_t)&z64_link - sizeof(z64_arena_node_t);
   size_t max_alloc = 0;
   size_t min_alloc = 0;
   size_t total_alloc = 0;
@@ -133,8 +132,8 @@ static int heap_draw_proc(struct menu_item *item,
       if (min_alloc == 0 || p->size < min_alloc)
         min_alloc = p->size;
     }
-    overhead += 0x30;
-    total += p->size + 0x30;
+    overhead += sizeof(z64_arena_node_t);
+    total += p->size + sizeof(z64_arena_node_t);
     p = p->next;
   }
   /* show heap data */
@@ -164,7 +163,7 @@ static int heap_draw_proc(struct menu_item *item,
     if (p == error_node)
       break;
     size_t b = (uint32_t)p - heap_start;
-    size_t e = b + p->size + 0x30;
+    size_t e = b + p->size + sizeof(z64_arena_node_t);
     b = b * graph_width / total;
     e = e * graph_width / total;
     for (size_t i = b; i < e; ++i) {

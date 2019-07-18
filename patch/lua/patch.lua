@@ -27,14 +27,11 @@ for i = 1, #arg do
   if rom_info == nil then
     print(" unrecognized rom, skipping")
   else
-    local rom_id = rom_info.game .. "-" ..
-                   rom_info.version .. "-" ..
-                   rom_info.region
-    local patch = gru.ups_load("ups/gz-" .. rom_id .. ".ups")
+    local patch = gru.ups_load("ups/" .. rom_info.gz_name .. ".ups")
     patch:apply(rom)
-    rom:save_file("gz-" .. rom_id ..  ".z64")
+    rom:save_file(rom_info.gz_name ..  ".z64")
     n = n + 1
-    print(" done, saved as " .. rom_id .. ".z64")
+    print(" done, saved as " .. rom_info.gz_name .. ".z64")
   end
 end
 
