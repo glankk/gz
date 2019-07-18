@@ -44,7 +44,6 @@ VC                    = $(OOT-1.2-VC) $(OOT-MQ-J-VC)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 HOOKS                 = $(foreach v,$(GZ_VERSIONS),gz-$(v)-hooks)
-LUA                   = $(foreach v,$(GZ_VERSIONS),gz-$(v)-lua)
 all                   : $(GZ)
 all-hooks             : $(HOOKS)
 clean                 : clean-hooks

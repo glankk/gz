@@ -50,12 +50,14 @@ struct z64_arena
 {
   z64_arena_node_t *first_node;               /* 0x0000 */
   void             *start;                    /* 0x0004 */
-#if Z64_VERSION == Z64_OOTMQJ
-                                              /* 0x0008 */
-#else
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
   uint32_t          size;                     /* 0x0008 */
   char              unk_00_[0x0004];          /* 0x000C */
                                               /* 0x0010 */
+#elif Z64_VERSION == Z64_OOTMQJ
+                                              /* 0x0008 */
 #endif
 };
 
@@ -66,9 +68,9 @@ struct z64_arena_node
   uint32_t          size;                     /* 0x0004 */
   z64_arena_node_t *next;                     /* 0x0008 */
   z64_arena_node_t *prev;                     /* 0x000C */
-#if Z64_VERSION == Z64_OOTMQJ
-  char              data[];                   /* 0x0010 */
-#else
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
   char             *filename;                 /* 0x0010 */
   int32_t           line;                     /* 0x0014 */
   OSId              thread_id;                /* 0x0018 */
@@ -77,6 +79,8 @@ struct z64_arena_node
   uint32_t          count_lo;                 /* 0x0024 */
   char              pad_00_[0x0008];          /* 0x0028 */
   char              data[];                   /* 0x0030 */
+#elif Z64_VERSION == Z64_OOTMQJ
+  char              data[];                   /* 0x0010 */
 #endif
 };
 
