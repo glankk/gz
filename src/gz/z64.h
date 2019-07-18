@@ -2326,7 +2326,7 @@ typedef struct
 # define z64_LoadActionLabel_addr               0x80071874
 # define z64_UpdateEquipment_addr               0x800792D4
 # define z64_InitPauseObjects_addr              0x8007BC34
-# define z64_LoadRoom_addr                      0x80080804
+# define z64_LoadRoom_addr                      0x800805D8
 # define z64_room_load_sync_hook_addr           0x8008073C
 # define z64_UnloadRoom_addr                    0x80080804
 # define z64_Io_addr                            0x800911D4
