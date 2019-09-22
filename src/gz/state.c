@@ -1052,8 +1052,8 @@ void load_state(void *state)
                      z64_game.pause_ctxt.icon_item_s);
     }
     else {
-      z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
-                           &z64_game.pause_ctxt.s27C);
+      z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p_0x13C,
+                           &z64_game.pause_ctxt.s_0x27C);
       if (dungeon_map) {
         zu_getfile_idx(z64_icon_item_dungeon_static,
                        z64_game.pause_ctxt.icon_item_s);
@@ -1510,7 +1510,7 @@ void load_state(void *state)
   }
   if (c_pause_objects && !c_gameover && (!p_pause_objects || p_gameover)) {
     uint16_t (*img)[112][64];
-    img = z64_game.pause_ctxt.p13C;
+    img = z64_game.pause_ctxt.p_0x13C;
     for (int y = 0; y < 112; ++y)
       for (int x = 0; x < 64; ++x)
         (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);

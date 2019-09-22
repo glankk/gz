@@ -83,7 +83,7 @@ typedef struct
   uint32_t sav_cfg;
   uint32_t sec;
   uint32_t ver;
-  uint32_t unk_00_[0x0004];
+  uint32_t unk_0x40[0x0004];
   uint32_t cfg_cnt;
   uint32_t cfg_dat;
   uint32_t max_msg;
