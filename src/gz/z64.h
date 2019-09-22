@@ -2321,7 +2321,7 @@ typedef struct
 # define z64_LoadMinimap_addr                   0x8006BB14
 # define z64_minimap_disable_1_addr             0x8006C8A0
 # define z64_minimap_disable_2_addr             0x8006D024
-# define z64_SwitchAgeEquips_addr               0x80065FF4
+# define z64_SwitchAgeEquips_addr               0x8006F32C
 # define z64_UpdateItemButton_addr              0x8006F678
 # define z64_LoadActionLabel_addr               0x80071874
 # define z64_UpdateEquipment_addr               0x800792D4
