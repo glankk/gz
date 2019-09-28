@@ -61,17 +61,17 @@ void settings_load_default(void)
   d->bits.hit_view_xlu = 1;
   d->bits.hit_view_shade = 1;
   d->bits.watches_visible = 1;
-  d->menu_x = 16;
+  d->menu_x = 20;
   d->menu_y = 64;
-  d->input_display_x = 16;
-  d->input_display_y = Z64_SCREEN_HEIGHT - 6;
-  d->log_x = Z64_SCREEN_WIDTH - 12;
-  d->log_y = Z64_SCREEN_HEIGHT - 14;
-  d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
-  d->lag_counter_y = 20;
+  d->input_display_x = 20;
+  d->input_display_y = Z64_SCREEN_HEIGHT - 10;
+  d->log_x = Z64_SCREEN_WIDTH - 16;
+  d->log_y = Z64_SCREEN_HEIGHT - 18;
+  d->lag_counter_x = Z64_SCREEN_WIDTH - 16;
+  d->lag_counter_y = 24;
 #ifndef WIIVC
-  d->timer_x = 16;
-  d->timer_y = 20;
+  d->timer_x = 20;
+  d->timer_y = 24;
 #endif
   d->n_watches = 0;
   d->cheats = 0;
