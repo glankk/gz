@@ -1,0 +1,13 @@
+# gz-oot-vc-[u,j] with standard remapping
+0000 00000000 00000001
+# use 8MB memory
+0304 00002EB0 60000000
+# allocate 32MB for rom
+0304 0005BF44 3C807200
+# apply d-pad remappings
+0302 0016BAF0 00000800
+0302 0016BAF4 00000400
+0302 0016BAF8 00000200
+0302 0016BAFC 00000100
+# apply c-stick remapping
+0302 0016BB04 00000020

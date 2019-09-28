@@ -101,11 +101,12 @@ for i = 1, #arg do
     else
       gzinject_cmd = gzinject_cmd .. " -r 3"
     end
-    if opt_raphnet then
-      gzinject_cmd = gzinject_cmd .. " --raphnet"
-    end
     if opt_disable_controller_remappings then
-      gzinject_cmd = gzinject_cmd .. " --disable-controller-remappings"
+      gzinject_cmd = gzinject_cmd .. " -p patch/gzi/gz_noremap.gzi"
+    elseif opt_raphnet then
+      gzinject_cmd = gzinject_cmd .. " -p patch/gzi/gz_raphnet.gzi"
+    else
+      gzinject_cmd = gzinject_cmd .. " -p patch/gzi/gz.gzi"
     end
     -- execute
     print("packing wad")
