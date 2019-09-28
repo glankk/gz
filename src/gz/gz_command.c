@@ -42,6 +42,7 @@ struct command_info command_info[COMMAND_MAX] =
   {"record macro",      command_recordmacro,   CMDACT_PRESS_ONCE},
   {"play macro",        command_playmacro,     CMDACT_PRESS_ONCE},
   {"collision view",    command_colview,       CMDACT_PRESS_ONCE},
+  {"hitbox view",       command_hitview,       CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                  CMDACT_PRESS},
   {"explore next room", NULL,                  CMDACT_PRESS},
   {"reset lag counter", command_resetlag,      CMDACT_HOLD},
@@ -248,7 +249,7 @@ void command_levitate(void)
 
 void command_fall(void)
 {
-  z64_link.common.pos_1.y = -32768.f;
+  z64_link.common.pos_1.y = -4096.f;
 }
 
 void command_turbo(void)
@@ -445,10 +446,18 @@ void command_playmacro(void)
 
 void command_colview(void)
 {
-  if (gz.col_view_state == 0)
-    gz.col_view_state = 1;
-  else if (gz.col_view_state == 2)
-    gz.col_view_state = 3;
+  if (gz.col_view_state == COLVIEW_INACTIVE)
+    gz.col_view_state = COLVIEW_START;
+  else
+    gz.col_view_state = COLVIEW_STOP;
+}
+
+void command_hitview(void)
+{
+  if (gz.hit_view_state == HITVIEW_INACTIVE)
+    gz.hit_view_state = HITVIEW_START;
+  else
+    gz.hit_view_state = HITVIEW_BEGIN_STOP;
 }
 
 void command_resetlag(void)

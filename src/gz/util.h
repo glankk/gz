@@ -18,6 +18,26 @@ static inline _Bool set_int(_Bool enable)
   return ie;
 }
 
+static inline void cache_writeback_data(void *ptr, uint32_t len)
+{
+  char *p = ptr;
+  char *e = p + len;
+  while (p < e) {
+    __asm__ volatile ("cache 0x19, 0x0000(%0);" :: "r"(p));
+    p += 0x10;
+  }
+}
+
+static inline void cache_invalidate_data(void *ptr, uint32_t len)
+{
+  char *p = ptr;
+  char *e = p + len;
+  while (p < e) {
+    __asm__ volatile ("cache 0x11, 0x0000(%0);" :: "r"(p));
+    p += 0x10;
+  }
+}
+
 /* wait for dma and disable interrupts */
 static inline _Bool enter_dma_section(void)
 {
@@ -44,15 +64,13 @@ static inline void dma_read(void *dst, uint32_t cart_addr, uint32_t len)
   while (pi_regs.status & PI_STATUS_DMA_BUSY)
     ;
   pi_regs.status = PI_STATUS_CLR_INTR;
-  for (uint32_t i = 0; i < len; i += 0x10)
-    __asm__ volatile ("cache 0x11, 0x0000(%0);" :: "r"((uint32_t)dst + i));
+  cache_invalidate_data(dst, len);
 }
 
 /* flush cache and dma ram to cart */
 static inline void dma_write(void *src, uint32_t cart_addr, uint32_t len)
 {
-  for (uint32_t i = 0; i < len; i += 0x10)
-    __asm__ volatile ("cache 0x19, 0x0000(%0);" :: "r"((uint32_t)src + i));
+  cache_writeback_data(src, len);
   pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(src);
   pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
   pi_regs.rd_len = len - 1;

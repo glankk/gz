@@ -355,6 +355,7 @@ static void main_hook(void)
 
   /* execute and draw collision view */
   gz_col_view();
+  gz_hit_view();
 
   {
     /* draw splash */
@@ -452,6 +453,32 @@ HOOK void entrance_offset_hook(void)
   __asm__ volatile (".set  noat;"
                     "lw    $v1, %0;"
                     "la    $at, %1;" :: "m"(offset), "i"(0x51));
+}
+
+HOOK void draw_room_hook(z64_game_t *game, z64_room_t *room, int unk_a2)
+{
+  init_gp();
+  if (gz.ready && gz.hide_rooms) {
+    struct zu_disp_p disp_p;
+    zu_save_disp_p(&disp_p);
+    z64_DrawRoom(game, room, unk_a2);
+    zu_load_disp_p(&disp_p);
+  }
+  else
+    z64_DrawRoom(game, room, unk_a2);
+}
+
+HOOK void draw_actors_hook(z64_game_t *game, void *actor_ctxt)
+{
+  init_gp();
+  if (gz.ready && gz.hide_actors) {
+    struct zu_disp_p disp_p;
+    zu_save_disp_p(&disp_p);
+    z64_DrawActors(game, actor_ctxt);
+    zu_load_disp_p(&disp_p);
+  }
+  else
+    z64_DrawActors(game, actor_ctxt);
 }
 
 HOOK void input_hook(void)
@@ -734,7 +761,10 @@ static void init(void)
   gz.timer_counter_offset = -gz.cpu_counter;
   gz.timer_counter_prev = gz.cpu_counter;
 #endif
-  gz.col_view_state = 0;
+  gz.col_view_state = COLVIEW_INACTIVE;
+  gz.hit_view_state = HITVIEW_INACTIVE;
+  gz.hide_rooms = 0;
+  gz.hide_actors = 0;
   gz.memfile = malloc(sizeof(*gz.memfile) * SETTINGS_MEMFILE_MAX);
   for (int i = 0; i < SETTINGS_MEMFILE_MAX; ++i)
     gz.memfile_saved[i] = 0;

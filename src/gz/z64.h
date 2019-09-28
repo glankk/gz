@@ -1074,6 +1074,33 @@ typedef struct
 
 typedef struct
 {
+  z64_actor_t      *actor;                    /* 0x0000 */
+  z64_col_hdr_t    *col_hdr;                  /* 0x0004 */
+  uint16_t          poly_idx;                 /* 0x0008 */
+  uint16_t          ceil_list_idx;            /* 0x000A */
+  uint16_t          wall_list_idx;            /* 0x000C */
+  uint16_t          floor_list_idx;           /* 0x000E */
+  uint16_t          vtx_idx;                  /* 0x0010 */
+  char              pad_0x12[0x0002];         /* 0x0012 */
+  z64_xyzf_t        scale_1;                  /* 0x0014 */
+  z64_xyz_t         rot_1;                    /* 0x0020 */
+  char              pad_0x26[0x0002];         /* 0x0026 */
+  z64_xyzf_t        pos_1;                    /* 0x0028 */
+  z64_xyzf_t        scale_2;                  /* 0x0034 */
+  z64_xyz_t         rot_2;                    /* 0x0040 */
+  char              pad_0x46[0x0002];         /* 0x0046 */
+  z64_xyzf_t        pos_2;                    /* 0x0048 */
+  int16_t           h_0x54;                   /* 0x0054 */
+  int16_t           h_0x56;                   /* 0x0056 */
+  int16_t           h_0x58;                   /* 0x0058 */
+  int16_t           h_0x5A;                   /* 0x005A */
+  float             f_0x5C;                   /* 0x005C */
+  float             f_0x60;                   /* 0x0060 */
+                                              /* 0x0064 */
+} z64_dyn_col_t;
+
+typedef struct
+{
   /* static collision stuff */
   z64_col_hdr_t    *col_hdr;                  /* 0x0000 */
   z64_xyzf_t        bbox_min;                 /* 0x0004 */
@@ -1088,18 +1115,124 @@ typedef struct
   uint16_t          stc_list_pos;             /* 0x0046 */
   z64_col_list_t   *stc_list;                 /* 0x0048 */
   uint8_t          *stc_check;                /* 0x004C */
-  char              unk_0x50[0x13F0];         /* 0x0050 */
   /* dynamic collision stuff */
+  uint8_t           unk_flags_0x50;           /* 0x0050 */
+  char              unk_0x51[0x0003];         /* 0x0051 */
+  z64_dyn_col_t     dyn_col[50];              /* 0x0054 */
+  union
+  {
+    uint16_t        data;
+    struct
+    {
+      uint16_t      unk_00              : 14;
+      uint16_t      destroy             : 1;
+      uint16_t      active              : 1;
+    };
+  }                 dyn_flags[50];            /* 0x13DC */
   z64_col_poly_t   *dyn_poly;                 /* 0x1440 */
   z64_xyz_t        *dyn_vtx;                  /* 0x1444 */
   z64_col_list_t   *dyn_list;                 /* 0x1448 */
-  char              unk_0x144C[0x0008];       /* 0x144C */
+  uint32_t          n_dyn_list;               /* 0x144C */
+  char              unk_0x1450[0x0004];       /* 0x1450 */
   uint32_t          dyn_list_max;             /* 0x1454 */
   uint32_t          dyn_poly_max;             /* 0x1458 */
   uint32_t          dyn_vtx_max;              /* 0x145C */
   char              unk_0x1460[0x0004];       /* 0x1460 */
                                               /* 0x1464 */
 } z64_col_ctxt_t;
+
+enum
+{
+  Z64_HIT_CYL_LIST,
+  Z64_HIT_CYL,
+  Z64_HIT_TRI_LIST,
+  Z64_HIT_QUAD,
+};
+
+typedef struct
+{
+  z64_actor_t      *actor;                    /* 0x0000 */
+  char              unk_0x4[0x0011];          /* 0x0004 */
+  uint8_t           type;                     /* 0x0015 */
+  char              unk_0x16[0x0002];         /* 0x0016 */
+                                              /* 0x0018 */
+} z64_hit_t;
+
+typedef struct
+{
+  char              unk_0x0[0x0028];          /* 0x0000 */
+  z64_xyz_t         xyz_0x28;                 /* 0x0028 */
+  int16_t           h_0x2E;                   /* 0x002E */
+  struct
+  {
+    z64_xyz_t       pos;                      /* 0x0030 */
+    /* also the distance from the center to the bottom and top */
+    int16_t         radius;                   /* 0x0036 */
+  };
+  /* not used by hit tests */
+  float             f_0x38;                   /* 0x0038 */
+  uint8_t           b_0x3C;                   /* 0x003C */
+  char              unk_0x3D[0x0003];         /* 0x003D */
+                                              /* 0x0040 */
+} z64_hit_cyl_ent_t;
+
+typedef struct
+{
+  z64_hit_t         base;                     /* 0x0000 */
+  int32_t           n_ent;                    /* 0x0018 */
+  z64_hit_cyl_ent_t*ent_list;                 /* 0x001C */
+                                              /* 0x0020 */
+} z64_hit_cyl_list_t;
+
+typedef struct
+{
+  z64_hit_t         base;                     /* 0x0000 */
+  char              unk_0x18[0x0028];         /* 0x0018 */
+  int16_t           radius;                   /* 0x0040 */
+  int16_t           height;                   /* 0x0042 */
+  /* the y coordinate is offset by this during hit tests */
+  int16_t           y_offset;                 /* 0x0044 */
+  /* the origin is on the bottom center of the cylinder */
+  z64_xyz_t         pos;                      /* 0x0046 */
+                                              /* 0x004C */
+} z64_hit_cyl_t;
+
+typedef struct
+{
+  char              unk_0x0[0x0028];          /* 0x0000 */
+  z64_xyzf_t        v[3];                     /* 0x0028 */
+  char              unk_0x4C[0x0010];         /* 0x004C */
+                                              /* 0x005C */
+} z64_hit_tri_ent_t;
+
+typedef struct
+{
+  z64_hit_t         base;                     /* 0x0000 */
+  int32_t           n_ent;                    /* 0x0018 */
+  z64_hit_tri_ent_t*ent_list;                 /* 0x001C */
+                                              /* 0x0020 */
+} z64_hit_tri_list_t;
+
+typedef struct
+{
+  z64_hit_t         base;                     /* 0x0000 */
+  char              unk_0x18[0x0028];         /* 0x0018 */
+  z64_xyzf_t        v[4];                     /* 0x0040 */
+  char              unk_0x70[0x000C];         /* 0x0070 */
+                                              /* 0x007C */
+} z64_hit_quad_t;
+
+typedef struct
+{
+  int16_t           n_at;                     /* 0x0000 */
+  uint16_t          hz_0x2;                   /* 0x0002 */
+  z64_hit_t        *at_list[50];              /* 0x0004 */
+  int32_t           n_ac;                     /* 0x00CC */
+  z64_hit_t        *ac_list[60];              /* 0x00D0 */
+  int32_t           n_ot;                     /* 0x01C0 */
+  z64_hit_t        *ot_list[50];              /* 0x01C4 */
+                                              /* 0x028C */
+} z64_hit_ctxt_t;
 
 typedef struct
 {
@@ -1167,7 +1300,8 @@ typedef struct
 
 typedef struct
 {
-  char              unk_0x0[0x0001];          /* 0x0000 */
+  /* decides which draw function to use (0-2) */
+  uint8_t           mode;                     /* 0x0000 */
   int8_t            n_entries;                /* 0x0001 */
   char              pad_0x2[0x0002];          /* 0x0002 */
   uint32_t          seg_start;                /* 0x0004 */
@@ -1496,7 +1630,9 @@ typedef struct
   int16_t           entrance_index;           /* 0x11E1A */
   char              unk_0x11E1C[0x0042];      /* 0x11E1C */
   uint8_t           fadeout_transition;       /* 0x11E5E */
-  char              unk_0x11E5F[0x06B9];      /* 0x11E5F */
+  char              unk_0x11E5F[0x0001];      /* 0x11E5F */
+  z64_hit_ctxt_t    hit_ctxt;                 /* 0x11E60 */
+  char              unk_0x120EC[0x042C];      /* 0x120EC */
                                               /* 0x12518 */
 } z64_game_t;
 
@@ -1890,12 +2026,16 @@ typedef struct
 # define z64_InitPauseObjects_addr              0x8007C09C
 # define z64_LoadRoom_addr                      0x80080A3C
 # define z64_room_load_sync_hook_addr           0x80080BD0
+# define z64_DrawRoom_addr                      0x80080C48
 # define z64_UnloadRoom_addr                    0x80080C98
 # define z64_Io_addr                            0x80091474
 # define z64_CreateSkyGfx_addr                  0x80095A9C
 # define z64_CreateSkyVtx_addr                  0x80095C4C
 # define z64_entrance_offset_hook_addr          0x8009AA44
 # define z64_srand_call_addr                    0x8009AC80
+# define z64_draw_room_1_call_addr              0x8009C758
+# define z64_draw_room_2_call_addr              0x8009C770
+# define z64_draw_actors_call_addr              0x8009C838
 # define z64_StopSfx_addr                       0x800A0290
 # define z64_frame_input_func_addr              0x800A0BA0
 # define z64_main_hook_addr                     0x800A0BF8
@@ -2036,12 +2176,16 @@ typedef struct
 # define z64_InitPauseObjects_addr              0x8007C09C
 # define z64_LoadRoom_addr                      0x80080A3C
 # define z64_room_load_sync_hook_addr           0x80080BD0
+# define z64_DrawRoom_addr                      0x80080C48
 # define z64_UnloadRoom_addr                    0x80080C98
 # define z64_Io_addr                            0x80091484
 # define z64_CreateSkyGfx_addr                  0x80095AAC
 # define z64_CreateSkyVtx_addr                  0x80095C5C
 # define z64_entrance_offset_hook_addr          0x8009AA54
 # define z64_srand_call_addr                    0x8009AC90
+# define z64_draw_room_1_call_addr              0x8009C768
+# define z64_draw_room_2_call_addr              0x8009C780
+# define z64_draw_actors_call_addr              0x8009C848
 # define z64_StopSfx_addr                       0x800A02A0
 # define z64_frame_input_func_addr              0x800A0BB0
 # define z64_main_hook_addr                     0x800A0C08
@@ -2182,12 +2326,16 @@ typedef struct
 # define z64_InitPauseObjects_addr              0x8007C72C
 # define z64_LoadRoom_addr                      0x80081064
 # define z64_room_load_sync_hook_addr           0x800811F8
+# define z64_DrawRoom_addr                      0x80081270
 # define z64_UnloadRoom_addr                    0x800812C0
 # define z64_Io_addr                            0x80091AB4
 # define z64_CreateSkyGfx_addr                  0x8009618C
 # define z64_CreateSkyVtx_addr                  0x8009633C
 # define z64_entrance_offset_hook_addr          0x8009B134
 # define z64_srand_call_addr                    0x8009B370
+# define z64_draw_room_1_call_addr              0x8009CE48
+# define z64_draw_room_2_call_addr              0x8009CE60
+# define z64_draw_actors_call_addr              0x8009CF28
 # define z64_StopSfx_addr                       0x800A0980
 # define z64_frame_input_func_addr              0x800A1290
 # define z64_main_hook_addr                     0x800A12E4
@@ -2328,12 +2476,16 @@ typedef struct
 # define z64_InitPauseObjects_addr              0x8007BC34
 # define z64_LoadRoom_addr                      0x800805D8
 # define z64_room_load_sync_hook_addr           0x8008073C
+# define z64_DrawRoom_addr                      0x800807B4
 # define z64_UnloadRoom_addr                    0x80080804
 # define z64_Io_addr                            0x800911D4
 # define z64_CreateSkyGfx_addr                  0x80095798
 # define z64_CreateSkyVtx_addr                  0x80095948
 # define z64_entrance_offset_hook_addr          0x8009A6EC
 # define z64_srand_call_addr                    0x8009A938
+# define z64_draw_room_1_call_addr              0x8009C418
+# define z64_draw_room_2_call_addr              0x8009C430
+# define z64_draw_actors_call_addr              0x8009C504
 # define z64_StopSfx_addr                       0x8009FD80
 # define z64_frame_input_func_addr              0x800A0604
 # define z64_main_hook_addr                     0x800A0658
@@ -2606,6 +2758,8 @@ typedef void (*z64_InitPauseObjects_t)(z64_game_t *game, void *addr,
 typedef void (*z64_LoadRoom_t)        (z64_game_t *game,
                                        z64_room_ctxt_t *room_ctxt,
                                        uint8_t room_index);
+typedef void (*z64_DrawRoom_t)        (z64_game_t *game, z64_room_t *room,
+                                       int unk_a2);
 typedef void (*z64_UnloadRoom_t)      (z64_game_t *game,
                                        z64_room_ctxt_t *room_ctxt);
 typedef void (*z64_Io_t)              (uint32_t dev_addr, void *dram_addr,
@@ -2748,6 +2902,7 @@ typedef void (*z64_SceneConfig_t)     (z64_game_t *game);
 #define z64_InitPauseObjects    ((z64_InitPauseObjects_t)                     \
                                  z64_InitPauseObjects_addr)
 #define z64_LoadRoom            ((z64_LoadRoom_t)     z64_LoadRoom_addr)
+#define z64_DrawRoom            ((z64_DrawRoom_t)     z64_DrawRoom_addr)
 #define z64_UnloadRoom          ((z64_UnloadRoom_t)   z64_UnloadRoom_addr)
 #define z64_Io                  ((z64_Io_t)           z64_Io_addr)
 #define z64_CreateSkyGfx        ((z64_CreateSkyGfx_t) z64_CreateSkyGfx_addr)

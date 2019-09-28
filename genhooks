@@ -56,6 +56,9 @@ asmgsc()
 
 asmgsc  "$(z64def z64_main_hook_addr)"              "jal $(gzsym _start);"
 asmgsc  "$(z64def z64_entrance_offset_hook_addr)"   "jal $(gzsym entrance_offset_hook); nop;"
+asmgsc  "$(z64def z64_draw_room_1_call_addr)"       "jal $(gzsym draw_room_hook);"
+asmgsc  "$(z64def z64_draw_room_2_call_addr)"       "jal $(gzsym draw_room_hook);"
+asmgsc  "$(z64def z64_draw_actors_call_addr)"       "jal $(gzsym draw_actors_hook);"
 asmgsc  "$(z64def z64_srand_call_addr)"             "jal $(gzsym srand_hook);"
 asmgsc  "$(z64def z64_frame_input_call_addr)"       "jal $(gzsym input_hook); nop;"
 asmgsc  "$(z64def z64_ocarina_update_call_addr)"    "jal $(gzsym ocarina_update_hook);"

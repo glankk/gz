@@ -38,36 +38,6 @@ struct item_data
   float           yaw;
 };
 
-static void set_lighting(void)
-{
-  /* create light */
-  z64_gbi_lights_t *gbi_lights = gDisplayListAlloc(&z64_ctxt.gfx->poly_opa.d,
-                                                   sizeof(z64_gbi_lights_t));
-  gbi_lights->numlights = 0;
-  Ambient *a = &gbi_lights->lites.a;
-  a->l.col[0] = a->l.colc[0] = z64_game.lighting.ambient[0];
-  a->l.col[1] = a->l.colc[1] = z64_game.lighting.ambient[1];
-  a->l.col[2] = a->l.colc[2] = z64_game.lighting.ambient[2];
-  /* fill light */
-  for (z64_light_node_t *light_node = z64_game.lighting.light_list;
-       light_node; light_node = light_node->next)
-  {
-    z64_light_handler_t handler = z64_light_handlers[light_node->light->type];
-    handler(gbi_lights, &light_node->light->lightn, NULL);
-  }
-  /* set light */
-  gSPNumLights(z64_ctxt.gfx->poly_opa.p++, gbi_lights->numlights);
-  gSPNumLights(z64_ctxt.gfx->poly_xlu.p++, gbi_lights->numlights);
-  for (int i = 0; i < gbi_lights->numlights; ++i) {
-    gSPLight(z64_ctxt.gfx->poly_opa.p++, &gbi_lights->lites.l[i], i + 1);
-    gSPLight(z64_ctxt.gfx->poly_xlu.p++, &gbi_lights->lites.l[i], i + 1);
-  }
-  gSPLight(z64_ctxt.gfx->poly_opa.p++, &gbi_lights->lites.a,
-           gbi_lights->numlights + 1);
-  gSPLight(z64_ctxt.gfx->poly_xlu.p++, &gbi_lights->lites.a,
-           gbi_lights->numlights + 1);
-}
-
 static void draw_crosshair(struct menu_item *item)
 {
   struct item_data *data = item->data;
@@ -417,7 +387,7 @@ static int draw_proc(struct menu_item *item,
     }
     /* configure lights */
     zu_gfx_inject(&data->gfx);
-    set_lighting();
+    zu_set_lighting();
     /* execute scene config */
     z64_scene_config_table[z64_scene_table[
                            z64_game.scene_index].scene_config](&z64_game);
