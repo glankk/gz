@@ -438,18 +438,22 @@ HOOK void entrance_offset_hook(void)
 {
   init_gp();
   uint32_t offset;
-  if (z64_file.void_flag && z64_file.cutscene_index == 0x0000)
-    gz.entrance_override_once = gz.entrance_override_next;
-  if (gz.entrance_override_once) {
-    offset = 0;
-    gz.entrance_override_once = 0;
-    gz.entrance_override_next = 1;
-  }
-  else {
+  if (!gz.ready)
     offset = z64_file.scene_setup_index;
-    gz.entrance_override_next = 0;
+  else {
+    if (z64_file.void_flag && z64_file.cutscene_index == 0x0000)
+      gz.entrance_override_once = gz.entrance_override_next;
+    if (gz.entrance_override_once) {
+      offset = 0;
+      gz.entrance_override_once = 0;
+      gz.entrance_override_next = 1;
+    }
+    else {
+      offset = z64_file.scene_setup_index;
+      gz.entrance_override_next = 0;
+    }
+    gz.next_entrance = -1;
   }
-  gz.next_entrance = -1;
   __asm__ volatile (".set  noat;"
                     "lw    $v1, %0;"
                     "la    $at, %1;" :: "m"(offset), "i"(0x51));
@@ -536,19 +540,21 @@ HOOK void input_hook(void)
 HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
 {
   init_gp();
-  z64_disp_buf_t *z_disp[4] =
-  {
-    &z64_ctxt.gfx->work,
-    &z64_ctxt.gfx->poly_opa,
-    &z64_ctxt.gfx->poly_xlu,
-    &z64_ctxt.gfx->overlay,
-  };
-  for (int i = 0; i < 4; ++i) {
-    if (disp_buf == z_disp[i]) {
-      gz.disp_hook_size[i] = disp_buf->size;
-      gz.disp_hook_p[i] = (char*)disp_buf->p - (char*)disp_buf->buf;
-      gz.disp_hook_d[i] = (char*)disp_buf->d - (char*)disp_buf->buf;
-      break;
+  if (gz.ready) {
+    z64_disp_buf_t *z_disp[4] =
+    {
+      &z64_ctxt.gfx->work,
+      &z64_ctxt.gfx->poly_opa,
+      &z64_ctxt.gfx->poly_xlu,
+      &z64_ctxt.gfx->overlay,
+    };
+    for (int i = 0; i < 4; ++i) {
+      if (disp_buf == z_disp[i]) {
+        gz.disp_hook_size[i] = disp_buf->size;
+        gz.disp_hook_p[i] = (char*)disp_buf->p - (char*)disp_buf->buf;
+        gz.disp_hook_d[i] = (char*)disp_buf->d - (char*)disp_buf->buf;
+        break;
+      }
     }
   }
   disp_buf->size = size;
@@ -623,28 +629,30 @@ static void state_main_hook(void)
 HOOK void srand_hook(uint32_t seed)
 {
   init_gp();
-  gz.frame_flag = 1;
-  void (*z64_srand)(uint32_t seed) = (void*)z64_srand_func_addr;
-  if (gz.movie_state == MOVIE_RECORDING) {
-    /* insert a recorded seed */
-    struct movie_seed *ms = vector_at(&gz.movie_seeds, gz.movie_seed_pos);
-    if (!ms || ms->frame_idx != gz.movie_frame)
-      ms = vector_insert(&gz.movie_seeds, gz.movie_seed_pos++, 1, NULL);
-    ms->frame_idx = gz.movie_frame;
-    ms->old_seed = z64_random;
-    ms->new_seed = seed;
-  }
-  else if (gz.movie_state == MOVIE_PLAYING) {
-    /* restore a recorded seed, if conditions match */
-    struct movie_seed *ms = vector_at(&gz.movie_seeds, gz.movie_seed_pos);
-    if (ms && ms->frame_idx == gz.movie_frame) {
-      ++gz.movie_seed_pos;
-      if (ms->old_seed == z64_random) {
-        z64_random = ms->new_seed;
-        return;
+  if (gz.ready) {
+    gz.frame_flag = 1;
+    if (gz.movie_state == MOVIE_RECORDING) {
+      /* insert a recorded seed */
+      struct movie_seed *ms = vector_at(&gz.movie_seeds, gz.movie_seed_pos);
+      if (!ms || ms->frame_idx != gz.movie_frame)
+        ms = vector_insert(&gz.movie_seeds, gz.movie_seed_pos++, 1, NULL);
+      ms->frame_idx = gz.movie_frame;
+      ms->old_seed = z64_random;
+      ms->new_seed = seed;
+    }
+    else if (gz.movie_state == MOVIE_PLAYING) {
+      /* restore a recorded seed, if conditions match */
+      struct movie_seed *ms = vector_at(&gz.movie_seeds, gz.movie_seed_pos);
+      if (ms && ms->frame_idx == gz.movie_frame) {
+        ++gz.movie_seed_pos;
+        if (ms->old_seed == z64_random) {
+          z64_random = ms->new_seed;
+          return;
+        }
       }
     }
   }
+  void (*z64_srand)(uint32_t seed) = (void*)z64_srand_func_addr;
   z64_srand(seed);
 }
 
@@ -709,7 +717,8 @@ HOOK void ocarina_sync_hook(void)
 
 HOOK uint32_t afx_rand_hook(void)
 {
-  if (gz.movie_state == MOVIE_IDLE) {
+  init_gp();
+  if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* produce a number using the audio rng, as normal */
     uint32_t (*z64_afx_rand_func)(void) = (void*)z64_afx_rand_func_addr;
     return z64_afx_rand_func();
