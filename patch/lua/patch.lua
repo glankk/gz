@@ -23,7 +23,7 @@ local n = 0
 for i = 1, #arg do
   io.write("making patched rom from `" .. arg[i] .. "`...")
   local rom = gru.n64rom_load(arg[i])
-  local rom_info = rawget(rom_table, rom:crc32())
+  local rom_info = rom_table[rom:crc32()]
   if rom_info == nil then
     print(" unrecognized rom, skipping")
   else

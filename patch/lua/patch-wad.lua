@@ -95,7 +95,7 @@ for i = 1, #arg do
   end
   -- check rom id
   local rom = gru.n64rom_load(input_rom)
-  local rom_info = rawget(rom_table, rom:crc32())
+  local rom_info = rom_table[rom:crc32()]
   if rom_info == nil then
     print(" unrecognized rom, skipping")
   else

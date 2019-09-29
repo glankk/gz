@@ -7,7 +7,9 @@ local make = loadfile("patch/lua/make.lua")
 for i = 1, #arg do
   print("making patch for `" .. arg[i] .. "`")
   local rom_info, rom, patched_rom = make(arg[i])
-  if rom_info ~= nil then
+  if rom_info == nil then
+    print(" unrecognized rom, skipping")
+  else
     print("saving patch")
     gru.ups_create(rom, patched_rom):save("patch/ups/" ..
                                           rom_info.gz_name .. ".ups")
