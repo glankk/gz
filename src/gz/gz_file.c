@@ -213,26 +213,26 @@ static int do_save_file(const char *path, void *data)
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
-  FILE *f = fopen(path, "wb");
-  if (f) {
+  int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (f != -1) {
     file = malloc(sizeof(*file));
     if (!file)
       err_str = s_memory;
     else {
       gz_save_memfile(file);
-      if (fwrite(file, 1, sizeof(*file), f) != sizeof(*file))
-        err_str = strerror(ferror(f));
+      if (write(f, file, sizeof(*file)) != sizeof(*file))
+        err_str = strerror(errno);
       else {
-        if (fclose(f))
+        if (close(f))
           err_str = strerror(errno);
-        f = NULL;
+        f = -1;
       }
     }
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (file)
     free(file);
   if (err_str) {
@@ -249,10 +249,10 @@ static int do_load_file(const char *path, void *data)
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
-  FILE *f = fopen(path, "rb");
-  if (f) {
+  int f = open(path, O_RDONLY);
+  if (f != -1) {
     struct stat st;
-    if (fstat(fileno(f), &st))
+    if (fstat(f, &st))
       err_str = strerror(errno);
     else if (st.st_size != sizeof(*file))
       err_str = s_invalid;
@@ -260,27 +260,34 @@ static int do_load_file(const char *path, void *data)
       file = malloc(sizeof(*file));
       if (!file)
         err_str = s_memory;
-      else if (fread(file, 1, sizeof(*file), f) != sizeof(*file))
-        err_str = strerror(ferror(f));
       else {
-        if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
-            settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-        {
-          gz_load_memfile(file);
+        errno = 0;
+        if (read(f, file, sizeof(*file)) != sizeof(*file)) {
+          if (errno == 0)
+            err_str = s_invalid;
+          else
+            err_str = strerror(errno);
         }
-        if (settings->bits.load_to == SETTINGS_LOADTO_MEMFILE ||
-            settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-        {
-          gz.memfile[gz.memfile_slot] = *file;
-          gz.memfile_saved[gz.memfile_slot] = 1;
+        else {
+          if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
+              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
+          {
+            gz_load_memfile(file);
+          }
+          if (settings->bits.load_to == SETTINGS_LOADTO_MEMFILE ||
+              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
+          {
+            gz.memfile[gz.memfile_slot] = *file;
+            gz.memfile_saved[gz.memfile_slot] = 1;
+          }
         }
       }
     }
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (file)
     free(file);
   if (err_str) {

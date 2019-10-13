@@ -4,6 +4,8 @@
 #include <time.h>
 #include <list/list.h>
 
+#define FAT_MAX_CACHE_SECT    4
+
 #define FAT_CACHE_FAT         0
 #define FAT_CACHE_DATA        1
 #define FAT_CACHE_MAX         2
@@ -35,9 +37,12 @@ struct fat_cache
 {
   _Bool     valid;
   _Bool     dirty;
-  uint32_t  lba;
+  uint32_t  max_lba;
+  uint32_t  load_lba;
+  uint32_t  prep_lba;
+  int       n_sect;
   _Alignas(0x10)
-  char      data[0x200];
+  char      data[0x200 * FAT_MAX_CACHE_SECT];
 };
 
 typedef int (*fat_io_proc)(uint32_t lba, uint32_t n_block, void *buf);
@@ -66,6 +71,7 @@ struct fat
   uint32_t          data_lba;
   uint32_t          n_clust_byte;
   uint32_t          max_clust;
+  uint32_t          free_lb;
   /* cache */
   struct fat_cache  cache[FAT_CACHE_MAX];
 };

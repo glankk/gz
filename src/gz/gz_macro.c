@@ -96,15 +96,17 @@ static int do_import_macro(const char *path, void *data)
   const char *s_eof = "unexpected end of file";
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
-  FILE *f = fopen(path, "rb");
-  if (f) {
+  int f = open(path, O_RDONLY);
+  if (f != -1) {
+    int n;
     size_t n_input;
     size_t n_seed;
-    fread(&n_input, sizeof(n_input), 1, f);
-    if (ferror(f) || feof(f))
+    errno = 0;
+    n = sizeof(n_input);
+    if (read(f, &n_input, n) != n)
       goto f_err;
-    fread(&n_seed, sizeof(n_seed), 1, f);
-    if (ferror(f) || feof(f))
+    n = sizeof(n_seed);
+    if (read(f, &n_seed, n) != n)
       goto f_err;
     vector_clear(&gz.movie_inputs);
     vector_clear(&gz.movie_seeds);
@@ -119,28 +121,28 @@ static int do_import_macro(const char *path, void *data)
     vector_insert(&gz.movie_seeds, 0, n_seed, NULL);
     vector_shrink_to_fit(&gz.movie_inputs);
     vector_shrink_to_fit(&gz.movie_seeds);
-    fread(&gz.movie_input_start, sizeof(gz.movie_input_start), 1, f);
-    if (ferror(f) || feof(f))
+    n = sizeof(gz.movie_input_start);
+    if (read(f, &gz.movie_input_start, n) != n)
       goto f_err;
     sys_io_mode(SYS_IO_DMA);
-    fread(gz.movie_inputs.begin, gz.movie_inputs.element_size, n_input, f);
-    if (ferror(f) || feof(f))
+    n = gz.movie_inputs.element_size * n_input;
+    if (read(f, gz.movie_inputs.begin, n) != n)
       goto f_err;
-    fread(gz.movie_seeds.begin, gz.movie_seeds.element_size, n_seed, f);
-    if (ferror(f) || feof(f))
+    n = gz.movie_seeds.element_size * n_seed;
+    if (read(f, gz.movie_seeds.begin, n) != n)
       goto f_err;
 f_err:
     sys_io_mode(SYS_IO_PIO);
-    if (ferror(f))
-      err_str = strerror(ferror(f));
-    else if (feof(f))
+    if (errno == 0)
       err_str = s_eof;
+    else
+      err_str = strerror(errno);
   }
   else
     err_str = strerror(errno);
 error:
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (err_str) {
     menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
     return 1;
@@ -152,38 +154,40 @@ error:
 static int do_export_macro(const char *path, void *data)
 {
   const char *err_str = NULL;
-  FILE *f = fopen(path, "wb");
+  int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (f) {
+    int n;
     size_t n_input = gz.movie_inputs.size;
     size_t n_seed = gz.movie_seeds.size;
-    fwrite(&n_input, sizeof(n_input), 1, f);
-    if (ferror(f))
+    errno = 0;
+    n = sizeof(n_input);
+    if (write(f, &n_input, n) != n)
       goto f_err;
-    fwrite(&n_seed, sizeof(n_seed), 1, f);
-    if (ferror(f))
+    n = sizeof(n_seed);
+    if (write(f, &n_seed, n) != n)
       goto f_err;
-    fwrite(&gz.movie_input_start, sizeof(gz.movie_input_start), 1, f);
-    if (ferror(f))
+    n = sizeof(gz.movie_input_start);
+    if (write(f, &gz.movie_input_start, n) != n)
       goto f_err;
-    fwrite(gz.movie_inputs.begin, gz.movie_inputs.element_size, n_input, f);
-    if (ferror(f))
+    n = sizeof(gz.movie_inputs.element_size * n_input);
+    if (write(f, gz.movie_inputs.begin, n) != n)
       goto f_err;
-    fwrite(gz.movie_seeds.begin, gz.movie_seeds.element_size, n_seed, f);
-    if (ferror(f))
+    n = sizeof(gz.movie_seeds.element_size * n_seed);
+    if (write(f, gz.movie_seeds.begin, n) != n)
       goto f_err;
 f_err:
-    if (ferror(f))
-      err_str = strerror(ferror(f));
+    if (errno != 0)
+      err_str = strerror(errno);
     else {
-      if (fclose(f))
+      if (close(f))
         err_str = strerror(errno);
-      f = NULL;
+      f = -1;
     }
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (err_str) {
     menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
     return 1;
@@ -243,10 +247,10 @@ static int do_import_state(const char *path, void *data)
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct state_meta *state = NULL;
-  FILE *f = fopen(path, "rb");
-  if (f) {
+  int f = open(path, O_RDONLY);
+  if (f != -1) {
     struct stat st;
-    if (fstat(fileno(f), &st)) {
+    if (fstat(f, &st)) {
       err_str = strerror(errno);
       goto error;
     }
@@ -263,8 +267,8 @@ static int do_import_state(const char *path, void *data)
       goto error;
     }
     sys_io_mode(SYS_IO_DMA);
-    if (fread(state, 1, st.st_size, f) != st.st_size)
-      err_str = strerror(ferror(f));
+    if (read(f, state, st.st_size) != st.st_size)
+      err_str = strerror(errno);
     else if (state->z64_version != Z64_VERSION ||
              state->state_version != SETTINGS_STATE_VERSION)
     {
@@ -279,8 +283,8 @@ static int do_import_state(const char *path, void *data)
   else
     err_str = strerror(errno);
 error:
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (state) {
     free(state);
     gz.state_buf[gz.state_slot] = NULL;
@@ -296,21 +300,21 @@ error:
 static int do_export_state(const char *path, void *data)
 {
   const char *err_str = NULL;
-  FILE *f = fopen(path, "wb");
-  if (f) {
+  int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (f != -1) {
     struct state_meta *state = gz.state_buf[gz.state_slot];
-    if (fwrite(state, 1, state->size, f) == state->size) {
-      if (fclose(f))
+    if (write(f, state, state->size) == state->size) {
+      if (close(f))
         err_str = strerror(errno);
-      f = NULL;
+      f = -1;
     }
     else
-      err_str = strerror(ferror(f));
+      err_str = strerror(errno);
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (err_str) {
     menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
     return 1;

@@ -622,7 +622,7 @@ static int import_callback(const char *path, void *data)
       }
       else {
         if (!feof(f))
-          err_str = strerror(ferror(f));
+          err_str = strerror(errno);
         break;
       }
     }
