@@ -124,10 +124,8 @@ struct settings_bits
   uint32_t break_type      : 1;
   uint32_t warp_age        : 2;
   uint32_t warp_cutscene   : 5;
-#ifndef WIIVC
   uint32_t load_to         : 2;
   uint32_t on_load         : 2;
-#endif
   uint32_t col_view_mode   : 1;
   uint32_t col_view_xlu    : 1;
   uint32_t col_view_line   : 1;

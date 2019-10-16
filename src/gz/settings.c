@@ -48,10 +48,8 @@ void settings_load_default(void)
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
-#ifndef WIIVC
   d->bits.load_to = SETTINGS_LOADTO_ZFILE;
   d->bits.on_load = SETTINGS_ONLOAD_NOTHING;
-#endif
   d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->bits.col_view_xlu = 1;
   d->bits.col_view_line = 0;

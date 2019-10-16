@@ -14,9 +14,7 @@ struct item_data
   struct menu      *imenu;
   struct vector     members;
   struct menu_item *add_button;
-#ifndef WIIVC
   struct menu_item *import_button;
-#endif
   struct menu_item *visibility_checkbox;
 };
 
@@ -164,9 +162,7 @@ static int add_member(struct item_data *data,
       position < 0 || position > data->members.size)
     return 0;
   ++data->add_button->y;
-#ifndef WIIVC
   ++data->import_button->y;
-#endif
   for (int i = position; i < data->members.size; ++i) {
     struct member_data *member_data = get_member(data, i);
     ++member_data->index;
@@ -213,9 +209,7 @@ static int remove_member(struct item_data *data, int position)
     return 0;
   menu_navigate_top(data->imenu, MENU_NAVIGATE_DOWN);
   --data->add_button->y;
-#ifndef WIIVC
   --data->import_button->y;
-#endif
   for (int i = position + 1; i < data->members.size; ++i) {
     struct member_data *member_data = get_member(data, i);
     --member_data->index;
@@ -246,7 +240,6 @@ static void add_button_proc(struct menu_item *item, void *data)
   add_member(item_data, address, type, item_data->members.size, 1, 0, 0, 0);
 }
 
-#ifndef WIIVC
 static int import_callback(const char *path, void *data);
 static void import_button_proc(struct menu_item *item, void *data)
 {
@@ -254,7 +247,6 @@ static void import_button_proc(struct menu_item *item, void *data)
   menu_get_file(menu_get_top(item_data->imenu), GETFILE_LOAD, NULL, ".txt",
                 import_callback, item_data);
 }
-#endif
 
 static void remove_button_proc(struct menu_item *item, void *data)
 {
@@ -327,12 +319,10 @@ struct menu_item *watchlist_create(struct menu *menu,
                                           add_button_proc, data);
 
 
-#ifndef WIIVC
   struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
   data->import_button = menu_add_button_icon(imenu, 2, 0,
                                              file_icons, 1, 0xFFFFFF,
                                              import_button_proc, data);
-#endif
   item->data = data;
   item->destroy_proc = destroy_proc;
   return item;
@@ -369,8 +359,6 @@ void watchlist_fetch(struct menu_item *item)
 /*
    import menu
 */
-
-#ifndef WIIVC
 
 #define WATCHFILE_VIEW_ROWS   16
 
@@ -645,5 +633,3 @@ static int import_callback(const char *path, void *data)
   }
   return 1;
 }
-
-#endif

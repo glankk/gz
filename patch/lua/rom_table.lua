@@ -100,3 +100,9 @@ else
                     },
   }
 end
+
+vc_table =
+{
+  [0xC74E596B] = "NACE",
+  [0x46E8C795] = "NACJ",
+}

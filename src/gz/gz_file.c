@@ -181,7 +181,6 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
   zu_clear_event_flag(0xC8);
 }
 
-#ifndef WIIVC
 static int load_file_to_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -318,7 +317,6 @@ static void load_file_proc(struct menu_item *item, void *data)
   menu_get_file(gz.menu_main, GETFILE_LOAD, NULL, ".ootsave",
                 do_load_file, NULL);
 }
-#endif
 
 struct menu *gz_file_menu(void)
 {
@@ -397,7 +395,6 @@ struct menu *gz_file_menu(void)
   menu_add_option(&menu, 17, 12, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
 
-#ifndef WIIVC
   /* create disk file controls */
   menu_add_static(&menu, 0, 13, "load file to", 0xC0C0C0);
   menu_add_option(&menu, 17, 13, "zelda file\0""current memfile\0""both\0",
@@ -407,7 +404,6 @@ struct menu *gz_file_menu(void)
                   on_file_load_proc, NULL);
   menu_add_button(&menu, 0, 15, "save to disk", save_file_proc, NULL);
   menu_add_button(&menu, 0, 16, "load from disk", load_file_proc, NULL);
-#endif
 
   return &menu;
 }
