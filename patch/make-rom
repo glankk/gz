@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
-set -e
+#!/bin/sh
 
 gru patch/lua/make-rom.lua "$@"

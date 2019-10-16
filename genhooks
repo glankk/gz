@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 AS="${AS:-mips64-as}"
 CPP="${CPP:-mips64-cpp}"

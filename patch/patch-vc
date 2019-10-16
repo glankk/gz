@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-set -e
-
-export PATH="$PWD/bin:$PATH"
-gru lua/patch-vc.lua -y "$@"
