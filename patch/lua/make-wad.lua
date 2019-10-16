@@ -75,7 +75,7 @@ local gzinject = os.getenv("GZINJECT")
 if gzinject == nil or gzinject == "" then gzinject = "gzinject" end
 
 wiivc = true
-require("lua/rom_table")
+require("patch/lua/rom_table")
 local make = loadfile("patch/lua/make.lua")
 
 -- extract wad
