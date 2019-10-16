@@ -329,7 +329,10 @@ static void import_state_proc(struct menu_item *item, void *data)
 static void export_state_proc(struct menu_item *item, void *data)
 {
   if (gz.state_buf[gz.state_slot]) {
-    menu_get_file(gz.menu_main, GETFILE_SAVE, "state", ".gzs",
+    struct state_meta *state = gz.state_buf[gz.state_slot];
+    char buf[100] = "00-";
+    buf[3] = 0;
+    menu_get_file(gz.menu_main, GETFILE_SAVE, strcat(buf, zu_scene_info[state->scene_idx].scene_name), ".gzs",
                   do_export_state, NULL);
   }
 }
