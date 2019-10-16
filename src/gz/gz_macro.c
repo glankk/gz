@@ -102,11 +102,15 @@ static int do_import_macro(const char *path, void *data)
     size_t n_seed;
     errno = 0;
     n = sizeof(n_input);
-    if (read(f, &n_input, n) != n)
+    if (read(f, &n_input, n) != n) {
+      err_str = s_eof;
       goto f_err;
+    }
     n = sizeof(n_seed);
-    if (read(f, &n_seed, n) != n)
+    if (read(f, &n_seed, n) != n) {
+      err_str = s_eof;
       goto f_err;
+    }
     vector_clear(&gz.movie_inputs);
     vector_clear(&gz.movie_seeds);
     if (!vector_reserve(&gz.movie_inputs, n_input) ||
@@ -121,20 +125,24 @@ static int do_import_macro(const char *path, void *data)
     vector_shrink_to_fit(&gz.movie_inputs);
     vector_shrink_to_fit(&gz.movie_seeds);
     n = sizeof(gz.movie_input_start);
-    if (read(f, &gz.movie_input_start, n) != n)
+    if (read(f, &gz.movie_input_start, n) != n) {
+      err_str = s_eof;
       goto f_err;
+    }
     sys_io_mode(SYS_IO_DMA);
     n = gz.movie_inputs.element_size * n_input;
-    if (read(f, gz.movie_inputs.begin, n) != n)
+    if (read(f, gz.movie_inputs.begin, n) != n) {
+      err_str = s_eof;
       goto f_err;
+    }
     n = gz.movie_seeds.element_size * n_seed;
-    if (read(f, gz.movie_seeds.begin, n) != n)
+    if (read(f, gz.movie_seeds.begin, n) != n) {
+      err_str = s_eof;
       goto f_err;
+    }
 f_err:
     sys_io_mode(SYS_IO_PIO);
-    if (errno == 0)
-      err_str = s_eof;
-    else
+    if (errno != 0)
       err_str = strerror(errno);
   }
   else
@@ -154,7 +162,7 @@ static int do_export_macro(const char *path, void *data)
 {
   const char *err_str = NULL;
   int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if (f) {
+  if (f != -1) {
     int n;
     size_t n_input = gz.movie_inputs.size;
     size_t n_seed = gz.movie_seeds.size;
@@ -168,10 +176,10 @@ static int do_export_macro(const char *path, void *data)
     n = sizeof(gz.movie_input_start);
     if (write(f, &gz.movie_input_start, n) != n)
       goto f_err;
-    n = sizeof(gz.movie_inputs.element_size * n_input);
+    n = gz.movie_inputs.element_size * n_input;
     if (write(f, gz.movie_inputs.begin, n) != n)
       goto f_err;
-    n = sizeof(gz.movie_seeds.element_size * n_seed);
+    n = gz.movie_seeds.element_size * n_seed;
     if (write(f, gz.movie_seeds.begin, n) != n)
       goto f_err;
 f_err:
