@@ -9,6 +9,8 @@
 
 int hb_sd_init(void)
 {
+  if (hb_regs.key != 0x1234)
+    return -1;
   hb_regs.status = HB_STATUS_INIT;
   while (hb_regs.status & HB_STATUS_BUSY)
     ;
