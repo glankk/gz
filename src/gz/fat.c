@@ -2115,8 +2115,11 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
     fat->cache[i].max_lba = 0xFFFFFFFF;
   }
   /* check partition record for compatible partition */
-  if (check_rec(fat, rec_lba, part))
-    return -1;
+  if (check_rec(fat, rec_lba, part)) {
+    /* no partition found, treat as logical volume */
+    fat->part_lba = 0;
+    fat->n_part_sect = 0;
+  }
   /* load partition boot record */
   void *pbr = cache_prep(fat, FAT_CACHE_DATA, fat->part_lba, 1);
   if (!pbr)
@@ -2137,8 +2140,9 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
     fat->n_fat_sect = get_word(pbr, 0x024, 4);
   /* do sanity checks */
   if (fat->n_sect_byte != 0x200 || fat->n_clust_sect == 0 ||
-      fat->n_resv_sect == 0 || fat->n_fat == 0 ||
-      fat->n_fs_sect > fat->n_part_sect || fat->n_fat_sect == 0)
+      fat->n_resv_sect == 0 || fat->n_fat == 0 || fat->n_fs_sect == 0 ||
+      (fat->n_part_sect != 0 && fat->n_fs_sect > fat->n_part_sect) ||
+      fat->n_fat_sect == 0)
   {
     errno = ENOENT;
     return -1;
@@ -2151,7 +2155,7 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
   fat->cache[FAT_CACHE_FAT].max_lba = fat->fat_lba + fat->n_fat_sect;
   fat->cache[FAT_CACHE_DATA].max_lba = fat->part_lba + fat->n_fs_sect;
   /* more sanity checks */
-  uint32_t max_lba = fat->part_lba + fat->n_part_sect;
+  uint32_t max_lba = fat->part_lba + fat->n_fs_sect;
   if (max_lba < fat->part_lba ||
       fat->fat_lba < fat->part_lba || fat->fat_lba >= max_lba ||
       fat->root_lba < fat->part_lba || fat->root_lba >= max_lba ||
