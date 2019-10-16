@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-set -e
-
-export PATH="$PWD/../bin:$PATH"
-gs -w bin 0x80400060 1024 ../bin/gz/oot-1.1/gz.bin -w text hooks.gsc -u
