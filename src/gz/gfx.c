@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <malloc.h>
 #include <mips.h>
 #include <n64.h>
 #include "gfx.h"
@@ -225,8 +224,8 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
   texture->tile_height = texdesc->tile_height;
   texture->tiles_x = texdesc->tiles_x;
   texture->tiles_y = texdesc->tiles_y;
-  texture->tile_size = ((texture->tile_width * texture->tile_height *
-                         G_SIZ_BITS(texture->im_siz) + 7) / 8 + 63) / 64 * 64;
+  texture->tile_size = (texture->tile_width * texture->tile_height *
+                        G_SIZ_BITS(texture->im_siz) + 63) / 64 * 8;
   size_t texture_size = texture->tile_size *
                         texture->tiles_x * texture->tiles_y;
   void *texture_data = NULL;
@@ -235,7 +234,7 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
     if (texldr->file_vaddr != texdesc->file_vaddr) {
       if (texldr->file_data)
         free(texldr->file_data);
-      texldr->file_data = memalign(64, texdesc->file_vsize);
+      texldr->file_data = malloc(texdesc->file_vsize);
       if (!texldr->file_data) {
         texldr->file_vaddr = GFX_FILE_DRAM;
         if (new_texture)
@@ -254,7 +253,7 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
       file_start = texldr->file_data;
   }
   if (!texture_data) {
-    texture_data = memalign(64, texture_size);
+    texture_data = malloc(texture_size);
     if (!texture_data) {
       if (new_texture)
         free(new_texture);
@@ -279,9 +278,9 @@ struct gfx_texture *gfx_texture_create(g_ifmt_t im_fmt, g_isiz_t im_siz,
   struct gfx_texture *texture = malloc(sizeof(*texture));
   if (!texture)
     return texture;
-  texture->tile_size = ((tile_width * tile_height *
-                         G_SIZ_BITS(im_siz) + 7) / 8 + 63) / 64 * 64;
-  texture->data = memalign(64, tiles_x * tiles_y * texture->tile_size);
+  texture->tile_size = (tile_width * tile_height *
+                        G_SIZ_BITS(im_siz) + 63) / 64 * 8;
+  texture->data = malloc(tiles_x * tiles_y * texture->tile_size);
   if (!texture->data) {
     free(texture);
     return NULL;
@@ -333,7 +332,7 @@ struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,
     dest = new_texture;
   }
   size_t texture_size = src->tile_size * src->tiles_x * src->tiles_y;
-  void *texture_data = memalign(64, texture_size);
+  void *texture_data = malloc(texture_size);
   if (!texture_data) {
     if (new_texture)
       free(new_texture);
