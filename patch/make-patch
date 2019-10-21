@@ -1,5 +1,4 @@
-#!/usr/bin/env sh
-set -e
+#!/bin/sh
 
-if test ! -d patch/ups; then mkdir patch/ups; fi
+if [ ! -d patch/ups ]; then mkdir patch/ups; fi
 gru patch/lua/make-patch.lua "$@"

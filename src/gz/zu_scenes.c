@@ -539,7 +539,6 @@ struct zu_scene_info zu_scene_info[] =
       "grotto",
     },
   },
-
   {
     "fairy spells",
     3, (const char*[])

@@ -906,3 +906,45 @@ void zu_load_disp_p(struct zu_disp_p *disp_p)
   gfx->overlay.p = gfx->overlay.buf + disp_p->overlay_p;
   gfx->overlay.d = gfx->overlay.buf + disp_p->overlay_d;
 }
+
+static z64_gbi_lights_t *gen_lighting(Gfx **p_gfx_d)
+{
+  /* create light */
+  z64_gbi_lights_t *gbi_lights;
+  gbi_lights = gDisplayListAlloc(p_gfx_d, sizeof(*gbi_lights));
+  gbi_lights->numlights = 0;
+  Ambient *a = &gbi_lights->lites.a;
+  a->l.col[0] = a->l.colc[0] = z64_game.lighting.ambient[0];
+  a->l.col[1] = a->l.colc[1] = z64_game.lighting.ambient[1];
+  a->l.col[2] = a->l.colc[2] = z64_game.lighting.ambient[2];
+  /* fill light */
+  for (z64_light_node_t *light_node = z64_game.lighting.light_list;
+       light_node; light_node = light_node->next)
+  {
+    z64_light_handler_t handler = z64_light_handlers[light_node->light->type];
+    handler(gbi_lights, &light_node->light->lightn, NULL);
+  }
+  return gbi_lights;
+}
+
+static void set_lighting(Gfx **p_gfx_p, z64_gbi_lights_t *gbi_lights)
+{
+  /* set light */
+  gSPNumLights((*p_gfx_p)++, gbi_lights->numlights);
+  for (int i = 0; i < gbi_lights->numlights; ++i)
+    gSPLight((*p_gfx_p)++, &gbi_lights->lites.l[i], i + 1);
+  gSPLight((*p_gfx_p)++, &gbi_lights->lites.a,
+           gbi_lights->numlights + 1);
+}
+
+void zu_set_lighting(void)
+{
+  z64_gbi_lights_t *gbi_lights = gen_lighting(&z64_ctxt.gfx->poly_opa.d);
+  set_lighting(&z64_ctxt.gfx->poly_opa.p, gbi_lights);
+  set_lighting(&z64_ctxt.gfx->poly_xlu.p, gbi_lights);
+}
+
+void zu_set_lighting_ext(Gfx **p_gfx_p, Gfx **p_gfx_d)
+{
+  set_lighting(p_gfx_p, gen_lighting(p_gfx_d));
+}

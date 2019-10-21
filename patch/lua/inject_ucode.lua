@@ -26,26 +26,15 @@ local data_loc =
 }
 
 local arg = {...}
-local opt_y = false
-if arg[1] == "-y" then
-  opt_y = true
-  table.remove(arg, 1)
+if #arg ~= 2 then
+  io.stderr:write("usage: inject_ucode <dst-file> <src-file>\n")
+  return 1
 end
+local opt_dst = arg[1]
+local opt_src = arg[2]
 
-function quit(code)
-  if not opt_y then
-    print("press enter to continue")
-    io.read()
-  end
-  os.exit(code)
-end
-
-if #arg < 2 then
-  print("usage: `inject_ucode [-y] <dst-file> <src-file>`")
-  quit(1)
-end
-local dst = gru.n64rom_load(arg[1])
-local src = gru.n64rom_load(arg[2])
+local dst_rom = gru.n64rom_load(opt_dst)
+local src_rom = gru.n64rom_load(opt_src)
 
 local version = nil
 local text = nil
@@ -57,29 +46,29 @@ local data_insert = nil
 for i=1,2 do
   local text_search = gru:blob_create()
   text_search:writestring(0, "gspL3DEX2_fifoTextStart")
-  text_insert = dst:find(text_search)
-  if text_insert then break end
-  dst, src = src, dst
-  arg[1], arg[2] = arg[2], arg[1]
+  text_insert = dst_rom:find(text_search)
+  if text_insert ~= nil then break end
+  dst_rom, src_rom = src_rom, dst_rom
+  opt_dst, opt_src = opt_src, opt_dst
 end
-if text_insert then
-  print(string.format("found text insertion point at 0x%08X in `%s`",
-                      text_insert, arg[1]))
+if text_insert ~= nil then
+  print(string.format("found text insertion point at 0x%08X in %s",
+                      text_insert, opt_dst))
 else
-  print("unable find text insertion point")
-  quit(1)
+  io.stderr:write("unable find text insertion point\n")
+  return 2
 end
 
 -- find data insertion point
 local data_search = gru:blob_create()
 data_search:writestring(0, "gspL3DEX2_fifoDataStart")
-data_insert = dst:find(data_search)
-if data_insert then
-  print(string.format("found data insertion point at 0x%08X in `%s`",
-                      data_insert, arg[1]))
+data_insert = dst_rom:find(data_search)
+if data_insert ~= nil then
+  print(string.format("found data insertion point at 0x%08X in %s",
+                      data_insert, opt_dst))
 else
-  print("unable find data insertion point")
-  quit(1)
+  io.stderr:write("unable find data insertion point\n")
+  return 2
 end
 
 -- include destination locations as search locations in source
@@ -90,8 +79,8 @@ data_loc[#data_loc] = data_insert
 for i = 1,#text_loc do
   local loc = text_loc[i]
   local size = text_size
-  if src:size() >= loc + size then
-    local blob = src:copy(loc, size)
+  if src_rom:size() >= loc + size then
+    local blob = src_rom:copy(loc, size)
     local blob_crc = blob:crc32()
     for v = 1,#text_crc do
       if blob_crc == text_crc[v] then
@@ -99,16 +88,16 @@ for i = 1,#text_loc do
         break
       end
     end
-    if version then
+    if version ~= nil then
       text = blob
-      print(string.format("found text at 0x%08X in `%s`", loc, arg[2]))
+      print(string.format("found text at 0x%08X in %s", loc, opt_src))
       break
     end
   end
 end
-if not text then
-  print("unable find text chunk")
-  quit(1)
+if text == nil then
+  io.stderr:write("unable find text chunk\n")
+  return 2
 end
 
 -- find data
@@ -116,29 +105,27 @@ for i = 1,#data_loc do
   local loc = data_loc[i]
   local size = data_size
   local crc = data_crc[version]
-  if src:size() >= loc + size then
-    local blob = src:copy(loc, size)
+  if src_rom:size() >= loc + size then
+    local blob = src_rom:copy(loc, size)
     if blob:crc32() == crc then
       data = blob
-      print(string.format("found data at 0x%08X in `%s`", loc, arg[2]))
+      print(string.format("found data at 0x%08X in %s", loc, opt_src))
       print(data:readstring(0x0138, 70))
       break
     end
   end
 end
-if not data then
-  print("unable find data chunk")
-  quit(1)
+if data == nil then
+  io.stderr:write("unable find data chunk\n")
+  return 2
 end
 
 -- insert microcode
 print("inserting microcode")
-dst:write(text_insert, text)
-dst:write(data_insert, data)
+dst_rom:write(text_insert, text)
+dst_rom:write(data_insert, data)
 
 -- save
-print("saving rom to `" .. arg[1] .. "`")
-dst:save(arg[1])
+dst_rom:save(opt_dst)
 
-print("done")
-quit(0)
+return 0

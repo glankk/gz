@@ -48,27 +48,28 @@ void settings_load_default(void)
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
-#ifndef WIIVC
   d->bits.load_to = SETTINGS_LOADTO_ZFILE;
   d->bits.on_load = SETTINGS_ONLOAD_NOTHING;
-#endif
   d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->bits.col_view_xlu = 1;
   d->bits.col_view_line = 0;
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;
+  d->bits.col_view_upd = 1;
+  d->bits.hit_view_xlu = 1;
+  d->bits.hit_view_shade = 1;
   d->bits.watches_visible = 1;
-  d->menu_x = 16;
+  d->menu_x = 20;
   d->menu_y = 64;
-  d->input_display_x = 16;
-  d->input_display_y = Z64_SCREEN_HEIGHT - 6;
-  d->log_x = Z64_SCREEN_WIDTH - 12;
-  d->log_y = Z64_SCREEN_HEIGHT - 14;
-  d->lag_counter_x = Z64_SCREEN_WIDTH - 12;
-  d->lag_counter_y = 20;
+  d->input_display_x = 20;
+  d->input_display_y = Z64_SCREEN_HEIGHT - 10;
+  d->log_x = Z64_SCREEN_WIDTH - 16;
+  d->log_y = Z64_SCREEN_HEIGHT - 18;
+  d->lag_counter_x = Z64_SCREEN_WIDTH - 16;
+  d->lag_counter_y = 24;
 #ifndef WIIVC
-  d->timer_x = 16;
-  d->timer_y = 20;
+  d->timer_x = 20;
+  d->timer_y = 24;
 #endif
   d->n_watches = 0;
   d->cheats = 0;
@@ -111,6 +112,7 @@ void settings_load_default(void)
   d->binds[COMMAND_RECORDMACRO] = input_bind_make(0);
   d->binds[COMMAND_PLAYMACRO] = input_bind_make(0);
   d->binds[COMMAND_COLVIEW] = input_bind_make(0);
+  d->binds[COMMAND_HITVIEW] = input_bind_make(0);
   d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);
   d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,

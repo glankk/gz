@@ -409,7 +409,8 @@ static int actor_draw_proc(struct menu_item *item,
       gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
                       0, 0, 0x00, 0x00, 0xFF, 0x80);
       gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 4, 5, 0);
-      unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p, 1);
+      unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
+      zu_set_lighting();
     }
   }
   else

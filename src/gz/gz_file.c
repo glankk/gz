@@ -191,7 +191,6 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
   zu_clear_event_flag(0xC8);
 }
 
-#ifndef WIIVC
 static int load_file_to_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -223,26 +222,26 @@ static int do_save_file(const char *path, void *data)
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
-  FILE *f = fopen(path, "wb");
-  if (f) {
+  int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (f != -1) {
     file = malloc(sizeof(*file));
     if (!file)
       err_str = s_memory;
     else {
       gz_save_memfile(file);
-      if (fwrite(file, 1, sizeof(*file), f) != sizeof(*file))
-        err_str = strerror(ferror(f));
+      if (write(f, file, sizeof(*file)) != sizeof(*file))
+        err_str = strerror(errno);
       else {
-        if (fclose(f))
+        if (close(f))
           err_str = strerror(errno);
-        f = NULL;
+        f = -1;
       }
     }
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (file)
     free(file);
   if (err_str) {
@@ -259,10 +258,10 @@ static int do_load_file(const char *path, void *data)
   const char *s_memory = "out of memory";
   const char *err_str = NULL;
   struct memory_file *file = NULL;
-  FILE *f = fopen(path, "rb");
-  if (f) {
+  int f = open(path, O_RDONLY);
+  if (f != -1) {
     struct stat st;
-    if (fstat(fileno(f), &st))
+    if (fstat(f, &st))
       err_str = strerror(errno);
     else if (st.st_size != sizeof(*file))
       err_str = s_invalid;
@@ -270,27 +269,34 @@ static int do_load_file(const char *path, void *data)
       file = malloc(sizeof(*file));
       if (!file)
         err_str = s_memory;
-      else if (fread(file, 1, sizeof(*file), f) != sizeof(*file))
-        err_str = strerror(ferror(f));
       else {
-        if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
-            settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-        {
-          gz_load_memfile(file);
+        errno = 0;
+        if (read(f, file, sizeof(*file)) != sizeof(*file)) {
+          if (errno == 0)
+            err_str = s_invalid;
+          else
+            err_str = strerror(errno);
         }
-        if (settings->bits.load_to == SETTINGS_LOADTO_MEMFILE ||
-            settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-        {
-          gz.memfile[gz.memfile_slot] = *file;
-          gz.memfile_saved[gz.memfile_slot] = 1;
+        else {
+          if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
+              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
+          {
+            gz_load_memfile(file);
+          }
+          if (settings->bits.load_to == SETTINGS_LOADTO_MEMFILE ||
+              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
+          {
+            gz.memfile[gz.memfile_slot] = *file;
+            gz.memfile_saved[gz.memfile_slot] = 1;
+          }
         }
       }
     }
   }
   else
     err_str = strerror(errno);
-  if (f)
-    fclose(f);
+  if (f != -1)
+    close(f);
   if (file)
     free(file);
   if (err_str) {
@@ -321,7 +327,6 @@ static void load_file_proc(struct menu_item *item, void *data)
   menu_get_file(gz.menu_main, GETFILE_LOAD, NULL, ".ootsave",
                 do_load_file, NULL);
 }
-#endif
 
 struct menu *gz_file_menu(void)
 {
@@ -405,7 +410,6 @@ struct menu *gz_file_menu(void)
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
 
-#ifndef WIIVC
   /* create disk file controls */
   menu_add_static(&menu, 0, 14, "load file to", 0xC0C0C0);
   menu_add_option(&menu, 17, 14, "zelda file\0""current memfile\0""both\0",
@@ -415,7 +419,6 @@ struct menu *gz_file_menu(void)
                   on_file_load_proc, NULL);
   menu_add_button(&menu, 0, 16, "save to disk", save_file_proc, NULL);
   menu_add_button(&menu, 0, 17, "load from disk", load_file_proc, NULL);
-#endif
 
   return &menu;
 }

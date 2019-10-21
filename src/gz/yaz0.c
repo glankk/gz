@@ -84,6 +84,13 @@ char yaz0_get_byte(void)
   return byte;
 }
 
+void yaz0_read(void *dest, uint32_t n_bytes)
+{
+  char *p = dest;
+  while (n_bytes-- != 0)
+    *p++ = yaz0_get_byte();
+}
+
 void yaz0_advance(uint32_t n_bytes)
 {
   while (n_bytes > 0) {

@@ -21,6 +21,26 @@ struct command_info
   enum cmdact           activation_type;
 };
 
+enum col_view_state
+{
+  COLVIEW_INACTIVE,
+  COLVIEW_START,
+  COLVIEW_ACTIVE,
+  COLVIEW_BEGIN_STOP,
+  COLVIEW_STOP,
+  COLVIEW_BEGIN_RESTART,
+  COLVIEW_RESTART,
+};
+
+enum hit_view_state
+{
+  HITVIEW_INACTIVE,
+  HITVIEW_START,
+  HITVIEW_ACTIVE,
+  HITVIEW_BEGIN_STOP,
+  HITVIEW_STOP,
+};
+
 struct memory_file
 {
   z64_file_t            z_file;
@@ -107,6 +127,9 @@ struct gz
   int64_t               timer_counter_prev;
 #endif
   int                   col_view_state;
+  int                   hit_view_state;
+  _Bool                 hide_rooms;
+  _Bool                 hide_actors;
   struct memory_file   *memfile;
   _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
   uint8_t               memfile_slot;
@@ -150,6 +173,7 @@ void          command_advance(void);
 void          command_recordmacro(void);
 void          command_playmacro(void);
 void          command_colview(void);
+void          command_hitview(void);
 void          command_resetlag(void);
 void          command_togglewatches(void);
 #ifndef WIIVC
@@ -166,6 +190,7 @@ void          gz_movie_rewind(void);
 void          gz_movie_seek(int frame);
 
 void          gz_col_view(void);
+void          gz_hit_view(void);
 
 struct menu  *gz_warps_menu(void);
 struct menu  *gz_scene_menu(void);

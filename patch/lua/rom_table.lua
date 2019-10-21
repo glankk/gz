@@ -100,20 +100,9 @@ else
                     },
   }
 end
-setmetatable(rom_table, {__index = function(t)
-  io.write("unrecognized rom. select an action;\n  0. skip\n")
-  local keys = {}
-  for k,v in pairs(t) do
-    keys[#keys + 1] = k
-    io.write(string.format("  %d. treat as `%s`\n",
-                           #keys,
-                           v.game .. "-" .. v.version .. "-" .. v.region))
-  end
-  io.flush()
-  local n = io.read("n")
-  local k = keys[n]
-  if k == nil then
-    return nil
-  end
-  return t[k]
-end})
+
+vc_table =
+{
+  [0xC74E596B] = "NACE",
+  [0x46E8C795] = "NACJ",
+}

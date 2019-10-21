@@ -86,6 +86,7 @@ enum commands
   COMMAND_RECORDMACRO,
   COMMAND_PLAYMACRO,
   COMMAND_COLVIEW,
+  COMMAND_HITVIEW,
   COMMAND_PREVROOM,
   COMMAND_NEXTROOM,
   COMMAND_RESETLAG,
@@ -123,15 +124,16 @@ struct settings_bits
   uint32_t break_type      : 1;
   uint32_t warp_age        : 2;
   uint32_t warp_cutscene   : 5;
-#ifndef WIIVC
   uint32_t load_to         : 2;
   uint32_t on_load         : 2;
-#endif
   uint32_t col_view_mode   : 1;
   uint32_t col_view_xlu    : 1;
   uint32_t col_view_line   : 1;
   uint32_t col_view_shade  : 1;
   uint32_t col_view_rd     : 1;
+  uint32_t col_view_upd    : 1;
+  uint32_t hit_view_xlu    : 1;
+  uint32_t hit_view_shade  : 1;
   uint32_t watches_visible : 1;
 };
 

@@ -310,7 +310,7 @@ static int cache_flush(struct fat *fat, int index)
   struct fat_cache *cache = &fat->cache[index];
   if (!cache->valid || !cache->dirty)
     return 0;
-  if (fat->write(cache->lba, 1, cache->data)) {
+  if (fat->write(cache->load_lba, cache->n_sect, cache->data)) {
     errno = EIO;
     return -1;
   }
@@ -321,17 +321,32 @@ static int cache_flush(struct fat *fat, int index)
 static void *cache_prep(struct fat *fat, int index, uint32_t lba, _Bool load)
 {
   struct fat_cache *cache = &fat->cache[index];
-  if (cache->valid && cache->lba == lba)
-    return cache->data;
+  if (cache->valid &&
+      cache->load_lba <= lba &&
+      cache->load_lba + cache->n_sect > lba)
+  {
+    cache->prep_lba = lba;
+    uint32_t offset = fat->n_sect_byte * (cache->prep_lba - cache->load_lba);
+    return &cache->data[offset];
+  }
   if (cache_flush(fat, index))
     return NULL;
-  if (load && fat->read(lba, 1, cache->data)) {
-    errno = EIO;
-    return NULL;
+  if (load) {
+    cache->n_sect = FAT_MAX_CACHE_SECT;
+    if (lba + cache->n_sect > cache->max_lba)
+      cache->n_sect = cache->max_lba - lba;
+    if (fat->read(lba, cache->n_sect, cache->data)) {
+      cache->valid = 0;
+      errno = EIO;
+      return NULL;
+    }
   }
+  else
+    cache->n_sect = 1;
   cache->valid = 1;
   cache->dirty = 0;
-  cache->lba = lba;
+  cache->load_lba = lba;
+  cache->prep_lba = lba;
   return cache->data;
 }
 
@@ -349,6 +364,7 @@ static void cache_read(struct fat *fat, int index, uint32_t offset,
                        void *dst, uint32_t length)
 {
   struct fat_cache *cache = &fat->cache[index];
+  offset += fat->n_sect_byte * (cache->prep_lba - cache->load_lba);
   if (dst)
     memcpy(dst, &cache->data[offset], length);
 }
@@ -357,6 +373,7 @@ static void cache_write(struct fat *fat, int index, uint32_t offset,
                         const void *src, uint32_t length)
 {
   struct fat_cache *cache = &fat->cache[index];
+  offset += fat->n_sect_byte * (cache->prep_lba - cache->load_lba);
   if (src)
     memcpy(&cache->data[offset], src, length);
   else
@@ -407,6 +424,8 @@ static int get_clust_fat12(struct fat *fat, uint32_t clust, uint32_t *value)
   *value = group & 0xFFF;
   if (*value >= 0xFF7)
     *value |= 0x0FFFF000;
+  if (clust == fat->free_lb && *value != 0)
+    ++fat->free_lb;
   return 0;
 }
 
@@ -438,6 +457,10 @@ static int set_clust_fat12(struct fat *fat, uint32_t clust, uint32_t value)
     set_word(block, offset, 3 - n, value >> (8 * n));
   }
   cache_dirty(fat, FAT_CACHE_FAT);
+  if (clust < fat->free_lb && value == 0)
+    fat->free_lb = clust;
+  else if (clust == fat->free_lb && value != 0)
+    ++fat->free_lb;
   return 0;
 }
 
@@ -465,6 +488,8 @@ static int get_clust(struct fat *fat, uint32_t clust, uint32_t *value)
     *value = get_word(block, offset, 4);
     *value &= 0x0FFFFFFF;
   }
+  if (clust == fat->free_lb && value != 0)
+    ++fat->free_lb;
   return 0;
 }
 
@@ -483,11 +508,19 @@ static int set_clust(struct fat *fat, uint32_t clust, uint32_t value)
   void *block = cache_prep(fat, FAT_CACHE_FAT, fat->fat_lba + lba, 1);
   if (!block)
     return -1;
-  if (fat->type == FAT16)
-    set_word(block, offset, 2, value & 0x0000FFFF);
-  else
-    set_word(block, offset, 4, value & 0x0FFFFFFF);
+  if (fat->type == FAT16) {
+    value &= 0x0000FFFF;
+    set_word(block, offset, 2, value);
+  }
+  else {
+    value &= 0x0FFFFFFF;
+    set_word(block, offset, 4, value);
+  }
   cache_dirty(fat, FAT_CACHE_FAT);
+  if (clust < fat->free_lb && value == 0)
+    fat->free_lb = clust;
+  else if (clust == fat->free_lb && value != 0)
+    ++fat->free_lb;
   return 0;
 }
 
@@ -537,15 +570,14 @@ static uint32_t check_free_chunk_length(struct fat *fat, uint32_t clust,
   }
   return length;
 }
-
 /* find the first free cluster after `clust` (inclusive),
    preferably with at most `pref_length` free clusters chunked in a sequence.
    returns the actual chunk length in `*length` if given. */
 static uint32_t find_free_clust(struct fat *fat, uint32_t clust,
                                 uint32_t pref_length, uint32_t *length)
 {
-  if (clust < 2)
-    clust = 2;
+  if (clust < fat->free_lb)
+    clust = fat->free_lb;
   uint32_t max_clust = 0;
   uint32_t max_length = 0;
   while (max_length < pref_length && clust < fat->max_clust) {
@@ -594,7 +626,7 @@ static int link_clust(struct fat *fat, uint32_t clust, uint32_t next_clust,
 static int check_free_space(struct fat *fat, uint32_t needed)
 {
   uint32_t n_free = 0;
-  for (uint32_t i = 2; i < fat->max_clust && n_free < needed; ++i) {
+  for (uint32_t i = fat->free_lb; i < fat->max_clust && n_free < needed; ++i) {
     uint32_t value;
     if (get_clust(fat, i, &value))
       return -1;
@@ -701,7 +733,11 @@ static int file_sect(const struct fat_file *file, _Bool load)
 /* return a pointer to the data cache at the file offset in `file` */
 static void *file_data(const struct fat_file *file)
 {
-  return &file->fat->cache[FAT_CACHE_DATA].data[file->p_sect_off];
+  struct fat *fat = file->fat;
+  struct fat_cache *cache = &fat->cache[FAT_CACHE_DATA];
+  uint32_t offset = file->p_sect_off;
+  offset += fat->n_sect_byte * (cache->prep_lba - cache->load_lba);
+  return &cache->data[offset];
 }
 
 /* point `file` to the beginning of the root directory */
@@ -2074,11 +2110,16 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
   /* initialize cache */
   fat->read = read;
   fat->write = write;
-  for (int i = 0; i < FAT_CACHE_MAX; ++i)
+  for (int i = 0; i < FAT_CACHE_MAX; ++i) {
     fat->cache[i].valid = 0;
+    fat->cache[i].max_lba = 0xFFFFFFFF;
+  }
   /* check partition record for compatible partition */
-  if (check_rec(fat, rec_lba, part))
-    return -1;
+  if (check_rec(fat, rec_lba, part)) {
+    /* no partition found, treat as logical volume */
+    fat->part_lba = 0;
+    fat->n_part_sect = 0;
+  }
   /* load partition boot record */
   void *pbr = cache_prep(fat, FAT_CACHE_DATA, fat->part_lba, 1);
   if (!pbr)
@@ -2099,8 +2140,9 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
     fat->n_fat_sect = get_word(pbr, 0x024, 4);
   /* do sanity checks */
   if (fat->n_sect_byte != 0x200 || fat->n_clust_sect == 0 ||
-      fat->n_resv_sect == 0 || fat->n_fat == 0 ||
-      fat->n_fs_sect > fat->n_part_sect || fat->n_fat_sect == 0)
+      fat->n_resv_sect == 0 || fat->n_fat == 0 || fat->n_fs_sect == 0 ||
+      (fat->n_part_sect != 0 && fat->n_fs_sect > fat->n_part_sect) ||
+      fat->n_fat_sect == 0)
   {
     errno = ENOENT;
     return -1;
@@ -2110,8 +2152,10 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
   fat->root_lba = fat->fat_lba + fat->n_fat * fat->n_fat_sect;
   fat->data_lba = fat->root_lba + (fat->n_entry * 0x20 +
                                    fat->n_sect_byte - 1) / fat->n_sect_byte;
+  fat->cache[FAT_CACHE_FAT].max_lba = fat->fat_lba + fat->n_fat_sect;
+  fat->cache[FAT_CACHE_DATA].max_lba = fat->part_lba + fat->n_fs_sect;
   /* more sanity checks */
-  uint32_t max_lba = fat->part_lba + fat->n_part_sect;
+  uint32_t max_lba = fat->part_lba + fat->n_fs_sect;
   if (max_lba < fat->part_lba ||
       fat->fat_lba < fat->part_lba || fat->fat_lba >= max_lba ||
       fat->root_lba < fat->part_lba || fat->root_lba >= max_lba ||
@@ -2122,6 +2166,7 @@ int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
   }
   fat->n_clust_byte = fat->n_clust_sect * fat->n_sect_byte;
   fat->max_clust = 2 + (fat->n_fs_sect - fat->data_lba) / fat->n_clust_sect;
+  fat->free_lb = 2;
   if (fat->max_clust < 0xFF7)
     fat->type = FAT12;
   else if (fat->max_clust < 0xFFF7)

@@ -16,5 +16,4 @@ To create a UPS patch or a pre-patched rom, run `patch/make-patch <rom-file>`
 or `patch/make-rom <rom-file>`. `<rom-file>` should be an unmodified rom to be
 used for creating the patch. Use `patch/make-patch-vc <rom-file>` to create a
 rom patch that targets the Wii VC. To create a patched Wii WAD with a gz rom
-inject, run `patch/make-wad <wad-file>`. On windows, you can drag-and-drop the
-rom onto the script files in the `patch` directory.
+inject, run `patch/make-wad <wad-file>`.

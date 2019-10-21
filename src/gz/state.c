@@ -56,7 +56,19 @@ static void save_ovl(void **p, void *addr,
   uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
-  z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
+  z64_ovl_hdr_t *hdr;
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
+  hdr = (void*)(end - *hdr_off);
+#elif Z64_VERSION == Z64_OOTMQJ
+  z64_ovl_hdr_t l_hdr;
+  hdr = &l_hdr;
+  yaz0_begin(file->prom_start);
+  yaz0_advance(end - *hdr_off - start);
+  yaz0_read(hdr, sizeof(*hdr));
+  serial_write(p, hdr, sizeof(*hdr));
+#endif
   char *data = start + hdr->text_size;
   char *bss = end;
   /* save data segment */
@@ -124,7 +136,16 @@ static void load_ovl(void **p, void **p_addr,
   uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
-  z64_ovl_hdr_t *hdr = (void*)(end - *hdr_off);
+  z64_ovl_hdr_t *hdr;
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
+  hdr = (void*)(end - *hdr_off);
+#elif Z64_VERSION == Z64_OOTMQJ
+  z64_ovl_hdr_t l_hdr;
+  hdr = &l_hdr;
+  serial_read(p, hdr, sizeof(*hdr));
+#endif
   char *data = start + hdr->text_size;
   char *bss = end;
   /* restore data segment */
@@ -137,8 +158,8 @@ static void load_ovl(void **p, void **p_addr,
     uint16_t n_save = 0;
     serial_read(p, &n_copy, sizeof(n_copy));
     serial_read(p, &n_save, sizeof(n_save));
-    for (uint16_t j = 0; j < n_copy; ++j)
-      data[i++] = yaz0_get_byte();
+    yaz0_read(&data[i], n_copy);
+    i += n_copy;
     serial_read(p, &data[i], n_save);
     i += n_save;
     if (i < hdr->data_size)
@@ -1052,8 +1073,8 @@ void load_state(void *state)
                      z64_game.pause_ctxt.icon_item_s);
     }
     else {
-      z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p13C,
-                           &z64_game.pause_ctxt.s27C);
+      z64_InitPauseObjects(&z64_game, z64_game.pause_ctxt.p_0x13C,
+                           &z64_game.pause_ctxt.s_0x27C);
       if (dungeon_map) {
         zu_getfile_idx(z64_icon_item_dungeon_static,
                        z64_game.pause_ctxt.icon_item_s);
@@ -1510,7 +1531,7 @@ void load_state(void *state)
   }
   if (c_pause_objects && !c_gameover && (!p_pause_objects || p_gameover)) {
     uint16_t (*img)[112][64];
-    img = z64_game.pause_ctxt.p13C;
+    img = z64_game.pause_ctxt.p_0x13C;
     for (int y = 0; y < 112; ++y)
       for (int x = 0; x < 64; ++x)
         (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);

@@ -1,5 +1,3 @@
-#!/usr/bin/env sh
-set -e
+#!/bin/sh
 
-export PATH="$PWD/bin:$PATH"
-gru lua/inject_ucode.lua "$@"
+gru patch/lua/inject_ucode.lua "$@"

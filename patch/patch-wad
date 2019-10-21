@@ -1,7 +1,0 @@
-#!/usr/bin/env sh
-set -e
-
-export PATH="$PWD/bin:$PATH"
-echo 45e | gzinject -a genkey -k common-key.bin >/dev/null
-gru lua/patch-wad.lua -y "$@" || true
-rm -rf common-key.bin wadextract

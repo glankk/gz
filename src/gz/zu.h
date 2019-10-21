@@ -143,6 +143,9 @@ void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx);
 void zu_save_disp_p(struct zu_disp_p *disp_p);
 void zu_load_disp_p(struct zu_disp_p *disp_p);
 
+void zu_set_lighting(void);
+void zu_set_lighting_ext(Gfx **p_gfx_p, Gfx **p_gfx_d);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif

@@ -1,22 +1,46 @@
+function usage()
+  io.stderr:write("usage: make-wad [<gzinject-arg>...] [--no-homeboy]"
+                  .. " [-m <input-rom>] [-o <output-wad>] <input-wad>\n")
+  os.exit(1)
+end
+
 -- parse arguments
 local arg = {...}
 local opt_id
 local opt_title
+local opt_keyfile = "patch/common-key.bin"
 local opt_region
+local opt_directory = "patch/wadextract"
 local opt_raphnet
 local opt_disable_controller_remappings
+local opt_nohb
+local opt_rom
+local opt_out
 local opt_wad
 while arg[1] do
   if arg[1] == "-i" or arg[1] == "--channelid" then
     opt_id = arg[2]
+    if opt_id == nil then usage() end
     table.remove(arg, 1)
     table.remove(arg, 1)
   elseif arg[1] == "-t" or arg[1] == "--channeltitle" then
     opt_title = arg[2]
+    if opt_title == nil then usage() end
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif arg[1] == "-k" or arg[1] == "--key" then
+    opt_keyfile = arg[2]
+    if opt_keyfile == nil then usage() end
     table.remove(arg, 1)
     table.remove(arg, 1)
   elseif arg[1] == "-r" or arg[1] == "--region" then
     opt_region = arg[2]
+    if opt_region == nil then usage() end
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif arg[1] == "-d" or arg[1] == "--directory" then
+    opt_directory = arg[2]
+    if opt_directory == nil then usage() end
     table.remove(arg, 1)
     table.remove(arg, 1)
   elseif arg[1] == "--raphnet" then
@@ -25,95 +49,103 @@ while arg[1] do
   elseif arg[1] == "--disable-controller-remappings" then
     opt_disable_controller_remappings = true
     table.remove(arg, 1)
-  elseif arg[1] == "-w" then
-    opt_wad = arg[2]
+  elseif arg[1] == "--no-homeboy" then
+    opt_nohb = true
+    table.remove(arg, 1)
+  elseif arg[1] == "-m" then
+    opt_rom = arg[2]
+    if opt_rom == nil then usage() end
     table.remove(arg, 1)
     table.remove(arg, 1)
+  elseif arg[1] == "-o" then
+    opt_out = arg[2]
+    if opt_out == nil then usage() end
+    table.remove(arg, 1)
+    table.remove(arg, 1)
+  elseif opt_wad ~= nil then usage()
   else
-    break
+    opt_wad = arg[1]
+    table.remove(arg, 1)
   end
 end
-if #arg < 1 then
-  print("usage: \n"
-        .. "  `make-wad [<gzinject-arg>...] <wad-file>...`\n"
-        .. "  `make-wad [<gzinject-arg>...] -w <wad-file> <rom-file>...`")
-  return
-end
+if opt_wad == nil then usage() end
+if opt_rom == nil then opt_rom = opt_directory .. "/content5/rom" end
 
 local gzinject = os.getenv("GZINJECT")
-if gzinject == nil or gzinject == "" then
-  gzinject = "gzinject"
-end
+if gzinject == nil or gzinject == "" then gzinject = "gzinject" end
 
 wiivc = true
+require("patch/lua/rom_table")
 local make = loadfile("patch/lua/make.lua")
 
-for i = 1, #arg do
-  local input_rom
-  local input_wad
-  if opt_wad ~= nil then
-    input_rom = arg[i]
-    input_wad = opt_wad
-    print("making wad from `" .. input_wad .. "` with `" .. input_rom .. "`...")
-  else
-    input_rom = "patch/wadextract/content5/rom"
-    input_wad = arg[i]
-    print("making wad from `" .. input_wad .. "`...")
-  end
-  -- extract wad
-  print("unpacking wad")
-  gru.os_rm("patch/wadextract")
-  local _,_,gzinject_result = os.execute(gzinject ..
-                                         " -a extract" ..
-                                         " -k patch/common-key.bin" ..
-                                         " -d patch/wadextract" ..
-                                         " --verbose" ..
-                                         " -w \"" .. input_wad .. "\"")
-  if gzinject_result ~= 0 then
-    error("unpacking failed", 0)
-  end
-  -- make rom
-  print("making rom")
-  local rom_info, rom, patched_rom = make(input_rom)
-  if rom_info ~= nil then
-    print("saving rom")
-    patched_rom:save_file("patch/wadextract/content5/rom")
-    -- build gzinject pack command string
-    local gzinject_cmd = gzinject ..
-                         " -a pack" ..
-                         " -k patch/common-key.bin" ..
-                         " -d patch/wadextract" ..
-                         " --verbose"
-    if opt_id then
-      gzinject_cmd = gzinject_cmd .. " -i \"" .. opt_id .. "\""
-    else
-      gzinject_cmd = gzinject_cmd .. " -i " .. rom_info.title_id
-    end
-    if opt_title then
-      gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. opt_title .. ".wad\""
-      gzinject_cmd = gzinject_cmd .. " -t \"" .. opt_title .. "\""
-    else
-      gzinject_cmd = gzinject_cmd .. " -w patch/" .. rom_info.gz_name .. ".wad"
-      gzinject_cmd = gzinject_cmd .. " -t " .. rom_info.gz_name
-    end
-    if opt_region then
-      gzinject_cmd = gzinject_cmd .. " -r \"" .. opt_region .. "\""
-    else
-      gzinject_cmd = gzinject_cmd .. " -r 3"
-    end
-    if opt_raphnet then
-      gzinject_cmd = gzinject_cmd .. " --raphnet"
-    end
-    if opt_disable_controller_remappings then
-      gzinject_cmd = gzinject_cmd .. " --disable-controller-remappings"
-    end
-    -- execute
-    print("packing wad")
-    local _,_,gzinject_result = os.execute(gzinject_cmd)
-    if gzinject_result ~= 0 then
-      error("packing failed", 0)
-    end
+-- extract wad
+gru.os_rm(opt_directory)
+local gzinject_cmd = gzinject ..
+                     " -a extract" ..
+                     " -k \"" .. opt_keyfile .. "\"" ..
+                     " -d \"" .. opt_directory .. "\"" ..
+                     " --verbose" ..
+                     " -w \"" .. opt_wad .. "\""
+local _,_,gzinject_result = os.execute(gzinject_cmd)
+if gzinject_result ~= 0 then return gzinject_result end
+
+-- make rom
+local rom_info, rom, patched_rom = make(opt_rom)
+if rom_info == nil then
+  io.stderr:write("make-wad: unrecognized rom: " .. opt_rom .. "\n")
+  return 2
+end
+patched_rom:save_file(opt_directory .. "/content5/rom")
+
+-- check vc version
+local vc = gru.blob_load(opt_directory .. "/content1.app")
+local vc_version = vc_table[vc:crc32()]
+
+-- build gzinject pack command string
+local gzinject_cmd = gzinject ..
+                     " -a pack" ..
+                     " -k \"" .. opt_keyfile .. "\"" ..
+                     " -d \"" .. opt_directory .. "\"" ..
+                     " --verbose"
+if opt_id ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -i \"" .. opt_id .. "\""
+else
+  gzinject_cmd = gzinject_cmd .. " -i " .. rom_info.title_id
+end
+if opt_title ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -t \"" .. opt_title .. "\""
+else
+  gzinject_cmd = gzinject_cmd .. " -t " .. rom_info.gz_name
+end
+if opt_region ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -r \"" .. opt_region .. "\""
+else
+  gzinject_cmd = gzinject_cmd .. " -r 3"
+end
+if vc_version ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_" .. vc_version .. ".gzi\""
+  if not opt_nohb then
+    gzinject_cmd = gzinject_cmd ..  " -p \"patch/gzi/hb_" .. vc_version ..
+                   ".gzi\" --dol-inject \"patch/dol/hb-" .. vc_version ..
+                   "/homeboy.bin\" --dol-loading 90000800"
   end
 end
+if not opt_disable_controller_remappings then
+  if opt_raphnet then
+    gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_remap_raphnet.gzi\""
+  else
+    gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_remap_default.gzi\""
+  end
+end
+if opt_out ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -w \"" .. opt_out .. "\""
+elseif opt_title ~= nil then
+  gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. opt_title .. ".wad\""
+else
+  gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. rom_info.gz_name .. ".wad\""
+end
+-- execute
+local _,_,gzinject_result = os.execute(gzinject_cmd)
+if gzinject_result ~= 0 then return gzinject_result end
 
-print("done")
+return 0
