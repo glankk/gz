@@ -817,9 +817,10 @@ static void init(void)
     menu_add_submenu(&menu, 0, 5, gz_equips_menu(), "equips");
     menu_add_submenu(&menu, 0, 6, gz_file_menu(), "file");
     menu_add_submenu(&menu, 0, 7, gz_macro_menu(), "macro");
-    menu_add_submenu(&menu, 0, 8, &watches, "watches");
-    menu_add_submenu(&menu, 0, 9, gz_debug_menu(), "debug");
-    menu_add_submenu(&menu, 0, 10, gz_settings_menu(), "settings");
+    menu_add_submenu(&menu, 0, 8, gz_trainer_menu(), "trainer");
+    menu_add_submenu(&menu, 0, 9, &watches, "watches");
+    menu_add_submenu(&menu, 0, 10, gz_debug_menu(), "debug");
+    menu_add_submenu(&menu, 0, 11, gz_settings_menu(), "settings");
 
     /* populate watches menu */
     watches.selector = menu_add_submenu(&watches, 0, 0, NULL, "return");

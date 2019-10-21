@@ -199,6 +199,7 @@ struct menu  *gz_inventory_menu(void);
 struct menu  *gz_equips_menu(void);
 struct menu  *gz_file_menu(void);
 struct menu  *gz_macro_menu(void);
+struct menu  *gz_trainer_menu(void);
 struct menu  *gz_debug_menu(void);
 struct menu  *gz_settings_menu(void);
 
