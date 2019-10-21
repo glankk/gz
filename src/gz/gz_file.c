@@ -95,6 +95,16 @@ static void set_time_proc(struct menu_item *item, void *data)
   gz.target_day_time = (uint32_t)data;
 }
 
+static void set_epona_flag_proc(struct menu_item *item, void *data)
+{
+  zu_set_event_flag(0x18);
+}
+
+static void clear_epona_flag_proc(struct menu_item *item, void *data)
+{
+  zu_clear_event_flag(0x18);
+}
+
 static void set_carpenter_flags_proc(struct menu_item *item, void *data)
 {
   zu_set_event_flag(0x90);
@@ -348,27 +358,32 @@ struct menu *gz_file_menu(void)
 
   /* create flag controls */
   struct gfx_texture *t_check = resource_get(RES_ICON_CHECK);
-  menu_add_static(&menu, 0, 5, "carpenters freed", 0xC0C0C0);
+  menu_add_static(&menu, 0, 5, "epona freed", 0xC0C0C0);
   menu_add_button_icon(&menu, 17, 5, t_check, 0, 0x00FF00,
-                       set_carpenter_flags_proc, NULL);
+                       set_epona_flag_proc, NULL);
   menu_add_button_icon(&menu, 19, 5, t_check, 1, 0xFF0000,
-                       clear_carpenter_flags_proc, NULL);
-  menu_add_static(&menu, 0, 6, "intro cutscenes", 0xC0C0C0);
+                       clear_epona_flag_proc, NULL);
+  menu_add_static(&menu, 0, 6, "carpenters freed", 0xC0C0C0);
   menu_add_button_icon(&menu, 17, 6, t_check, 0, 0x00FF00,
-                       set_intro_flags_proc, NULL);
+                       set_carpenter_flags_proc, NULL);
   menu_add_button_icon(&menu, 19, 6, t_check, 1, 0xFF0000,
-                       clear_intro_flags_proc, NULL);
-  menu_add_static(&menu, 0, 7, "rewards obtained", 0xC0C0C0);
+                       clear_carpenter_flags_proc, NULL);
+  menu_add_static(&menu, 0, 7, "intro cutscenes", 0xC0C0C0);
   menu_add_button_icon(&menu, 17, 7, t_check, 0, 0x00FF00,
-                       set_reward_flags_proc, NULL);
+                       set_intro_flags_proc, NULL);
   menu_add_button_icon(&menu, 19, 7, t_check, 1, 0xFF0000,
+                       clear_intro_flags_proc, NULL);
+  menu_add_static(&menu, 0, 8, "rewards obtained", 0xC0C0C0);
+  menu_add_button_icon(&menu, 17, 8, t_check, 0, 0x00FF00,
+                       set_reward_flags_proc, NULL);
+  menu_add_button_icon(&menu, 19, 8, t_check, 1, 0xFF0000,
                        clear_reward_flags_proc, NULL);
 
   /* create timer controls */
-  menu_add_static(&menu, 0, 8, "timer 1", 0xC0C0C0);
-  menu_add_intinput(&menu, 17, 8, 10, 5,
+  menu_add_static(&menu, 0, 9, "timer 1", 0xC0C0C0);
+  menu_add_intinput(&menu, 17, 9, 10, 5,
                     halfword_mod_proc, &z64_file.timer_1_value);
-  menu_add_option(&menu, 23, 8,
+  menu_add_option(&menu, 23, 9,
                   "inactive\0""heat starting\0""heat initial\0"
                   "heat moving\0""heat active\0""race starting\0"
                   "race initial\0""race moving\0""race active\0"
@@ -376,34 +391,34 @@ struct menu *gz_file_menu(void)
                   "timer initial\0""timer moving\0""timer active\0"
                   "timer stopped\0",
                   halfword_optionmod_proc, &z64_file.timer_1_state);
-  menu_add_static(&menu, 0, 9, "timer 2", 0xC0C0C0);
-  menu_add_intinput(&menu, 17, 9, 10, 5,
+  menu_add_static(&menu, 0, 10, "timer 2", 0xC0C0C0);
+  menu_add_intinput(&menu, 17, 10, 10, 5,
                     halfword_mod_proc, &z64_file.timer_2_value);
-  menu_add_option(&menu, 23, 9,
+  menu_add_option(&menu, 23, 10,
                   "inactive\0""starting\0""initial\0""moving\0""active\0"
                   "stopped\0""ending\0""timer starting\0""timer initial\0"
                   "timer moving\0""timer active\0""timer stopped\0",
                   halfword_optionmod_proc, &z64_file.timer_2_state);
 
   /* create file settings controls */
-  menu_add_static(&menu, 0, 10, "file index", 0xC0C0C0);
-  menu_add_intinput(&menu, 17, 10, 16, 2, byte_mod_proc, &z64_file.file_index);
-  menu_add_static(&menu, 0, 11, "language", 0xC0C0C0);
-  menu_add_option(&menu, 17, 11, "japanese\0""english\0",
+  menu_add_static(&menu, 0, 11, "file index", 0xC0C0C0);
+  menu_add_intinput(&menu, 17, 11, 16, 2, byte_mod_proc, &z64_file.file_index);
+  menu_add_static(&menu, 0, 12, "language", 0xC0C0C0);
+  menu_add_option(&menu, 17, 12, "japanese\0""english\0",
                   byte_switch_proc, &z64_file.language);
-  menu_add_static(&menu, 0, 12, "z targeting", 0xC0C0C0);
-  menu_add_option(&menu, 17, 12, "switch\0""hold\0",
+  menu_add_static(&menu, 0, 13, "z targeting", 0xC0C0C0);
+  menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
 
   /* create disk file controls */
-  menu_add_static(&menu, 0, 13, "load file to", 0xC0C0C0);
-  menu_add_option(&menu, 17, 13, "zelda file\0""current memfile\0""both\0",
+  menu_add_static(&menu, 0, 14, "load file to", 0xC0C0C0);
+  menu_add_option(&menu, 17, 14, "zelda file\0""current memfile\0""both\0",
                   load_file_to_proc, NULL);
-  menu_add_static(&menu, 0, 14, "after loading", 0xC0C0C0);
-  menu_add_option(&menu, 17, 14, "do nothing\0""reload scene\0""void out\0",
+  menu_add_static(&menu, 0, 15, "after loading", 0xC0C0C0);
+  menu_add_option(&menu, 17, 15, "do nothing\0""reload scene\0""void out\0",
                   on_file_load_proc, NULL);
-  menu_add_button(&menu, 0, 15, "save to disk", save_file_proc, NULL);
-  menu_add_button(&menu, 0, 16, "load from disk", load_file_proc, NULL);
+  menu_add_button(&menu, 0, 16, "save to disk", save_file_proc, NULL);
+  menu_add_button(&menu, 0, 17, "load from disk", load_file_proc, NULL);
 
   return &menu;
 }
