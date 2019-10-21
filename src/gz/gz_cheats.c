@@ -46,8 +46,8 @@ struct menu *gz_cheats_menu(void)
 
   /* populate cheat list */
   for (int i = 0; i < CHEAT_MAX; ++i) {
-    menu_add_static(&menu, 0, 1 + i, cheat_names[i], 0xC0C0C0);
-    menu_add_checkbox(&menu, 14, 1 + i, cheat_proc, (void*)i);
+    menu_add_checkbox(&menu, 0, 1 + i, cheat_proc, (void*)i);
+    menu_add_static(&menu, 2, 1 + i, cheat_names[i], 0xC0C0C0);
   }
 
   return &menu;
