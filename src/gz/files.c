@@ -304,6 +304,39 @@ static int file_activate_proc(struct menu_item *item)
   return 1;
 }
 
+static int file_nav_proc(struct menu_item *item, enum menu_navigation nav) {
+  int row = (int)item->data;
+  int n_entries = gf_dir_entries.container.size;
+  if(row == 0 && nav == MENU_NAVIGATE_UP) {
+    struct dir_state *ds = vector_at(&gf_dir_state, 0);
+    --ds->scroll;
+    if (ds->scroll + FILE_VIEW_ROWS > n_entries)
+      ds->scroll = n_entries - FILE_VIEW_ROWS;
+    if (ds->scroll < 0) {
+      if(n_entries < FILE_VIEW_ROWS) {
+        ds->scroll = 0;
+        item->owner->selector = gf_files[n_entries - 1];
+      }
+      else {
+        ds->scroll = n_entries - FILE_VIEW_ROWS;
+        item->owner->selector = gf_files[FILE_VIEW_ROWS - 1];
+      }
+    }
+    return 1;
+  }
+  else if ((row == FILE_VIEW_ROWS - 1 || row == gf_dir_entries.container.size - 1) && nav == MENU_NAVIGATE_DOWN) {
+    struct dir_state *ds = vector_at(&gf_dir_state, 0);
+    ++ds->scroll;
+    int index = ds->scroll + row;
+    if(index == gf_dir_entries.container.size){
+      ds->scroll = 0;
+      item->owner->selector = gf_files[0];
+    }
+    return 1;
+  }
+  return 0;
+}
+
 static _Bool dir_entry_comp(void *a, void *b)
 {
   struct dir_entry *da = a;
@@ -452,6 +485,7 @@ static void gf_menu_init(void)
       item->enter_proc = file_enter_proc;
       item->draw_proc = file_draw_proc;
       item->activate_proc = file_activate_proc;
+      item->navigate_proc = file_nav_proc;
       gf_files[i] = item;
     }
     struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
