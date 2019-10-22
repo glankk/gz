@@ -1,13 +1,14 @@
+#include <stdlib.h>
 #include "gfx.h"
 #include "gz.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
 #include "z64.h"
-/*801DABDE*/
 
 static uint8_t roll_timer;
 static uint8_t last_roll;
+static uint8_t is_first;
 static _Bool   roll_timer_active;
 
 static _Bool is_rolling()
@@ -28,15 +29,16 @@ static _Bool roll_pressed()
 
 static void update_roll_timer()
 {
-  //if paused, dont update
   if(gz.frames_queued == 0){
     return;
   }
 
   if(roll_pressed() && !roll_timer_active){
     roll_timer_active = 1;
+    is_first = 1;
     last_roll = 0;
   } else if (roll_pressed() && roll_timer_active){
+    is_first = 0;
     last_roll = roll_timer;
     roll_timer = 0;
   }
@@ -50,7 +52,6 @@ static void update_roll_timer()
   if(roll_timer == 30){
     roll_timer_active = 0;
   }
-
 }
 
 static int roll_timing_draw_proc(struct menu_item *item,
@@ -67,8 +68,40 @@ static int roll_timing_draw_proc(struct menu_item *item,
   update_roll_timer();
   gfx_printf(font, x, y + ch * 0, "%i", roll_timer);
   gfx_printf(font, x, y + ch * 1, "%i", last_roll);
-  gfx_printf(font, x, y + ch * 2, "%i", gz.frames_queued);
 
+  if (!is_first && roll_timer_active){
+    if((last_roll < 14) || (last_roll > 19)){
+      gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0x10, 0x10, 0xFF));
+      int amnt = last_roll - 16;
+      if (amnt < 0)
+        gfx_printf(font, x, y + ch * 2, "bad (%i frames early)", abs(amnt));
+      if (amnt > 0)
+        gfx_printf(font, x, y + ch * 2, "bad (%i frames late)", abs(amnt));
+    }else{
+      switch(last_roll)
+      {
+        case 14: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xBE, 0x4F, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "okay (2 frames early)");
+                 break;
+        case 15: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0x7D, 0xFF, 0x95, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "good (1 frame early)");
+                 break;
+        case 16: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0x00, 0xFF, 0x2F, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "perfect! (frame perfect)");
+                 break;
+        case 17: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0x7D, 0xFF, 0x95, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "good (1 frame late)");
+                 break;
+        case 18: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xEF, 0xFF, 0x20, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "okay (2 frames late)");
+                 break;
+        case 19: gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xBE, 0x4F, 0xFF));
+                 gfx_printf(font, x, y + ch * 2, "okay (3 frames late)");
+                 break;
+        default: break;
+      }
+    }
+  }
   return 1;
 }
 
