@@ -16,6 +16,14 @@ static _Bool   is_first_roll;
 static z64_actor_t* bomb_ptr;
 static uint16_t bomb_timer;
 
+typedef struct
+{
+  z64_actor_t common;          /* 0x0000 */
+  char        unk_0x13C[0xAC]; /* 0x013C */
+  u16         timer;           /* 0x01E8 */
+  char        unk_0x1EA[0x1E]; /* 0x01EA */
+}bomb_t;                       /* 0x0208 */
+
 static void set_rgb_green()
 {
   gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0x00, 0xFF, 0x2F, 0xFF));
