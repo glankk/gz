@@ -108,6 +108,7 @@ struct gz
   uint16_t              day_time_prev;
   int                   target_day_time;
   int32_t               frames_queued;
+  _Bool                 frame_ran;
   struct zu_disp_p      z_disp_p;
   uint32_t              disp_hook_size[4];
   uint32_t              disp_hook_p[4];

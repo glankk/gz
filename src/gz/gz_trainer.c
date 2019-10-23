@@ -78,14 +78,17 @@ static int bomb_hess_draw_proc(struct menu_item *item,
   int x = draw_params->x;
   int y = draw_params->y;
 
-  update_bombs();
+  if(gz.frame_ran){
+    update_bombs();
+  }
+
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "instance: %8x", bomb1.instance);
+  gfx_printf(font, x, y + ch * 0, "instance: %8x", &gz.frame_ran);
   gfx_printf(font, x, y + ch * 1, "cooking: %i", bomb1.cooking);
-  gfx_printf(font, x, y + ch * 2, "cook timer: %i", bomb1.cook_timer-1);
+  gfx_printf(font, x, y + ch * 2, "cook timer: %i", bomb1.cook_timer);
   gfx_printf(font, x, y + ch * 3, "exploding: %i", bomb1.exploding);
-  gfx_printf(font, x, y + ch * 4, "explode timer: %i", bomb1.explode_timer-1);
+  gfx_printf(font, x, y + ch * 4, "explode timer: %i", bomb1.explode_timer);
 
   return 1;
 }

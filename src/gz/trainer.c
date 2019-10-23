@@ -29,10 +29,6 @@ _Bool roll_pressed()
 
 void update_roll()
 {
-  if(gz.frames_queued == 0){
-    return;
-  }
-
   if(roll_pressed() && !roll.timer_active){
     roll.timer_active = 1;
     roll.is_first_roll = 1;
@@ -53,6 +49,7 @@ void update_roll()
     roll.timer_active = 0;
   }
 }
+
 static void update_bomb_timers(bomb_t* bomb)
 {
   if(bomb->instance){
@@ -84,11 +81,9 @@ static void update_bomb_timers(bomb_t* bomb)
     }
   }
 }
+
 void update_bombs()
 {
-  if(gz.frames_queued == 0){
-    return;
-  }
   bomb1.instance = (z64_bomb_t*)z64_game.actor_list[3].first;
   update_bomb_timers(&bomb1);
 }

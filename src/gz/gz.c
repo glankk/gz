@@ -586,6 +586,7 @@ static void state_main_hook(void)
       gz.frame_counter = 0;
       zu_reset();
     }
+    gz.frame_ran = 1;
   }
   else {
     z64_gfx_t *gfx = z64_ctxt.gfx;
@@ -624,6 +625,7 @@ static void state_main_hook(void)
     /* do not execute an ocarina frame */
     gz.frame_flag = 0;
   }
+  gz.frame_ran = 0;
 }
 
 HOOK void srand_hook(uint32_t seed)
@@ -756,6 +758,7 @@ static void init(void)
   gz.day_time_prev = z64_file.day_time;
   gz.target_day_time = -1;
   gz.frames_queued = -1;
+  gz.frame_ran = 1;
   gz.movie_state = MOVIE_IDLE;
   vector_init(&gz.movie_inputs, sizeof(struct movie_input));
   vector_init(&gz.movie_seeds, sizeof(struct movie_seed));
