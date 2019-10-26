@@ -4,7 +4,7 @@
 
 void z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset)
 {
-  struct movie_input *mi = vector_at(&gz.movie_inputs, movie_frame);
+  struct movie_input *mi = vector_at(&gz.movie_input, movie_frame);
   z64_controller_t *raw_prev;
   if (movie_frame == 0) {
     raw_prev = &gz.movie_input_start;
@@ -15,7 +15,7 @@ void z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset)
                     ~(zi->pad_pressed & ~zi->pad_released);
   }
   else {
-    struct movie_input *mi_prev = vector_at(&gz.movie_inputs, movie_frame - 1);
+    struct movie_input *mi_prev = vector_at(&gz.movie_input, movie_frame - 1);
     raw_prev = &mi_prev->raw;
   }
   mi->raw = zi->raw;
@@ -27,12 +27,12 @@ void z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset)
 
 void movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset)
 {
-  struct movie_input *mi = vector_at(&gz.movie_inputs, movie_frame);
+  struct movie_input *mi = vector_at(&gz.movie_input, movie_frame);
   z64_controller_t *raw_prev;
   if (movie_frame == 0)
     raw_prev = &gz.movie_input_start;
   else {
-    struct movie_input *mi_prev = vector_at(&gz.movie_inputs, movie_frame - 1);
+    struct movie_input *mi_prev = vector_at(&gz.movie_input, movie_frame - 1);
     raw_prev = &mi_prev->raw;
   }
   uint16_t delta = mi->pad_delta;
@@ -53,19 +53,52 @@ void gz_movie_rewind(void)
 {
   gz.movie_frame = 0;
   gz.movie_seed_pos = 0;
+  gz.movie_oca_input_pos = 0;
+  gz.movie_oca_sync_pos = 0;
+  gz.movie_room_load_pos = 0;
 }
 
 void gz_movie_seek(int frame)
 {
-  if (frame > gz.movie_inputs.size)
-    frame = gz.movie_inputs.size;
+  int pos;
+  /* set frame number */
+  if (frame > gz.movie_input.size)
+    frame = gz.movie_input.size;
   gz.movie_frame = frame;
-  int seed_pos = 0;
-  while (seed_pos < gz.movie_seeds.size) {
-    struct movie_seed *ms = vector_at(&gz.movie_seeds, seed_pos);
-    if (ms->frame_idx >= gz.movie_frame)
+  /* seek seed pos */
+  pos = 0;
+  while (pos < gz.movie_seed.size) {
+    struct movie_seed *ms = vector_at(&gz.movie_seed, pos);
+    if (ms->frame_idx > gz.movie_frame)
       break;
-    ++seed_pos;
+    ++pos;
   }
-  gz.movie_seed_pos = seed_pos;
+  gz.movie_seed_pos = pos;
+  /* seek ocarina input pos */
+  pos = 0;
+  while (pos < gz.movie_oca_input.size) {
+    struct movie_oca_input *oi = vector_at(&gz.movie_oca_input, pos);
+    if (oi->frame_idx > gz.movie_frame)
+      break;
+    ++pos;
+  }
+  gz.movie_oca_input_pos = pos;
+  /* seek ocarina sync pos */
+  pos = 0;
+  while (pos < gz.movie_oca_sync.size) {
+    struct movie_oca_sync *os = vector_at(&gz.movie_oca_sync, pos);
+    if (os->frame_idx > gz.movie_frame)
+      break;
+    ++pos;
+  }
+  gz.movie_oca_sync_pos = pos;
+  /* seek room load pos */
+  pos = 0;
+  while (pos < gz.movie_room_load.size) {
+    struct movie_room_load *rl = vector_at(&gz.movie_room_load, pos);
+    if (rl->frame_idx > gz.movie_frame)
+      break;
+    ++pos;
+  }
+  gz.movie_room_load_pos = pos;
 }

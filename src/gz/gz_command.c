@@ -445,7 +445,7 @@ void command_playmacro(void)
 {
   if (gz.movie_state == MOVIE_PLAYING)
     gz.movie_state = MOVIE_IDLE;
-  else if (gz.movie_inputs.size > 0)
+  else if (gz.movie_input.size > 0)
     gz.movie_state = MOVIE_PLAYING;
 }
 

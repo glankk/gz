@@ -2060,7 +2060,7 @@ typedef struct
 # define z64_CheckAfxConfigBusy_addr            0x800CB798
 # define z64_LoadOverlay_addr                   0x800CCBB8
 # define z64_srand_func_addr                    0x800CDCC0
-# define z64_guPerspectiveF_camo_addr           0x800D035C
+# define z64_guPerspectiveF_hook_addr           0x800D0358
 # define z64_guPerspective_camo_addr            0x800D0590
 # define z64_osGetCurrFaultedThread_addr        0x800D5AD0
 # define gspF3DEX2_NoN_fifoTextStart            0x800E3F70
@@ -2211,7 +2211,7 @@ typedef struct
 # define z64_CheckAfxConfigBusy_addr            0x800CB958
 # define z64_LoadOverlay_addr                   0x800CCD78
 # define z64_srand_func_addr                    0x800CDE80
-# define z64_guPerspectiveF_camo_addr           0x800D051C
+# define z64_guPerspectiveF_hook_addr           0x800D0518
 # define z64_guPerspective_camo_addr            0x800D0750
 # define z64_osGetCurrFaultedThread_addr        0x800D5C90
 # define gspF3DEX2_NoN_fifoTextStart            0x800E4130
@@ -2362,7 +2362,7 @@ typedef struct
 # define z64_CheckAfxConfigBusy_addr            0x800CBFD8
 # define z64_LoadOverlay_addr                   0x800CD3F8
 # define z64_srand_func_addr                    0x800CE500
-# define z64_guPerspectiveF_camo_addr           0x800D0B9C
+# define z64_guPerspectiveF_hook_addr           0x800D0B98
 # define z64_guPerspective_camo_addr            0x800D0DD0
 # define z64_osGetCurrFaultedThread_addr        0x800D6160
 # define gspF3DEX2_NoN_fifoTextStart            0x800E45B0
@@ -2513,7 +2513,7 @@ typedef struct
 # define z64_CheckAfxConfigBusy_addr            0x800CC188
 # define z64_LoadOverlay_addr                   0x800CD420
 # define z64_srand_func_addr                    0x800CE3D0
-# define z64_guPerspectiveF_camo_addr           0x800D0FEC
+# define z64_guPerspectiveF_hook_addr           0x800D0FE8
 # define z64_guPerspective_camo_addr            0x800D1220
 # define z64_osGetCurrFaultedThread_addr        0x800D6460
 # define z64_part_space_addr                    0x800E7030

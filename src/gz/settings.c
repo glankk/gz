@@ -43,6 +43,14 @@ void settings_load_default(void)
   d->bits.timer = 0;
   d->bits.pause_display = 1;
   d->bits.macro_input = 0;
+  d->bits.hack_oca_input = 1;
+  d->bits.hack_oca_sync = 1;
+  d->bits.hack_room_load = 1;
+#ifdef WIIVC
+  d->bits.wiivc_cam = 1;
+#else
+  d->bits.wiivc_cam = 0;
+#endif
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;

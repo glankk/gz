@@ -85,6 +85,25 @@ struct movie_seed
   uint32_t              new_seed;
 };
 
+struct movie_oca_input
+{
+  int32_t               frame_idx;
+  uint16_t              pad;
+  int8_t                adjusted_x;
+  int8_t                adjusted_y;
+};
+
+struct movie_oca_sync
+{
+  int32_t               frame_idx;
+  int32_t               audio_frames;
+};
+
+struct movie_room_load
+{
+  int32_t               frame_idx;
+};
+
 struct log_entry
 {
   char                 *msg;
@@ -114,10 +133,19 @@ struct gz
   uint32_t              disp_hook_d[4];
   enum movie_state      movie_state;
   z64_controller_t      movie_input_start;
-  struct vector         movie_inputs;
-  struct vector         movie_seeds;
+  struct vector         movie_input;
+  struct vector         movie_seed;
+  struct vector         movie_oca_input;
+  struct vector         movie_oca_sync;
+  struct vector         movie_room_load;
   int                   movie_frame;
   int                   movie_seed_pos;
+  int                   movie_oca_input_pos;
+  int                   movie_oca_sync_pos;
+  int                   movie_room_load_pos;
+  _Bool                 oca_input_flag;
+  _Bool                 oca_sync_flag;
+  _Bool                 room_load_flag;
   z64_controller_t      z_input_mask;
   int32_t               frame_counter;
   int32_t               lag_vi_offset;

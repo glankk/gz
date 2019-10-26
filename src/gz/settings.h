@@ -118,6 +118,10 @@ struct settings_bits
   uint32_t timer           : 1;
   uint32_t pause_display   : 1;
   uint32_t macro_input     : 1;
+  uint32_t hack_oca_input  : 1;
+  uint32_t hack_oca_sync   : 1;
+  uint32_t hack_room_load  : 1;
+  uint32_t wiivc_cam       : 1;
   uint32_t break_type      : 1;
   uint32_t warp_age        : 2;
   uint32_t warp_cutscene   : 5;
