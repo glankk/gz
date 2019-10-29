@@ -106,6 +106,7 @@ local gzinject_cmd = gzinject ..
                      " -a pack" ..
                      " -k \"" .. opt_keyfile .. "\"" ..
                      " -d \"" .. opt_directory .. "\"" ..
+                     " -p \"patch/gzi/gz_mem_patch.gzi\"" ..
                      " --verbose"
 if opt_id ~= nil then
   gzinject_cmd = gzinject_cmd .. " -i \"" .. opt_id .. "\""
@@ -123,7 +124,6 @@ else
   gzinject_cmd = gzinject_cmd .. " -r 3"
 end
 if vc_version ~= nil then
-  gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_" .. vc_version .. ".gzi\""
   if not opt_nohb then
     gzinject_cmd = gzinject_cmd ..  " -p \"patch/gzi/hb_" .. vc_version ..
                    ".gzi\" --dol-inject \"patch/dol/hb-" .. vc_version ..
