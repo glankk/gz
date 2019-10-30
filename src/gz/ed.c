@@ -496,7 +496,10 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
     return ED_ERROR_SD_RD_TIMEOUT;
   }
   /* dma to ram */
-  dma_read(dst, cart_addr, n_blocks * 0x200);
+  if ((uint32_t)dst % 0x10 == 0)
+    dma_read(dst, cart_addr, n_blocks * 0x200);
+  else
+    memcpy(dst, (void*)cart_addr, n_blocks * 0x200);
   /* restore interrupts */
   set_int(ie);
   return ED_ERROR_SUCCESS;
@@ -535,7 +538,10 @@ enum ed_error ed_fifo_read(void *dst, uint32_t n_blocks)
   while (ed_regs.status & ED_STATE_DMA_BUSY)
     ;
   /* dma cart to ram */
-  dma_read(dst, cart_addr, n_blocks * 0x200);
+  if ((uint32_t)dst % 0x10 == 0)
+    dma_read(dst, cart_addr, n_blocks * 0x200);
+  else
+    memcpy(dst, (void*)cart_addr, n_blocks * 0x200);
   /* restore interrupts */
   set_int(ie);
   /* check for dma timeout */
@@ -550,7 +556,10 @@ enum ed_error ed_fifo_write(void *src, uint32_t n_blocks)
   /* disable interrupts */
   _Bool ie = enter_dma_section();
   /* dma ram to cart */
-  dma_write(src, cart_addr, n_blocks * 0x200);
+  if ((uint32_t)src % 0x8 == 0)
+    dma_write(src, cart_addr, n_blocks * 0x200);
+  else
+    memcpy((void*)cart_addr, src, n_blocks * 0x200);
   /* dma cart to fifo */
   ed_regs.cfg;
   ed_regs.dma_len = n_blocks - 1;
