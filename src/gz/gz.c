@@ -9,6 +9,7 @@
 #include "explorer.h"
 #include "gfx.h"
 #include "gz.h"
+#include "hb.h"
 #include "input.h"
 #include "menu.h"
 #include "resource.h"
@@ -584,7 +585,11 @@ static void state_main_hook(void)
       gz.reset_flag = 0;
       gz.lag_vi_offset += (int32_t)z64_vi_counter - gz.frame_counter;
       gz.frame_counter = 0;
-      zu_reset();
+      /* try doing a homeboy reset */
+      if (hb_reset(0x00400000, 0x00400000) == -1) {
+        /* no homeboy interface, do a normal reset */
+        zu_reset();
+      }
     }
   }
   else {
