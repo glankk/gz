@@ -625,7 +625,7 @@ void zu_reset(void)
                     "lw    $t0, 0x0008($t0);"
                     "la    $t1, 0x80400000;"
                     "lw    $t2, 0x0000($t0);"
-                    "la    $t3, 0x3C02A460;"
+                    "la    $t3, 0x3C02A805;"
                     "beq   $t2, $t3, . + 0x0010;"
                     "nop;"
                     "jr    $t0;"
