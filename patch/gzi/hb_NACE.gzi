@@ -1,5 +1,7 @@
 # homeboy patches for NACE
 0000 00000000 00000001
+# dont zero gz memory
+0304 0003D320 3C800040
 # resize MEM2 heap for homeboy
 0302 00085732 00009010
 0304 00085738 60000000
