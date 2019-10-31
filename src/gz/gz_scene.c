@@ -57,7 +57,7 @@ static int col_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     if (gz.col_view_state != COLVIEW_INACTIVE)
-      gz.col_view_state = COLVIEW_STOP;
+      gz.col_view_state = COLVIEW_BEGIN_STOP;
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.col_view_state == COLVIEW_START ||

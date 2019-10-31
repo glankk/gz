@@ -449,7 +449,7 @@ void command_colview(void)
   if (gz.col_view_state == COLVIEW_INACTIVE)
     gz.col_view_state = COLVIEW_START;
   else
-    gz.col_view_state = COLVIEW_STOP;
+    gz.col_view_state = COLVIEW_BEGIN_STOP;
 }
 
 void command_hitview(void)
