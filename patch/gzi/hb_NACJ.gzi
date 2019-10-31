@@ -1,5 +1,7 @@
 # homeboy patches for NACJ
 0000 00000000 00000001
+# dont zero gz memory
+0304 0003D300 3C800040
 # resize MEM2 heap for homeboy
 0302 00085726 00009010
 0304 0008572C 60000000
