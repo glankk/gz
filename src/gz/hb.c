@@ -60,3 +60,14 @@ int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)
   hb_regs.status = HB_STATUS_RESET;
   return 0;
 }
+
+int hb_get_timebase(uint32_t *hi, uint32_t *lo)
+{
+  if (hb_regs.key != 0x1234)
+    return -1;
+  if (hi)
+    *hi = hb_regs.timebase_hi;
+  if (lo)
+    *lo = hb_regs.timebase_lo;
+  return 0;
+}

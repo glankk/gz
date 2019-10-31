@@ -40,9 +40,7 @@ void settings_load_default(void)
   d->bits.log = 1;
   d->bits.lag_counter = 0;
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
-#ifndef WIIVC
   d->bits.timer = 0;
-#endif
   d->bits.pause_display = 1;
   d->bits.macro_input = 0;
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
@@ -67,10 +65,8 @@ void settings_load_default(void)
   d->log_y = Z64_SCREEN_HEIGHT - 18;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 16;
   d->lag_counter_y = 24;
-#ifndef WIIVC
   d->timer_x = 20;
   d->timer_y = 24;
-#endif
   d->n_watches = 0;
   d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
@@ -118,7 +114,6 @@ void settings_load_default(void)
   d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
                                                BUTTON_D_RIGHT);
   d->binds[COMMAND_TOGGLEWATCHES] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
-#ifndef WIIVC
   d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
                                             BUTTON_D_LEFT);
   d->binds[COMMAND_RESETTIMER] = input_bind_make(3, BUTTON_R, BUTTON_B,
@@ -126,7 +121,6 @@ void settings_load_default(void)
   d->binds[COMMAND_STARTTIMER] = input_bind_make(0);
   d->binds[COMMAND_STOPTIMER] = input_bind_make(0);
   d->binds[COMMAND_RESET] = input_bind_make(0);
-#endif
 }
 
 void settings_save(int profile)

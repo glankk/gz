@@ -47,13 +47,11 @@ struct command_info command_info[COMMAND_MAX] =
   {"explore next room", NULL,                  CMDACT_PRESS},
   {"reset lag counter", command_resetlag,      CMDACT_HOLD},
   {"toggle watches",    command_togglewatches, CMDACT_PRESS},
-#ifndef WIIVC
   {"start/stop timer",  command_timer,         CMDACT_PRESS_ONCE},
   {"reset timer",       command_resettimer,    CMDACT_HOLD},
   {"start timer",       command_starttimer,    CMDACT_PRESS_ONCE},
   {"stop timer",        command_stoptimer,     CMDACT_PRESS_ONCE},
   {"reset",             command_reset,         CMDACT_PRESS_ONCE},
-#endif
 };
 
 void gz_apply_settings()
@@ -475,7 +473,6 @@ void command_togglewatches(void)
     watchlist_hide(gz.menu_watchlist);
 }
 
-#ifndef WIIVC
 void command_timer(void)
 {
   gz.timer_active = !gz.timer_active;
@@ -503,4 +500,3 @@ void command_reset(void)
 {
   gz.reset_flag = 1;
 }
-#endif

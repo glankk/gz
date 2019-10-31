@@ -24,24 +24,25 @@ struct gz gz =
   .ready = 0,
 };
 
-#ifndef WIIVC
 static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
   uint32_t new_count;
-  __asm__ volatile ("mfc0  $t0, $9;"
-                    "nop;"
-                    "sw    $t0, %0;" : "=m"(new_count) :: "t0");
+  if (hb_get_timebase(NULL, &new_count) == 0)
+    gz.cpu_counter_freq = 60750000;
+  else {
+    __asm__ volatile ("mfc0  $t0, $9;"
+                      "nop;"
+                      "sw    $t0, %0;" : "=m"(new_count) :: "t0");
+    gz.cpu_counter_freq = OS_CPU_COUNTER;
+  }
   gz.cpu_counter += new_count - count;
   count = new_count;
 }
-#endif
 
 static void main_hook(void)
 {
-#ifndef WIIVC
   update_cpu_counter();
-#endif
   input_update();
   gfx_mode_init();
 
@@ -322,14 +323,13 @@ static void main_hook(void)
   }
   gz.frame_counter += z64_gameinfo.update_rate;
 
-#ifndef WIIVC
   /* execute and draw timer */
   if (!gz.timer_active)
     gz.timer_counter_offset -= gz.cpu_counter - gz.timer_counter_prev;
   gz.timer_counter_prev = gz.cpu_counter;
   if (settings->bits.timer) {
     int64_t count = gz.cpu_counter + gz.timer_counter_offset;
-    int tenths = count * 10 / OS_CPU_COUNTER;
+    int tenths = count * 10 / gz.cpu_counter_freq;
     int seconds = tenths / 10;
     int minutes = seconds / 60;
     int hours = minutes / 60;
@@ -347,7 +347,6 @@ static void main_hook(void)
     else
       gfx_printf(font, x, y, "%d.%d", seconds, tenths);
   }
-#endif
 
   /* draw menus */
   if (gz.menu_active)
@@ -768,13 +767,11 @@ static void init(void)
   gz.movie_seed_pos = 0;
   gz.frame_counter = 0;
   gz.lag_vi_offset = -(int32_t)z64_vi_counter;
-#ifndef WIIVC
   gz.cpu_counter = 0;
   update_cpu_counter();
   gz.timer_active = 0;
   gz.timer_counter_offset = -gz.cpu_counter;
   gz.timer_counter_prev = gz.cpu_counter;
-#endif
   gz.col_view_state = COLVIEW_INACTIVE;
   gz.hit_view_state = HITVIEW_INACTIVE;
   gz.hide_rooms = 0;

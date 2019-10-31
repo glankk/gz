@@ -29,11 +29,14 @@ typedef struct
   uint32_t dram_save_addr;
   uint32_t dram_save_len;
   uint32_t dram_save_key;
+  uint32_t timebase_hi;
+  uint32_t timebase_lo;
 } hb_regs_t;
 
 int hb_sd_init(void);
 int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
 int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
 int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len);
+int hb_get_timebase(uint32_t *hi, uint32_t *lo);
 
 #endif

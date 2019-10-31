@@ -91,13 +91,11 @@ enum commands
   COMMAND_NEXTROOM,
   COMMAND_RESETLAG,
   COMMAND_TOGGLEWATCHES,
-#ifndef WIIVC
   COMMAND_TIMER,
   COMMAND_RESETTIMER,
   COMMAND_STARTTIMER,
   COMMAND_STOPTIMER,
   COMMAND_RESET,
-#endif
   COMMAND_MAX,
 };
 
@@ -116,9 +114,7 @@ struct settings_bits
   uint32_t log             : 1;
   uint32_t lag_counter     : 1;
   uint32_t lag_unit        : 1;
-#ifndef WIIVC
   uint32_t timer           : 1;
-#endif
   uint32_t pause_display   : 1;
   uint32_t macro_input     : 1;
   uint32_t break_type      : 1;
@@ -153,10 +149,8 @@ struct settings_data
   int16_t               log_y;
   int16_t               lag_counter_x;
   int16_t               lag_counter_y;
-#ifndef WIIVC
   int16_t               timer_x;
   int16_t               timer_y;
-#endif
   int16_t               watch_x[SETTINGS_WATCHES_MAX];
   int16_t               watch_y[SETTINGS_WATCHES_MAX];
   uint16_t              warp_entrance;

@@ -120,12 +120,11 @@ struct gz
   int                   movie_seed_pos;
   int32_t               frame_counter;
   int32_t               lag_vi_offset;
-#ifndef WIIVC
   int64_t               cpu_counter;
+  int32_t               cpu_counter_freq;
   _Bool                 timer_active;
   int64_t               timer_counter_offset;
   int64_t               timer_counter_prev;
-#endif
   int                   col_view_state;
   int                   hit_view_state;
   _Bool                 hide_rooms;
@@ -176,13 +175,11 @@ void          command_colview(void);
 void          command_hitview(void);
 void          command_resetlag(void);
 void          command_togglewatches(void);
-#ifndef WIIVC
 void          command_timer(void);
 void          command_resettimer(void);
 void          command_starttimer(void);
 void          command_stoptimer(void);
 void          command_reset(void);
-#endif
 
 void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
 void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);
