@@ -54,6 +54,7 @@ enum cheats
   CHEAT_USEITEMS,
   CHEAT_NOMAP,
   CHEAT_ISG,
+  CHEAT_QUICKTEXT,
   CHEAT_MAX,
 };
 

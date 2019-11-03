@@ -166,6 +166,8 @@ static void main_hook(void)
     z64_gameinfo.minimap_disabled = 1;
   if (settings->cheats & (1 << CHEAT_ISG))
     z64_link.sword_state = 1;
+  if (settings->cheats & (1 << CHEAT_QUICKTEXT))
+    *(uint8_t*)(z64_message_state_addr + 0x000C) = 0x01;
 
   /* handle commands */
   for (int i = 0; i < COMMAND_MAX; ++i) {
