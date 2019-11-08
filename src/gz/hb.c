@@ -7,9 +7,17 @@
  *  emulate the CPU cache. No flushing/invalidating is done.
  */
 
+int hb_check(void)
+{
+  if (hb_regs.key == 0x1234)
+    return 0;
+  else
+    return -1;
+}
+
 int hb_sd_init(void)
 {
-  if (hb_regs.key != 0x1234)
+  if (hb_check() == -1)
     return -1;
   hb_regs.status = HB_STATUS_SD_INIT;
   while (hb_regs.status & HB_STATUS_SD_BUSY)
@@ -23,7 +31,7 @@ int hb_sd_init(void)
 
 int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst)
 {
-  if (hb_regs.key != 0x1234)
+  if (hb_check() == -1)
     return -1;
   hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(dst);
   hb_regs.sd_n_blocks = n_blocks;
@@ -38,7 +46,7 @@ int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst)
 
 int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
 {
-  if (hb_regs.key != 0x1234)
+  if (hb_check() == -1)
     return -1;
   hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(src);
   hb_regs.sd_n_blocks = n_blocks;
@@ -53,7 +61,7 @@ int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
 
 int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)
 {
-  if (hb_regs.key != 0x1234)
+  if (hb_check() == -1)
     return -1;
   hb_regs.dram_save_addr = dram_save_addr;
   hb_regs.dram_save_len = dram_save_len;
@@ -63,11 +71,22 @@ int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)
 
 int hb_get_timebase(uint32_t *hi, uint32_t *lo)
 {
-  if (hb_regs.key != 0x1234)
+  if (hb_check() == -1)
     return -1;
   if (hi)
     *hi = hb_regs.timebase_hi;
   if (lo)
     *lo = hb_regs.timebase_lo;
+  return 0;
+}
+
+int hb_get_timebase64(uint64_t *tb)
+{
+  uint32_t hi;
+  uint32_t lo;
+  if (hb_get_timebase(&hi, &lo) == -1)
+    return -1;
+  if (tb)
+    *tb = (((uint64_t)hi << 32) | (uint64_t)lo);
   return 0;
 }

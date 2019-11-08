@@ -29,7 +29,7 @@ static void update_cpu_counter(void)
   static uint32_t count = 0;
   uint32_t new_count;
   if (hb_get_timebase(NULL, &new_count) == 0)
-    gz.cpu_counter_freq = 60750000;
+    gz.cpu_counter_freq = HB_TIMEBASE_FREQ;
   else {
     __asm__ volatile ("mfc0  $t0, $9;"
                       "nop;"
