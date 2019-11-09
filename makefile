@@ -1,6 +1,6 @@
 PACKAGE_TARNAME      ?= gz
 PACKAGE_URL          ?= github.com/glankk/gz
-target                = mips64
+target                = mips64-ultra-elf
 program_prefix        = $(target)-
 AS                    = $(program_prefix)as
 CCAS                  = $(program_prefix)gcc -x assembler-with-cpp
@@ -11,7 +11,7 @@ LD                    = $(program_prefix)g++
 OBJCOPY               = $(program_prefix)objcopy
 NM                    = $(program_prefix)nm
 READELF               = $(program_prefix)readelf
-GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ','\'',$(CPPFLAGS))' ./genhooks
+GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ','\'',$(ALL_CPPFLAGS))' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
@@ -34,16 +34,24 @@ ASMFILES              = *.S
 CFILES                = *.c
 CXXFILES              = *.cpp *.cxx *.cc *.c++
 
-OOT-1.0               = $(OBJ-gz-oot-1.0) $(ELF-gz-oot-1.0) $(HOOKS-gz-oot-1.0)
-OOT-1.1               = $(OBJ-gz-oot-1.1) $(ELF-gz-oot-1.1) $(HOOKS-gz-oot-1.1)
-OOT-1.2               = $(OBJ-gz-oot-1.2) $(ELF-gz-oot-1.2) $(HOOKS-gz-oot-1.2)
-OOT-MQ-J              = $(OBJ-gz-oot-mq-j) $(ELF-gz-oot-mq-j) $(HOOKS-gz-oot-mq-j)
-N64                   = $(OOT-1.0) $(OOT-1.1) $(OOT-1.2) $(OOT-MQ-J)
-OOT-1.0-VC            = $(OBJ-gz-oot-1.0-vc) $(ELF-gz-oot-1.0-vc) $(HOOKS-gz-oot-1.0-vc)
-OOT-1.1-VC            = $(OBJ-gz-oot-1.1-vc) $(ELF-gz-oot-1.1-vc) $(HOOKS-gz-oot-1.1-vc)
-OOT-1.2-VC            = $(OBJ-gz-oot-1.2-vc) $(ELF-gz-oot-1.2-vc) $(HOOKS-gz-oot-1.2-vc)
-OOT-MQ-J-VC           = $(OBJ-gz-oot-mq-j-vc) $(ELF-gz-oot-mq-j-vc) $(HOOKS-gz-oot-mq-j-vc)
-VC                    = $(OOT-1.0-VC) $(OOT-1.1-VC) $(OOT-1.2-VC) $(OOT-MQ-J-VC)
+OBJ-OOT-1.0           = $(OBJ-gz-oot-1.0) $(OBJ-gz-oot-1.0-vc)
+OBJ-OOT-1.1           = $(OBJ-gz-oot-1.1) $(OBJ-gz-oot-1.1-vc)
+OBJ-OOT-1.2           = $(OBJ-gz-oot-1.2) $(OBJ-gz-oot-1.2-vc)
+OBJ-OOT-MQ-J          = $(OBJ-gz-oot-mq-j) $(OBJ-gz-oot-mq-j-vc)
+ELF-OOT-1.0           = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.0-vc)
+ELF-OOT-1.1           = $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.1-vc)
+ELF-OOT-1.2           = $(ELF-gz-oot-1.2) $(ELF-gz-oot-1.2-vc)
+ELF-OOT-MQ-J          = $(ELF-gz-oot-mq-j) $(ELF-gz-oot-mq-j-vc)
+HOOKS-OOT-1.0         = $(HOOKS-gz-oot-1.0) $(HOOKS-gz-oot-1.0-vc)
+HOOKS-OOT-1.1         = $(HOOKS-gz-oot-1.1) $(HOOKS-gz-oot-1.1-vc)
+HOOKS-OOT-1.2         = $(HOOKS-gz-oot-1.2) $(HOOKS-gz-oot-1.2-vc)
+HOOKS-OOT-MQ-J        = $(HOOKS-gz-oot-mq-j) $(HOOKS-gz-oot-mq-j-vc)
+OBJ-N64               = $(OBJ-gz-oot-1.0) $(OBJ-gz-oot-1.1) $(OBJ-gz-oot-1.2) $(OBJ-gz-oot-mq-j)
+OBJ-VC                = $(OBJ-gz-oot-1.0-vc) $(OBJ-gz-oot-1.1-vc) $(OBJ-gz-oot-1.2-vc) $(OBJ-gz-oot-mq-j-vc)
+ELF-N64               = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.2) $(ELF-gz-oot-mq-j)
+ELF-VC                = $(ELF-gz-oot-1.0-vc) $(ELF-gz-oot-1.1-vc) $(ELF-gz-oot-1.2-vc) $(ELF-gz-oot-mq-j-vc)
+HOOKS-N64             = $(HOOKS-gz-oot-1.0) $(HOOKS-gz-oot-1.1) $(HOOKS-gz-oot-1.2) $(HOOKS-gz-oot-mq-j)
+HOOKS-VC              = $(HOOKS-gz-oot-1.0-vc) $(HOOKS-gz-oot-1.1-vc) $(HOOKS-gz-oot-1.2-vc) $(HOOKS-gz-oot-mq-j-vc)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 HOOKS                 = $(foreach v,$(GZ_VERSIONS),gz-$(v)-hooks)
@@ -132,18 +140,21 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
   $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
 
-$(OOT-1.0)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT10
-$(OOT-1.1)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT11
-$(OOT-1.2)            : CPPFLAGS             += -DZ64_VERSION=Z64_OOT12
-$(OOT-MQ-J)           : CPPFLAGS             += -DZ64_VERSION=Z64_OOTMQJ
-$(N64)                : CFLAGS               ?= -O3 -flto -ffat-lto-objects
-$(N64)                : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
-$(N64)                : LDFLAGS              ?= -O3 -flto
-$(OOT-1.0-VC)         : CPPFLAGS             += -DZ64_VERSION=Z64_OOT10 -DWIIVC
-$(OOT-1.1-VC)         : CPPFLAGS             += -DZ64_VERSION=Z64_OOT11 -DWIIVC
-$(OOT-1.2-VC)         : CPPFLAGS             += -DZ64_VERSION=Z64_OOT12 -DWIIVC
-$(OOT-MQ-J-VC)        : CPPFLAGS             += -DZ64_VERSION=Z64_OOTMQJ -DWIIVC
-$(VC)                 : CFLAGS               ?= -O1 -fno-reorder-blocks
-$(VC)                 : CXXFLAGS             ?= -O1 -fno-reorder-blocks
+$(OBJ-OOT-1.0) \
+$(HOOKS-OOT-1.0)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT10 $(ALL_CPPFLAGS)
+$(OBJ-OOT-1.1) \
+$(HOOKS-OOT-1.1)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT11 $(ALL_CPPFLAGS)
+$(OBJ-OOT-1.2) \
+$(HOOKS-OOT-1.2)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT12 $(ALL_CPPFLAGS)
+$(OBJ-OOT-MQ-J) \
+$(HOOKS-OOT-MQ-J)     : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_CPPFLAGS)
+$(OBJ-VC) \
+$(HOOKS-VC)           : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
+$(OBJ-N64)            : CFLAGS               ?= -O3 -flto -ffat-lto-objects
+$(OBJ-N64)            : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
+$(ELF-N64)            : LDFLAGS              ?= -O3 -flto
+$(OBJ-VC)             : CFLAGS               ?= -O1 -fno-reorder-blocks
+$(OBJ-VC)             : CXXFLAGS             ?= -O1 -fno-reorder-blocks
+$(ELF-VC)             : LDFLAGS              ?=
 
 $(eval $(call bin_template,ldr,ldr,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(HOOKDIR)/ldr,$(LDR_ADDRESS)))
