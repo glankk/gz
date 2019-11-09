@@ -6,6 +6,7 @@
 # Generated files
 obj/
 bin/
+hooks/
 *.o
 *.d
 *.elf
