@@ -22,10 +22,11 @@ local fs = gru.z64fs_load_blob(rom)
 
 print("patching code file")
 local code_file = fs:get(rom_info.code_ind)
-local hooks = gru.gsc_load(gz_version .. "/hooks.gsc")
+local hooks = gru.gsc_load("hooks/gz/" .. gz_version .. "/gz.gsc")
 hooks:shift(-rom_info.code_ram)
 hooks:apply_be(code_file)
-local ups_size_patch = gru.gsc_load(gz_version .. "/patch/ups_size_patch.gsc")
+local ups_size_patch = gru.gsc_load("patch/gsc/" .. rom_info.data_dir ..
+                                    "/ups_size_patch.gsc")
 ups_size_patch:shift(-rom_info.code_ram)
 ups_size_patch:apply_be(code_file)
 fs:replace(rom_info.code_ind, code_file, fs:compressed(rom_info.code_ind))
@@ -50,7 +51,9 @@ local _,_,make_result = os.execute(string.format(make .. " clean-ldr && " ..
 if make_result ~= 0 then error("failed to build ldr", 0) end
 
 print("inserting payload")
-gru.gsc_load(gz_version .. "/patch/mem_patch.gsc"):apply_be(patched_rom)
+local mem_patch = gru.gsc_load("patch/gsc/" .. rom_info.data_dir ..
+                               "/mem_patch.gsc")
+mem_patch:apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)
 patched_rom:write(0x1000, ldr)
