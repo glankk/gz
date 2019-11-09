@@ -1,6 +1,6 @@
 PACKAGE_TARNAME      ?= gz
 PACKAGE_URL          ?= github.com/glankk/gz
-target                = mips64-ultra-elf
+target                = mips64
 program_prefix        = $(target)-
 AS                    = $(program_prefix)as
 CCAS                  = $(program_prefix)gcc -x assembler-with-cpp
