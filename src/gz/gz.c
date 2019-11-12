@@ -624,8 +624,8 @@ static void state_main_hook(void)
     --z64_ctxt.state_frames;
     /* do not execute an ocarina frame */
     gz.frame_flag = 0;
+    gz.frame_ran = 0;
   }
-  gz.frame_ran = 0;
 }
 
 HOOK void srand_hook(uint32_t seed)
