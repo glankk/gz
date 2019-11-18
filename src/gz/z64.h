@@ -2016,6 +2016,7 @@ typedef struct
 # define z64_DeleteActor_addr                   0x80024FE0
 # define z64_SpawnActor_addr                    0x80025110
 # define z64_CreateStaticCollision_addr         0x8002E70C
+# define z64_camera_hook_addr                   0x80048A30
 # define z64_LoadMinimap_addr                   0x8006BF04
 # define z64_minimap_disable_1_addr             0x8006CD50
 # define z64_minimap_disable_2_addr             0x8006D4E4
@@ -2166,6 +2167,7 @@ typedef struct
 # define z64_DeleteActor_addr                   0x80024FE0
 # define z64_SpawnActor_addr                    0x80025110
 # define z64_CreateStaticCollision_addr         0x8002E70C
+# define z64_camera_hook_addr                   0x80048A30
 # define z64_LoadMinimap_addr                   0x8006BF04
 # define z64_minimap_disable_1_addr             0x8006CD50
 # define z64_minimap_disable_2_addr             0x8006D4E4
@@ -2316,6 +2318,7 @@ typedef struct
 # define z64_DeleteActor_addr                   0x80025620
 # define z64_SpawnActor_addr                    0x80025750
 # define z64_CreateStaticCollision_addr         0x8002ED4C
+# define z64_camera_hook_addr                   0x80049070
 # define z64_LoadMinimap_addr                   0x8006C564
 # define z64_minimap_disable_1_addr             0x8006D3B0
 # define z64_minimap_disable_2_addr             0x8006DB44
@@ -2466,6 +2469,7 @@ typedef struct
 # define z64_DeleteActor_addr                   0x80024E34
 # define z64_SpawnActor_addr                    0x80024F64
 # define z64_CreateStaticCollision_addr         0x8002E4BC
+# define z64_camera_hook_addr                   0x800485FC
 # define z64_LoadMinimap_addr                   0x8006BB14
 # define z64_minimap_disable_1_addr             0x8006C8A0
 # define z64_minimap_disable_2_addr             0x8006D024

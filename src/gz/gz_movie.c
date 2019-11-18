@@ -45,30 +45,8 @@ void movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset)
   zi->pad_released = (~mi->raw.pad & raw_prev->pad) | delta;
   zi->x_diff = mi->raw.x - raw_prev->x;
   zi->y_diff = mi->raw.y - raw_prev->y;
-  if (zi->raw.x < 8) {
-    if (zi->raw.x > -8)
-      zi->adjusted_x = 0;
-    else if (zi->raw.x < -66)
-      zi->adjusted_x = -60;
-    else
-      zi->adjusted_x = zi->raw.x + 7;
-  }
-  else if (zi->raw.x > 66)
-    zi->adjusted_x = 60;
-  else
-    zi->adjusted_x = zi->raw.x - 7;
-  if (zi->raw.y < 8) {
-    if (zi->raw.y > -8)
-      zi->adjusted_y = 0;
-    else if (zi->raw.y < -66)
-      zi->adjusted_y = -60;
-    else
-      zi->adjusted_y = zi->raw.y + 7;
-  }
-  else if (zi->raw.y > 66)
-    zi->adjusted_y = 60;
-  else
-    zi->adjusted_y = zi->raw.y - 7;
+  zi->adjusted_x = zu_adjust_joystick(zi->raw.x);
+  zi->adjusted_y = zu_adjust_joystick(zi->raw.y);
 }
 
 void gz_movie_rewind(void)

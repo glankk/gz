@@ -487,6 +487,18 @@ HOOK void draw_actors_hook(z64_game_t *game, void *actor_ctxt)
     z64_DrawActors(game, actor_ctxt);
 }
 
+static void mask_input(z64_input_t *input)
+{
+  z64_controller_t *mask = &gz.z_input_mask;
+  input->pad_pressed &= ~mask->pad;
+  input->pad_released |= (input->raw.pad & mask->pad);
+  input->raw.pad &= ~mask->pad;
+  input->raw.x &= ~mask->x;
+  input->raw.y &= ~mask->y;
+  input->adjusted_x = zu_adjust_joystick(input->raw.x);
+  input->adjusted_y = zu_adjust_joystick(input->raw.y);
+}
+
 HOOK void input_hook(void)
 {
   init_gp();
@@ -498,6 +510,7 @@ HOOK void input_hook(void)
     z64_input_t di = z64_input_direct;
     z64_input_t *zi = &z64_ctxt.input[0];
     frame_input_func(&z64_ctxt);
+    mask_input(zi);
     if (gz.movie_state == MOVIE_RECORDING) {
       if (gz.movie_frame >= gz.movie_inputs.size) {
         if (gz.movie_inputs.size == gz.movie_inputs.capacity)
@@ -682,6 +695,7 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   void (*ocarina_input_func)(void *a0, z64_input_t *input, int a2);
   ocarina_input_func = (void*)z64_ocarina_input_func_addr;
   ocarina_input_func(a0, input, a2);
+  mask_input(input);
   if (gz.ready && gz.movie_state != MOVIE_IDLE && gz.movie_frame > 0) {
     /* ocarina inputs happen after the movie counter has been advanced,
        so use the previous movie frame */
@@ -740,6 +754,85 @@ HOOK uint32_t afx_rand_hook(void)
   }
 }
 
+static void update_cam(void)
+{
+  const float m_speed = 0.5;
+  const float r_speed = 0.0025;
+  const int joy_max = 60;
+
+  int x = zu_adjust_joystick(input_x());
+  int y = zu_adjust_joystick(input_y());
+
+  if (input_pad() & BUTTON_Z) {
+    gz.cam_pos.x += -sin(gz.cam_yaw) * cos(gz.cam_pitch) * y * m_speed;
+    gz.cam_pos.y += -sin(gz.cam_pitch) * y * m_speed;
+    gz.cam_pos.z += cos(gz.cam_yaw) * cos(gz.cam_pitch) * y * m_speed;
+
+    gz.cam_pos.x += -cos(gz.cam_yaw) * x * m_speed;
+    gz.cam_pos.z += -sin(gz.cam_yaw) * x * m_speed;
+
+    if (input_pad() & BUTTON_C_UP)
+      gz.cam_pos.y += joy_max * m_speed;
+    if (input_pad() & BUTTON_C_DOWN)
+      gz.cam_pos.y -= joy_max * m_speed;
+    if (input_pad() & BUTTON_C_RIGHT)
+      gz.cam_yaw += joy_max * r_speed;
+    if (input_pad() & BUTTON_C_LEFT)
+      gz.cam_yaw -= joy_max * r_speed;
+  }
+  else {
+    gz.cam_yaw += x * r_speed;
+    gz.cam_pitch += y * r_speed;
+
+    if (input_pad() & BUTTON_C_UP) {
+      gz.cam_pos.x += -sin(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
+      gz.cam_pos.y += -sin(gz.cam_pitch) * joy_max * m_speed;
+      gz.cam_pos.z += cos(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
+    }
+    if (input_pad() & BUTTON_C_DOWN) {
+      gz.cam_pos.x -= -sin(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
+      gz.cam_pos.y -= -sin(gz.cam_pitch) * joy_max * m_speed;
+      gz.cam_pos.z -= cos(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
+    }
+    if (input_pad() & BUTTON_C_RIGHT) {
+      gz.cam_pos.x += -cos(gz.cam_yaw) * joy_max * m_speed;
+      gz.cam_pos.z += -sin(gz.cam_yaw) * joy_max * m_speed;
+    }
+    if (input_pad() & BUTTON_C_LEFT) {
+      gz.cam_pos.x -= -cos(gz.cam_yaw) * joy_max * m_speed;
+      gz.cam_pos.z -= -sin(gz.cam_yaw) * joy_max * m_speed;
+    }
+  }
+
+  {
+    const float lim = M_PI / 2 - r_speed;
+    if (gz.cam_pitch > lim)
+      gz.cam_pitch = lim;
+    else if (gz.cam_pitch < -lim)
+      gz.cam_pitch = -lim;
+  }
+}
+
+HOOK void camera_hook(void *camera)
+{
+  void (*camera_func)(void *camera);
+  __asm__ volatile ("sw    $t9, %0" : "=m"(camera_func));
+
+  if (!gz.ready || !gz.free_cam)
+    return camera_func(camera);
+
+  if (!gz.lock_cam)
+    update_cam();
+
+  z64_xyzf_t *camera_at = (void*)((char*)camera + 0x0050);
+  z64_xyzf_t *camera_eye = (void*)((char*)camera + 0x005C);
+
+  *camera_eye = gz.cam_pos;
+  camera_at->x = gz.cam_pos.x - sin(gz.cam_yaw) * cos(gz.cam_pitch);
+  camera_at->y = gz.cam_pos.y - sin(gz.cam_pitch);
+  camera_at->z = gz.cam_pos.z + cos(gz.cam_yaw) * cos(gz.cam_pitch);
+}
+
 static void main_return_proc(struct menu_item *item, void *data)
 {
   gz_hide_menu();
@@ -767,6 +860,9 @@ static void init(void)
   vector_init(&gz.movie_seeds, sizeof(struct movie_seed));
   gz.movie_frame = 0;
   gz.movie_seed_pos = 0;
+  gz.z_input_mask.pad = 0x0000;
+  gz.z_input_mask.x = 0x00;
+  gz.z_input_mask.y = 0x00;
   gz.frame_counter = 0;
   gz.lag_vi_offset = -(int32_t)z64_vi_counter;
   gz.cpu_counter = 0;
@@ -778,6 +874,12 @@ static void init(void)
   gz.hit_view_state = HITVIEW_INACTIVE;
   gz.hide_rooms = 0;
   gz.hide_actors = 0;
+  gz.free_cam = 0;
+  gz.cam_yaw = 0.f;
+  gz.cam_pitch = 0.f;
+  gz.cam_pos.x = 0.f;
+  gz.cam_pos.y = 0.f;
+  gz.cam_pos.z = 0.f;
   gz.memfile = malloc(sizeof(*gz.memfile) * SETTINGS_MEMFILE_MAX);
   for (int i = 0; i < SETTINGS_MEMFILE_MAX; ++i)
     gz.memfile_saved[i] = 0;

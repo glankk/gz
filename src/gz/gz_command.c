@@ -125,6 +125,13 @@ void gz_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
   zu_execute_game(entrance_index, cutscene_index);
 }
 
+void gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y)
+{
+  gz.z_input_mask.pad = pad;
+  gz.z_input_mask.x = x;
+  gz.z_input_mask.y = y;
+}
+
 void gz_save_memfile(struct memory_file *file)
 {
   memcpy(&file->z_file, &z64_file, sizeof(file->z_file));

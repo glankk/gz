@@ -948,3 +948,23 @@ void zu_set_lighting_ext(Gfx **p_gfx_p, Gfx **p_gfx_d)
 {
   set_lighting(p_gfx_p, gen_lighting(p_gfx_d));
 }
+
+int zu_adjust_joystick(int v)
+{
+  if (v < 0) {
+    if (v > -8)
+      return 0;
+    else if (v < -66)
+      return -60;
+    else
+      return v + 7;
+  }
+  else {
+    if (v < 8)
+      return 0;
+    else if (v > 66)
+      return 60;
+    else
+      return v - 7;
+  }
+}

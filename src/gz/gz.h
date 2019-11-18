@@ -118,6 +118,7 @@ struct gz
   struct vector         movie_seeds;
   int                   movie_frame;
   int                   movie_seed_pos;
+  z64_controller_t      z_input_mask;
   int32_t               frame_counter;
   int32_t               lag_vi_offset;
   int64_t               cpu_counter;
@@ -129,6 +130,11 @@ struct gz
   int                   hit_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
+  _Bool                 free_cam;
+  _Bool                 lock_cam;
+  float                 cam_yaw;
+  float                 cam_pitch;
+  z64_xyzf_t            cam_pos;
   struct memory_file   *memfile;
   _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
   uint8_t               memfile_slot;
@@ -146,6 +152,7 @@ void          gz_save_memfile(struct memory_file *memfile);
 void          gz_load_memfile(struct memory_file *memfile);
 void          gz_warp(int16_t entrance_index,
                       uint16_t cutscene_index, int age);
+void          gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y);
 
 void          command_break(void);
 void          command_levitate(void);

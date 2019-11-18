@@ -195,6 +195,59 @@ static int hit_view_shade_proc(struct menu_item *item,
   return 0;
 }
 
+static void set_cam_input_mask(void)
+{
+  if (gz.free_cam && !gz.lock_cam) {
+      gz_set_input_mask(BUTTON_C_RIGHT | BUTTON_C_LEFT | BUTTON_C_DOWN |
+                        BUTTON_C_UP | BUTTON_Z, 0xFF, 0xFF);
+  }
+  else
+    gz_set_input_mask(0x0000, 0x00, 0x00);
+}
+
+static int enable_cam_proc(struct menu_item *item,
+                           enum menu_callback_reason reason,
+                           void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    gz.free_cam = 1;
+    set_cam_input_mask();
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    gz.free_cam = 0;
+    set_cam_input_mask();
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, gz.free_cam);
+  return 0;
+}
+
+static int lock_cam_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    gz.lock_cam = 1;
+    set_cam_input_mask();
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    gz.lock_cam = 0;
+    set_cam_input_mask();
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, gz.lock_cam);
+  return 0;
+}
+
+static void reset_cam_proc(struct menu_item *item, void *data)
+{
+  gz.cam_yaw = 0.f;
+  gz.cam_pitch = 0.f;
+  gz.cam_pos.x = 0.f;
+  gz.cam_pos.y = 0.f;
+  gz.cam_pos.z = 0.f;
+}
+
 static int hide_rooms_proc(struct menu_item *item,
                            enum menu_callback_reason reason,
                            void *data)
@@ -238,11 +291,13 @@ struct menu *gz_scene_menu(void)
   static struct menu menu;
   static struct menu explorer;
   static struct menu collision;
+  static struct menu camera;
   struct menu_item *item;
 
   /* initialize menus */
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&collision, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  menu_init(&camera, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
 
   /* populate scene menu */
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
@@ -258,25 +313,26 @@ struct menu *gz_scene_menu(void)
   menu_add_button(&menu, 0, 5, "load room", load_room_proc, item);
   /* visuals controls */
   menu_add_submenu(&menu, 0, 6, &collision, "collision");
-  menu_add_static(&menu, 0, 7, "hide rooms", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 7, hide_rooms_proc, NULL);
-  menu_add_static(&menu, 0, 8, "hide actors", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 8, hide_actors_proc, NULL);
+  menu_add_submenu(&menu, 0, 7, &camera, "free camera");
+  menu_add_static(&menu, 0, 8, "hide rooms", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 8, hide_rooms_proc, NULL);
+  menu_add_static(&menu, 0, 9, "hide actors", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 9, hide_actors_proc, NULL);
   /* teleport controls */
-  menu_add_static(&menu, 0, 9, "teleport slot", 0xC0C0C0);
-  menu_add_watch(&menu, 18, 9,
+  menu_add_static(&menu, 0, 10, "teleport slot", 0xC0C0C0);
+  menu_add_watch(&menu, 18, 10,
                  (uint32_t)&settings->teleport_slot, WATCH_TYPE_U8);
-  menu_add_button(&menu, 16, 9, "-", teleport_dec_proc, NULL);
-  menu_add_button(&menu, 20, 9, "+", teleport_inc_proc, NULL);
+  menu_add_button(&menu, 16, 10, "-", teleport_dec_proc, NULL);
+  menu_add_button(&menu, 20, 10, "+", teleport_inc_proc, NULL);
   /* scene info watches */
-  menu_add_static(&menu, 0, 10, "current scene", 0xC0C0C0);
-  menu_add_watch(&menu, 16, 10,
-                 (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
-  menu_add_static(&menu, 0, 11, "current room", 0xC0C0C0);
+  menu_add_static(&menu, 0, 11, "current scene", 0xC0C0C0);
   menu_add_watch(&menu, 16, 11,
+                 (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+  menu_add_static(&menu, 0, 12, "current room", 0xC0C0C0);
+  menu_add_watch(&menu, 16, 12,
                  (uint32_t)&z64_game.room_ctxt.rooms[0].index, WATCH_TYPE_U8);
-  menu_add_static(&menu, 0, 12, "no. rooms", 0xC0C0C0);
-  menu_add_watch(&menu, 16, 12, (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
+  menu_add_static(&menu, 0, 13, "no. rooms", 0xC0C0C0);
+  menu_add_watch(&menu, 16, 13, (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
 
   /* populate collision menu */
   collision.selector = menu_add_submenu(&collision, 0, 0, NULL, "return");
@@ -303,6 +359,14 @@ struct menu *gz_scene_menu(void)
   menu_add_checkbox(&collision, 16, 9, hit_view_xlu_proc, NULL);
   menu_add_static(&collision, 2, 10, "shaded", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 10, hit_view_shade_proc, NULL);
+
+  /* populate camera menu */
+  camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");
+  menu_add_checkbox(&camera, 0, 1, enable_cam_proc, NULL);
+  menu_add_static(&camera, 2, 1, "enable", 0xC0C0C0);
+  menu_add_checkbox(&camera, 0, 2, lock_cam_proc, NULL);
+  menu_add_static(&camera, 2, 2, "lock", 0xC0C0C0);
+  menu_add_button(&camera, 0, 3, "reset", reset_cam_proc, item);
 
   return &menu;
 }

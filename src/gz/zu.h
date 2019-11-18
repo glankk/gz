@@ -146,6 +146,8 @@ void zu_load_disp_p(struct zu_disp_p *disp_p);
 void zu_set_lighting(void);
 void zu_set_lighting_ext(Gfx **p_gfx_p, Gfx **p_gfx_d);
 
+int zu_adjust_joystick(int v);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif
