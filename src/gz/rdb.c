@@ -68,9 +68,9 @@ static const char *const rdb_thread_name[] =
 
 static struct
 {
-  _Alignas(0x10) volatile
+  _Alignas(0x10)
   struct fifo_pkt     ipkt;
-  _Alignas(0x10) volatile
+  _Alignas(0x10)
   struct fifo_pkt     opkt;
   int                 ipos;
 
@@ -130,6 +130,7 @@ static void rdb_flush(void)
     return;
   while (ed_regs.status & (ED_STATE_TXE | ED_STATE_DMA_BUSY))
     ;
+  __asm__ volatile ("" :: "m"(rdb.opkt));
   ed_fifo_write((void*)&rdb.opkt, 1);
   rdb.opkt.size = 0;
 }
@@ -140,6 +141,7 @@ static char rdb_getc(void)
     while (ed_regs.status & (ED_STATE_RXF | ED_STATE_DMA_BUSY))
       ;
     ed_fifo_read((void*)&rdb.ipkt, 1);
+    __asm__ volatile ("" : "=m"(rdb.ipkt));
     rdb.ipos = 0;
   }
   return rdb.ipkt.data[rdb.ipos++];
