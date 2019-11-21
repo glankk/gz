@@ -8,7 +8,6 @@
 #include "settings.h"
 #include "z64.h"
 
-#define           BIND_END 6
 static int8_t     joy_x;
 static int8_t     joy_y;
 static uint16_t   pad;
@@ -27,12 +26,33 @@ static _Bool      bind_disable[COMMAND_MAX];
 static _Bool      bind_override[COMMAND_MAX];
 static _Bool      input_enabled = 1;
 
-static int bind_get_component(uint16_t bind, int index)
+static int bitmask_button_index(uint16_t bitmask)
+{
+  for (int i = 0; i < 16; ++i)
+    if (bitmask & (1 << i))
+      return i;
+  return -1;
+}
+
+uint16_t bind_make(int length, ...)
+{
+  uint16_t bind = 0;
+  va_list vl;
+  va_start(vl, length);
+  for (int i = 0; i < length; ++i)
+    bind |= bitmask_button_index(va_arg(vl, int)) << (i * 4);
+  va_end(vl);
+  if (length < 4)
+    bind |= BIND_END << (length * 4);
+  return bind;
+}
+
+int bind_get_component(uint16_t bind, int index)
 {
   return (bind >> (4 * index)) & 0x000F;
 }
 
-static uint16_t bind_get_bitmask(uint16_t bind)
+uint16_t bind_get_bitmask(uint16_t bind)
 {
   uint16_t p = 0;
   for (int i = 0; i < 4; ++i) {
@@ -42,14 +62,6 @@ static uint16_t bind_get_bitmask(uint16_t bind)
     p |= 1 << c;
   }
   return p;
-}
-
-static int bitmask_button_index(uint16_t bitmask)
-{
-  for (int i = 0; i < 16; ++i)
-    if (bitmask & (1 << i))
-      return i;
-  return -1;
 }
 
 const uint32_t input_button_color[] =
@@ -229,19 +241,6 @@ void input_free(uint16_t bitmask)
   }
 }
 
-uint16_t input_bind_make(int length, ...)
-{
-  uint16_t bind = 0;
-  va_list vl;
-  va_start(vl, length);
-  for (int i = 0; i < length; ++i)
-    bind |= bitmask_button_index(va_arg(vl, int)) << (i * 4);
-  va_end(vl);
-  if (length < 4)
-    bind |= BIND_END << (length * 4);
-  return bind;
-}
-
 void input_bind_set_disable(int index, _Bool value)
 {
   bind_disable[index] = value;
@@ -283,7 +282,7 @@ static int think_proc(struct menu_item *item)
     else if (button_time[bitmask_button_index(BUTTON_L)] >=
              INPUT_REPEAT_DELAY)
     {
-      *b = input_bind_make(0);
+      *b = bind_make(0);
       item->animate_highlight = 0;
       data->state = 0;
       input_enabled = 1;
@@ -291,7 +290,7 @@ static int think_proc(struct menu_item *item)
   }
   if (data->state == 2) {
     if (pad) {
-      *b = input_bind_make(0);
+      *b = bind_make(0);
       data->state = 3;
     }
   }

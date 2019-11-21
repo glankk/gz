@@ -5,31 +5,32 @@
 #include <vector/vector.h>
 #include "files.h"
 #include "menu.h"
+#include "osk.h"
 #include "resource.h"
 #include "sys.h"
 
 #define FILE_VIEW_ROWS    14
 
 /* params */
-static enum get_file_mode gf_mode;
-static char              *gf_suffix;
-static int                gf_suffix_length;
-static get_file_callback  gf_callback_proc;
-static void              *gf_callback_data;
+static enum get_file_mode   gf_mode;
+static char                *gf_suffix;
+static int                  gf_suffix_length;
+static get_file_callback_t  gf_callback_proc;
+static void                *gf_callback_data;
 /* data */
-static struct menu        gf_menu;
-static struct vector      gf_dir_state;
-static struct set         gf_dir_entries;
-static _Bool              gf_untitled;
+static struct menu          gf_menu;
+static struct vector        gf_dir_state;
+static struct set           gf_dir_entries;
+static _Bool                gf_untitled;
 /* menus */
-static struct menu_item  *gf_reset;
-static struct menu_item  *gf_location;
-static struct menu_item  *gf_name;
-static struct menu_item  *gf_accept;
-static struct menu_item  *gf_clear;
-static struct menu_item  *gf_scroll_up;
-static struct menu_item  *gf_scroll_down;
-static struct menu_item  *gf_files[FILE_VIEW_ROWS];
+static struct menu_item    *gf_reset;
+static struct menu_item    *gf_location;
+static struct menu_item    *gf_name;
+static struct menu_item    *gf_accept;
+static struct menu_item    *gf_clear;
+static struct menu_item    *gf_scroll_up;
+static struct menu_item    *gf_scroll_down;
+static struct menu_item    *gf_files[FILE_VIEW_ROWS];
 
 struct dir_state
 {
@@ -175,11 +176,12 @@ static void update_view(_Bool enable, _Bool select)
 static void set_name(const char *name)
 {
   if (!name || strlen(name) == 0) {
-    menu_strinput_set(gf_name, "untitled");
+    strcpy(gf_name->text, "untitled");
     gf_untitled = 1;
   }
   else {
-    menu_strinput_set(gf_name, name);
+    strncpy(gf_name->text, name, 31);
+    gf_name->text[31] = 0;
     gf_untitled = 0;
   }
 }
@@ -307,30 +309,33 @@ static int file_activate_proc(struct menu_item *item)
 static int file_nav_proc(struct menu_item *item, enum menu_navigation nav) {
   int row = (int)item->data;
   int n_entries = gf_dir_entries.container.size;
-  if(row == 0 && nav == MENU_NAVIGATE_UP) {
+  if (row == 0 && nav == MENU_NAVIGATE_UP) {
     struct dir_state *ds = vector_at(&gf_dir_state, 0);
     --ds->scroll;
     if (ds->scroll + FILE_VIEW_ROWS > n_entries)
       ds->scroll = n_entries - FILE_VIEW_ROWS;
     if (ds->scroll < 0) {
-      if(n_entries < FILE_VIEW_ROWS) {
+      if (n_entries < FILE_VIEW_ROWS) {
         ds->scroll = 0;
-        item->owner->selector = gf_files[n_entries - 1];
+        menu_select(item->owner, gf_files[n_entries - 1]);
       }
       else {
         ds->scroll = n_entries - FILE_VIEW_ROWS;
-        item->owner->selector = gf_files[FILE_VIEW_ROWS - 1];
+        menu_select(item->owner, gf_files[FILE_VIEW_ROWS - 1]);
       }
     }
     return 1;
   }
-  else if ((row == FILE_VIEW_ROWS - 1 || row == gf_dir_entries.container.size - 1) && nav == MENU_NAVIGATE_DOWN) {
+  else if ((row == FILE_VIEW_ROWS - 1 ||
+            row == gf_dir_entries.container.size - 1) &&
+           nav == MENU_NAVIGATE_DOWN)
+  {
     struct dir_state *ds = vector_at(&gf_dir_state, 0);
     ++ds->scroll;
     int index = ds->scroll + row;
-    if(index == gf_dir_entries.container.size){
+    if (index == gf_dir_entries.container.size){
       ds->scroll = 0;
-      item->owner->selector = gf_files[0];
+      menu_select(item->owner, gf_files[0]);
     }
     return 1;
   }
@@ -398,11 +403,23 @@ static _Bool dir_entry_comp(void *a, void *b)
     return 0;
 }
 
+static int osk_callback_proc(const char *str, void *data)
+{
+  set_name(str);
+  gf_menu.selector = gf_accept;
+  return 0;
+}
+
+static int name_activate_proc(struct menu_item *item)
+{
+  menu_get_osk_string(item->owner, gf_untitled ? NULL : item->text,
+                      osk_callback_proc, NULL);
+  return 1;
+}
+
 static void accept_proc(struct menu_item *item, void *data)
 {
-  char name[32];
-  menu_strinput_get(gf_name, name);
-  return_path(name);
+  return_path(gf_name->text);
 }
 
 static void clear_proc(struct menu_item *item, void *data)
@@ -439,25 +456,6 @@ static void scroll_down_proc(struct menu_item *item, void *data)
     ds->scroll = 0;
 }
 
-static int name_proc(struct menu_item *item,
-                     enum menu_callback_reason reason,
-                     void *data)
-{
-  if (reason == MENU_CALLBACK_ACTIVATE) {
-    if (gf_untitled)
-      menu_strinput_set(gf_name, "");
-  }
-  else if (reason == MENU_CALLBACK_CHANGED) {
-    char str[32];
-    menu_strinput_get(gf_name, str);
-    if (strlen(str) == 0)
-      set_name(NULL);
-    else
-      gf_untitled = 0;
-  }
-  return 0;
-}
-
 static void gf_menu_init(void)
 {
   static _Bool ready = 0;
@@ -476,7 +474,10 @@ static void gf_menu_init(void)
     gf_reset = menu_add_button(menu, 0, 1, "reset disk", reset_proc, NULL);
     gf_location = menu_add_static(menu, 0, 2, NULL, 0xC0C0C0);
     gf_location->text = malloc(32);
-    gf_name = menu_add_strinput(menu, 0, 3, 31, name_proc, NULL);
+    gf_name = menu_item_add(menu, 0, 3, NULL, 0xFFFFFF);
+    gf_name->text = malloc(32);
+    gf_name->text[0] = 0;
+    gf_name->activate_proc = name_activate_proc;
     gf_accept = menu_add_button(menu, 0, 4, "accept", accept_proc, NULL);
     gf_clear = menu_add_button(menu, 7, 4, "clear", clear_proc, NULL);
     for (int i = 0; i < FILE_VIEW_ROWS; ++i) {
@@ -501,7 +502,7 @@ static void gf_menu_init(void)
 
 void menu_get_file(struct menu *menu, enum get_file_mode mode,
                    const char *defname, const char *suffix,
-                   get_file_callback callback_proc, void *callback_data)
+                   get_file_callback_t callback_proc, void *callback_data)
 {
   gf_mode = mode;
   if (gf_suffix)

@@ -92,3 +92,11 @@ struct menu_item *menu_add_button_icon(struct menu *menu, int x, int y,
   item->activate_proc = activate_proc;
   return item;
 }
+
+void menu_button_set_texture(struct menu_item *item,
+                             struct gfx_texture *texture, int texture_tile)
+{
+  struct item_data *data = item->data;
+  data->texture = texture;
+  data->texture_tile = texture_tile;
+}

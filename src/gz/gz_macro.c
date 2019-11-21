@@ -324,7 +324,7 @@ static int do_export_state(const char *path, void *data)
     menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
     return 1;
   }
-  else 
+  else
     return 0;
 }
 
@@ -338,12 +338,11 @@ static void export_state_proc(struct menu_item *item, void *data)
 {
   if (gz.state_buf[gz.state_slot]) {
     struct state_meta *state = gz.state_buf[gz.state_slot];
-    char buf[100] = "000-";
-    buf[4] = 0;
-    const char *append = zu_scene_info[state->scene_idx].scene_name;
-    size_t max_len = sizeof(buf) - strlen(append) - 1;
-    menu_get_file(gz.menu_main, GETFILE_SAVE, strncat(buf, append, max_len),
-                  ".gzs", do_export_state, NULL);
+    char defname[32];
+    snprintf(defname, sizeof(defname), "000-%s",
+             zu_scene_info[state->scene_idx].scene_name);
+    menu_get_file(gz.menu_main, GETFILE_SAVE, defname, ".gzs",
+                  do_export_state, NULL);
   }
 }
 

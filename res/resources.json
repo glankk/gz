@@ -173,6 +173,13 @@
     "format":       "rgba16",
     "tile_height":  15
   },
+  "osk_icons.png":
+  {
+    "type":         "texture",
+    "name":         "osk_icons",
+    "format":       "i4",
+    "tile_height":  8
+  },
   "crosshair.png":
   {
     "type":         "texture",

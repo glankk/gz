@@ -7,6 +7,7 @@
 #define input_sch_pad         (*(uint16_t*)input_sch_pad_addr)
 
 #define INPUT_REPEAT_DELAY    8
+#define BIND_END              6
 
 #define BUTTON_C_RIGHT        0x0001
 #define BUTTON_C_LEFT         0x0002
@@ -23,6 +24,10 @@
 #define BUTTON_B              0x4000
 #define BUTTON_A              0x8000
 
+uint16_t  bind_make(int length, ...);
+int       bind_get_component(uint16_t bind, int index);
+uint16_t  bind_get_bitmask(uint16_t bind);
+
 void      input_update(void);
 uint16_t  input_z_pad(void);
 int8_t    input_x(void);
@@ -34,7 +39,6 @@ uint16_t  input_released(void);
 void      input_reservation_set(_Bool enabled);
 void      input_reserve(uint16_t bitmask);
 void      input_free(uint16_t bitmask);
-uint16_t  input_bind_make(int length, ...);
 void      input_bind_set_disable(int index, _Bool value);
 void      input_bind_set_override(int index, _Bool value);
 _Bool     input_bind_held(int index);
