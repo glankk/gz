@@ -126,8 +126,8 @@ end
 if vc_version ~= nil then
   if not opt_nohb then
     gzinject_cmd = gzinject_cmd ..  " -p \"patch/gzi/hb_" .. vc_version ..
-                   ".gzi\" --dol-inject \"patch/dol/hb-" .. vc_version ..
-                   "/homeboy.bin\" --dol-loading 90000800"
+                   ".gzi\" --dol-inject \"patch/homeboy/bin/hb-" ..
+                   vc_version .. "/homeboy.bin\" --dol-loading 90000800"
   end
 end
 if not opt_disable_controller_remappings then

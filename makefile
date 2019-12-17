@@ -64,6 +64,12 @@ distclean             :
 	rm -rf patch/ups patch/*.z64 patch/*.wad
 .PHONY                : all clean distclean
 
+all-homeboy           :
+	cd patch/homeboy && $(MAKE) all
+clean-homeboy         :
+	cd patch/homeboy && $(MAKE) clean
+.PHONY                : all-homeboy clean-homeboy
+
 define bin_template
 NAME-$(1)             = $(2)
 SRCDIR-$(1)           = $(3)
