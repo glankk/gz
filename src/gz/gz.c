@@ -793,15 +793,10 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
   if (gz.ready && gz.movie_state != MOVIE_IDLE && gz.movie_frame > 0) {
     /* if recording, use the sync hack setting to decide the input to use */
     if (gz.movie_state == MOVIE_RECORDING) {
-      z64_input_t frame_input;
-      movie_to_z(gz.movie_frame - 1, &frame_input, NULL);
       if (settings->bits.hack_oca_input)
-        *input = frame_input;
-      /* record ocarina input if it differs from the sync hack */
-      if (input->raw.pad != frame_input.raw.pad ||
-          input->adjusted_x != frame_input.adjusted_x ||
-          input->adjusted_y != frame_input.adjusted_y)
-      {
+        movie_to_z(gz.movie_frame - 1, input, NULL);
+      else {
+        /* record ocarina input */
         struct movie_oca_input *oi;
         oi = vector_at(&gz.movie_oca_input, gz.movie_oca_input_pos);
         if (!oi || oi->frame_idx != gz.movie_frame) {
@@ -815,8 +810,6 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
         ++gz.movie_oca_input_pos;
         gz.oca_input_flag = 1;
       }
-      else
-        *input = frame_input;
     }
     /* if in playback, use a recorded value, or sync hack if there is none */
     else {
