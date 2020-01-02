@@ -5,6 +5,7 @@
 #include <mips.h>
 #include <n64.h>
 #include "gfx.h"
+#include "util.h"
 #include "z64.h"
 #include "zu.h"
 
@@ -191,7 +192,9 @@ void gfx_flush(void)
 {
   flush_chars();
   gSPEndDisplayList(gfx_disp_p++);
+  cache_writeback_data(gfx_disp, GFX_DISP_SIZE);
   gSPDisplayList(z64_ctxt.gfx->overlay.p++, gfx_disp);
+
   Gfx *disp_w = gfx_disp_w;
   gfx_disp_w = gfx_disp;
   gfx_disp = disp_w;
