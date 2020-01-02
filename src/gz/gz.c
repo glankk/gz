@@ -60,9 +60,10 @@ static void update_cpu_counter(void)
   if (hb_get_timebase(NULL, &new_count) == 0)
     gz.cpu_counter_freq = HB_TIMEBASE_FREQ;
   else {
-    __asm__ volatile ("mfc0  $t0, $9;"
+    __asm__ volatile ("mfc0    $t0, $9;"
                       "nop;"
-                      "sw    $t0, %0;" : "=m"(new_count) :: "t0");
+                      "sw      $t0, %[new_count];"
+                      : [new_count] "=m"(new_count) :: "t0");
     gz.cpu_counter_freq = OS_CPU_COUNTER;
   }
   gz.cpu_counter += new_count - count;
@@ -887,13 +888,13 @@ HOOK void ocarina_sync_hook(void)
     uint32_t t1;
     uint32_t t6;
   } regs;
-  __asm__ volatile ("la    $v0, %0;"
-                    "sw    $v1, 0x0000($v0);"
-                    "sw    $a3, 0x0008($v0);"
-                    "sw    $t0, 0x000C($v0);"
-                    "sw    $t1, 0x0010($v0);"
-                    "sw    $t6, 0x0014($v0);"
-                    : "=m"(regs) :: "v0");
+  __asm__ volatile ("la      $v0, %[regs];"
+                    "sw      $v1, 0x0000($v0);"
+                    "sw      $a3, 0x0008($v0);"
+                    "sw      $t0, 0x000C($v0);"
+                    "sw      $t1, 0x0010($v0);"
+                    "sw      $t6, 0x0014($v0);"
+                    : [regs] "=m"(regs) :: "v0");
   int audio_frames;
   /* default behavior */
   if (regs.t6)
@@ -936,13 +937,13 @@ HOOK void ocarina_sync_hook(void)
     }
   }
   regs.a0 = audio_frames;
-  __asm__ volatile ("la    $v0, %0;"
-                    "lw    $v1, 0x0000($v0);"
-                    "lw    $a0, 0x0004($v0);"
-                    "lw    $a3, 0x0008($v0);"
-                    "lw    $t0, 0x000C($v0);"
-                    "lw    $t1, 0x0010($v0);"
-                    :: "m"(regs) : "v0");
+  __asm__ volatile ("la      $v0, %[regs];"
+                    "lw      $v1, 0x0000($v0);"
+                    "lw      $a0, 0x0004($v0);"
+                    "lw      $a3, 0x0008($v0);"
+                    "lw      $t0, 0x000C($v0);"
+                    "lw      $t1, 0x0010($v0);"
+                    :: [regs] "m"(regs) : "v0", "v1", "a0", "a3", "t0", "t1");
 }
 
 HOOK uint32_t afx_rand_hook(void)
@@ -970,8 +971,9 @@ HOOK void guPerspectiveF_hook(MtxF *mf)
   init_gp();
   if (gz.ready && settings->bits.wiivc_cam) {
     /* overwrite the scale argument in guPerspectiveF */
-    __asm__ volatile ("la    $t0, 0x3F800000;"
-                      "sw    $t0, 0x0048($sp);" ::: "t0");
+    __asm__ volatile ("la      $t0, 0x3F800000;"
+                      "sw      $t0, 0x0048($sp);"
+                      ::: "t0");
   }
   mf->xx = 1.f;
   mf->xy = 0.f;
@@ -1053,7 +1055,8 @@ static void update_cam(void)
 HOOK void camera_hook(void *camera)
 {
   void (*camera_func)(void *camera);
-  __asm__ volatile ("sw    $t9, %0" : "=m"(camera_func));
+  __asm__ volatile ("sw      $t9, %[camera_func]"
+                    : [camera_func] "=m"(camera_func));
 
   if (!gz.ready || !gz.free_cam)
     return camera_func(camera);

@@ -458,8 +458,9 @@ static _Bool rdb_set_bkp(struct swbkp *bkp, uint32_t addr)
   bkp->old_insn = *p;
   bkp->new_insn = MIPS_TEQ(MIPS_R0, MIPS_R0, 0);
   *p = bkp->new_insn;
-  __asm__ volatile ("cache 0x19, 0(%0);"
-                    "cache 0x10, 0(%0);" :: "r"(p));
+  __asm__ volatile ("cache   0x19, 0(%[p]);"
+                    "cache   0x10, 0(%[p]);"
+                    :: [p] "r"(p));
   return 1;
 }
 
@@ -471,8 +472,9 @@ static _Bool rdb_clear_bkp(struct swbkp *bkp)
   bkp->active = 0;
   if (*p == bkp->new_insn) {
     *p = bkp->old_insn;
-    __asm__ volatile ("cache 0x19, 0(%0);"
-                      "cache 0x10, 0(%0);" :: "r"(p));
+    __asm__ volatile ("cache   0x19, 0(%[p]);"
+                      "cache   0x10, 0(%[p]);"
+                      :: [p] "r"(p));
   }
   return 1;
 }
@@ -484,12 +486,12 @@ static void rdb_enable_watch(void)
     watchlo = (rdb.watch_addr & 0x1FFFFFF8) | (rdb.watch_type & 3);
   else
     watchlo = 0;
-  __asm__ volatile ("mtc0  %0, $18;" :: "r"(watchlo));
+  __asm__ volatile ("mtc0    %[watchlo], $18;" :: [watchlo] "r"(watchlo));
 }
 
 static void rdb_disable_watch(void)
 {
-  __asm__ volatile ("mtc0  $zero, $18;");
+  __asm__ volatile ("mtc0    $zero, $18;");
 }
 
 static int rdb_nthreads(void)

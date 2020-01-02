@@ -8,13 +8,13 @@
 static inline _Bool set_int(_Bool enable)
 {
   uint32_t sr;
-  __asm__ volatile ("mfc0  %0, $12;" : "=r"(sr));
+  __asm__ volatile ("mfc0    %[sr], $12;" : [sr] "=r"(sr));
   _Bool ie = sr & MIPS_STATUS_IE;
   if (enable)
     sr |= MIPS_STATUS_IE;
   else
     sr &= ~MIPS_STATUS_IE;
-  __asm__ volatile ("mtc0  %0, $12;" :: "r"(sr));
+  __asm__ volatile ("mtc0    %[sr], $12;" :: [sr] "r"(sr));
   return ie;
 }
 
@@ -23,7 +23,7 @@ static inline void cache_writeback_data(void *ptr, uint32_t len)
   char *p = ptr;
   char *e = p + len;
   while (p < e) {
-    __asm__ volatile ("cache 0x19, 0x0000(%0);" :: "r"(p));
+    __asm__ volatile ("cache   0x19, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
   }
 }
@@ -33,7 +33,7 @@ static inline void cache_invalidate_data(void *ptr, uint32_t len)
   char *p = ptr;
   char *e = p + len;
   while (p < e) {
-    __asm__ volatile ("cache 0x11, 0x0000(%0);" :: "r"(p));
+    __asm__ volatile ("cache   0x11, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
   }
 }
