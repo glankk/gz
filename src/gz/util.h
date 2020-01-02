@@ -58,13 +58,13 @@ static inline _Bool enter_dma_section(void)
 /* dma cart to ram and invalidate cache */
 static inline void dma_read(void *dst, uint32_t cart_addr, uint32_t len)
 {
+  cache_invalidate_data(dst, len);
   pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(dst);
   pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
   pi_regs.wr_len = len - 1;
   while (pi_regs.status & PI_STATUS_DMA_BUSY)
     ;
   pi_regs.status = PI_STATUS_CLR_INTR;
-  cache_invalidate_data(dst, len);
 }
 
 /* flush cache and dma ram to cart */
