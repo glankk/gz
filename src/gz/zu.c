@@ -317,6 +317,7 @@ void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
   z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
 }
 
+_Noreturn
 void zu_reset(void)
 {
   /* reset cp0 status */
@@ -633,6 +634,7 @@ void zu_reset(void)
                     "jr    $t1;"
                     "nop;"
                     ".set  pop;");
+  __builtin_unreachable();
 }
 
 void zu_void(void)
