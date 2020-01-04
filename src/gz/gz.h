@@ -41,6 +41,19 @@ enum hit_view_state
   HITVIEW_STOP,
 };
 
+enum cam_mode
+{
+  CAMMODE_CAMERA,
+  CAMMODE_VIEW,
+};
+
+enum cam_bhv
+{
+  CAMBHV_MANUAL,
+  CAMBHV_BIRDSEYE,
+  CAMBHV_RADIAL,
+};
+
 struct memory_file
 {
   z64_file_t            z_file;
@@ -160,8 +173,12 @@ struct gz
   _Bool                 hide_actors;
   _Bool                 free_cam;
   _Bool                 lock_cam;
-  float                 cam_yaw;
+  enum cam_mode         cam_mode;
+  enum cam_bhv          cam_bhv;
+  int16_t               cam_dist_min;
+  int16_t               cam_dist_max;
   float                 cam_pitch;
+  float                 cam_yaw;
   z64_xyzf_t            cam_pos;
   struct memory_file   *memfile;
   _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
@@ -223,6 +240,9 @@ void          gz_movie_seek(int frame);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);
+
+void          gz_update_cam(void);
+void          gz_free_view(void);
 
 struct menu  *gz_warps_menu(void);
 struct menu  *gz_scene_menu(void);

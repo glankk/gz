@@ -7,7 +7,8 @@
 #define guDefMtxF(xx,xy,xz,xw,  \
                   yx,yy,yz,yw,  \
                   zx,zy,zz,zw,  \
-                  wx,wy,wz,ww)    {.f={xx,xy,xz,xw,                           \
+                  wx,wy,wz,ww,  \
+                  ...)            {.f={xx,xy,xz,xw,                           \
                                        yx,yy,yz,yw,                           \
                                        zx,zy,zz,zw,                           \
                                        wx,wy,wz,ww}}
@@ -30,6 +31,10 @@ void guMtxIdent(Mtx *m);
 void guMtxIdentF(MtxF *mf);
 void guPerspectiveF(MtxF *mf, uint16_t *perspNorm, float fovy, float aspect,
                     float near, float far, float scale);
+void guLookAtF(MtxF *mf,
+               float xEye, float yEye, float zEye,
+               float xAt, float yAt, float zAt,
+               float xUp, float yUp, float zUp);
 void guMtxCatF(const MtxF *m, const MtxF *n, MtxF *r);
 void guRotateF(MtxF *mf, float a, float x, float y, float z);
 void guRotateRPYF(MtxF *mf, float r, float p, float h);

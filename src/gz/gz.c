@@ -7,7 +7,9 @@
 #include <n64.h>
 #include <vector/vector.h>
 #include "explorer.h"
+#include "geometry.h"
 #include "gfx.h"
+#include "gu.h"
 #include "gz.h"
 #include "hb.h"
 #include "input.h"
@@ -388,6 +390,9 @@ static void main_hook(void)
   /* execute and draw collision view */
   gz_col_view();
   gz_hit_view();
+
+  /* execute free camera in view mode */
+  gz_free_view();
 
   {
     /* draw splash */
@@ -993,84 +998,25 @@ HOOK void guPerspectiveF_hook(MtxF *mf)
   mf->ww = 1.f;
 }
 
-static void update_cam(void)
-{
-  const float m_speed = 0.5;
-  const float r_speed = 0.0025;
-  const int joy_max = 60;
-
-  int x = zu_adjust_joystick(input_x());
-  int y = zu_adjust_joystick(input_y());
-
-  if (input_pad() & BUTTON_Z) {
-    gz.cam_pos.x += -sin(gz.cam_yaw) * cos(gz.cam_pitch) * y * m_speed;
-    gz.cam_pos.y += -sin(gz.cam_pitch) * y * m_speed;
-    gz.cam_pos.z += cos(gz.cam_yaw) * cos(gz.cam_pitch) * y * m_speed;
-
-    gz.cam_pos.x += -cos(gz.cam_yaw) * x * m_speed;
-    gz.cam_pos.z += -sin(gz.cam_yaw) * x * m_speed;
-
-    if (input_pad() & BUTTON_C_UP)
-      gz.cam_pos.y += joy_max * m_speed;
-    if (input_pad() & BUTTON_C_DOWN)
-      gz.cam_pos.y -= joy_max * m_speed;
-    if (input_pad() & BUTTON_C_RIGHT)
-      gz.cam_yaw += joy_max * r_speed;
-    if (input_pad() & BUTTON_C_LEFT)
-      gz.cam_yaw -= joy_max * r_speed;
-  }
-  else {
-    gz.cam_yaw += x * r_speed;
-    gz.cam_pitch += y * r_speed;
-
-    if (input_pad() & BUTTON_C_UP) {
-      gz.cam_pos.x += -sin(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
-      gz.cam_pos.y += -sin(gz.cam_pitch) * joy_max * m_speed;
-      gz.cam_pos.z += cos(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
-    }
-    if (input_pad() & BUTTON_C_DOWN) {
-      gz.cam_pos.x -= -sin(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
-      gz.cam_pos.y -= -sin(gz.cam_pitch) * joy_max * m_speed;
-      gz.cam_pos.z -= cos(gz.cam_yaw) * cos(gz.cam_pitch) * joy_max * m_speed;
-    }
-    if (input_pad() & BUTTON_C_RIGHT) {
-      gz.cam_pos.x += -cos(gz.cam_yaw) * joy_max * m_speed;
-      gz.cam_pos.z += -sin(gz.cam_yaw) * joy_max * m_speed;
-    }
-    if (input_pad() & BUTTON_C_LEFT) {
-      gz.cam_pos.x -= -cos(gz.cam_yaw) * joy_max * m_speed;
-      gz.cam_pos.z -= -sin(gz.cam_yaw) * joy_max * m_speed;
-    }
-  }
-
-  {
-    const float lim = M_PI / 2 - r_speed;
-    if (gz.cam_pitch > lim)
-      gz.cam_pitch = lim;
-    else if (gz.cam_pitch < -lim)
-      gz.cam_pitch = -lim;
-  }
-}
-
 HOOK void camera_hook(void *camera)
 {
   void (*camera_func)(void *camera);
   __asm__ volatile ("sw      $t9, %[camera_func]"
                     : [camera_func] "=m"(camera_func));
 
-  if (!gz.ready || !gz.free_cam)
+  if (!gz.ready || !gz.free_cam || gz.cam_mode != CAMMODE_CAMERA)
     return camera_func(camera);
 
-  if (!gz.lock_cam)
-    update_cam();
+  gz_update_cam();
 
   z64_xyzf_t *camera_at = (void*)((char*)camera + 0x0050);
   z64_xyzf_t *camera_eye = (void*)((char*)camera + 0x005C);
 
   *camera_eye = gz.cam_pos;
-  camera_at->x = gz.cam_pos.x - sin(gz.cam_yaw) * cos(gz.cam_pitch);
-  camera_at->y = gz.cam_pos.y - sin(gz.cam_pitch);
-  camera_at->z = gz.cam_pos.z + cos(gz.cam_yaw) * cos(gz.cam_pitch);
+
+  z64_xyzf_t vf;
+  vec3f_py(&vf, gz.cam_pitch, gz.cam_yaw);
+  vec3f_add(camera_at, camera_eye, &vf);
 }
 
 static void main_return_proc(struct menu_item *item, void *data)
@@ -1121,6 +1067,11 @@ static void init(void)
   gz.hide_rooms = 0;
   gz.hide_actors = 0;
   gz.free_cam = 0;
+  gz.lock_cam = 0;
+  gz.cam_mode = CAMMODE_CAMERA;
+  gz.cam_bhv = CAMBHV_MANUAL;
+  gz.cam_dist_min = 100;
+  gz.cam_dist_max = 400;
   gz.cam_yaw = 0.f;
   gz.cam_pitch = 0.f;
   gz.cam_pos.x = 0.f;

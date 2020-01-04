@@ -248,6 +248,58 @@ static void reset_cam_proc(struct menu_item *item, void *data)
   gz.cam_pos.z = 0.f;
 }
 
+static int cam_mode_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED)
+    gz.cam_mode = menu_option_get(item);
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_option_get(item) != gz.cam_mode)
+      menu_option_set(item, gz.cam_mode);
+  }
+  return 0;
+}
+
+static int cam_bhv_proc(struct menu_item *item,
+                        enum menu_callback_reason reason,
+                        void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED)
+    gz.cam_bhv = menu_option_get(item);
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_option_get(item) != gz.cam_bhv)
+      menu_option_set(item, gz.cam_bhv);
+  }
+  return 0;
+}
+
+static int cam_dist_min_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED)
+    gz.cam_dist_min = menu_intinput_gets(item);
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_intinput_gets(item) != gz.cam_dist_min)
+      menu_intinput_set(item, gz.cam_dist_min);
+  }
+  return 0;
+}
+
+static int cam_dist_max_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_CHANGED)
+    gz.cam_dist_max = menu_intinput_gets(item);
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_intinput_gets(item) != gz.cam_dist_max)
+      menu_intinput_set(item, gz.cam_dist_max);
+  }
+  return 0;
+}
+
 static int hide_rooms_proc(struct menu_item *item,
                            enum menu_callback_reason reason,
                            void *data)
@@ -362,11 +414,21 @@ struct menu *gz_scene_menu(void)
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");
-  menu_add_checkbox(&camera, 0, 1, enable_cam_proc, NULL);
-  menu_add_static(&camera, 2, 1, "enable", 0xC0C0C0);
-  menu_add_checkbox(&camera, 0, 2, lock_cam_proc, NULL);
-  menu_add_static(&camera, 2, 2, "lock", 0xC0C0C0);
-  menu_add_button(&camera, 0, 3, "reset", reset_cam_proc, item);
+  menu_add_static(&camera, 0, 1, "enable", 0xC0C0C0);
+  menu_add_checkbox(&camera, 16, 1, enable_cam_proc, NULL);
+  menu_add_static(&camera, 0, 2, "lock", 0xC0C0C0);
+  menu_add_checkbox(&camera, 16, 2, lock_cam_proc, NULL);
+  menu_add_static(&camera, 0, 3, "mode", 0xC0C0C0);
+  menu_add_option(&camera, 16, 3, "camera\0" "view\0", cam_mode_proc, NULL);
+  menu_add_static(&camera, 0, 4, "behavior", 0xC0C0C0);
+  menu_add_option(&camera, 16, 4,
+                  "manual\0" "birdseye follow\0" "radial follow\0",
+                  cam_bhv_proc, NULL);
+  menu_add_static(&camera, 0, 5, "distance min", 0xC0C0C0);
+  menu_add_intinput(&camera, 16, 5, -10, 4, cam_dist_min_proc, NULL);
+  menu_add_static(&camera, 0, 6, "distance max", 0xC0C0C0);
+  menu_add_intinput(&camera, 16, 6, -10, 4, cam_dist_max_proc, NULL);
+  menu_add_button(&camera, 16, 7, "reset", reset_cam_proc, item);
 
   return &menu;
 }
