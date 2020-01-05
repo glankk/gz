@@ -425,9 +425,9 @@ struct menu *gz_scene_menu(void)
                   "manual\0" "birdseye follow\0" "radial follow\0",
                   cam_bhv_proc, NULL);
   menu_add_static(&camera, 0, 5, "distance min", 0xC0C0C0);
-  menu_add_intinput(&camera, 16, 5, -10, 4, cam_dist_min_proc, NULL);
+  menu_add_intinput(&camera, 16, 5, -10, 5, cam_dist_min_proc, NULL);
   menu_add_static(&camera, 0, 6, "distance max", 0xC0C0C0);
-  menu_add_intinput(&camera, 16, 6, -10, 4, cam_dist_max_proc, NULL);
+  menu_add_intinput(&camera, 16, 6, -10, 5, cam_dist_max_proc, NULL);
   menu_add_button(&camera, 16, 7, "reset", reset_cam_proc, item);
 
   return &menu;
