@@ -573,16 +573,32 @@ HOOK void input_hook(void)
     frame_input_func(&z64_ctxt);
   else if (gz.frames_queued != 0) {
     z64_input_t di = z64_input_direct;
-    z64_input_t *zi = &z64_ctxt.input[0];
-    frame_input_func(&z64_ctxt);
-    mask_input(zi);
+    z64_input_t *zi = z64_ctxt.input;
+    {
+      z64_controller_t raw_save[4];
+      uint16_t status_save[4];
+      for (int i = 0; i < 4; ++i)
+        if (gz.vcont_enabled[i]) {
+          /* save raw and status to get correct raw_prev and status_prev */
+          raw_save[i] = zi[i].raw;
+          status_save[i] = zi[i].status;
+        }
+      frame_input_func(&z64_ctxt);
+      mask_input(&zi[0]);
+      for (int i = 0; i < 4; ++i)
+        if (gz.vcont_enabled[i]) {
+          zi[i].raw = raw_save[i];
+          zi[i].status = status_save[i];
+          gz_vcont_get(i, &zi[i]);
+        }
+    }
     if (gz.movie_state == MOVIE_RECORDING) {
       if (gz.movie_frame >= gz.movie_input.size) {
         if (gz.movie_input.size == gz.movie_input.capacity)
           vector_reserve(&gz.movie_input, 128);
         vector_push_back(&gz.movie_input, 1, NULL);
       }
-      z_to_movie(gz.movie_frame++, zi, gz.reset_flag);
+      z_to_movie(gz.movie_frame++, &zi[0], gz.reset_flag);
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       if (gz.movie_frame >= gz.movie_input.size) {
@@ -593,22 +609,22 @@ HOOK void input_hook(void)
       }
       if (gz.movie_state == MOVIE_PLAYING) {
         _Bool reset;
-        movie_to_z(gz.movie_frame++, zi, &reset);
+        movie_to_z(gz.movie_frame++, &zi[0], &reset);
         if (settings->bits.macro_input) {
           gz.reset_flag |= reset;
-          if (abs(zi->raw.x) < 8) {
-            zi->raw.x = di.raw.x;
-            zi->x_diff = di.x_diff;
-            zi->adjusted_x = di.adjusted_x;
+          if (abs(zi[0].raw.x) < 8) {
+            zi[0].raw.x = di.raw.x;
+            zi[0].x_diff = di.x_diff;
+            zi[0].adjusted_x = di.adjusted_x;
           }
-          if (abs(zi->raw.y) < 8) {
-            zi->raw.y = di.raw.y;
-            zi->y_diff = di.y_diff;
-            zi->adjusted_y = di.adjusted_y;
+          if (abs(zi[0].raw.y) < 8) {
+            zi[0].raw.y = di.raw.y;
+            zi[0].y_diff = di.y_diff;
+            zi[0].adjusted_y = di.adjusted_y;
           }
-          zi->raw.pad |= di.raw.pad;
-          zi->pad_pressed |= di.pad_pressed;
-          zi->pad_released |= di.pad_released;
+          zi[0].raw.pad |= di.raw.pad;
+          zi[0].pad_pressed |= di.pad_pressed;
+          zi[0].pad_released |= di.pad_released;
         }
         else
           gz.reset_flag = reset;
@@ -1052,9 +1068,13 @@ static void init(void)
   gz.movie_oca_input_pos = 0;
   gz.movie_oca_sync_pos = 0;
   gz.movie_room_load_pos = 0;
-  gz.z_input_mask.pad = 0x0000;
-  gz.z_input_mask.x = 0x00;
-  gz.z_input_mask.y = 0x00;
+  gz.z_input_mask.pad = 0;
+  gz.z_input_mask.x = 0;
+  gz.z_input_mask.y = 0;
+  for (int i = 0; i < 4; ++i) {
+    gz.vcont_enabled[i] = 0;
+    gz_vcont_set(i, 0, NULL);
+  }
   gz.frame_counter = 0;
   gz.lag_vi_offset = -(int32_t)z64_vi_counter;
   gz.cpu_counter = 0;

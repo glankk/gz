@@ -160,6 +160,8 @@ struct gz
   _Bool                 oca_sync_flag;
   _Bool                 room_load_flag;
   z64_controller_t      z_input_mask;
+  _Bool                 vcont_enabled[4];
+  z64_input_t           vcont_input[4];
   int32_t               frame_counter;
   int32_t               lag_vi_offset;
   int64_t               cpu_counter;
@@ -237,6 +239,9 @@ void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
 void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);
 void          gz_movie_rewind(void);
 void          gz_movie_seek(int frame);
+
+void          gz_vcont_set(int port, _Bool plugged, z64_controller_t *cont);
+void          gz_vcont_get(int port, z64_input_t *input);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);

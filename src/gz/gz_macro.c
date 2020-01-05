@@ -11,6 +11,9 @@
 #include "z64.h"
 #include "zu.h"
 
+static _Bool            vcont_plugged[4];
+static z64_controller_t vcont_raw[4];
+
 static int pause_switch_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -584,15 +587,89 @@ static int wiivc_cam_proc(struct menu_item *item,
   return 0;
 }
 
+static int vcont_enable_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  int port = (int)data;
+  if (reason == MENU_CALLBACK_CHANGED) {
+    gz.vcont_enabled[port] = menu_checkbox_get(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != gz.vcont_enabled[port])
+      menu_checkbox_set(item, gz.vcont_enabled[port]);
+  }
+  return 0;
+}
+
+static int vcont_plugged_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  int port = (int)data;
+  if (reason == MENU_CALLBACK_CHANGED) {
+    vcont_plugged[port] = menu_checkbox_get(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != vcont_plugged[port])
+      menu_checkbox_set(item, vcont_plugged[port]);
+  }
+  return 0;
+}
+
+static int vcont_joy_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  int port = (int)data / 2;
+  int axis = (int)data % 2;
+  int8_t *v = (axis == 0 ? &vcont_raw[port].x : &vcont_raw[port].y);
+  if (reason == MENU_CALLBACK_CHANGED) {
+    *v = menu_intinput_gets(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_intinput_gets(item) != *v)
+      menu_intinput_set(item, *v);
+  }
+  return 0;
+}
+
+static int vcont_button_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  int port = (int)data / 16;
+  int button = (int)data % 16;
+  uint16_t button_mask = (1 << button);
+  if (reason == MENU_CALLBACK_CHANGED) {
+    if (menu_switch_get(item))
+      vcont_raw[port].pad |= button_mask;
+    else
+      vcont_raw[port].pad &= ~button_mask;
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = vcont_raw[port].pad & button_mask;
+    if (menu_switch_get(item) != state)
+      menu_switch_set(item, state);
+  }
+  return 0;
+}
+
 struct menu *gz_macro_menu(void)
 {
   static struct menu menu;
   static struct menu menu_settings;
+  static struct menu menu_vcont;
   struct menu_item *item;
 
   /* initialize menus */
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  menu_init(&menu_vcont, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
 
   /* load textures */
   struct gfx_texture *t_macro = resource_get(RES_ICON_MACRO);
@@ -667,8 +744,10 @@ struct menu *gz_macro_menu(void)
   item->tooltip = "quick play movie";
   /* create settings controls */
   menu_add_submenu(&menu, 0, 15, &menu_settings, "settings");
+  /* create virtual controller controls */
+  menu_add_submenu(&menu, 0, 16, &menu_vcont, "virtual controller");
   /* create tooltip */
-  menu_add_tooltip(&menu, 0, 17, gz.menu_main, 0xC0C0C0);
+  menu_add_tooltip(&menu, 8, 0, gz.menu_main, 0xC0C0C0);
 
   /* populate settings menu */
   menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
@@ -684,5 +763,91 @@ struct menu *gz_macro_menu(void)
   menu_add_checkbox(&menu_settings, 2, 6, wiivc_cam_proc, NULL);
   menu_add_static(&menu_settings, 4, 6, "wii vc camera", 0xC0C0C0);
 
+  /* populate virtual pad menu */
+  menu_vcont.selector = menu_add_submenu(&menu_vcont, 0, 0, NULL, "return");
+  struct gfx_texture *t_buttons = resource_get(RES_ICON_BUTTONS);
+  for (int i = 0; i < 4; ++i) {
+    char s[16];
+    sprintf(s, "controller %i", i + 1);
+    menu_add_static(&menu_vcont, 0, 1 + i * 4, s, 0xC0C0C0);
+    menu_add_checkbox(&menu_vcont, 14, 1 + i * 4,
+                      vcont_enable_proc, (void *)i);
+
+    menu_add_static(&menu_vcont, 2, 2 + i * 4, "plugged in", 0xC0C0C0);
+    menu_add_checkbox(&menu_vcont, 14, 2 + i * 4,
+                      vcont_plugged_proc, (void *)i);
+
+    menu_add_static(&menu_vcont, 2, 3 + i * 4, "joystick", 0xC0C0C0);
+    menu_add_intinput(&menu_vcont, 14, 3 + i * 4, -10, 4,
+                      vcont_joy_proc, (void *)(i * 2 + 0));
+    menu_add_intinput(&menu_vcont, 19, 3 + i * 4, -10, 4,
+                      vcont_joy_proc, (void *)(i * 2 + 1));
+
+    menu_add_static(&menu_vcont, 2, 4 + i * 4, "buttons", 0xC0C0C0);
+    static const int buttons[] =
+    {
+      15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
+    };
+    for (int j = 0; j < sizeof(buttons) / sizeof(*buttons); ++j) {
+      int b = buttons[j];
+      item = menu_add_switch(&menu_vcont, 14, 4 + i * 4,
+                             t_buttons, b, input_button_color[b],
+                             t_buttons, b, 0x808080,
+                             1.f, 0, vcont_button_proc, (void *)(i * 16 + b));
+      item->pxoffset = j * 10;
+    }
+  }
+
   return &menu;
+}
+
+void gz_vcont_set(int port, _Bool plugged, z64_controller_t *cont)
+{
+  z64_input_t *vcont = &gz.vcont_input[port];
+
+  vcont->raw_prev = vcont->raw;
+  vcont->status_prev = vcont->status;
+
+  if (plugged) {
+    vcont->raw = *cont;
+    vcont->status = 0x0000;
+  }
+  else {
+    vcont->raw.pad = 0x0000;
+    vcont->raw.x = 0;
+    vcont->raw.y = 0;
+    vcont->status = 0x0800;
+  }
+
+  vcont->x_diff += (vcont->raw.x - vcont->raw_prev.x);
+  vcont->y_diff += (vcont->raw.y - vcont->raw_prev.y);
+
+  uint16_t pad_changed = (vcont->raw.pad ^ vcont->raw_prev.pad);
+  vcont->pad_pressed |= (pad_changed & vcont->raw.pad);
+  vcont->pad_released |= (pad_changed & vcont->raw_prev.pad);
+
+  vcont->adjusted_x = zu_adjust_joystick(vcont->raw.x);
+  vcont->adjusted_y = zu_adjust_joystick(vcont->raw.y);
+}
+
+void gz_vcont_get(int port, z64_input_t *input)
+{
+  z64_input_t *vcont = &gz.vcont_input[port];
+
+  input->raw_prev = input->raw;
+  input->status_prev = input->status;
+
+  input->raw = vcont->raw;
+  input->status = vcont->status;
+  input->x_diff = vcont->x_diff;
+  input->y_diff = vcont->y_diff;
+  input->pad_pressed = vcont->pad_pressed;
+  input->pad_released = vcont->pad_released;
+  input->adjusted_x = vcont->adjusted_x;
+  input->adjusted_y = vcont->adjusted_y;
+
+  vcont->x_diff = 0;
+  vcont->y_diff = 0;
+  vcont->pad_pressed = 0;
+  vcont->pad_released = 0;
 }
