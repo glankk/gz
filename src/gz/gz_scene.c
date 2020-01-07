@@ -133,6 +133,27 @@ static int holl_view_all_proc(struct menu_item *item,
   return 0;
 }
 
+static int guard_view_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    if (gz.guard_view_state == GUARDVIEW_INACTIVE)
+      gz.guard_view_state = GUARDVIEW_START;
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    if (gz.guard_view_state != GUARDVIEW_INACTIVE)
+      gz.guard_view_state = GUARDVIEW_BEGIN_STOP;
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = gz.guard_view_state == GUARDVIEW_START ||
+                  gz.guard_view_state == GUARDVIEW_ACTIVE;
+    if (menu_checkbox_get(item) != state)
+      menu_checkbox_set(item, state);
+  }
+  return 0;
+}
+
 static int col_view_mode_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
@@ -579,9 +600,9 @@ struct menu *gz_scene_menu(void)
   collision.selector = menu_add_submenu(&collision, 0, 0, NULL, "return");
   /* collision view controls */
   menu_add_static(&collision, 0, 1, "show collision", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 1, col_view_proc, NULL);
+  menu_add_checkbox(&collision, 17, 1, col_view_proc, NULL);
   menu_add_static(&collision, 2, 2, "mode", 0xC0C0C0);
-  menu_add_option(&collision, 16, 2, "decal\0""surface\0",
+  menu_add_option(&collision, 17, 2, "decal\0""surface\0",
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
@@ -610,6 +631,9 @@ struct menu *gz_scene_menu(void)
   menu_add_checkbox(&collision, 16, 14, hit_view_xlu_proc, NULL);
   menu_add_static(&collision, 2, 15, "shaded", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 15, hit_view_shade_proc, NULL);
+  /* guard vision control */
+  menu_add_static(&collision, 0, 10, "show guards view", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 16, guard_view_proc, NULL);
 
   /* populate visuals menu */
   visuals.selector = menu_add_submenu(&visuals, 0, 0, NULL, "return");
