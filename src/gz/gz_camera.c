@@ -12,6 +12,14 @@ static const float  pitch_lim     = M_PI / 2.f - joy_rspeed;
 static const float  fol_mspeed    = 1.f / 3.f;
 static const float  fol_rspeed    = 1.f / 3.f;
 
+static void get_target_point(z64_xyzf_t *v)
+{
+  *v = z64_link.common.pos_2;
+  if (z64_file.link_age == 0)
+    v->y += 55.f;
+  else
+    v->y += 35.f;
+}
 
 static void cam_manual(void)
 {
@@ -73,8 +81,11 @@ static void cam_manual(void)
 static void cam_birdseye(void)
 {
   if (zu_in_game()) {
+    z64_xyzf_t vt;
+    get_target_point(&vt);
+
     z64_xyzf_t vd;
-    vec3f_sub(&vd, &z64_link.common.pos_2, &gz.cam_pos);
+    vec3f_sub(&vd, &vt, &gz.cam_pos);
 
     float pitch, yaw;
     vec3f_pyangles(&vd, &pitch, &yaw);
@@ -114,8 +125,11 @@ static void cam_radial(void)
   z64_xyzf_t vf;
   vec3f_py(&vf, gz.cam_pitch, gz.cam_yaw);
 
+  z64_xyzf_t vt;
+  get_target_point(&vt);
+
   z64_xyzf_t vd;
-  vec3f_sub(&vd, &z64_link.common.pos_2, &gz.cam_pos);
+  vec3f_sub(&vd, &vt, &gz.cam_pos);
 
   float dist = vec3f_dot(&vd, &vf);
   z64_xyzf_t vp;
