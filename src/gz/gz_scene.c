@@ -17,12 +17,28 @@ static void set_entrance_proc(struct menu_item *item, void *data)
 
 static void clear_scene_flags_proc(struct menu_item *item, void *data)
 {
-  memset(&z64_game.swch_flags, 0x00, 0x24);
+  z64_game.swch_flags = 0x00000000;
+  z64_game.temp_swch_flags = 0x00000000;
+  z64_game.unk_flags_0 = 0x00000000;
+  z64_game.unk_flags_1 = 0x00000000;
+  z64_game.chest_flags = 0x00000000;
+  z64_game.clear_flags = 0x00000000;
+  z64_game.temp_clear_flags = 0x00000000;
+  z64_game.collect_flags = 0x00000000;
+  z64_game.temp_collect_flags = 0x00000000;
 }
 
 static void set_scene_flags_proc(struct menu_item *item, void *data)
 {
-  memset(&z64_game.swch_flags, 0xFF, 0x24);
+  z64_game.swch_flags = 0xFFFFFFFF;
+  z64_game.temp_swch_flags = 0xFFFFFFFF;
+  z64_game.unk_flags_0 = 0xFFFFFFFF;
+  z64_game.unk_flags_1 = 0xFFFFFFFF;
+  z64_game.chest_flags = 0xFFFFFFFF;
+  z64_game.clear_flags = 0xFFFFFFFF;
+  z64_game.temp_clear_flags = 0xFFFFFFFF;
+  z64_game.collect_flags = 0xFFFFFFFF;
+  z64_game.temp_collect_flags = 0xFFFFFFFF;
 }
 
 static void load_room_proc(struct menu_item *item, void *data)

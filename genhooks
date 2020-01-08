@@ -1,9 +1,8 @@
 #!/bin/sh
 
 AS="${AS:-mips64-as}"
-CPP="${CPP:-mips64-cpp}"
-NM="${NM:-mips64-nm}"
 OBJCOPY="${OBJCOPY:-mips64-objcopy}"
+NM="${NM:-mips64-nm}"
 
 elf="$1"
 if [ -z "$elf" ]; then
@@ -11,17 +10,11 @@ if [ -z "$elf" ]; then
   exit 1
 fi
 
-z64_rc="$(mktemp)"
-$CPP -dD $CPPFLAGS -imacros "src/gz/z64.h" </dev/null |
-awk '(/^#define z64_[0-9A-Za-z_]*_addr/) {printf "%s=%s\n",$2,$3}' >"$z64_rc"
-. "$z64_rc"
-rm -f "$z64_rc"
-
-gz_rc="$(mktemp)"
+symrc="$(mktemp)"
 $NM "$elf" |
-awk '(/^[0-9A-Za-z_ ]*$/) {printf "gzsym_%s=0x%s\n",$3,$1}' >"$gz_rc"
-. "$gz_rc"
-rm -f "$gz_rc"
+awk '(/^[0-9A-Za-z_ ]*$/) {printf "sym_%s=0x%s\n",$3,$1}' >"$symrc"
+. "$symrc"
+rm -f "$symrc"
 
 asmgsc()
 {
@@ -35,24 +28,24 @@ asmgsc()
   rm -f "$objfile" "$binfile"
 }
 
-asmgsc  "$z64_main_hook_addr"              "jal $gzsym__start;"
-asmgsc  "$z64_entrance_offset_hook_addr"   "jal $gzsym_entrance_offset_hook; nop;"
-asmgsc  "$z64_draw_room_1_call_addr"       "jal $gzsym_draw_room_hook;"
-asmgsc  "$z64_draw_room_2_call_addr"       "jal $gzsym_draw_room_hook;"
-asmgsc  "$z64_draw_actors_call_addr"       "jal $gzsym_draw_actors_hook;"
-asmgsc  "$z64_srand_call_addr"             "jal $gzsym_srand_hook;"
-asmgsc  "$z64_frame_input_call_addr"       "jal $gzsym_input_hook; nop;"
-asmgsc  "$z64_ocarina_update_call_addr"    "jal $gzsym_ocarina_update_hook;"
-asmgsc  "$z64_ocarina_input_call_addr"     "jal $gzsym_ocarina_input_hook;"
-asmgsc  "$z64_ocarina_sync_hook_addr"      "jal $gzsym_ocarina_sync_hook; nop; b 0x000C; nop;"
-asmgsc  "$z64_afx_rand_call_addr"          "jal $gzsym_afx_rand_hook;"
-asmgsc  "$z64_room_load_sync_hook_addr"    "jal $gzsym_room_load_sync_hook;"
-asmgsc  "$z64_camera_hook_addr"            "jal $gzsym_camera_hook;"
-asmgsc  "$z64_minimap_disable_1_addr"      ".hword 0x5000;" # beql $zero, $zero
-asmgsc  "$z64_minimap_disable_2_addr"      ".hword 0x5000;" # beql $zero, $zero
-asmgsc  "$z64_guPerspectiveF_hook_addr"    "jal $gzsym_guPerspectiveF_hook; sw \$a2, 0x0038(\$sp);"
-asmgsc  "$z64_guPerspective_camo_addr"     "nop; nop;"
-asmgsc  "$z64_disp_swap_1_addr"            "jal $gzsym_disp_hook;"
-asmgsc  "$z64_disp_swap_2_addr"            "jal $gzsym_disp_hook;"
-asmgsc  "$z64_disp_swap_3_addr"            "jal $gzsym_disp_hook;"
-asmgsc  "$z64_disp_swap_4_addr"            "jal $gzsym_disp_hook;"
+asmgsc  "$sym_z64_main_hook"             "jal $sym__start;"
+asmgsc  "$sym_z64_entrance_offset_hook"  "jal $sym_entrance_offset_hook; nop;"
+asmgsc  "$sym_z64_draw_room_1_call"      "jal $sym_draw_room_hook;"
+asmgsc  "$sym_z64_draw_room_2_call"      "jal $sym_draw_room_hook;"
+asmgsc  "$sym_z64_draw_actors_call"      "jal $sym_draw_actors_hook;"
+asmgsc  "$sym_z64_srand_call"            "jal $sym_srand_hook;"
+asmgsc  "$sym_z64_frame_input_call"      "jal $sym_input_hook; nop;"
+asmgsc  "$sym_z64_ocarina_update_call"   "jal $sym_ocarina_update_hook;"
+asmgsc  "$sym_z64_ocarina_input_call"    "jal $sym_ocarina_input_hook;"
+asmgsc  "$sym_z64_ocarina_sync_hook"     "jal $sym_ocarina_sync_hook; nop; b 0x000C; nop;"
+asmgsc  "$sym_z64_afx_rand_call"         "jal $sym_afx_rand_hook;"
+asmgsc  "$sym_z64_room_load_sync_hook"   "jal $sym_room_load_sync_hook;"
+asmgsc  "$sym_z64_camera_hook"           "jal $sym_camera_hook;"
+asmgsc  "$sym_z64_minimap_disable_1"     ".hword 0x5000;" # beql $zero, $zero
+asmgsc  "$sym_z64_minimap_disable_2"     ".hword 0x5000;" # beql $zero, $zero
+asmgsc  "$sym_z64_guPerspectiveF_hook"   "jal $sym_guPerspectiveF_hook; sw \$a2, 0x0038(\$sp);"
+asmgsc  "$sym_z64_guPerspective_camo"    "nop; nop;"
+asmgsc  "$sym_z64_disp_swap_1"           "jal $sym_disp_hook;"
+asmgsc  "$sym_z64_disp_swap_2"           "jal $sym_disp_hook;"
+asmgsc  "$sym_z64_disp_swap_3"           "jal $sym_disp_hook;"
+asmgsc  "$sym_z64_disp_swap_4"           "jal $sym_disp_hook;"

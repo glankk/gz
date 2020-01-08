@@ -28,8 +28,8 @@ Gfx *unload_l3dex2(Gfx **pgdl)
 {
   if (have_l3dex2()) {
     gSPLoadUcode((*pgdl)++,
-                 MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoTextStart),
-                 MIPS_KSEG0_TO_PHYS(gspF3DEX2_NoN_fifoDataStart));
+                 MIPS_KSEG0_TO_PHYS(z64_gspF3DEX2_NoN_fifoTextStart),
+                 MIPS_KSEG0_TO_PHYS(z64_gspF3DEX2_NoN_fifoDataStart));
   }
   return *pgdl;
 }

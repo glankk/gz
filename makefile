@@ -10,14 +10,14 @@ CXX                   = $(program_prefix)g++
 LD                    = $(program_prefix)g++
 OBJCOPY               = $(program_prefix)objcopy
 NM                    = $(program_prefix)nm
-GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' OBJCOPY='$(OBJCOPY)' CPPFLAGS='$(subst ','\'',$(ALL_CPPFLAGS))' ./genhooks
+GENHOOKS              = AS='$(AS)' OBJCOPY='$(OBJCOPY)' NM='$(NM)' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
 ALL_CPPFLAGS          = -DPACKAGE_TARNAME='$(PACKAGE_TARNAME)' -DPACKAGE_URL='$(PACKAGE_URL)' -DF3DEX_GBI_2 $(CPPFLAGS)
 ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(CFLAGS)
 ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(CXXFLAGS)
-ALL_LDFLAGS           = -T $(LDSCRIPT) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(LDFLAGS)
+ALL_LDFLAGS           = -T $(LDSCRIPT) -L$(LIBDIR) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(LDFLAGS)
 ALL_LDLIBS            = $(LDLIBS)
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
 RESDESC               = $(RESDIR)/resources.json
@@ -26,6 +26,7 @@ GZ_ADDRESS            = 80400060
 LDR_ADDRESS           = 80000400
 SRCDIR                = src
 RESDIR                = res
+LIBDIR                = lib
 OBJDIR                = obj
 BINDIR                = bin
 HOOKDIR               = hooks
@@ -155,6 +156,10 @@ $(OBJ-OOT-MQ-J) \
 $(HOOKS-OOT-MQ-J)     : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_CPPFLAGS)
 $(OBJ-VC) \
 $(HOOKS-VC)           : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
+$(ELF-OOT-1.0)        : ALL_LDLIBS           := -loot-1.0 $(ALL_LDLIBS)
+$(ELF-OOT-1.1)        : ALL_LDLIBS           := -loot-1.1 $(ALL_LDLIBS)
+$(ELF-OOT-1.2)        : ALL_LDLIBS           := -loot-1.2 $(ALL_LDLIBS)
+$(ELF-OOT-MQ-J)       : ALL_LDLIBS           := -loot-mq-j $(ALL_LDLIBS)
 $(OBJ-N64)            : CFLAGS               ?= -O3 -flto -ffat-lto-objects
 $(OBJ-N64)            : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
 $(ELF-N64)            : LDFLAGS              ?= -O3 -flto

@@ -841,10 +841,10 @@ void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx)
     &gfx->poly_xlu,
     &gfx->overlay,
   };
-  uint32_t src_gfx = z64_disp_addr + src_gfx_idx * z64_disp_size;
-  uint32_t dst_gfx = z64_disp_addr + (gfx->frame_count_1 & 1) * z64_disp_size;
-  uint32_t src_cimg = z64_cimg_addr + src_cimg_idx * z64_cimg_size;
-  uint32_t dst_cimg = z64_cimg_addr + (gfx->frame_count_2 & 1) * z64_cimg_size;
+  uint32_t src_gfx = (uint32_t)&z64_disp[src_gfx_idx * z64_disp_size];
+  uint32_t dst_gfx = (uint32_t)&z64_disp[(gfx->frame_count_1 & 1) * z64_disp_size];
+  uint32_t src_cimg = (uint32_t)&z64_cimg[src_cimg_idx * z64_cimg_size];
+  uint32_t dst_cimg = (uint32_t)&z64_cimg[(gfx->frame_count_2 & 1) * z64_cimg_size];
   for (int i = 0; i < sizeof(z_disp) / sizeof(*z_disp); ++i) {
     z64_disp_buf_t *disp = z_disp[i];
     for (Gfx *p = disp->buf; p != disp->p; ++p) {

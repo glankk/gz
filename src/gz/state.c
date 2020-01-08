@@ -449,7 +449,7 @@ uint32_t save_state(void *state)
   /* save sequencer info */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
-    char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
+    char *seq = &z64_afx[0x3530 + i * 0x0160];
     _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
     serial_write(&p, &seq_active, sizeof(seq_active));
     if (seq_active) {
@@ -591,8 +591,8 @@ uint32_t save_state(void *state)
   }
   serial_write(&p, &eot, sizeof(eot));
   /* save camera shake effects */
-  serial_write(&p, (void*)z64_n_camera_shake_addr, 0x0002);
-  serial_write(&p, (void*)z64_camera_shake_addr, 0x0090);
+  serial_write(&p, &z64_n_camera_shake, 0x0002);
+  serial_write(&p, z64_camera_shake, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
   {
@@ -628,17 +628,17 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* weather / daytime state */
-  serial_write(&p, (void*)z64_weather_state_addr, 0x0018);
+  serial_write(&p, z64_weather_state, 0x0018);
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  serial_write(&p, (void*)z64_hazard_state_addr, 0x0008);
+  serial_write(&p, z64_hazard_state, 0x0008);
 
   /* timer state */
-  serial_write(&p, (void*)z64_timer_state_addr, 0x0008);
+  serial_write(&p, z64_timer_state, 0x0008);
 
   /* hud state */
-  serial_write(&p, (void*)z64_hud_state_addr, 0x0008);
+  serial_write(&p, z64_hud_state, 0x0008);
 
   /* letterboxing */
   serial_write(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
@@ -646,14 +646,14 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
   /* sound state */
-  serial_write(&p, (void*)z64_sound_state_addr, 0x004C);
+  serial_write(&p, z64_sound_state, 0x004C);
 
   /* event state */
-  serial_write(&p, (void*)z64_event_state_1_addr, 0x0008);
-  serial_write(&p, (void*)z64_event_state_2_addr, 0x0004);
+  serial_write(&p, z64_event_state_1, 0x0008);
+  serial_write(&p, z64_event_state_2, 0x0004);
   /* event camera parameters */
   for (int i = 0; i < 24; ++i)
-    serial_write(&p, (void*)(z64_event_camera_addr + 0x28 * i + 0x10), 0x0018);
+    serial_write(&p, &z64_event_camera[0x28 * i + 0x10], 0x0018);
 
   /* oob timer */
   serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
@@ -665,24 +665,24 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
-  serial_write(&p, (void*)z64_dins_state_1_addr, 0x0004);
-  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0006), 0x0002);
-  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0014), 0x0004);
-  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x0020), 0x0004);
-  serial_write(&p, (void*)(z64_dins_state_2_addr + 0x003C), 0x0004);
-  serial_write(&p, (void*)z64_fw_state_1_addr, 0x0004);
-  serial_write(&p, (void*)z64_fw_state_2_addr, 0x0004);
+  serial_write(&p, z64_dins_state_1, 0x0004);
+  serial_write(&p, &z64_dins_state_2[0x0006], 0x0002);
+  serial_write(&p, &z64_dins_state_2[0x0014], 0x0004);
+  serial_write(&p, &z64_dins_state_2[0x0020], 0x0004);
+  serial_write(&p, &z64_dins_state_2[0x003C], 0x0004);
+  serial_write(&p, z64_fw_state_1, 0x0004);
+  serial_write(&p, z64_fw_state_2, 0x0004);
 
   /* camera state */
-  serial_write(&p, (void*)z64_camera_state_addr, 0x0020);
+  serial_write(&p, z64_camera_state, 0x0020);
 
   /* cutscene state */
-  serial_write(&p, (void*)z64_cs_state_addr, 0x0140);
+  serial_write(&p, z64_cs_state, 0x0140);
   /* cutscene message id */
-  serial_write(&p, (void*)z64_cs_message_addr, 0x0008);
+  serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  serial_write(&p, (void*)z64_message_state_addr, 0x0028);
+  serial_write(&p, z64_message_state, 0x0028);
 
   _Bool save_gfx = 1;
   /* save display lists */
@@ -718,7 +718,7 @@ uint32_t save_state(void *state)
     serial_write(&p, &eot, sizeof(eot));
 
   /* save sfx mutes */
-  serial_write(&p, (void*)z64_sfx_mute_addr, 0x0008);
+  serial_write(&p, z64_sfx_mute, 0x0008);
   /* save pending audio commands */
   {
     uint8_t n_cmd = z64_audio_cmd_write_pos - z64_audio_cmd_read_pos;
@@ -736,15 +736,15 @@ uint32_t save_state(void *state)
 #endif
 
   /* save ocarina state */
-  serial_write(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  serial_write(&p, z64_ocarina_state, 0x0060);
   /* ocarina minigame parameters */
-  serial_write(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
-  serial_write(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
+  serial_write(&p, &z64_ocarina_state[0x0068], 0x0001);
+  serial_write(&p, &z64_ocarina_state[0x006C], 0x0001);
   /* save song state */
-  serial_write(&p, (void*)z64_song_state_addr, 0x00AC);
-  serial_write(&p, (void*)z64_scarecrow_song_addr, 0x0140);
-  serial_write(&p, (void*)z64_song_ptr_addr, 0x0004);
-  serial_write(&p, (void*)z64_staff_notes_addr, 0x001E);
+  serial_write(&p, z64_song_state, 0x00AC);
+  serial_write(&p, z64_scarecrow_song, 0x0140);
+  serial_write(&p, z64_song_ptr, 0x0004);
+  serial_write(&p, z64_staff_notes, 0x001E);
 
   //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
   //serial_write(&p, (void*)0x8012143C, 0x41F4);
@@ -1019,8 +1019,8 @@ void load_state(void *state)
       spark->active = 0;
   }
   /* load camera shake effects */
-  serial_read(&p, (void*)z64_n_camera_shake_addr, 0x0002);
-  serial_read(&p, (void*)z64_camera_shake_addr, 0x0090);
+  serial_read(&p, &z64_n_camera_shake, 0x0002);
+  serial_read(&p, z64_camera_shake, 0x0090);
 
   /* load scene */
   if (z64_game.scene_index != scene_index) {
@@ -1114,7 +1114,7 @@ void load_state(void *state)
     zu_getfile_idx(z64_icon_item_24_static, z64_game.pause_ctxt.icon_item_24);
     /* gray out restricted items */
     char *p = z64_play_ovl_tab[0].ptr;
-    p += (z64_item_highlight_vram_addr - z64_play_ovl_tab[0].vram_start);
+    p += ((uint32_t)&z64_item_highlight_vram - z64_play_ovl_tab[0].vram_start);
     uint8_t *item_highlight_tab = (void*)p;
     uint32_t *pixels = z64_game.pause_ctxt.icon_item;
     for (int i = 0; i < 0x56; ++i) {
@@ -1396,17 +1396,17 @@ void load_state(void *state)
   serial_read(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* weather / daytime state */
-  serial_read(&p, (void*)z64_weather_state_addr, 0x0018);
+  serial_read(&p, z64_weather_state, 0x0018);
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  serial_read(&p, (void*)z64_hazard_state_addr, 0x0008);
+  serial_read(&p, z64_hazard_state, 0x0008);
 
   /* timer state */
-  serial_read(&p, (void*)z64_timer_state_addr, 0x0008);
+  serial_read(&p, z64_timer_state, 0x0008);
 
   /* hud state */
-  serial_read(&p, (void*)z64_hud_state_addr, 0x0008);
+  serial_read(&p, z64_hud_state, 0x0008);
 
   /* letterboxing */
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
@@ -1414,14 +1414,14 @@ void load_state(void *state)
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
   /* sound state */
-  serial_read(&p, (void*)z64_sound_state_addr, 0x004C);
+  serial_read(&p, z64_sound_state, 0x004C);
 
   /* event state */
-  serial_read(&p, (void*)z64_event_state_1_addr, 0x0008);
-  serial_read(&p, (void*)z64_event_state_2_addr, 0x0004);
+  serial_read(&p, z64_event_state_1, 0x0008);
+  serial_read(&p, z64_event_state_2, 0x0004);
   /* event camera parameters */
   for (int i = 0; i < 24; ++i)
-    serial_read(&p, (void*)(z64_event_camera_addr + 0x28 * i + 0x10), 0x0018);
+    serial_read(&p, &z64_event_camera[0x28 * i + 0x10], 0x0018);
 
   /* oob timer */
   serial_read(&p, &z64_oob_timer, sizeof(z64_oob_timer));
@@ -1433,24 +1433,24 @@ void load_state(void *state)
   serial_read(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
-  serial_read(&p, (void*)z64_dins_state_1_addr, 0x0004);
-  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0006), 0x0002);
-  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0014), 0x0004);
-  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x0020), 0x0004);
-  serial_read(&p, (void*)(z64_dins_state_2_addr + 0x003C), 0x0004);
-  serial_read(&p, (void*)z64_fw_state_1_addr, 0x0004);
-  serial_read(&p, (void*)z64_fw_state_2_addr, 0x0004);
+  serial_read(&p, z64_dins_state_1, 0x0004);
+  serial_read(&p, &z64_dins_state_2[0x0006], 0x0002);
+  serial_read(&p, &z64_dins_state_2[0x0014], 0x0004);
+  serial_read(&p, &z64_dins_state_2[0x0020], 0x0004);
+  serial_read(&p, &z64_dins_state_2[0x003C], 0x0004);
+  serial_read(&p, z64_fw_state_1, 0x0004);
+  serial_read(&p, z64_fw_state_2, 0x0004);
 
   /* camera state */
-  serial_read(&p, (void*)z64_camera_state_addr, 0x0020);
+  serial_read(&p, z64_camera_state, 0x0020);
 
   /* cutscene state */
-  serial_read(&p, (void*)z64_cs_state_addr, 0x0140);
+  serial_read(&p, z64_cs_state, 0x0140);
   /* cutscene message id */
-  serial_read(&p, (void*)z64_cs_message_addr, 0x0008);
+  serial_read(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  serial_read(&p, (void*)z64_message_state_addr, 0x0028);
+  serial_read(&p, z64_message_state, 0x0028);
 
   /* load textures */
   zu_getfile_idx(z64_parameter_static, z64_game.if_ctxt.parameter);
@@ -1524,7 +1524,7 @@ void load_state(void *state)
   /* clear unsaved textures */
   if (c_pause_objects && !p_pause_objects) {
     uint16_t (*img)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
-    img = (void*)z64_zimg_addr;
+    img = (void*)&z64_zimg;
     for (int y = 0; y < Z64_SCREEN_HEIGHT; ++y)
       for (int x = 0; x < Z64_SCREEN_WIDTH; ++x)
         (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
@@ -1596,7 +1596,7 @@ void load_state(void *state)
   for (int i = 0; i < 4; ++i) {
     struct seq_info *si = &seq_info[i];
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
-    char *seq = (void*)(z64_afx_addr + 0x3530 + i * 0x0160);
+    char *seq = &z64_afx[0x3530 + i * 0x0160];
     _Bool c_active = *(uint8_t*)(seq) & 0x80;
     if (si->p_active) {
       memcpy(&sc->stop_cmd_timer, &si->stop_cmd_timer,
@@ -1645,7 +1645,7 @@ void load_state(void *state)
   z64_FlushAfxCmd();
 
   /* load sfx mutes */
-  serial_read(&p, (void*)z64_sfx_mute_addr, 0x0008);
+  serial_read(&p, z64_sfx_mute, 0x0008);
   /* restore pending audio commands */
   {
     uint8_t n_cmd;
@@ -1667,15 +1667,15 @@ void load_state(void *state)
 #endif
 
   /* load ocarina state */
-  serial_read(&p, (void*)z64_ocarina_state_addr, 0x0060);
+  serial_read(&p, z64_ocarina_state, 0x0060);
   /* ocarina minigame parameters */
-  serial_read(&p, (void*)(z64_ocarina_state_addr + 0x0068), 0x0001);
-  serial_read(&p, (void*)(z64_ocarina_state_addr + 0x006C), 0x0001);
+  serial_read(&p, &z64_ocarina_state[0x0068], 0x0001);
+  serial_read(&p, &z64_ocarina_state[0x006C], 0x0001);
   /* load song state */
-  serial_read(&p, (void*)z64_song_state_addr, 0x00AC);
-  serial_read(&p, (void*)z64_scarecrow_song_addr, 0x0140);
-  serial_read(&p, (void*)z64_song_ptr_addr, 0x0004);
-  serial_read(&p, (void*)z64_staff_notes_addr, 0x001E);
+  serial_read(&p, z64_song_state, 0x00AC);
+  serial_read(&p, z64_scarecrow_song, 0x0140);
+  serial_read(&p, z64_song_ptr, 0x0004);
+  serial_read(&p, z64_staff_notes, 0x001E);
   /* fix audio counters */
   {
     uint32_t delta = z64_song_counter - z64_ocarina_counter;

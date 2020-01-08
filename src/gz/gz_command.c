@@ -151,7 +151,7 @@ void gz_save_memfile(struct memory_file *file)
          sizeof(file->scene_flags));
   /* pause screen stuff */
   {
-    file->start_icon_dd = z64_gameinfo.start_icon_dd;
+    file->start_icon_dd = z64_file.gameinfo->start_icon_dd;
     file->pause_screen = z64_game.pause_ctxt.screen_idx;
     file->item_screen_cursor = z64_game.pause_ctxt.item_cursor;
     file->quest_screen_cursor = z64_game.pause_ctxt.quest_cursor;
@@ -205,7 +205,7 @@ void gz_load_memfile(struct memory_file *file)
   }
   /* pause screen stuff */
   if (z64_game.pause_ctxt.state == 0) {
-    z64_gameinfo.start_icon_dd = file->start_icon_dd;
+    z64_file.gameinfo->start_icon_dd = file->start_icon_dd;
     z64_game.pause_ctxt.screen_idx = file->pause_screen;
     z64_game.pause_ctxt.item_cursor = file->item_screen_cursor;
     z64_game.pause_ctxt.quest_cursor = file->quest_screen_cursor;

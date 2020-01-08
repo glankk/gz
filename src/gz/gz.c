@@ -195,11 +195,11 @@ static void main_hook(void)
            sizeof(z64_game.if_ctxt.restriction_flags));
   }
   if (settings->cheats & (1 << CHEAT_NOMAP))
-    z64_gameinfo.minimap_disabled = 1;
+    z64_file.gameinfo->minimap_disabled = 1;
   if (settings->cheats & (1 << CHEAT_ISG))
     z64_link.sword_state = 1;
   if (settings->cheats & (1 << CHEAT_QUICKTEXT))
-    *(uint8_t*)(z64_message_state_addr + 0x000C) = 0x01;
+    *(uint8_t*)(&z64_message_state[0x000C]) = 0x01;
 
   /* handle commands */
   for (int i = 0; i < COMMAND_MAX; ++i) {
@@ -355,7 +355,7 @@ static void main_hook(void)
     else if (settings->bits.lag_unit == SETTINGS_LAG_SECONDS)
       gfx_printf(font, x, settings->lag_counter_y, "%8.2f", lag_frames / 60.f);
   }
-  gz.frame_counter += z64_gameinfo.update_rate;
+  gz.frame_counter += z64_file.gameinfo->update_rate;
 
   /* execute and draw timer */
   if (!gz.timer_active)
@@ -567,10 +567,8 @@ static void mask_input(z64_input_t *input)
 HOOK void input_hook(void)
 {
   init_gp();
-  void (*frame_input_func)(z64_ctxt_t *ctxt);
-  frame_input_func = (void*)z64_frame_input_func_addr;
   if (!gz.ready)
-    frame_input_func(&z64_ctxt);
+    z64_UpdateCtxtInput(&z64_ctxt);
   else if (gz.frames_queued != 0) {
     z64_input_t di = z64_input_direct;
     z64_input_t *zi = z64_ctxt.input;
@@ -583,7 +581,7 @@ HOOK void input_hook(void)
           raw_save[i] = zi[i].raw;
           status_save[i] = zi[i].status;
         }
-      frame_input_func(&z64_ctxt);
+      z64_UpdateCtxtInput(&z64_ctxt);
       mask_input(&zi[0]);
       for (int i = 0; i < 4; ++i)
         if (gz.vcont_enabled[i]) {
@@ -726,12 +724,12 @@ static void state_main_hook(void)
     if (z64_ctxt.state_frames != 0) {
       /* copy gfx buffer from previous frame */
       if (gfx->frame_count_1 & 1) {
-        memcpy((void*)(z64_disp_addr + z64_disp_size),
-               (void*)(z64_disp_addr), z64_disp_size);
+        memcpy((void*)(&z64_disp[z64_disp_size]),
+               (void*)(&z64_disp[0]), z64_disp_size);
       }
       else {
-        memcpy((void*)(z64_disp_addr),
-               (void*)(z64_disp_addr + z64_disp_size), z64_disp_size);
+        memcpy((void*)(&z64_disp[0]),
+               (void*)(&z64_disp[z64_disp_size]), z64_disp_size);
       }
       /* set pointers */
       zu_load_disp_p(&gz.z_disp_p);
@@ -807,19 +805,16 @@ HOOK void srand_hook(uint32_t seed)
 #endif
     }
   }
-  void (*z64_srand)(uint32_t seed) = (void*)z64_srand_func_addr;
-  z64_srand(seed);
+  z64_SeedRandom(seed);
 }
 
 HOOK void ocarina_update_hook(void)
 {
   init_gp();
-  void (*ocarina_update_func)(void);
-  ocarina_update_func = (void*)z64_ocarina_update_func_addr;
   if (!gz.ready)
-    ocarina_update_func();
+    z64_OcarinaUpdate();
   else if (gz.frame_flag) {
-    ocarina_update_func();
+    z64_OcarinaUpdate();
     /* if recording over sync events, remove them */
     if (gz.movie_state == MOVIE_RECORDING && !gz.oca_input_flag) {
       /* ocarina inputs can happen multiple times per frame */
@@ -849,9 +844,7 @@ HOOK void ocarina_update_hook(void)
 HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
 {
   init_gp();
-  void (*ocarina_input_func)(void *a0, z64_input_t *input, int a2);
-  ocarina_input_func = (void*)z64_ocarina_input_func_addr;
-  ocarina_input_func(a0, input, a2);
+  z64_GetInput(a0, input, a2);
   if (gz.ready)
     mask_input(input);
   if (gz.ready && gz.movie_state != MOVIE_IDLE && gz.movie_frame > 0) {
@@ -972,13 +965,12 @@ HOOK uint32_t afx_rand_hook(void)
   init_gp();
   if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* produce a number using the audio rng, as normal */
-    uint32_t (*z64_afx_rand_func)(void) = (void*)z64_afx_rand_func_addr;
+    uint32_t (*z64_afx_rand_func)(void) = (void*)&z64_afx_rand_func;
     return z64_afx_rand_func();
   }
   else {
     /* produce a number that is deterministic within gz movies */
-    uint8_t *song_length = (void*)(z64_ocarina_state_addr + 0x0068);
-    int n = *song_length + 1;
+    int n = z64_ocarina_song_length + 1;
     uint32_t v = z64_random;
     for (int i = 0; i < n; ++i)
       v = v * 0x0019660D + 0x3C6EF35F;
