@@ -25,13 +25,13 @@ rm -f "$gz_rc"
 
 asmgsc()
 {
+  addr="$(printf "%d" "$1")"
   objfile="$(mktemp)"
   binfile="$(mktemp)"
-  hookfile="$(mktemp -p "$hooks_dir")"
   echo ".data; .set noreorder; .set noat; $2" | $AS -o "$objfile"
   $OBJCOPY -j .data -O binary "$objfile" "$binfile"
-  od -An -t x1 -w2 -v "$binfile" |
-  awk 'BEGIN {a='"$1"'+0x01000000} (NF==2) {printf "%08x %s%s\n",a,$1,$2; a+=2}'
+  od -An -t x1 -v "$binfile" |
+  awk 'BEGIN {RS=""; a='"$addr"'} {for (i=1; i<=NF; i++) {if (i<NF) {printf "%08x %s%s\n",a+16777216,$i,$(i+1); i++; a++} else printf "%08x 00%s",a,$i; a++}}'
   rm -f "$objfile" "$binfile"
 }
 
