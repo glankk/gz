@@ -10,8 +10,7 @@ CXX                   = $(program_prefix)g++
 LD                    = $(program_prefix)g++
 OBJCOPY               = $(program_prefix)objcopy
 NM                    = $(program_prefix)nm
-READELF               = $(program_prefix)readelf
-GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' READELF='$(READELF)' CPPFLAGS='$(subst ','\'',$(ALL_CPPFLAGS))' ./genhooks
+GENHOOKS              = AS='$(AS)' CPP='$(CPP)' NM='$(NM)' OBJCOPY='$(OBJCOPY)' CPPFLAGS='$(subst ','\'',$(ALL_CPPFLAGS))' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
