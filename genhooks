@@ -12,7 +12,7 @@ fi
 
 symrc="$(mktemp)"
 $NM "$elf" |
-awk '(/^[0-9A-Za-z_ ]*$/) {printf "sym_%s=0x%s\n",$3,$1}' >"$symrc"
+awk '(/^[0-9A-Za-z_ ]*$/) {printf "sym_%s=0x%s\n",$3,substr($1,length($1)-7)}' >"$symrc"
 . "$symrc"
 rm -f "$symrc"
 
