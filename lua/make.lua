@@ -1,4 +1,4 @@
-require("patch/lua/rom_table")
+require("lua/rom_table")
 
 local arg = {...}
 local rom = gru.n64rom_load(arg[1])
@@ -25,7 +25,7 @@ local code_file = fs:get(rom_info.code_ind)
 local hooks = gru.gsc_load("hooks/gz/" .. gz_version .. "/gz.gsc")
 hooks:shift(-rom_info.code_ram)
 hooks:apply_be(code_file)
-local ups_size_patch = gru.gsc_load("patch/gsc/" .. rom_info.data_dir ..
+local ups_size_patch = gru.gsc_load("gsc/" .. rom_info.data_dir ..
                                     "/ups_size_patch.gsc")
 ups_size_patch:shift(-rom_info.code_ram)
 ups_size_patch:apply_be(code_file)
@@ -51,8 +51,7 @@ local _,_,make_result = os.execute(string.format(make .. " clean-ldr && " ..
 if make_result ~= 0 then error("failed to build ldr", 0) end
 
 print("inserting payload")
-local mem_patch = gru.gsc_load("patch/gsc/" .. rom_info.data_dir ..
-                               "/mem_patch.gsc")
+local mem_patch = gru.gsc_load("gsc/" .. rom_info.data_dir .. "/mem_patch.gsc")
 mem_patch:apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)

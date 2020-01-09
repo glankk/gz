@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo 45e | gzinject -a genkey -k common-key.bin >/dev/null
+gru lua/make-wad.lua "$@"
+rm -rf common-key.bin wadextract

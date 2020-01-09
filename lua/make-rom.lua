@@ -1,5 +1,5 @@
 local progname
-if wiivc then progname = "make-patch-vc" else progname = "make-patch" end
+if wiivc then progname = "make-rom-vc" else progname = "make-rom" end
 
 function usage()
   io.stderr:write("usage: " .. progname .. " [-o <output-rom>] <input-rom>\n")
@@ -7,14 +7,10 @@ function usage()
 end
 
 local arg = {...}
-local opt_sub
 local opt_out
 local opt_rom
 while arg[1] do
-  if arg[1] == "-s" then
-    opt_sub = true
-    table.remove(arg, 1)
-  elseif arg[1] == "-o" then
+  if arg[1] == "-o" then
     opt_out = arg[2]
     if opt_out == nil then usage() end
     table.remove(arg, 1)
@@ -27,18 +23,17 @@ while arg[1] do
 end
 if opt_rom == nil then usage() end
 
-local make = loadfile("patch/lua/make.lua")
+local make = loadfile("lua/make.lua")
 local rom_info, rom, patched_rom = make(opt_rom)
 if rom_info == nil then
   io.stderr:write(progname .. ": unrecognized rom: " .. opt_rom .. "\n")
   return 2
 end
 
-local ups = gru.ups_create(rom, patched_rom)
 if opt_out ~= nil then
-  ups:save(opt_out)
+  patched_rom:save_file(opt_out)
 else
-  ups:save("patch/ups/" .. rom_info.gz_name .. ".ups")
+  patched_rom:save_file(rom_info.gz_name ..  ".z64")
 end
 
 return 0

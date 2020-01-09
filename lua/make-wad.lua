@@ -8,9 +8,9 @@ end
 local arg = {...}
 local opt_id
 local opt_title
-local opt_keyfile = "patch/common-key.bin"
+local opt_keyfile = "common-key.bin"
 local opt_region
-local opt_directory = "patch/wadextract"
+local opt_directory = "wadextract"
 local opt_raphnet
 local opt_disable_controller_remappings
 local opt_nohb
@@ -75,8 +75,8 @@ local gzinject = os.getenv("GZINJECT")
 if gzinject == nil or gzinject == "" then gzinject = "gzinject" end
 
 wiivc = true
-require("patch/lua/rom_table")
-local make = loadfile("patch/lua/make.lua")
+require("lua/rom_table")
+local make = loadfile("lua/make.lua")
 
 -- extract wad
 gru.os_rm(opt_directory)
@@ -106,7 +106,7 @@ local gzinject_cmd = gzinject ..
                      " -a pack" ..
                      " -k \"" .. opt_keyfile .. "\"" ..
                      " -d \"" .. opt_directory .. "\"" ..
-                     " -p \"patch/gzi/gz_mem_patch.gzi\"" ..
+                     " -p \"gzi/gz_mem_patch.gzi\"" ..
                      " --verbose"
 if opt_id ~= nil then
   gzinject_cmd = gzinject_cmd .. " -i \"" .. opt_id .. "\""
@@ -125,24 +125,24 @@ else
 end
 if vc_version ~= nil then
   if not opt_nohb then
-    gzinject_cmd = gzinject_cmd ..  " -p \"patch/gzi/hb_" .. vc_version ..
-                   ".gzi\" --dol-inject \"patch/homeboy/bin/hb-" ..
+    gzinject_cmd = gzinject_cmd ..  " -p \"gzi/hb_" .. vc_version ..
+                   ".gzi\" --dol-inject \"homeboy/bin/hb-" ..
                    vc_version .. "/homeboy.bin\" --dol-loading 90000800"
   end
 end
 if not opt_disable_controller_remappings then
   if opt_raphnet then
-    gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_remap_raphnet.gzi\""
+    gzinject_cmd = gzinject_cmd .. " -p \"gzi/gz_remap_raphnet.gzi\""
   else
-    gzinject_cmd = gzinject_cmd .. " -p \"patch/gzi/gz_remap_default.gzi\""
+    gzinject_cmd = gzinject_cmd .. " -p \"gzi/gz_remap_default.gzi\""
   end
 end
 if opt_out ~= nil then
   gzinject_cmd = gzinject_cmd .. " -w \"" .. opt_out .. "\""
 elseif opt_title ~= nil then
-  gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. opt_title .. ".wad\""
+  gzinject_cmd = gzinject_cmd .. " -w \"" .. opt_title .. ".wad\""
 else
-  gzinject_cmd = gzinject_cmd .. " -w \"patch/" .. rom_info.gz_name .. ".wad\""
+  gzinject_cmd = gzinject_cmd .. " -w \"" .. rom_info.gz_name .. ".wad\""
 end
 -- execute
 local _,_,gzinject_result = os.execute(gzinject_cmd)

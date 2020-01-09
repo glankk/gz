@@ -61,13 +61,13 @@ clean                 :
 	rm -rf $(OBJDIR) $(BINDIR) $(HOOKDIR)
 clean-hooks           : $(foreach v,$(HOOKS),clean-$(v))
 distclean             :
-	rm -rf patch/ups patch/*.z64 patch/*.wad
+	rm -rf ups *.z64 *.wad
 .PHONY                : all clean distclean
 
 all-homeboy           :
-	cd patch/homeboy && $(MAKE) all
+	cd homeboy && $(MAKE) all
 clean-homeboy         :
-	cd patch/homeboy && $(MAKE) clean
+	cd homeboy && $(MAKE) clean
 .PHONY                : all-homeboy clean-homeboy
 
 define bin_template
