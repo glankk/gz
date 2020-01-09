@@ -61,7 +61,8 @@ static void save_ovl(void **p, void *addr,
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
   hdr = (void*)(end - *hdr_off);
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   yaz0_begin(file->prom_start);
@@ -141,7 +142,8 @@ static void load_ovl(void **p, void **p_addr,
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
   hdr = (void*)(end - *hdr_off);
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   serial_read(p, hdr, sizeof(*hdr));

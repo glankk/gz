@@ -12,6 +12,7 @@
 #define Z64_OOT11             0x01
 #define Z64_OOT12             0x02
 #define Z64_OOTMQJ            0x03
+#define Z64_OOTGCJ            0x04
 
 #define Z64_SCREEN_WIDTH      320
 #define Z64_SCREEN_HEIGHT     240
@@ -60,7 +61,8 @@ struct z64_arena
   uint32_t          size;                     /* 0x0008 */
   char              unk_0xC[0x0004];          /* 0x000C */
                                               /* 0x0010 */
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
                                               /* 0x0008 */
 #endif
 };
@@ -83,7 +85,8 @@ struct z64_arena_node
   uint32_t          count_lo;                 /* 0x0024 */
   char              pad_0x28[0x0008];         /* 0x0028 */
   char              data[];                   /* 0x0030 */
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
   char              data[];                   /* 0x0010 */
 #endif
 };
@@ -775,7 +778,8 @@ typedef struct
   char              unk_0x1410[0x0020];       /* 0x1410 */
   z64_gameinfo_t   *gameinfo;                 /* 0x1430 */
   char              unk_0x1434[0x001C];       /* 0x1434 */
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
   char              unk_0x1410[0x0018];       /* 0x1410 */
   z64_gameinfo_t   *gameinfo;                 /* 0x1428 */
   char              unk_0x142C[0x0024];       /* 0x142C */
@@ -2068,7 +2072,8 @@ typedef struct
 # define z64_vr_TTVR_pal_static                 1002
 # define z64_vr_FCVR_static                     1003
 # define z64_vr_FCVR_pal_static                 1004
-#elif Z64_VERSION == Z64_OOTMQJ
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTGCJ
 # define z64_icon_item_static                   8
 # define z64_icon_item_24_static                9
 # define z64_icon_item_field_static             10
