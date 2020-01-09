@@ -69,22 +69,26 @@ void gfx_start(void)
 void gfx_mode_init(void)
 {
   gfx_sync();
-  gSPLoadGeometryMode(gfx_disp_p++, 0);
-  gDPSetCycleType(gfx_disp_p++, G_CYC_1CYCLE);
-  gDPSetRenderMode(gfx_disp_p++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-  gDPSetScissor(gfx_disp_p++, G_SC_NON_INTERLACE,
-                0, 0, Z64_SCREEN_WIDTH, Z64_SCREEN_HEIGHT);
-  gDPSetAlphaDither(gfx_disp_p++, G_AD_DISABLE);
-  gDPSetColorDither(gfx_disp_p++, G_CD_DISABLE);
-  gDPSetAlphaCompare(gfx_disp_p++, G_AC_NONE);
-  gDPSetDepthSource(gfx_disp_p++, G_ZS_PRIM);
-  gDPSetCombineKey(gfx_disp_p++, G_CK_NONE);
-  gDPSetTextureConvert(gfx_disp_p++, G_TC_FILT);
-  gDPSetTextureDetail(gfx_disp_p++, G_TD_CLAMP);
-  gDPSetTexturePersp(gfx_disp_p++, G_TP_NONE);
-  gDPSetTextureLOD(gfx_disp_p++, G_TL_TILE);
-  gDPSetTextureLUT(gfx_disp_p++, G_TT_NONE);
-  gDPPipelineMode(gfx_disp_p++, G_PM_NPRIMITIVE);
+  static Gfx mode_init[] = {
+    gsSPLoadGeometryMode(0),
+    gsDPSetCycleType(G_CYC_1CYCLE),
+    gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
+    gsDPSetScissor(G_SC_NON_INTERLACE,
+                  0, 0, Z64_SCREEN_WIDTH, Z64_SCREEN_HEIGHT),
+    gsDPSetAlphaDither(G_AD_DISABLE),
+    gsDPSetColorDither(G_CD_DISABLE),
+    gsDPSetAlphaCompare(G_AC_NONE),
+    gsDPSetDepthSource(G_ZS_PRIM),
+    gsDPSetCombineKey(G_CK_NONE),
+    gsDPSetTextureConvert(G_TC_FILT),
+    gsDPSetTextureDetail(G_TD_CLAMP),
+    gsDPSetTexturePersp(G_TP_NONE),
+    gsDPSetTextureLOD(G_TL_TILE),
+    gsDPSetTextureLUT(G_TT_NONE),
+    gsDPPipelineMode(G_PM_NPRIMITIVE),
+    gsSPEndDisplayList(),
+  };
+  gSPDisplayList(gfx_disp_p++, mode_init);
   gfx_mode_apply(GFX_MODE_ALL);
 }
 

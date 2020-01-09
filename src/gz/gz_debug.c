@@ -377,7 +377,7 @@ static int actor_draw_proc(struct menu_item *item,
         guMtxCatF(&mt, &mf, &mf);
         guMtxF2L(&mf, &m);
       }
-      Vtx v[6] =
+      static Vtx v[6] =
       {
         gdSPDefVtxC(-8192, 0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
         gdSPDefVtxC(8192,  0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
@@ -387,28 +387,27 @@ static int actor_draw_proc(struct menu_item *item,
         gdSPDefVtxC(0,      0,      8192,  0, 0, 0x00, 0x00, 0xFF, 0x80),
       };
       load_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
-      gDPPipeSync(z64_ctxt.gfx->poly_xlu.p++);
-      gDPSetCycleType(z64_ctxt.gfx->poly_xlu.p++, G_CYC_1CYCLE);
-      gDPSetRenderMode(z64_ctxt.gfx->poly_xlu.p++,
-                       G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2);
-      gDPSetCombineMode(z64_ctxt.gfx->poly_xlu.p++,
-                        G_CC_PRIMITIVE, G_CC_PRIMITIVE);
-      gSPLoadGeometryMode(z64_ctxt.gfx->poly_xlu.p++, G_ZBUFFER);
-      gSPTexture(z64_ctxt.gfx->poly_xlu.p++, 0, 0, 0, 0, G_OFF);
+      static Gfx draw_lines[] = {
+        gsDPPipeSync(),
+        gsDPSetCycleType(G_CYC_1CYCLE),
+        gsDPSetRenderMode(G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2),
+        gsDPSetCombineMode(G_CC_PRIMITIVE, G_CC_PRIMITIVE),
+        gsSPLoadGeometryMode(G_ZBUFFER),
+        gsSPTexture(0, 0, 0, 0, G_OFF),
+        gsSPVertex(&v, 6, 0),
+        gsDPSetPrimColor(0, 0, 0xFF, 0x00, 0x00, 0x80),
+        gsSPLine3D(0, 1, 0),
+        gsDPSetPrimColor(0, 0, 0x00, 0xFF, 0x00, 0x80),
+        gsSPLine3D(2, 3, 0),
+        gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x80),
+        gsSPLine3D(4, 5, 0),
+        gsSPEndDisplayList(),
+      };
       gSPMatrix(z64_ctxt.gfx->poly_xlu.p++,
-                gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, m),
-                G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
-      gSPVertex(z64_ctxt.gfx->poly_xlu.p++,
-                gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, v), 6, 0);
-      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
-                      0, 0, 0xFF, 0x00, 0x00, 0x80);
-      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 0, 1, 0);
-      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
-                      0, 0, 0x00, 0xFF, 0x00, 0x80);
-      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 2, 3, 0);
-      gDPSetPrimColor(z64_ctxt.gfx->poly_xlu.p++,
-                      0, 0, 0x00, 0x00, 0xFF, 0x80);
-      gSPLine3D(z64_ctxt.gfx->poly_xlu.p++, 4, 5, 0);
+                    gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, m),
+                    G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
+      gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++,
+                        draw_lines);
       unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
       zu_set_lighting();
     }
