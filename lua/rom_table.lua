@@ -12,7 +12,7 @@ rom_table =
                     data_dir    = "oot-1.0",
                     gz_version  = "oot-1.0" .. version_suffix,
                     gz_name     = "gz-oot-1.0-j" .. version_suffix,
-                    title_id    = "NGZJ",
+                    title_id    = "NG0J",
                   },
   [0xCD16C529]  = {
                     game        = "oot",
@@ -23,7 +23,7 @@ rom_table =
                     data_dir    = "oot-1.0",
                     gz_version  = "oot-1.0" .. version_suffix,
                     gz_name     = "gz-oot-1.0-u" .. version_suffix,
-                    title_id    = "NGZE",
+                    title_id    = "NG0E",
                   },
   [0x26E73887]  = {
                     game        = "oot",
@@ -34,7 +34,7 @@ rom_table =
                     data_dir    = "oot-1.1",
                     gz_version  = "oot-1.1" .. version_suffix,
                     gz_name     = "gz-oot-1.1-j" .. version_suffix,
-                    title_id    = "NGZJ",
+                    title_id    = "NG1J",
                   },
   [0x3FD2151E]  = {
                     game        = "oot",
@@ -45,7 +45,7 @@ rom_table =
                     data_dir    = "oot-1.1",
                     gz_version  = "oot-1.1" .. version_suffix,
                     gz_name     = "gz-oot-1.1-u" .. version_suffix,
-                    title_id    = "NGZE",
+                    title_id    = "NG1E",
                   },
   [0x2B2721BA]  = {
                     game        = "oot",
@@ -56,7 +56,7 @@ rom_table =
                     data_dir    = "oot-1.2",
                     gz_version  = "oot-1.2" .. version_suffix,
                     gz_name     = "gz-oot-1.2-j" .. version_suffix,
-                    title_id    = "NGZJ",
+                    title_id    = "NG2J",
                   },
   [0x32120C23]  = {
                     game        = "oot",
@@ -67,7 +67,7 @@ rom_table =
                     data_dir    = "oot-1.2",
                     gz_version  = "oot-1.2" .. version_suffix,
                     gz_name     = "gz-oot-1.2-u" .. version_suffix,
-                    title_id    = "NGZE",
+                    title_id    = "NG2E",
                   },
   [0x122FF261]  = {
                     game        = "oot",
