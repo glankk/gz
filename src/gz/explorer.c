@@ -93,7 +93,7 @@ static void draw_crosshair(struct menu_item *item)
   guMtxF2L(&mf, &m);
   Mtx *p_vert_mtx = gDisplayListData(&data->gfx.poly_xlu.d, m);
   /* build dlist */
-  gDisplayListAppend(&data->gfx.poly_xlu.p,
+  static Gfx init_xlu[] = {
     gsDPPipeSync(),
     /* rsp state */
     gsSPLoadGeometryMode(G_ZBUFFER),
@@ -116,7 +116,11 @@ static void draw_crosshair(struct menu_item *item)
     /* memory interface */
     gsDPSetColorDither(G_CD_DISABLE),
     gsDPSetAlphaDither(G_AD_DISABLE),
-    /* load meshes */
+    gsSPEndDisplayList(),
+  };
+  gDisplayListAppend(&data->gfx.poly_xlu.p,
+    /* load mesh matricies */
+    gsSPDisplayList(&init_xlu),
     gsSPMatrix(p_latx_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
     gsSPVertex(&lat_mesh, 4, 0),
     gsSPMatrix(p_vert_mtx, G_MTX_MODELVIEW | G_MTX_LOAD),
@@ -297,22 +301,9 @@ static int draw_proc(struct menu_item *item,
     static void *zbuf = NULL;
     if (!zbuf)
       zbuf = memalign(64, 2 * Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
-    gDisplayListAppend(&data->gfx.poly_opa.p,
-      /* clear z buffer */
-      gsDPPipeSync(),
-      gsDPSetCycleType(G_CYC_FILL),
-      gsDPSetRenderMode(G_RM_NOOP, G_RM_NOOP2),
-      gsDPSetColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH, zbuf),
-      gsDPSetFillColor((GPACK_ZDZ(G_MAXFBZ, 0) << 16) |
-                       GPACK_ZDZ(G_MAXFBZ, 0)),
-      gsDPFillRectangle(0, 0, Z64_SCREEN_WIDTH - 1, Z64_SCREEN_HEIGHT - 1),
-      gsDPPipeSync(),
-      gsDPSetColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH,
-                        ZU_MAKE_SEG(Z64_SEG_CIMG, 0)),
-      gsDPSetDepthImage(zbuf),
+
+    static Gfx init_rcp[] = {
       /* rsp settings */
-      gsSPSegment(Z64_SEG_SCENE, data->scene_file),
-      gsSPSegment(Z64_SEG_ROOM, data->room_file),
       gsSPSegment(0x08, &null_dl),
       gsSPSegment(0x09, &null_dl),
       gsSPSegment(0x0A, &null_dl),
@@ -337,6 +328,23 @@ static int draw_proc(struct menu_item *item,
       gsDPSetFogColor(0x00, 0x00, 0x00, 0x00),
       gsDPSetScissor(G_SC_NON_INTERLACE, 32, 32,
                      Z64_SCREEN_WIDTH - 32, Z64_SCREEN_HEIGHT - 32),
+      gsSPEndDisplayList(),
+    };
+    gDisplayListAppend(&data->gfx.poly_opa.p,
+      gsDPPipeSync(),
+      gsDPSetCycleType(G_CYC_FILL),
+      gsDPSetRenderMode(G_RM_NOOP, G_RM_NOOP2),
+      gsDPSetColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH, zbuf),
+      gsDPSetFillColor((GPACK_ZDZ(G_MAXFBZ, 0) << 16) |
+                       GPACK_ZDZ(G_MAXFBZ, 0)),
+      gsDPFillRectangle(0, 0, Z64_SCREEN_WIDTH - 1, Z64_SCREEN_HEIGHT - 1),
+      gsDPPipeSync(),
+      gsDPSetColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, Z64_SCREEN_WIDTH,
+                        ZU_MAKE_SEG(Z64_SEG_CIMG, 0)),
+      gsDPSetDepthImage(zbuf),
+      gsSPSegment(Z64_SEG_SCENE, data->scene_file),
+      gsSPSegment(Z64_SEG_ROOM, data->room_file),
+      gsSPDisplayList(init_rcp),
     );
     /* create projection matrix */
     {
