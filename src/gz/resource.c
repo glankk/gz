@@ -158,7 +158,8 @@ static void *rc_zicon_note(void)
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12 || \
     Z64_VERSION == Z64_OOTMQJ || \
-    Z64_VERSION == Z64_OOTGCJ
+    Z64_VERSION == Z64_OOTGCJ || \
+    Z64_VERSION == Z64_OOTGCU
     0x00088040,
 #elif Z64_VERSION == Z64_OOTMQU
     0x00089440,

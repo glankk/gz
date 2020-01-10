@@ -102,6 +102,17 @@ rom_table =
                     gz_name     = "gz-oot-gc-j" .. version_suffix,
                     title_id    = "NGCJ",
                   },
+  [0x346DE3AE]  = {
+                    game        = "oot",
+                    version     = "gc",
+                    region      = "u",
+                    code_ind    = 27,
+                    code_ram    = 0x80010EE0,
+                    data_dir    = "oot-gc-u",
+                    gz_version  = "oot-gc-u" .. version_suffix,
+                    gz_name     = "gz-oot-gc-u" .. version_suffix,
+                    title_id    = "NGCE",
+                  },
 }
 
 vc_table =
