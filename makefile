@@ -44,17 +44,10 @@ ELF-OOT-1.1           = $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.1-vc)
 ELF-OOT-1.2           = $(ELF-gz-oot-1.2) $(ELF-gz-oot-1.2-vc)
 ELF-OOT-MQ-J          = $(ELF-gz-oot-mq-j) $(ELF-gz-oot-mq-j-vc)
 ELF-OOT-GC-J          = $(ELF-gz-oot-gc-j) $(ELF-gz-oot-gc-j-vc)
-HOOKS-OOT-1.0         = $(HOOKS-gz-oot-1.0) $(HOOKS-gz-oot-1.0-vc)
-HOOKS-OOT-1.1         = $(HOOKS-gz-oot-1.1) $(HOOKS-gz-oot-1.1-vc)
-HOOKS-OOT-1.2         = $(HOOKS-gz-oot-1.2) $(HOOKS-gz-oot-1.2-vc)
-HOOKS-OOT-MQ-J        = $(HOOKS-gz-oot-mq-j) $(HOOKS-gz-oot-mq-j-vc)
-HOOKS-OOT-GC-J        = $(HOOKS-gz-oot-gc-j) $(HOOKS-gz-oot-gc-j-vc)
 OBJ-N64               = $(OBJ-gz-oot-1.0) $(OBJ-gz-oot-1.1) $(OBJ-gz-oot-1.2) $(OBJ-gz-oot-mq-j) $(OBJ-gz-oot-gc-j)
 OBJ-VC                = $(OBJ-gz-oot-1.0-vc) $(OBJ-gz-oot-1.1-vc) $(OBJ-gz-oot-1.2-vc) $(OBJ-gz-oot-mq-j-vc) $(OBJ-gz-oot-gc-j-vc)
 ELF-N64               = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.2) $(ELF-gz-oot-mq-j) $(ELF-gz-oot-gc-j)
 ELF-VC                = $(ELF-gz-oot-1.0-vc) $(ELF-gz-oot-1.1-vc) $(ELF-gz-oot-1.2-vc) $(ELF-gz-oot-mq-j-vc) $(ELF-gz-oot-gc-j-vc)
-HOOKS-N64             = $(HOOKS-gz-oot-1.0) $(HOOKS-gz-oot-1.1) $(HOOKS-gz-oot-1.2) $(HOOKS-gz-oot-mq-j) $(HOOKS-gz-oot-gc-j)
-HOOKS-VC              = $(HOOKS-gz-oot-1.0-vc) $(HOOKS-gz-oot-1.1-vc) $(HOOKS-gz-oot-1.2-vc) $(HOOKS-gz-oot-mq-j-vc) $(HOOKS-gz-oot-gc-j-vc)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 HOOKS                 = $(foreach v,$(GZ_VERSIONS),gz-$(v)-hooks)
@@ -149,18 +142,12 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
   $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
 
-$(OBJ-OOT-1.0) \
-$(HOOKS-OOT-1.0)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT10 $(ALL_CPPFLAGS)
-$(OBJ-OOT-1.1) \
-$(HOOKS-OOT-1.1)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT11 $(ALL_CPPFLAGS)
-$(OBJ-OOT-1.2) \
-$(HOOKS-OOT-1.2)      : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT12 $(ALL_CPPFLAGS)
-$(OBJ-OOT-MQ-J) \
-$(HOOKS-OOT-MQ-J)     : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_CPPFLAGS)
-$(OBJ-OOT-GC-J) \
-$(HOOKS-OOT-GC-J)     : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCJ $(ALL_CPPFLAGS)
-$(OBJ-VC) \
-$(HOOKS-VC)           : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
+$(OBJ-OOT-1.0)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT10 $(ALL_CPPFLAGS)
+$(OBJ-OOT-1.1)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT11 $(ALL_CPPFLAGS)
+$(OBJ-OOT-1.2)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT12 $(ALL_CPPFLAGS)
+$(OBJ-OOT-MQ-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_CPPFLAGS)
+$(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCJ $(ALL_CPPFLAGS)
+$(OBJ-VC)             : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
 $(ELF-OOT-1.0)        : ALL_LDLIBS           := -loot-1.0 $(ALL_LDLIBS)
 $(ELF-OOT-1.1)        : ALL_LDLIBS           := -loot-1.1 $(ALL_LDLIBS)
 $(ELF-OOT-1.2)        : ALL_LDLIBS           := -loot-1.2 $(ALL_LDLIBS)
