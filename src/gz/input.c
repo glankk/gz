@@ -78,10 +78,22 @@ const uint32_t input_button_color[] =
   0xC8C8C8,
   0xC8C8C8,
   0xC8C8C8,
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
   0xC80000,
   0xC0C0C0,
   0x009600,
   0x5A5AFF,
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
+      Z64_VERSION == Z64_OOTGCJ || \
+      Z64_VERSION == Z64_OOTGCU
+  0x787878,
+  0xC0C0C0,
+  0xFF1E1E,
+  0x00C832,
+#endif
 };
 
 void input_update(void)
