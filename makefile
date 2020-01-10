@@ -153,7 +153,6 @@ $(OBJ-OOT-MQ-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_C
 $(OBJ-OOT-MQ-U)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQU $(ALL_CPPFLAGS)
 $(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCJ $(ALL_CPPFLAGS)
 $(OBJ-OOT-GC-U)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCU $(ALL_CPPFLAGS)
-$(OBJ-VC)             : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
 $(ELF-OOT-1.0)        : ALL_LDLIBS           := -loot-1.0 $(ALL_LDLIBS)
 $(ELF-OOT-1.1)        : ALL_LDLIBS           := -loot-1.1 $(ALL_LDLIBS)
 $(ELF-OOT-1.2)        : ALL_LDLIBS           := -loot-1.2 $(ALL_LDLIBS)
@@ -161,6 +160,14 @@ $(ELF-OOT-MQ-J)       : ALL_LDLIBS           := -loot-mq-j $(ALL_LDLIBS)
 $(ELF-OOT-MQ-U)       : ALL_LDLIBS           := -loot-mq-u $(ALL_LDLIBS)
 $(ELF-OOT-GC-J)       : ALL_LDLIBS           := -loot-gc-j $(ALL_LDLIBS)
 $(ELF-OOT-GC-U)       : ALL_LDLIBS           := -loot-gc-u $(ALL_LDLIBS)
+ifeq '$(shell $(CC) -dumpmachine 2>/dev/null)' 'mips64-ultra-elf'
+$(OBJ-VC)             : ALL_CFLAGS           := -n64-wiivc $(ALL_LDFLAGS)
+$(OBJ-VC)             : ALL_CXXFLAGS         := -n64-wiivc $(ALL_LDFLAGS)
+$(ELF-VC)             : ALL_LDFLAGS          := -n64-wiivc $(ALL_LDFLAGS)
+else
+$(OBJ-VC)             : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
+endif
+
 $(OBJ-N64)            : CFLAGS               ?= -O3 -flto -ffat-lto-objects
 $(OBJ-N64)            : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
 $(ELF-N64)            : LDFLAGS              ?= -O3 -flto
