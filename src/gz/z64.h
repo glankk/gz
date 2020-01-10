@@ -12,7 +12,8 @@
 #define Z64_OOT11             0x01
 #define Z64_OOT12             0x02
 #define Z64_OOTMQJ            0x03
-#define Z64_OOTGCJ            0x04
+#define Z64_OOTMQU            0x04
+#define Z64_OOTGCJ            0x05
 
 #define Z64_SCREEN_WIDTH      320
 #define Z64_SCREEN_HEIGHT     240
@@ -62,6 +63,7 @@ struct z64_arena
   char              unk_0xC[0x0004];          /* 0x000C */
                                               /* 0x0010 */
 #elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ
                                               /* 0x0008 */
 #endif
@@ -86,6 +88,7 @@ struct z64_arena_node
   char              pad_0x28[0x0008];         /* 0x0028 */
   char              data[];                   /* 0x0030 */
 #elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ
   char              data[];                   /* 0x0010 */
 #endif
@@ -779,6 +782,7 @@ typedef struct
   z64_gameinfo_t   *gameinfo;                 /* 0x1430 */
   char              unk_0x1434[0x001C];       /* 0x1434 */
 #elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ
   char              unk_0x1410[0x0018];       /* 0x1410 */
   z64_gameinfo_t   *gameinfo;                 /* 0x1428 */
@@ -2138,6 +2142,71 @@ typedef struct
 # define z64_vr_TTVR_pal_static                 1001
 # define z64_vr_FCVR_static                     1002
 # define z64_vr_FCVR_pal_static                 1003
+#elif Z64_VERSION == Z64_OOTMQU
+# define z64_icon_item_static                   7
+# define z64_icon_item_24_static                8
+# define z64_icon_item_field_static             9
+# define z64_icon_item_dungeon_static           10
+# define z64_icon_item_gameover_static          11
+# define z64_icon_item_jpn_static               12
+# define z64_icon_item_nes_static               13
+# define z64_item_name_static                   14
+# define z64_map_name_static                    15
+# define z64_message_static                     16
+# define z64_message_texture_static             18
+# define z64_nes_font_static                    19
+# define z64_map_48x85_static                   24
+# define z64_parameter_static                   940
+# define z64_vr_cloud2_static                   953
+# define z64_vr_cloud2_pal_static               954
+# define z64_vr_holy0_static                    957
+# define z64_vr_holy0_pal_static                958
+# define z64_vr_holy1_static                    959
+# define z64_vr_holy1_pal_static                960
+# define z64_vr_MDVR_static                     961
+# define z64_vr_MDVR_pal_static                 962
+# define z64_vr_MNVR_static                     963
+# define z64_vr_MNVR_pal_static                 964
+# define z64_vr_RUVR_static                     965
+# define z64_vr_RUVR_pal_static                 966
+# define z64_vr_LHVR_static                     967
+# define z64_vr_LHVR_pal_static                 968
+# define z64_vr_KHVR_static                     969
+# define z64_vr_KHVR_pal_static                 970
+# define z64_vr_K3VR_static                     971
+# define z64_vr_K3VR_pal_static                 972
+# define z64_vr_K4VR_static                     973
+# define z64_vr_K4VR_pal_static                 974
+# define z64_vr_K5VR_static                     975
+# define z64_vr_K5VR_pal_static                 976
+# define z64_vr_SP1a_static                     977
+# define z64_vr_SP1a_pal_static                 978
+# define z64_vr_MLVR_static                     979
+# define z64_vr_MLVR_pal_static                 980
+# define z64_vr_KKRVR_static                    981
+# define z64_vr_KKRVR_pal_static                982
+# define z64_vr_KR3VR_static                    983
+# define z64_vr_KR3VR_pal_static                984
+# define z64_vr_IPVR_static                     985
+# define z64_vr_IPVR_pal_static                 986
+# define z64_vr_KSVR_static                     987
+# define z64_vr_KSVR_pal_static                 988
+# define z64_vr_GLVR_static                     989
+# define z64_vr_GLVR_pal_static                 990
+# define z64_vr_ZRVR_static                     991
+# define z64_vr_ZRVR_pal_static                 992
+# define z64_vr_DGVR_static                     993
+# define z64_vr_DGVR_pal_static                 994
+# define z64_vr_ALVR_static                     995
+# define z64_vr_ALVR_pal_static                 996
+# define z64_vr_NSVR_static                     997
+# define z64_vr_NSVR_pal_static                 998
+# define z64_vr_LBVR_static                     999
+# define z64_vr_LBVR_pal_static                 1000
+# define z64_vr_TTVR_static                     1001
+# define z64_vr_TTVR_pal_static                 1002
+# define z64_vr_FCVR_static                     1003
+# define z64_vr_FCVR_pal_static                 1004
 #endif
 
 /* data */
