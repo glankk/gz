@@ -88,7 +88,8 @@ const uint32_t input_button_color[] =
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
-      Z64_VERSION == Z64_OOTGCU
+      Z64_VERSION == Z64_OOTGCU || \
+      Z64_VERSION == Z64_OOTCEJ
   0x787878,
   0xC0C0C0,
   0xFF1E1E,
