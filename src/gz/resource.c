@@ -153,18 +153,7 @@ static void *rc_zicon_note(void)
 {
   struct gfx_texdesc td =
   {
-    G_IM_FMT_IA, G_IM_SIZ_8b,
-#if Z64_VERSION == Z64_OOT10 || \
-    Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTMQJ || \
-    Z64_VERSION == Z64_OOTGCJ || \
-    Z64_VERSION == Z64_OOTGCU || \
-    Z64_VERSION == Z64_OOTCEJ
-    0x00088040,
-#elif Z64_VERSION == Z64_OOTMQU
-    0x00089440,
-#endif
+    G_IM_FMT_IA, G_IM_SIZ_8b, 0x00088040,
     16, 24, 1, 1,
     z64_ftab[z64_icon_item_static].vrom_start,
     z64_ftab[z64_icon_item_static].vrom_end

@@ -80,12 +80,12 @@ rom_table =
                     gz_name     = "gz-oot-mq-j" .. version_suffix,
                     title_id    = "NGQJ",
                   },
-  [0x091D9D5C]  = {
+  [0xC744C4DB]  = {
                     game        = "oot",
                     version     = "mq",
                     region      = "u",
-                    code_ind    = 28,
-                    code_ram    = 0x80010F00,
+                    code_ind    = 27,
+                    code_ram    = 0x80010EE0,
                     data_dir    = "oot-mq-u",
                     gz_version  = "oot-mq-u" .. version_suffix,
                     gz_name     = "gz-oot-mq-u" .. version_suffix,
