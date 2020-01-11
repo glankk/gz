@@ -165,8 +165,8 @@ $(ELF-OOT-GC-J)       : ALL_LDLIBS           := -loot-gc-j $(ALL_LDLIBS)
 $(ELF-OOT-GC-U)       : ALL_LDLIBS           := -loot-gc-u $(ALL_LDLIBS)
 $(ELF-OOT-CE-J)       : ALL_LDLIBS           := -loot-ce-j $(ALL_LDLIBS)
 ifeq '$(shell $(CC) -dumpmachine 2>/dev/null)' 'mips64-ultra-elf'
-$(OBJ-VC)             : ALL_CFLAGS           := -n64-wiivc $(ALL_LDFLAGS)
-$(OBJ-VC)             : ALL_CXXFLAGS         := -n64-wiivc $(ALL_LDFLAGS)
+$(OBJ-VC)             : ALL_CFLAGS           := -n64-wiivc $(ALL_CFLAGS)
+$(OBJ-VC)             : ALL_CXXFLAGS         := -n64-wiivc $(ALL_CXXFLAGS)
 $(ELF-VC)             : ALL_LDFLAGS          := -n64-wiivc $(ALL_LDFLAGS)
 else
 $(OBJ-VC)             : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
