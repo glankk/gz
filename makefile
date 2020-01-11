@@ -148,28 +148,28 @@ $(foreach v,$(GZ_VERSIONS),$(eval \
   $(call lua_template,gz-$(v),$(LUAFILE)) \
 ))
 
-$(OBJ-OOT-1.0)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT10 $(ALL_CPPFLAGS)
-$(OBJ-OOT-1.1)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT11 $(ALL_CPPFLAGS)
-$(OBJ-OOT-1.2)        : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOT12 $(ALL_CPPFLAGS)
-$(OBJ-OOT-MQ-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQJ $(ALL_CPPFLAGS)
-$(OBJ-OOT-MQ-U)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTMQU $(ALL_CPPFLAGS)
-$(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCJ $(ALL_CPPFLAGS)
-$(OBJ-OOT-GC-U)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTGCU $(ALL_CPPFLAGS)
-$(OBJ-OOT-CE-J)       : ALL_CPPFLAGS         := -DZ64_VERSION=Z64_OOTCEJ $(ALL_CPPFLAGS)
-$(ELF-OOT-1.0)        : ALL_LDLIBS           := -loot-1.0 $(ALL_LDLIBS)
-$(ELF-OOT-1.1)        : ALL_LDLIBS           := -loot-1.1 $(ALL_LDLIBS)
-$(ELF-OOT-1.2)        : ALL_LDLIBS           := -loot-1.2 $(ALL_LDLIBS)
-$(ELF-OOT-MQ-J)       : ALL_LDLIBS           := -loot-mq-j $(ALL_LDLIBS)
-$(ELF-OOT-MQ-U)       : ALL_LDLIBS           := -loot-mq-u $(ALL_LDLIBS)
-$(ELF-OOT-GC-J)       : ALL_LDLIBS           := -loot-gc-j $(ALL_LDLIBS)
-$(ELF-OOT-GC-U)       : ALL_LDLIBS           := -loot-gc-u $(ALL_LDLIBS)
-$(ELF-OOT-CE-J)       : ALL_LDLIBS           := -loot-ce-j $(ALL_LDLIBS)
+$(OBJ-OOT-1.0)        : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOT10
+$(OBJ-OOT-1.1)        : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOT11
+$(OBJ-OOT-1.2)        : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOT12
+$(OBJ-OOT-MQ-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTMQJ
+$(OBJ-OOT-MQ-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTMQU
+$(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCJ
+$(OBJ-OOT-GC-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCU
+$(OBJ-OOT-CE-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTCEJ
+$(ELF-OOT-1.0)        : ALL_LDLIBS           += -loot-1.0
+$(ELF-OOT-1.1)        : ALL_LDLIBS           += -loot-1.1
+$(ELF-OOT-1.2)        : ALL_LDLIBS           += -loot-1.2
+$(ELF-OOT-MQ-J)       : ALL_LDLIBS           += -loot-mq-j
+$(ELF-OOT-MQ-U)       : ALL_LDLIBS           += -loot-mq-u
+$(ELF-OOT-GC-J)       : ALL_LDLIBS           += -loot-gc-j
+$(ELF-OOT-GC-U)       : ALL_LDLIBS           += -loot-gc-u
+$(ELF-OOT-CE-J)       : ALL_LDLIBS           += -loot-ce-j
 ifeq '$(shell $(CC) -dumpmachine 2>/dev/null)' 'mips64-ultra-elf'
-$(OBJ-VC)             : ALL_CFLAGS           := -n64-wiivc $(ALL_CFLAGS)
-$(OBJ-VC)             : ALL_CXXFLAGS         := -n64-wiivc $(ALL_CXXFLAGS)
-$(ELF-VC)             : ALL_LDFLAGS          := -n64-wiivc $(ALL_LDFLAGS)
+$(OBJ-VC)             : ALL_CFLAGS           += -n64-wiivc
+$(OBJ-VC)             : ALL_CXXFLAGS         += -n64-wiivc
+$(ELF-VC)             : ALL_LDFLAGS          += -n64-wiivc
 else
-$(OBJ-VC)             : ALL_CPPFLAGS         := -DWIIVC $(ALL_CPPFLAGS)
+$(OBJ-VC)             : ALL_CPPFLAGS         += -DWIIVC
 endif
 
 $(OBJ-N64)            : CFLAGS               ?= -O3 -flto -ffat-lto-objects
