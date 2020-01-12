@@ -101,6 +101,16 @@ patched_rom:save_file(opt_directory .. "/content5/rom")
 local vc = gru.blob_load(opt_directory .. "/content1.app")
 local vc_version = vc_table[vc:crc32()]
 
+-- make homeboy
+if not opt_nohb and vc_version ~= nil then
+  print("building homeboy")
+  local make = os.getenv("MAKE")
+  if make == nil or make == "" then make = "make" end
+  local _,_,make_result = os.execute("(cd homeboy && " .. make ..
+                                     " hb-" .. vc_version .. ")")
+  if make_result ~= 0 then error("failed to build homeboy", 0) end
+end
+
 -- build gzinject pack command string
 local gzinject_cmd = gzinject ..
                      " -a pack" ..
@@ -123,12 +133,10 @@ if opt_region ~= nil then
 else
   gzinject_cmd = gzinject_cmd .. " -r 3"
 end
-if vc_version ~= nil then
-  if not opt_nohb then
-    gzinject_cmd = gzinject_cmd ..  " -p \"gzi/hb_" .. vc_version ..
-                   ".gzi\" --dol-inject \"homeboy/bin/hb-" ..
-                   vc_version .. "/homeboy.bin\" --dol-loading 90000800"
-  end
+if not opt_nohb and vc_version ~= nil then
+  gzinject_cmd = gzinject_cmd ..  " -p \"gzi/hb_" .. vc_version ..
+                 ".gzi\" --dol-inject \"homeboy/bin/hb-" ..
+                 vc_version .. "/homeboy.bin\" --dol-loading 90000800"
 end
 if not opt_disable_controller_remappings then
   if opt_raphnet then
