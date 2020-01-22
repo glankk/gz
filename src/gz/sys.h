@@ -52,6 +52,8 @@ int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
 char           *getcwd(char *buf, size_t size);
 time_t          time(time_t *tloc);
+void            __assert_func(const char *file, int line,
+                              const char *func, const char *failedexpr);
 int             sys_io_mode(int mode);
 void            sys_reset(void);
 

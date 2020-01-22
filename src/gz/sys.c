@@ -780,6 +780,12 @@ time_t time(time_t *tloc)
   return 0;
 }
 
+void __assert_func(const char *file, int line,
+                   const char *func, const char *failedexpr)
+{
+  return;
+}
+
 int sys_io_mode(int mode)
 {
   int p_mode = io_mode;
