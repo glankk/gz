@@ -129,6 +129,7 @@ z64_game_arena                    = 0x8011CA40 ;
 z64_map_mark_data_tab             = 0x8011CA70 ;
 z64_timer_state                   = 0x8011CA90 ;
 z64_camera_shake                  = 0x8011CAD0 ;
+z64_poly_colorfilter_state        = 0x8011DCB8 ;
 z64_stab                          = 0x8011DE38 ;
 z64_thread_sched                  = 0x8011DEE8 ;
 z64_thread_padmgr                 = 0x8011E150 ;

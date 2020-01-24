@@ -2230,6 +2230,7 @@ z64_extern  z64_arena_t           z64_game_arena;
 z64_extern  void                 *z64_map_mark_data_tab;
 z64_extern  char                  z64_timer_state[];
 z64_extern  char                  z64_camera_shake[];
+z64_extern  char                  z64_poly_colorfilter_state[];
 z64_extern  OSThread              z64_thread_sched;
 z64_extern  OSThread              z64_thread_padmgr;
 z64_extern  z64_input_t           z64_input_direct;

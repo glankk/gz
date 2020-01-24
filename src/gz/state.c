@@ -653,6 +653,9 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
+  /* poly color filter state (sepia effect) */
+  serial_write(&p, z64_poly_colorfilter_state, 0x001C);
+
   /* sound state */
   serial_write(&p, z64_sound_state, 0x004C);
 
@@ -1420,6 +1423,9 @@ void load_state(void *state)
   serial_read(&p, &z64_letterbox_target, sizeof(z64_letterbox_target));
   serial_read(&p, &z64_letterbox_current, sizeof(z64_letterbox_current));
   serial_read(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
+
+  /* poly color filter state (sepia effect) */
+  serial_read(&p, z64_poly_colorfilter_state, 0x001C);
 
   /* sound state */
   serial_read(&p, z64_sound_state, 0x004C);
