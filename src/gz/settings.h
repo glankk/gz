@@ -8,8 +8,8 @@
 #define SETTINGS_MAXSIZE            (0x8000-(SETTINGS_ADDRESS))
 #define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION            0x0002
-#define SETTINGS_STATE_VERSION      0x0002
+#define SETTINGS_VERSION            0x0003
+#define SETTINGS_STATE_VERSION      0x0003
 
 #define SETTINGS_WATCHES_MAX        18
 #define SETTINGS_TELEPORT_MAX       9
