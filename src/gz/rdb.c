@@ -660,7 +660,7 @@ static void rdb_stop_reply(OSThread *thread)
 
 static void rdb_main(void *arg)
 {
-  init_gp();
+  maybe_init_gp();
   memset(&rdb, 0, sizeof(rdb));
   ed_open();
 #if !(defined(RDB_DEBUG_FAULT) && RDB_DEBUG_FAULT)

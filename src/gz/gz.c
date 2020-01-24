@@ -16,6 +16,7 @@
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
+#include "util.h"
 #include "watchlist.h"
 #include "z64.h"
 #include "zu.h"
@@ -464,7 +465,7 @@ static void main_hook(void)
 
 HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
 {
-  init_gp();
+  maybe_init_gp();
   if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* default behavior */
     return z64_osRecvMesg(mq, msg, flag);
@@ -503,7 +504,7 @@ HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
 
 HOOK void entrance_offset_hook(void)
 {
-  init_gp();
+  maybe_init_gp();
   uint32_t offset;
   if (!gz.ready)
     offset = z64_file.scene_setup_index;
@@ -528,7 +529,7 @@ HOOK void entrance_offset_hook(void)
 
 HOOK void draw_room_hook(z64_game_t *game, z64_room_t *room, int unk_a2)
 {
-  init_gp();
+  maybe_init_gp();
   if (gz.ready && gz.hide_rooms) {
     struct zu_disp_p disp_p;
     zu_save_disp_p(&disp_p);
@@ -541,7 +542,7 @@ HOOK void draw_room_hook(z64_game_t *game, z64_room_t *room, int unk_a2)
 
 HOOK void draw_actors_hook(z64_game_t *game, void *actor_ctxt)
 {
-  init_gp();
+  maybe_init_gp();
   if (gz.ready && gz.hide_actors) {
     struct zu_disp_p disp_p;
     zu_save_disp_p(&disp_p);
@@ -566,7 +567,7 @@ static void mask_input(z64_input_t *input)
 
 HOOK void input_hook(void)
 {
-  init_gp();
+  maybe_init_gp();
   if (!gz.ready)
     z64_UpdateCtxtInput(&z64_ctxt);
   else if (gz.frames_queued != 0) {
@@ -633,7 +634,7 @@ HOOK void input_hook(void)
 
 HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
 {
-  init_gp();
+  maybe_init_gp();
   if (gz.ready) {
     z64_disp_buf_t *z_disp[4] =
     {
@@ -760,7 +761,7 @@ static void state_main_hook(void)
 
 HOOK void srand_hook(uint32_t seed)
 {
-  init_gp();
+  maybe_init_gp();
   if (gz.ready) {
     if (gz.movie_state == MOVIE_RECORDING) {
       /* insert a recorded seed */
@@ -810,7 +811,7 @@ HOOK void srand_hook(uint32_t seed)
 
 HOOK void ocarina_update_hook(void)
 {
-  init_gp();
+  maybe_init_gp();
   if (!gz.ready)
     z64_OcarinaUpdate();
   else if (gz.frame_flag) {
@@ -843,7 +844,7 @@ HOOK void ocarina_update_hook(void)
 
 HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
 {
-  init_gp();
+  maybe_init_gp();
   z64_GetInput(a0, input, a2);
   if (gz.ready)
     mask_input(input);
@@ -889,7 +890,7 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
 
 HOOK void ocarina_sync_hook(void)
 {
-  init_gp();
+  maybe_init_gp();
   /* the hook is placed in the middle of a function where there is not normally
      a function call, so some registers need to be saved
   */
@@ -962,7 +963,7 @@ HOOK void ocarina_sync_hook(void)
 
 HOOK uint32_t afx_rand_hook(void)
 {
-  init_gp();
+  maybe_init_gp();
   if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* produce a number using the audio rng, as normal */
     uint32_t (*z64_afx_rand_func)(void) = (void*)&z64_afx_rand_func;
@@ -981,7 +982,7 @@ HOOK uint32_t afx_rand_hook(void)
 HOOK void guPerspectiveF_hook(MtxF *mf)
 {
   /* replaces the guMtxIdentF function in guPerspectiveF */
-  init_gp();
+  maybe_init_gp();
   if (gz.ready && settings->bits.wiivc_cam) {
     /* overwrite the scale argument in guPerspectiveF */
     __asm__ volatile ("la      $t0, 0x3F800000;"
@@ -1167,7 +1168,7 @@ ENTRY void _start()
 {
   static __attribute__((section(".sdata")))
   void *ra_save;
-  init_gp();
+  maybe_init_gp();
   init_stack();
   xchg_stack();
   __asm__ volatile ("sw      $ra, %[ra_save];"

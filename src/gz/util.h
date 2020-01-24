@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <mips.h>
 #include <n64.h>
+#include <startup.h>
 
 /* set interrupt enable bit and return previous value */
 static inline _Bool set_int(_Bool enable)
@@ -91,6 +92,13 @@ static inline _Bool is_nan(float f)
   } pun;
   pun.f = f;
   return (pun.w & exp_mask) == exp_mask && (pun.w & sig_mask) != 0;
+}
+
+static inline void maybe_init_gp(void)
+{
+#ifndef NO_GP
+  init_gp();
+#endif
 }
 
 #endif
