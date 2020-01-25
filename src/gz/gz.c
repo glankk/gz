@@ -406,9 +406,11 @@ static void main_hook(void)
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0x00, 0x00, alpha));
       const char *tarname = STRINGIFY(PACKAGE_TARNAME);
       const char *url = STRINGIFY(PACKAGE_URL);
-      gfx_printf(font, 20, Z64_SCREEN_HEIGHT - 10 - ch, tarname);
+      const char *version = STRINGIFY(PACKAGE_VERSION);
+      gfx_printf(font, 20, Z64_SCREEN_HEIGHT - 12 - ch * 2, tarname);
+      gfx_printf(font, 20, Z64_SCREEN_HEIGHT - 10 - ch, version);
       gfx_printf(font, Z64_SCREEN_WIDTH - 16 - cw * strlen(url),
-                 Z64_SCREEN_HEIGHT - 10 - ch, url);
+                 Z64_SCREEN_HEIGHT - 12 - ch * 2, url);
       if (!logo_texture)
         logo_texture = resource_load_grc_texture("logo");
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xFF, 0xFF, 0xFF, alpha));
@@ -417,7 +419,7 @@ static void main_hook(void)
         {
           logo_texture, i,
           Z64_SCREEN_WIDTH - 16 - logo_texture->tile_width,
-          Z64_SCREEN_HEIGHT - 10 - ch * 2 -
+          Z64_SCREEN_HEIGHT - 12 - ch * 3 -
           (logo_texture->tiles_y - i) * logo_texture->tile_height,
           1.f, 1.f,
         };
