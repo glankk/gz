@@ -1,4 +1,7 @@
-PACKAGE_TARNAME      ?= gz
+ifeq ($(origin PACKAGE_TARNAME), undefined)
+GIT_HASH             := $(shell git rev-parse --short HEAD 2>/dev/null)
+PACKAGE_TARNAME       = $(strip gz $(GIT_HASH))
+endif
 PACKAGE_URL          ?= github.com/glankk/gz
 target                = mips64
 program_prefix        = $(target)-
