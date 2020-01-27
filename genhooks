@@ -18,13 +18,13 @@ rm -f "$symrc"
 
 asmgsc()
 {
-  addr="$(printf "%d" "$1")"
+  addr="$(( $1 & 0x00FFFFFF ))"
   objfile="$(mktemp)"
   binfile="$(mktemp)"
   echo ".data; .set noreorder; .set noat; $2" | $AS -o "$objfile"
   $OBJCOPY -j .data -O binary "$objfile" "$binfile"
   od -An -t x1 -v "$binfile" |
-  awk 'BEGIN {RS=""; a='"$addr"'} {for (i=1; i<=NF; i++) {if (i<NF) {printf "%08x %s%s\n",a+16777216,$i,$(i+1); i++; a++} else printf "%08x 00%s",a,$i; a++}}'
+  awk 'BEGIN {RS=""; a='"$addr"'} {for (i=1; i<=NF; i++) {if (i<NF) {printf "81%06x %s%s\n",a,$i,$(i+1); i++; a++} else printf "80%06x 00%s",a,$i; a++}}'
   rm -f "$objfile" "$binfile"
 }
 
