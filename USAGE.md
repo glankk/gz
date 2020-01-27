@@ -6,11 +6,15 @@
 -   [2 Menus](#2-menus)
     -   [2.1 Warps](#21-warps)
     -   [2.2 Scene](#22-scene)
+        -   [2.2.1 Collision](#221-collision)
+        -   [2.2.2 Free camera](#222-free-camera)
     -   [2.3 Cheats](#23-cheats)
     -   [2.4 Inventory](#24-inventory)
     -   [2.5 Equips](#25-equips)
     -   [2.6 File](#26-file)
     -   [2.7 Macro](#27-macro)
+        -   [2.7.1 Settings](#271-settings)
+        -   [2.7.2 Virtual controller](#272-virtual-controller)
     -   [2.8 Watches](#28-watches)
     -   [2.9 Debug](#29-debug)
     -   [2.10 Settings](#210-settings)
@@ -71,7 +75,7 @@ which is useful for preventing certain wrong warps from crashing. The bottom of
 the warps menu shows information about the game's current warp parameters.
 
 **_Warning:_** Attempting to load a beta scene will cause a crash on all but
-the debug version of Ocarina of Time.
+the debug version of Ocarina of Time, which is currently unsupported.
 
 **_Warning:_** Starting a game (with a warp or scene loading command) when no
 file data is loaded (i.e. from the N64 logo and, to a lesser extent, the file
@@ -84,19 +88,25 @@ backwards through the scene, and D-Pad left and right to rotate the view. While
 holding Z, the D-Pad up and down will navigate vertically through the scene,
 and D-Pad left and right will move sideways. Use the `explore prev room` and
 `explore next room` commands to cycle through the rooms of the scene (bound to
-`R + D-Down` and `R + D-Up` by default). Pressing L will teleport link to the
+`R + D-Down` and `R + D-Up` by default). Pressing L will teleport Link to the
 location and orientation of the crosshair and close the scene explorer.
 
-**set entrance point** sets link's current position and orientation as the
+**set entrance point** sets Link's current position and orientation as the
 point where he will respawn after voiding out. **clear flags** and **set
 flags** modifies the temporary and permanent flags for the current scene, which
 keep track of things such as which chests have been opened, which items have
 been collected, which enemies have been defeated, etc. The **load room** option
 loads the room with the specified index, if a room which such an index exists
 within the current scene. If that room is already the currently loaded room,
-it will be unloaded. **collision view**, when enabled, shows the static scene
-collision in the current scene. The collision polygons are color-coded to show
-special properties;
+it will be unloaded. **teleport slot** selects which
+position to save and load when using the teleportation commands (this can also
+be bound to a button combination, but is unbound by default). The bottom of the
+scene menu shows information about the current scene.
+
+#### 2.2.1 Collision
+**show collision**, when enabled, shows the static and dynamic scene collision
+in the current scene. The collision polygons are color-coded to show special
+properties;
 
 -   **Blue:** Hookshotable surface.
 -   **Purple:** Surface with special interaction (ladder, vine, crawlspace, not
@@ -109,28 +119,69 @@ special properties;
 -   **White:** Normal surface.
 
 Note that collision polygons are affected by scene lighting and fog, which can
-cause their appearance to be misleading. The collision view **mode** decides
-how collision polygons are drawn. The _decal_ setting will draw polygons
-overlaid on scene textures, but will not produce any new surfaces (note however
-that most emulators do not correctly emulate this behavior). The _surface_
-setting draws collision polygons as their own surfaces, but can produce depth
+cause their appearance to be misleading. These effects can be disabled by
+turning off the **shaded** option. The collision view **mode** decides how
+collision polygons are drawn. The _decal_ setting will draw polygons overlaid
+on scene textures, but will not produce any new surfaces (note however that
+most emulators do not correctly emulate this behavior). The _surface_ setting
+draws collision polygons as their own surfaces, but can produce depth
 flickering on existing scene textures. Collision polygons can be configured to
 be completely opaque, or see-through with the **translucent** option. Enabling
 **wifreframe** will display lines around the edges of each polygon. The
 **reduced** option will reduce potential lag by only rendering collision
-polygons with some special property (i.e. colored polygons). When entering a
-new scene, or changing a collision view setting, the collision view must be
-disabled and re-enabled in order to update. **teleport slot** selects which
-position to save and load when using the teleportation commands (this can also
-be bound to a button combination, but is unbound by default). The bottom of the
-scene menu shows information about the current scene.
+polygons with some special property (i.e. colored polygons). When **auto
+update** is on, the collision view will update automatically when a collision
+view setting is changed, or when the collision changes. If turned off, the
+collision view must be manually disabled and re-enabled in order to update.
+
+The **show hitboxes** option shows simple collision bodies and damage sources
+and sinks. The **translucent** and **shaded** options are identical to the
+collision view options with the same names. Hitboxes are also color-coded by
+their type;
+
+-   **Red:** Hitboxes; deal damage.
+-   **Blue:** Hurtboxes; take damage.
+-   **White:** Bumpboxes; pushes and/or get pushed.
+
+It's common for objects to have multiple overlapping hitboxes of different
+types.
+
+#### 2.2.2 Free camera
+The free camera function provides full control of the game's camera. When
+enabled, the camera can be controlled with the joystick, C buttons, and Z
+trigger. These controls are disabled in the game when controlling the free
+camera. Press **lock** to disable the manual camera controls and restore the
+normal game controls.
+
+The free camera has two **mode** settings; when set to *camera*, the game's
+camera is physically moved, which affects the behavior of in-game objects that
+react to the camera's position. When set to *view*, only the graphical
+viewpoint is changed. The game's camera then behaves as usual and is disjoint
+from the user's view of the scene.
+
+The **behavior** setting decides how the camera moves and how the controls
+work;
+
+-   **manual:** The camera does not move by itself. Use the joystick to look
+    around, and the C buttons to move. Hold Z to move with the joystick, look
+    with C-left and right, and move vertically with C-up and down. The
+    **distance min** and **distance max** settings do nothing.
+-   **birdseye follow:** The camera automatically looks at Link, and moves
+    forward and backward to stay within the specified *distance*. Controls
+    are the same as for *manual*.
+-   **radial follow:** The camera follows Link from a fixed viewing angle. It
+    will move up, down, and sideways to keep Link in focus, and forward and
+    backward to stay within the specified *distance*. Use the joystick,
+    C-left, and C-right to rotate the viewing angle, and C-up and down to move
+    towards and away from the focus point. Hold Z to swap the function of C-up
+    and down with the vertical joystick axis.
 
 ### 2.3 Cheats
 This menu allows toggling the builtin cheats on and off. The following cheats
 are available:
 
--   **energy:** Gives full health
--   **magic:** Gives full magic
+-   **energy:** Gives full health.
+-   **magic:** Gives full magic.
 -   **_various items:_** Sets item amounts to the current capacity of that
     item, or to one if the capacity is zero or unlimited.
 -   **small keys:** Sets the number of small keys to one within the current
@@ -146,6 +197,7 @@ are available:
     be used regardless of location.
 -   **no minimap:** Keeps the minimap hidden at all times.
 -   **isg:** Permanently activates the *infinite sword glitch*.
+-   **quick text:** Activates fast scrolling for all textboxes.
 
 To undo the effects of the *no music*, *items usable*, and *no minimap* cheats,
 turn the cheat off and enter a new scene, or reload the current scene.
@@ -201,11 +253,12 @@ normally appears. The **memory file** selects the memory file to save to and
 load from when using the memory file commands (see
 [2.9 Settings](#29-settings)).
 The current time of day can be manually adjusted, or automatically
-fast-forwarded to day or night with the corresponding buttons. **carpenters
-freed**, **intro cutscenes**, and **rewards obtained** let's you set and clear
-various flags in the current file. Pressing the checkmark will set the
-pertinent flags such that they have been "completed", and the cross will clear
-them (setting them to the state that they were in when the file was created).
+fast-forwarded to day or night with the corresponding buttons. **epona freed**,
+**carpenters freed**, **intro cutscenes**, and **rewards obtained** let's you
+set and clear various useful flags in the current file. Pressing the checkmark
+will set the pertinent flags such that they have been "completed", and the
+cross will clear them (setting them to the state that they were in when the
+file was created).
 
 The **timer 1** and **timer 2** options display and modify the state of the two
 types of timers in the game. The first timer is used for hot rooms and races,
@@ -223,24 +276,21 @@ to FFh, as it is by default on the title screen, saving will have no effect.
 There's also a **language** and **z targeting** option, which apply to the
 current file.
 
-Save files can be saved to and and loaded from an ED64 SD card with the
-**save to disk** and **load from disk** options. Pressing _load from disk_ will
-bring up the file browser. Pressing the name of a save file will load it and
-return to the file menu. The **load file to** and **after loading** options
-decide where in memory the file will be loaded to (the current zelda file, the
-currently selected memfile slot, or both), and what should happen when the
-loading is completed (reload scene, void out, or nothing). The _after loading_
-option will have no effect when loading only to the current memfile. The file
-extension used for save files on disk is `.ootsave`, and the default filename
-is `file`. The filename can be changed by pressing the name field. Select the
-position you want to change with the D-Pad left and D-Pad right, and use the
-D-Pad up and D-Pad down to cycle between characters. Holding Z will cycle 3
-characters at a time. Pressing **clear** will set the name field to be empty.
-When the name field is empty, the default filename is `untitled`. When saving,
-pressing the name of a save file in the file browser will copy that name to the
-name field. Pressing accept will save the file to the current folder in the
-file browser with the specified file name. If the file exists, you will be
-prompted to overwrite it.
+Save files can be saved to and and loaded from an SD card with the **save to
+disk** and **load from disk** options. Pressing _load from disk_ will bring up
+the file browser. Pressing the name of a save file will load it and return to
+the file menu. The **load file to** and **after loading** options decide where
+in memory the file will be loaded to (the current zelda file, the currently
+selected memfile slot, or both), and what should happen when the loading is
+completed (reload scene, void out, or nothing). The _after loading_ option will
+have no effect when loading only to the current memfile. The file extension
+used for save files on disk is `.ootsave`, and the default filename is `file`.
+The filename can be changed by pressing the name field. Pressing **clear** will
+set the name field to be empty. When the name field is empty, the default
+filename is `untitled`. When saving, pressing the name of a save file in the
+file browser will copy that name to the name field. Pressing accept will save
+the file to the current folder in the file browser with the specified file
+name. If the file exists, you will be prompted to overwrite it.
 
 ### 2.7 Macro
 This menu provies tools for producing tool-assisted gameplay recordings. Press
@@ -272,16 +322,38 @@ a state to slot 0 for playing back the macro from the start, and then switch to
 slot 1 to use for rerecording. **quick play movie** will start macro playback
 from the start and load the state in slot 0.
 
-Macros and savestates can be saved to and loaded from an ED64 SD card using
-**export macro** / **import macro** and **export state** / **import state**.
+Macros and savestates can be saved to and loaded from an SD card using **export
+macro** / **import macro** and **export state** / **import state**.
 
 _Note:_ Macros override all controller input by default, but this can be
 changed with the **macro input** setting in the settings menu.
 
 _Note:_ States can not be used in the file select menu or on the n64 logo.
 
-_See also:_ [4 Issues with savestates](#4-issues-with-savestates) and
-[5 About frame advancing and recording](#5-about-frame-advancing-and-recording).
+_See also:_ [4 Issues with savestates](#4-issues-with-savestates).
+
+#### 2.7.1 Settings
+This menu provides advanced settings for macro recording. gz implements certain
+hacks to keep macros in sync (See
+[5 About frame advancing and recording](#5-about-frame-advancing-and-recording)).
+All hacks are enabled by default. Disabling the hacks can cause issues and
+desyncs, and should only be done if required. For example, when recording a
+setup that is sensitive to room loading lag. For such use cases, the hacks
+should not be kept disabled longer than necessary (i.e. disable only when
+recording that particular section).
+
+The **wii vc camera** setting enables a camera quirk that is present on the Wii
+VC versions of the game. This setting can be used to sync macros that were made
+on Wii VC when played back on N64, or vice versa. It is enabled by default on
+Wii VC versions of gz.
+
+#### 2.7.2 Virtual controller
+Press the checkbox next to the controller number to override the game's input
+for that controller with a virtual controller. When the virtual controller is
+enabled, the **plugged in** option decides if the controller should appear to
+be connected to the system. The **joystick** controls set the x and y
+coordinates of the joystick on the virtual controller, and the **buttons**
+controls decide what buttons are held down on the virtual controller.
 
 ### 2.8 Watches
 This menu lets you add custom RAM watches to observe arbitrary parts of game's
@@ -305,12 +377,13 @@ Pressing the anchor button next to a watch will release the watch from the
 watches menu so that it's always visible, even when the menu is closed. When a
 watch is released, a positioning button will appear which lets you change the
 position of the watch on the screen. Holding Z when positioning the watch will
-move it faster.
+move it faster. The **visible** option can be unchecked to hide all watches
+globally.
 
-Watches can be imported from text files on an ED64 SD card by pressing the
-folder icon. Press a watch file to bring up a list of all watches contained in
-that file. Press a watch to import it to your watch list. When you've imported
-all the watches you need, press **return** to go back to the watches menu. The
+Watches can be imported from text files on an SD card by pressing the folder
+icon. Press a watch file to bring up a list of all watches contained in that
+file. Press a watch to import it to your watch list. When you've imported all
+the watches you need, press **return** to go back to the watches menu. The
 format of watch files is described in the wiki,
 [here](https://github.com/glankk/gz/wiki/Watch-File-Syntax).
 
@@ -330,10 +403,10 @@ This menu contains various debug features to use for testing;
     actors of that type. The address and id of the selected actor is displayed
     below, as well as the actor variable in that actor instance. The **delete**
     option deletes the currently selected actor, and the **go to** option
-    teleports link to the location of that actor. To spawn a new actor, enter
+    teleports Link to the location of that actor. To spawn a new actor, enter
     an actor id, variable, the x, y, and z components of the position and
     rotation to spawn the actor at, and press **spawn**. The **fetch from
-    link** option loads link's current position and rotation into the position
+    link** option loads Link's current position and rotation into the position
     and rotation fields.
 -   **flags:** Display and edit saved game flags. The flags are grouped by the
     records they are kept in. Use the arrows to cycle between flag records.
@@ -353,9 +426,9 @@ This menu contains various debug features to use for testing;
     addresses. Holding Z while scrolling will scroll faster. You can also enter
     an address manually in the address field. To edit memory, select the
     desired data type and press a memory cell to modify it.
--   **rdb:** Remote debugging interface through ED64v3 USB FIFO. Press
-    **start rdb** to attach the debugger and halt the program, and **stop rdb**
-    to detach the debugger. Press **break** to hit a breakpoint on the graph
+-   **rdb:** Remote debugging interface through ED64v3 USB FIFO. Press **start
+    rdb** to attach the debugger and halt the program, and **stop rdb** to
+    detach the debugger. Press **break** to hit a breakpoint on the graph
     thread.
 
 ### 2.10 Settings
@@ -407,7 +480,7 @@ simultaneously.
 
 The following commands are available:
 
--   **show/hide menu**: Opens the utility menu if it's closed, closes it if
+-   **show/hide menu:** Opens the utility menu if it's closed, closes it if
     it's opened. *Default: `R + L`*
 -   **return from menu:** Returns to the previous menu, as if the *return*
     button was pressed. *Default: `R + D-Left`*
@@ -460,12 +533,16 @@ The following commands are available:
     down to loop the macro. *Default: `unbound`*
 -   **collision view:** Toggle the collision view on or off.
     *Default: `unbound`*
+-   **collision view:** Toggle the hitbox view on or off.
+    *Default: `unbound`*
 -   **explore prev room:** Loads the previous room while using the scene
     explorer. *Default: `R + D-Down`*
 -   **explore next room:** Loads the next room while using the scene explorer.
     *Default: `R + D-Up`*
 -   **reset lag counter:** Resets the number of lag frames recorded to zero.
     *Default: `R + B + D-Right`*
+-   **toggle watches:** Shows or hides watches globally.
+    *Default: `R + D-Right`*
 -   **start/stop timer:** Starts the on-screen timer if it is stopped, stops it
     if it's running. *Default: `R + A + D-Left`*
 -   **reset timer:** Sets the time of the on-screen timer to zero.
@@ -493,11 +570,7 @@ There are some known issues with the Wii VC version of gz;
     the Virtual Console. The WAD patcher remaps the D-Pad to be functional
     again, and maps C-Stick Down to L on the Virtual Console to provide access
     to the utility menu.
--   Disk features rely on the presence of the ED64 which does not exist on the
-    Wii, and are therefore unavailable.
 -   The scene explorer has graphical glitches due to poor emulation.
--   The reset command is not emulated correctly and has been removed.
--   The timer function is not emulated correctly and has been removed.
 
 ## 4 Issues with savestates
 
