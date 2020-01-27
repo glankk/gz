@@ -1,5 +1,11 @@
 PACKAGE_TARNAME      ?= gz
 PACKAGE_URL          ?= github.com/glankk/gz
+ifeq ($(origin PACKAGE_VERSION), undefined)
+PACKAGE_VERSION      := $(shell git describe --tags --dirty 2>/dev/null)
+ifeq ('$(PACKAGE_VERSION)', '')
+PACKAGE_VERSION       = Unknown version
+endif
+endif
 target                = mips64
 program_prefix        = $(target)-
 AS                    = $(program_prefix)as
@@ -14,7 +20,7 @@ GENHOOKS              = AS='$(AS)' OBJCOPY='$(OBJCOPY)' NM='$(NM)' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
-ALL_CPPFLAGS          = -DPACKAGE_TARNAME='$(PACKAGE_TARNAME)' -DPACKAGE_URL='$(PACKAGE_URL)' -DF3DEX_GBI_2 $(CPPFLAGS)
+ALL_CPPFLAGS          = -DPACKAGE_TARNAME='$(PACKAGE_TARNAME)' -DPACKAGE_URL='$(PACKAGE_URL)' -DPACKAGE_VERSION='$(PACKAGE_VERSION)' -DF3DEX_GBI_2 $(CPPFLAGS)
 ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(CFLAGS)
 ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(CXXFLAGS)
 ALL_LDFLAGS           = -T $(LDSCRIPT) -L$(LIBDIR) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(LDFLAGS)
