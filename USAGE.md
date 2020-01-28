@@ -533,7 +533,7 @@ The following commands are available:
     down to loop the macro. *Default: `unbound`*
 -   **collision view:** Toggle the collision view on or off.
     *Default: `unbound`*
--   **collision view:** Toggle the hitbox view on or off.
+-   **hitbox view:** Toggle the hitbox view on or off.
     *Default: `unbound`*
 -   **explore prev room:** Loads the previous room while using the scene
     explorer. *Default: `R + D-Down`*
