@@ -16,6 +16,7 @@
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
+#include "start.h"
 #include "util.h"
 #include "watchlist.h"
 #include "z64.h"
@@ -26,35 +27,6 @@ struct gz gz =
 {
   .ready = 0,
 };
-
-static __attribute__((section(".sdata")))
-void *stack_ptr;
-
-static inline void init_stack(void)
-{
-  static __attribute__((section(".stack"))) _Alignas(8)
-  char _stack[0x2000];
-  static __attribute__((section(".sbss")))
-  void *t0_save;
-  __asm__ volatile ("sw      $t0, %[t0_save];"
-                    "la      $t0, %[stack_top];"
-                    "sw      $t0, %[stack_ptr];"
-                    "lw      $t0, %[t0_save];"
-                    : [stack_ptr] "=m"(stack_ptr), [t0_save] "=m"(t0_save)
-                    : [stack_top] "i"(&_stack[sizeof(_stack) - 0x10]));
-}
-
-static inline void xchg_stack(void)
-{
-  static __attribute__((section(".sbss")))
-  void *t0_save;
-  __asm__ volatile ("sw      $t0, %[t0_save];"
-                    "lw      $t0, %[stack_ptr];"
-                    "sw      $sp, %[stack_ptr];"
-                    "move    $sp, $t0;"
-                    "lw      $t0, %[t0_save];"
-                    : [stack_ptr] "+m"(stack_ptr), [t0_save] "=m"(t0_save));
-}
 
 static void update_cpu_counter(void)
 {
@@ -670,20 +642,8 @@ static void state_main_hook(void)
     gz.oca_sync_flag = 0;
     gz.room_load_flag = 0;
     /* execute state */
-    {
-      register void *a0 __asm__ ("a0") = &z64_ctxt;
-      register void *t9 __asm__ ("t9") = z64_ctxt.state_main;
-      xchg_stack();
-      __asm__ volatile ("jalr    %[state_main];"
-                        : [state_main] "+r"(t9), "+r"(a0)
-                        :
-                        : "at", "v0", "v1",       "a1", "a2", "a3", "t0", "t1",
-                          "t2", "t3", "t4", "t5", "t6", "t7", "t8",       "ra",
-                          "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8",
-                          "f9", "f10", "f11", "f12", "f13", "f14", "f15", "f16",
-                          "f17", "f18", "f19", "cc", "memory");
-      xchg_stack();
-    }
+    gz_leave_func = z64_ctxt.state_main;
+    gz_leave(&z64_ctxt);
     /* if recording over a previous seed, erase it */
     if (gz.movie_state == MOVIE_RECORDING) {
       struct movie_seed *ms;
@@ -1169,26 +1129,6 @@ int main()
     init();
   state_main_hook();
   main_hook();
-}
-
-ENTRY void _start()
-{
-  static __attribute__((section(".sdata")))
-  void *ra_save;
-  maybe_init_gp();
-  init_stack();
-  xchg_stack();
-  __asm__ volatile ("sw      $ra, %[ra_save];"
-                    "jal     %[main];"
-                    "lw      $ra, %[ra_save];"
-                    : [ra_save] "=m"(ra_save)
-                    : [main] "i"(main)
-                    : "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1",
-                      "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9",
-                      "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8",
-                      "f9", "f10", "f11", "f12", "f13", "f14", "f15", "f16",
-                      "f17", "f18", "f19", "cc", "memory");
-  xchg_stack();
 }
 
 /* support libraries */
