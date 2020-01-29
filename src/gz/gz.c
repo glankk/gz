@@ -900,6 +900,7 @@ HOOK void ocarina_sync_hook(void)
   {
     uint32_t v1;
     uint32_t a0;
+    uint32_t a1;
     uint32_t a3;
     uint32_t t0;
     uint32_t t1;
@@ -907,10 +908,11 @@ HOOK void ocarina_sync_hook(void)
   } regs;
   __asm__ volatile ("la      $v0, %[regs];"
                     "sw      $v1, 0x0000($v0);"
-                    "sw      $a3, 0x0008($v0);"
-                    "sw      $t0, 0x000C($v0);"
-                    "sw      $t1, 0x0010($v0);"
-                    "sw      $t6, 0x0014($v0);"
+                    "sw      $a1, 0x0008($v0);"
+                    "sw      $a3, 0x000C($v0);"
+                    "sw      $t0, 0x0010($v0);"
+                    "sw      $t1, 0x0014($v0);"
+                    "sw      $t6, 0x0018($v0);"
                     : [regs] "=m"(regs) :: "v0");
   int audio_frames;
   /* default behavior */
@@ -957,10 +959,13 @@ HOOK void ocarina_sync_hook(void)
   __asm__ volatile ("la      $v0, %[regs];"
                     "lw      $v1, 0x0000($v0);"
                     "lw      $a0, 0x0004($v0);"
-                    "lw      $a3, 0x0008($v0);"
-                    "lw      $t0, 0x000C($v0);"
-                    "lw      $t1, 0x0010($v0);"
-                    :: [regs] "m"(regs) : "v0", "v1", "a0", "a3", "t0", "t1");
+                    "lw      $a1, 0x0008($v0);"
+                    "lw      $a3, 0x000C($v0);"
+                    "lw      $t0, 0x0010($v0);"
+                    "lw      $t1, 0x0014($v0);"
+                    "lw      $t6, 0x0018($v0);"
+                    :: [regs] "m"(regs)
+                    : "v0", "v1", "a0", "a1", "a3", "t0", "t1", "t6");
 }
 
 HOOK uint32_t afx_rand_hook(void)
