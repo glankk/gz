@@ -396,6 +396,10 @@ static _Bool dir_entry_comp(void *a, void *b)
       return 0;
   }
   /* length comparison */
+  while (*sa)
+    ++sa;
+  while (*sb)
+    ++sb;
   d = (sa - da->name) - (sb - db->name);
   if (d < 0)
     return 1;
