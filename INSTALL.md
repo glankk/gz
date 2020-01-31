@@ -23,7 +23,7 @@ Ocarina of Time ROMs:
 -   The Legend of Zelda: Ocarina of Time (USA) (1.0)
 -   The Legend of Zelda: Ocarina of Time (USA) (1.1)
 -   The Legend of Zelda: Ocarina of Time (USA) (1.2)
--   The Legend of Zelda: Ocarina of Time - Master Quest (USA)
+-   The Legend of Zelda: Ocarina of Time - Master Quest (USA) (GC)
 -   The Legend of Zelda: Ocarina of Time (USA) (GC) (Master Quest Disc /
 Collector's Edition)
 -   Zeruda no Densetsu: Toki no Okarina (JPN) (1.0)
@@ -38,7 +38,7 @@ Ocarina of Time WADs:
 -   The Legend of Zelda: Ocarina of Time (USA) (1.2) (Wii VC)
 -   Zelda no Densetsu: Toki no Okarina (JPN) (1.2) (Wii VC)
 
-Line microcode donor ROMs:
+Line microcode ROMs:
 
 -   Hey You, Pikachu! (USA)
 -   Hey You, Pikachu! (JPN)
@@ -101,12 +101,12 @@ inject. The default options should be fine for most users.
     of the default.
 -   `-k|--key <key-file>`: Use `<key-file>` as the common key instead of
     `common-key.bin`.
--   `-r|--region <region>`: Set the channel region to `<region>` instead
-    of region-free. `<region>` should be one of:
+-   `-r|--region <region>`: Set the channel region to `<region>`. `<region>`
+    should be one of the following:
     -   `0`: Japan
     -   `1`: USA
     -   `2`: Europe
-    -   `3`: Region free
+    -   `3`: Region free (default)
 -   `-d|--directory <content-directory>`: Use `<content-directory>` as working
     directory for the main content file. The default is `wadextract`.
 -   `--raphnet`: Use Raphnet Adapter controller remapping. L is bound to the Z
