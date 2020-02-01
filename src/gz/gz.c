@@ -933,8 +933,7 @@ HOOK uint32_t afx_rand_hook(void)
   maybe_init_gp();
   if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* produce a number using the audio rng, as normal */
-    uint32_t (*z64_afx_rand_func)(void) = (void*)&z64_afx_rand_func;
-    return z64_afx_rand_func();
+    return z64_AfxRand();
   }
   else {
     /* produce a number that is deterministic within gz movies */
