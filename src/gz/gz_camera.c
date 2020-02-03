@@ -237,7 +237,7 @@ void gz_free_view(void)
     z64_xyzf_t up;
     vec3f_py(&at, gz.cam_pitch, gz.cam_yaw);
     vec3f_add(&at, &gz.cam_pos, &at);
-    vec3f_py(&up, gz.cam_pitch - M_PI / 4.f, gz.cam_yaw);
+    vec3f_py(&up, gz.cam_pitch - M_PI / 2.f, gz.cam_yaw);
     MtxF mf_lookat;
     guLookAtF(&mf_lookat, gz.cam_pos.x, gz.cam_pos.y, gz.cam_pos.z,
               at.x, at.y, at.z, up.x, up.y, up.z);
