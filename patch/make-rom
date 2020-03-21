@@ -1,3 +1,0 @@
-#!/bin/sh
-
-gru patch/lua/make-rom.lua "$@"

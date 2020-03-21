@@ -47,13 +47,11 @@ struct command_info command_info[COMMAND_MAX] =
   {"explore next room", NULL,                  CMDACT_PRESS},
   {"reset lag counter", command_resetlag,      CMDACT_HOLD},
   {"toggle watches",    command_togglewatches, CMDACT_PRESS},
-#ifndef WIIVC
   {"start/stop timer",  command_timer,         CMDACT_PRESS_ONCE},
   {"reset timer",       command_resettimer,    CMDACT_HOLD},
   {"start timer",       command_starttimer,    CMDACT_PRESS_ONCE},
   {"stop timer",        command_stoptimer,     CMDACT_PRESS_ONCE},
   {"reset",             command_reset,         CMDACT_PRESS_ONCE},
-#endif
 };
 
 void gz_apply_settings()
@@ -128,6 +126,13 @@ void gz_warp(int16_t entrance_index, uint16_t cutscene_index, int age)
   zu_execute_game(entrance_index, cutscene_index);
 }
 
+void gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y)
+{
+  gz.z_input_mask.pad = pad;
+  gz.z_input_mask.x = x;
+  gz.z_input_mask.y = y;
+}
+
 void gz_save_memfile(struct memory_file *file)
 {
   memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
@@ -147,7 +152,7 @@ void gz_save_memfile(struct memory_file *file)
          sizeof(file->scene_flags));
   /* pause screen stuff */
   {
-    file->start_icon_dd = z64_gameinfo.start_icon_dd;
+    file->start_icon_dd = z64_file.gameinfo->start_icon_dd;
     file->pause_screen = z64_game.pause_ctxt.screen_idx;
     file->item_screen_cursor = z64_game.pause_ctxt.item_cursor;
     file->quest_screen_cursor = z64_game.pause_ctxt.quest_cursor;
@@ -201,7 +206,7 @@ void gz_load_memfile(struct memory_file *file)
   }
   /* pause screen stuff */
   if (z64_game.pause_ctxt.state == 0) {
-    z64_gameinfo.start_icon_dd = file->start_icon_dd;
+    z64_file.gameinfo->start_icon_dd = file->start_icon_dd;
     z64_game.pause_ctxt.screen_idx = file->pause_screen;
     z64_game.pause_ctxt.item_cursor = file->item_screen_cursor;
     z64_game.pause_ctxt.quest_cursor = file->quest_screen_cursor;
@@ -441,7 +446,7 @@ void command_playmacro(void)
 {
   if (gz.movie_state == MOVIE_PLAYING)
     gz.movie_state = MOVIE_IDLE;
-  else if (gz.movie_inputs.size > 0)
+  else if (gz.movie_input.size > 0)
     gz.movie_state = MOVIE_PLAYING;
 }
 
@@ -450,7 +455,7 @@ void command_colview(void)
   if (gz.col_view_state == COLVIEW_INACTIVE)
     gz.col_view_state = COLVIEW_START;
   else
-    gz.col_view_state = COLVIEW_STOP;
+    gz.col_view_state = COLVIEW_BEGIN_STOP;
 }
 
 void command_hitview(void)
@@ -476,7 +481,6 @@ void command_togglewatches(void)
     watchlist_hide(gz.menu_watchlist);
 }
 
-#ifndef WIIVC
 void command_timer(void)
 {
   gz.timer_active = !gz.timer_active;
@@ -504,4 +508,3 @@ void command_reset(void)
 {
   gz.reset_flag = 1;
 }
-#endif

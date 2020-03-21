@@ -40,11 +40,17 @@ void settings_load_default(void)
   d->bits.log = 1;
   d->bits.lag_counter = 0;
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
-#ifndef WIIVC
   d->bits.timer = 0;
-#endif
   d->bits.pause_display = 1;
   d->bits.macro_input = 0;
+  d->bits.hack_oca_input = 1;
+  d->bits.hack_oca_sync = 1;
+  d->bits.hack_room_load = 1;
+#ifdef WIIVC
+  d->bits.wiivc_cam = 1;
+#else
+  d->bits.wiivc_cam = 0;
+#endif
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
@@ -67,10 +73,8 @@ void settings_load_default(void)
   d->log_y = Z64_SCREEN_HEIGHT - 18;
   d->lag_counter_x = Z64_SCREEN_WIDTH - 16;
   d->lag_counter_y = 24;
-#ifndef WIIVC
   d->timer_x = 20;
   d->timer_y = 24;
-#endif
   d->n_watches = 0;
   d->cheats = 0;
   for (int i = 0; i < SETTINGS_TELEPORT_MAX; ++i) {
@@ -81,52 +85,48 @@ void settings_load_default(void)
   }
   d->teleport_slot = 0;
   d->warp_entrance = 0;
-  d->binds[COMMAND_MENU] = input_bind_make(2, BUTTON_R, BUTTON_L);
-  d->binds[COMMAND_RETURN] = input_bind_make(2, BUTTON_R, BUTTON_D_LEFT);
+  d->binds[COMMAND_MENU] = bind_make(2, BUTTON_R, BUTTON_L);
+  d->binds[COMMAND_RETURN] = bind_make(2, BUTTON_R, BUTTON_D_LEFT);
 #ifndef WIIVC
-  d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_C_UP, BUTTON_L);
+  d->binds[COMMAND_BREAK] = bind_make(2, BUTTON_C_UP, BUTTON_L);
 #else
-  d->binds[COMMAND_BREAK] = input_bind_make(2, BUTTON_START, BUTTON_L);
+  d->binds[COMMAND_BREAK] = bind_make(2, BUTTON_START, BUTTON_L);
 #endif
-  d->binds[COMMAND_LEVITATE] = input_bind_make(1, BUTTON_L);
-  d->binds[COMMAND_FALL] = input_bind_make(2, BUTTON_Z, BUTTON_L);
-  d->binds[COMMAND_TURBO] = input_bind_make(0);
-  d->binds[COMMAND_FILESELECT] = input_bind_make(2, BUTTON_B, BUTTON_L);
-  d->binds[COMMAND_RELOAD] = input_bind_make(2, BUTTON_A, BUTTON_L);
-  d->binds[COMMAND_VOID] = input_bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
-  d->binds[COMMAND_AGE] = input_bind_make(0);
-  d->binds[COMMAND_SAVESTATE] = input_bind_make(1, BUTTON_D_LEFT);
-  d->binds[COMMAND_LOADSTATE] = input_bind_make(1, BUTTON_D_RIGHT);
-  d->binds[COMMAND_SAVEMEMFILE] = input_bind_make(0);
-  d->binds[COMMAND_LOADMEMFILE] = input_bind_make(0);
-  d->binds[COMMAND_SAVEPOS] = input_bind_make(0);
-  d->binds[COMMAND_LOADPOS] = input_bind_make(0);
-  d->binds[COMMAND_PREVSTATE] = input_bind_make(0);
-  d->binds[COMMAND_NEXTSTATE] = input_bind_make(0);
-  d->binds[COMMAND_PREVFILE] = input_bind_make(0);
-  d->binds[COMMAND_NEXTFILE] = input_bind_make(0);
-  d->binds[COMMAND_PREVPOS] = input_bind_make(0);
-  d->binds[COMMAND_NEXTPOS] = input_bind_make(0);
-  d->binds[COMMAND_PAUSE] = input_bind_make(1, BUTTON_D_DOWN);
-  d->binds[COMMAND_ADVANCE] = input_bind_make(1, BUTTON_D_UP);
-  d->binds[COMMAND_RECORDMACRO] = input_bind_make(0);
-  d->binds[COMMAND_PLAYMACRO] = input_bind_make(0);
-  d->binds[COMMAND_COLVIEW] = input_bind_make(0);
-  d->binds[COMMAND_HITVIEW] = input_bind_make(0);
-  d->binds[COMMAND_PREVROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_DOWN);
-  d->binds[COMMAND_NEXTROOM] = input_bind_make(2, BUTTON_R, BUTTON_D_UP);
-  d->binds[COMMAND_RESETLAG] = input_bind_make(3, BUTTON_R, BUTTON_B,
-                                               BUTTON_D_RIGHT);
-  d->binds[COMMAND_TOGGLEWATCHES] = input_bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
-#ifndef WIIVC
-  d->binds[COMMAND_TIMER] = input_bind_make(3, BUTTON_R, BUTTON_A,
-                                            BUTTON_D_LEFT);
-  d->binds[COMMAND_RESETTIMER] = input_bind_make(3, BUTTON_R, BUTTON_B,
-                                                 BUTTON_D_LEFT);
-  d->binds[COMMAND_STARTTIMER] = input_bind_make(0);
-  d->binds[COMMAND_STOPTIMER] = input_bind_make(0);
-  d->binds[COMMAND_RESET] = input_bind_make(0);
-#endif
+  d->binds[COMMAND_LEVITATE] = bind_make(1, BUTTON_L);
+  d->binds[COMMAND_FALL] = bind_make(2, BUTTON_Z, BUTTON_L);
+  d->binds[COMMAND_TURBO] = bind_make(0);
+  d->binds[COMMAND_FILESELECT] = bind_make(2, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_RELOAD] = bind_make(2, BUTTON_A, BUTTON_L);
+  d->binds[COMMAND_VOID] = bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
+  d->binds[COMMAND_AGE] = bind_make(0);
+  d->binds[COMMAND_SAVESTATE] = bind_make(1, BUTTON_D_LEFT);
+  d->binds[COMMAND_LOADSTATE] = bind_make(1, BUTTON_D_RIGHT);
+  d->binds[COMMAND_SAVEMEMFILE] = bind_make(0);
+  d->binds[COMMAND_LOADMEMFILE] = bind_make(0);
+  d->binds[COMMAND_SAVEPOS] = bind_make(0);
+  d->binds[COMMAND_LOADPOS] = bind_make(0);
+  d->binds[COMMAND_PREVSTATE] = bind_make(0);
+  d->binds[COMMAND_NEXTSTATE] = bind_make(0);
+  d->binds[COMMAND_PREVFILE] = bind_make(0);
+  d->binds[COMMAND_NEXTFILE] = bind_make(0);
+  d->binds[COMMAND_PREVPOS] = bind_make(0);
+  d->binds[COMMAND_NEXTPOS] = bind_make(0);
+  d->binds[COMMAND_PAUSE] = bind_make(1, BUTTON_D_DOWN);
+  d->binds[COMMAND_ADVANCE] = bind_make(1, BUTTON_D_UP);
+  d->binds[COMMAND_RECORDMACRO] = bind_make(0);
+  d->binds[COMMAND_PLAYMACRO] = bind_make(0);
+  d->binds[COMMAND_COLVIEW] = bind_make(0);
+  d->binds[COMMAND_HITVIEW] = bind_make(0);
+  d->binds[COMMAND_PREVROOM] = bind_make(2, BUTTON_R, BUTTON_D_DOWN);
+  d->binds[COMMAND_NEXTROOM] = bind_make(2, BUTTON_R, BUTTON_D_UP);
+  d->binds[COMMAND_RESETLAG] = bind_make(3, BUTTON_R, BUTTON_B, BUTTON_D_RIGHT);
+  d->binds[COMMAND_TOGGLEWATCHES] = bind_make(2, BUTTON_R, BUTTON_D_RIGHT);
+  d->binds[COMMAND_TIMER] = bind_make(3, BUTTON_R, BUTTON_A, BUTTON_D_LEFT);
+  d->binds[COMMAND_RESETTIMER] = bind_make(3, BUTTON_R, BUTTON_B,
+                                           BUTTON_D_LEFT);
+  d->binds[COMMAND_STARTTIMER] = bind_make(0);
+  d->binds[COMMAND_STOPTIMER] = bind_make(0);
+  d->binds[COMMAND_RESET] = bind_make(0);
 }
 
 void settings_save(int profile)

@@ -71,23 +71,24 @@ enum ed_error
 
 typedef struct
 {
-  uint32_t cfg;
-  uint32_t status;
-  uint32_t dma_len;
-  uint32_t dma_ram_addr;
-  uint32_t msg;
-  uint32_t dma_cfg;
-  uint32_t spi;
-  uint32_t spi_cfg;
-  uint32_t key;
-  uint32_t sav_cfg;
-  uint32_t sec;
-  uint32_t ver;
-  uint32_t unk_0x40[0x0004];
-  uint32_t cfg_cnt;
-  uint32_t cfg_dat;
-  uint32_t max_msg;
-  uint32_t crc;
+  uint32_t cfg;                     /* 0x0000 */
+  uint32_t status;                  /* 0x0004 */
+  uint32_t dma_len;                 /* 0x0008 */
+  uint32_t dma_ram_addr;            /* 0x000C */
+  uint32_t msg;                     /* 0x0010 */
+  uint32_t dma_cfg;                 /* 0x0014 */
+  uint32_t spi;                     /* 0x0018 */
+  uint32_t spi_cfg;                 /* 0x001C */
+  uint32_t key;                     /* 0x0020 */
+  uint32_t sav_cfg;                 /* 0x0024 */
+  uint32_t sec;                     /* 0x0028 */
+  uint32_t ver;                     /* 0x002C */
+  uint32_t unk_0x40[0x0004];        /* 0x0030 */
+  uint32_t cfg_cnt;                 /* 0x0034 */
+  uint32_t cfg_dat;                 /* 0x0038 */
+  uint32_t max_msg;                 /* 0x003C */
+  uint32_t crc;                     /* 0x0040 */
+                                    /* 0x0044 */
 } ed_regs_t;
 
 void          ed_open(void);

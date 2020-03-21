@@ -115,8 +115,7 @@ static int wheel_draw_proc(struct menu_item *item,
 {
   struct item_data *data = item->data;
   /* initialize rcp */
-  gfx_disp
-  (
+  static Gfx init_rcp[] = {
     /* rsp state */
     gsDPPipeSync(),
     gsSPLoadGeometryMode(0),
@@ -142,7 +141,9 @@ static int wheel_draw_proc(struct menu_item *item,
     gsDPSetColorDither(G_CD_DISABLE),
     gsDPSetAlphaDither(G_AD_DISABLE),
     gsDPPipelineMode(G_PM_NPRIMITIVE),
-  );
+    gsSPEndDisplayList(),
+  };
+  gfx_disp(gsSPDisplayList(init_rcp));
   /* create projection matrix */
   {
     Mtx m;

@@ -1,4 +1,0 @@
-#!/bin/sh
-
-if [ ! -d patch/ups ]; then mkdir patch/ups; fi
-gru patch/lua/make-patch.lua "$@"

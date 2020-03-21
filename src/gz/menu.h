@@ -261,6 +261,9 @@ struct menu_item   *menu_add_button_icon(struct menu *menu, int x, int y,
                                          int texture_tile, uint32_t color,
                                          menu_action_callback callback_proc,
                                          void *callback_data);
+void                menu_button_set_texture(struct menu_item *item,
+                                            struct gfx_texture *texture,
+                                            int texture_tile);
 struct menu_item   *menu_add_positioning(struct menu *menu, int x, int y,
                                          menu_generic_callback callback_proc,
                                          void *callback_data);

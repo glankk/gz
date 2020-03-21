@@ -39,6 +39,61 @@ void guPerspectiveF(MtxF *mf, uint16_t *perspNorm, float fovy, float aspect,
   mf->wy = 0.f;
   mf->wz = 2.f * near * far / (near - far) * scale;
   mf->ww = 0.f;
+
+  if (perspNorm) {
+    float n = 65536.f * 2.f / (near + far);
+    if (n > 65535.f)
+      n = 65535.f;
+    else if (n < 1.f)
+      n = 1.f;
+    *perspNorm = n;
+  }
+}
+
+void guLookAtF(MtxF *mf,
+               float xEye, float yEye, float zEye,
+               float xAt, float yAt, float zAt,
+               float xUp, float yUp, float zUp)
+{
+  /* compute forward vector */
+  float xFwd = xAt - xEye;
+  float yFwd = yAt - yEye;
+  float zFwd = zAt - zEye;
+  float dFwd = sqrtf(xFwd * xFwd + yFwd * yFwd + zFwd * zFwd);
+  xFwd /= dFwd;
+  yFwd /= dFwd;
+  zFwd /= dFwd;
+
+  /* compute right vector */
+  float xRight = yFwd * zUp - zFwd * yUp;
+  float yRight = zFwd * xUp - xFwd * zUp;
+  float zRight = xFwd * yUp - yFwd * xUp;
+  float dRight = sqrtf(xRight * xRight + yRight * yRight + zRight * zRight);
+  xRight /= dRight;
+  yRight /= dRight;
+  zRight /= dRight;
+
+  /* compute up vector */
+  xUp = yRight * zFwd - zRight * yFwd;
+  yUp = zRight * xFwd - xRight * zFwd;
+  zUp = xRight * yFwd - yRight * xFwd;
+  float dUp = sqrtf(xUp * xUp + yUp * yUp + zUp * zUp);
+  xUp /= dUp;
+  yUp /= dUp;
+  zUp /= dUp;
+
+  /* compute translation vector */
+  float xTrans = -(xEye * xRight + yEye * yRight + zEye * zRight);
+  float yTrans = -(xEye * xUp    + yEye * yUp    + zEye * zUp);
+  float zTrans = -(xEye * xFwd   + yEye * yFwd   + zEye * zFwd);
+
+  *mf = (MtxF)guDefMtxF
+  (
+    xRight, xUp,    -xFwd,   0.f,
+    yRight, yUp,    -yFwd,   0.f,
+    zRight, zUp,    -zFwd,   0.f,
+    xTrans, yTrans, -zTrans, 1.f,
+  );
 }
 
 void guMtxCatF(const MtxF *m, const MtxF *n, MtxF *r)

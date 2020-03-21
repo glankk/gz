@@ -1,5 +1,0 @@
-#!/bin/sh
-
-echo 45e | gzinject -a genkey -k patch/common-key.bin >/dev/null
-gru patch/lua/make-wad.lua "$@"
-rm -rf patch/common-key.bin patch/wadextract

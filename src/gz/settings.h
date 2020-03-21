@@ -8,8 +8,8 @@
 #define SETTINGS_MAXSIZE            (0x8000-(SETTINGS_ADDRESS))
 #define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION            0x0002
-#define SETTINGS_STATE_VERSION      0x0002
+#define SETTINGS_VERSION            0x0003
+#define SETTINGS_STATE_VERSION      0x0003
 
 #define SETTINGS_WATCHES_MAX        18
 #define SETTINGS_TELEPORT_MAX       9
@@ -54,6 +54,7 @@ enum cheats
   CHEAT_USEITEMS,
   CHEAT_NOMAP,
   CHEAT_ISG,
+  CHEAT_QUICKTEXT,
   CHEAT_MAX,
 };
 
@@ -91,13 +92,11 @@ enum commands
   COMMAND_NEXTROOM,
   COMMAND_RESETLAG,
   COMMAND_TOGGLEWATCHES,
-#ifndef WIIVC
   COMMAND_TIMER,
   COMMAND_RESETTIMER,
   COMMAND_STARTTIMER,
   COMMAND_STOPTIMER,
   COMMAND_RESET,
-#endif
   COMMAND_MAX,
 };
 
@@ -116,11 +115,13 @@ struct settings_bits
   uint32_t log             : 1;
   uint32_t lag_counter     : 1;
   uint32_t lag_unit        : 1;
-#ifndef WIIVC
   uint32_t timer           : 1;
-#endif
   uint32_t pause_display   : 1;
   uint32_t macro_input     : 1;
+  uint32_t hack_oca_input  : 1;
+  uint32_t hack_oca_sync   : 1;
+  uint32_t hack_room_load  : 1;
+  uint32_t wiivc_cam       : 1;
   uint32_t break_type      : 1;
   uint32_t warp_age        : 2;
   uint32_t warp_cutscene   : 5;
@@ -153,10 +154,8 @@ struct settings_data
   int16_t               log_y;
   int16_t               lag_counter_x;
   int16_t               lag_counter_y;
-#ifndef WIIVC
   int16_t               timer_x;
   int16_t               timer_y;
-#endif
   int16_t               watch_x[SETTINGS_WATCHES_MAX];
   int16_t               watch_y[SETTINGS_WATCHES_MAX];
   uint16_t              warp_entrance;

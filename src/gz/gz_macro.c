@@ -11,6 +11,9 @@
 #include "z64.h"
 #include "zu.h"
 
+static _Bool            vcont_plugged[4];
+static z64_controller_t vcont_raw[4];
+
 static int pause_switch_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -48,8 +51,14 @@ static int play_switch_proc(struct menu_item *item,
 {
   if (reason == MENU_CALLBACK_THINK)
     menu_switch_set(item, gz.movie_state == MOVIE_PLAYING);
-  else if (reason == MENU_CALLBACK_CHANGED)
+  else if (reason == MENU_CALLBACK_CHANGED) {
+    if (gz.movie_state != MOVIE_PLAYING &&
+        gz.movie_frame == gz.movie_input.size)
+    {
+      gz_movie_rewind();
+    }
     command_playmacro();
+  }
   return 0;
 }
 
@@ -67,12 +76,21 @@ static int trim_switch_proc(struct menu_item *item,
                             void *data)
 {
   if (reason == MENU_CALLBACK_CHANGED) {
-    vector_erase(&gz.movie_inputs, gz.movie_frame,
-                 gz.movie_inputs.size - gz.movie_frame);
-    vector_erase(&gz.movie_seeds, gz.movie_seed_pos,
-                 gz.movie_seeds.size - gz.movie_seed_pos);
-    vector_shrink_to_fit(&gz.movie_inputs);
-    vector_shrink_to_fit(&gz.movie_seeds);
+    vector_erase(&gz.movie_input, gz.movie_frame,
+                 gz.movie_input.size - gz.movie_frame);
+    vector_erase(&gz.movie_seed, gz.movie_seed_pos,
+                 gz.movie_seed.size - gz.movie_seed_pos);
+    vector_erase(&gz.movie_oca_input, gz.movie_oca_input_pos,
+                 gz.movie_oca_input.size - gz.movie_oca_input_pos);
+    vector_erase(&gz.movie_oca_sync, gz.movie_oca_sync_pos,
+                 gz.movie_oca_sync.size - gz.movie_oca_sync_pos);
+    vector_erase(&gz.movie_room_load, gz.movie_room_load_pos,
+                 gz.movie_room_load.size - gz.movie_room_load_pos);
+    vector_shrink_to_fit(&gz.movie_input);
+    vector_shrink_to_fit(&gz.movie_seed);
+    vector_shrink_to_fit(&gz.movie_oca_input);
+    vector_shrink_to_fit(&gz.movie_oca_sync);
+    vector_shrink_to_fit(&gz.movie_room_load);
   }
   return 0;
 }
@@ -97,6 +115,8 @@ static int do_import_macro(const char *path, void *data)
   const char *err_str = NULL;
   int f = open(path, O_RDONLY);
   if (f != -1) {
+    struct stat st;
+    fstat(f, &st);
     int n;
     size_t n_input;
     size_t n_seed;
@@ -111,34 +131,94 @@ static int do_import_macro(const char *path, void *data)
       err_str = s_eof;
       goto f_err;
     }
-    vector_clear(&gz.movie_inputs);
-    vector_clear(&gz.movie_seeds);
-    if (!vector_reserve(&gz.movie_inputs, n_input) ||
-        !vector_reserve(&gz.movie_seeds, n_seed))
+    vector_clear(&gz.movie_input);
+    vector_clear(&gz.movie_seed);
+    if (!vector_reserve(&gz.movie_input, n_input) ||
+        !vector_reserve(&gz.movie_seed, n_seed))
     {
       err_str = s_memory;
       goto error;
     }
     gz_movie_rewind();
-    vector_insert(&gz.movie_inputs, 0, n_input, NULL);
-    vector_insert(&gz.movie_seeds, 0, n_seed, NULL);
-    vector_shrink_to_fit(&gz.movie_inputs);
-    vector_shrink_to_fit(&gz.movie_seeds);
+    vector_insert(&gz.movie_input, 0, n_input, NULL);
+    vector_insert(&gz.movie_seed, 0, n_seed, NULL);
+    vector_shrink_to_fit(&gz.movie_input);
+    vector_shrink_to_fit(&gz.movie_seed);
     n = sizeof(gz.movie_input_start);
     if (read(f, &gz.movie_input_start, n) != n) {
       err_str = s_eof;
       goto f_err;
     }
     sys_io_mode(SYS_IO_DMA);
-    n = gz.movie_inputs.element_size * n_input;
-    if (read(f, gz.movie_inputs.begin, n) != n) {
+    n = gz.movie_input.element_size * n_input;
+    if (read(f, gz.movie_input.begin, n) != n) {
       err_str = s_eof;
       goto f_err;
     }
-    n = gz.movie_seeds.element_size * n_seed;
-    if (read(f, gz.movie_seeds.begin, n) != n) {
+    n = gz.movie_seed.element_size * n_seed;
+    if (read(f, gz.movie_seed.begin, n) != n) {
       err_str = s_eof;
       goto f_err;
+    }
+    /* read sync info if it exists */
+    if (lseek(f, 0, SEEK_CUR) < st.st_size) {
+      size_t n_oca_input;
+      size_t n_oca_sync;
+      size_t n_room_load;
+      n = sizeof(n_oca_input);
+      if (read(f, &n_oca_input, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+      n = sizeof(n_oca_sync);
+      if (read(f, &n_oca_sync, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+      n = sizeof(n_room_load);
+      if (read(f, &n_room_load, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+      vector_clear(&gz.movie_oca_input);
+      vector_clear(&gz.movie_oca_sync);
+      vector_clear(&gz.movie_room_load);
+      if (!vector_reserve(&gz.movie_oca_input, n_oca_input) ||
+          !vector_reserve(&gz.movie_oca_sync, n_oca_sync) ||
+          !vector_reserve(&gz.movie_room_load, n_room_load))
+      {
+        err_str = s_memory;
+        goto error;
+      }
+      vector_insert(&gz.movie_oca_input, 0, n_oca_input, NULL);
+      vector_insert(&gz.movie_oca_sync, 0, n_oca_sync, NULL);
+      vector_insert(&gz.movie_room_load, 0, n_room_load, NULL);
+      vector_shrink_to_fit(&gz.movie_oca_input);
+      vector_shrink_to_fit(&gz.movie_oca_sync);
+      vector_shrink_to_fit(&gz.movie_room_load);
+      n = gz.movie_oca_input.element_size * n_oca_input;
+      if (read(f, gz.movie_oca_input.begin, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+      n = gz.movie_oca_sync.element_size * n_oca_sync;
+      if (read(f, gz.movie_oca_sync.begin, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+      n = gz.movie_room_load.element_size * n_room_load;
+      if (read(f, gz.movie_room_load.begin, n) != n) {
+        err_str = s_eof;
+        goto f_err;
+      }
+    }
+    else {
+      vector_clear(&gz.movie_oca_input);
+      vector_clear(&gz.movie_oca_sync);
+      vector_clear(&gz.movie_room_load);
+      vector_shrink_to_fit(&gz.movie_oca_input);
+      vector_shrink_to_fit(&gz.movie_oca_sync);
+      vector_shrink_to_fit(&gz.movie_room_load);
     }
 f_err:
     sys_io_mode(SYS_IO_PIO);
@@ -164,8 +244,8 @@ static int do_export_macro(const char *path, void *data)
   int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (f != -1) {
     int n;
-    size_t n_input = gz.movie_inputs.size;
-    size_t n_seed = gz.movie_seeds.size;
+    size_t n_input = gz.movie_input.size;
+    size_t n_seed = gz.movie_seed.size;
     errno = 0;
     n = sizeof(n_input);
     if (write(f, &n_input, n) != n)
@@ -176,12 +256,36 @@ static int do_export_macro(const char *path, void *data)
     n = sizeof(gz.movie_input_start);
     if (write(f, &gz.movie_input_start, n) != n)
       goto f_err;
-    n = gz.movie_inputs.element_size * n_input;
-    if (write(f, gz.movie_inputs.begin, n) != n)
+    n = gz.movie_input.element_size * n_input;
+    if (write(f, gz.movie_input.begin, n) != n)
       goto f_err;
-    n = gz.movie_seeds.element_size * n_seed;
-    if (write(f, gz.movie_seeds.begin, n) != n)
+    n = gz.movie_seed.element_size * n_seed;
+    if (write(f, gz.movie_seed.begin, n) != n)
       goto f_err;
+    size_t n_oca_input = gz.movie_oca_input.size;
+    size_t n_oca_sync = gz.movie_oca_sync.size;
+    size_t n_room_load = gz.movie_room_load.size;
+    /* write sync info if there is any */
+    if (n_oca_input != 0 || n_oca_sync != 0 || n_room_load != 0) {
+      n = sizeof(n_oca_input);
+      if (write(f, &n_oca_input, n) != n)
+        goto f_err;
+      n = sizeof(n_oca_sync);
+      if (write(f, &n_oca_sync, n) != n)
+        goto f_err;
+      n = sizeof(n_room_load);
+      if (write(f, &n_room_load, n) != n)
+        goto f_err;
+      n = gz.movie_oca_input.element_size * n_oca_input;
+      if (write(f, gz.movie_oca_input.begin, n) != n)
+        goto f_err;
+      n = gz.movie_oca_sync.element_size * n_oca_sync;
+      if (write(f, gz.movie_oca_sync.begin, n) != n)
+        goto f_err;
+      n = gz.movie_room_load.element_size * n_room_load;
+      if (write(f, gz.movie_room_load.begin, n) != n)
+        goto f_err;
+    }
 f_err:
     if (errno != 0)
       err_str = strerror(errno);
@@ -337,7 +441,11 @@ static void import_state_proc(struct menu_item *item, void *data)
 static void export_state_proc(struct menu_item *item, void *data)
 {
   if (gz.state_buf[gz.state_slot]) {
-    menu_get_file(gz.menu_main, GETFILE_SAVE, "state", ".gzs",
+    struct state_meta *state = gz.state_buf[gz.state_slot];
+    char defname[32];
+    snprintf(defname, sizeof(defname), "000-%s",
+             zu_scene_info[state->scene_idx].scene_name);
+    menu_get_file(gz.menu_main, GETFILE_SAVE, defname, ".gzs",
                   do_export_state, NULL);
   }
 }
@@ -407,7 +515,7 @@ static void quick_play_proc(struct menu_item *item, void *data)
   struct state_meta *state = gz.state_buf[0];
   if (!zu_in_game())
     gz_log("can not load here");
-  else if (!state || state->movie_frame != 0 || gz.movie_inputs.size == 0)
+  else if (!state || state->movie_frame != 0 || gz.movie_input.size == 0)
     gz_log("no movie recorded");
   else {
     gz_movie_rewind();
@@ -419,14 +527,149 @@ static void quick_play_proc(struct menu_item *item, void *data)
   }
 }
 
+static int hack_oca_input_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hack_oca_input = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hack_oca_input = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.hack_oca_input)
+      menu_checkbox_set(item, settings->bits.hack_oca_input);
+  }
+  return 0;
+}
+
+static int hack_oca_sync_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hack_oca_sync = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hack_oca_sync = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.hack_oca_sync)
+      menu_checkbox_set(item, settings->bits.hack_oca_sync);
+  }
+  return 0;
+}
+
+static int hack_room_load_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hack_room_load = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hack_room_load = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.hack_room_load)
+      menu_checkbox_set(item, settings->bits.hack_room_load);
+  }
+  return 0;
+}
+
+static int wiivc_cam_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.wiivc_cam = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.wiivc_cam = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.wiivc_cam)
+      menu_checkbox_set(item, settings->bits.wiivc_cam);
+  }
+  return 0;
+}
+
+static int vcont_enable_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  int port = (int)data;
+  if (reason == MENU_CALLBACK_CHANGED) {
+    gz.vcont_enabled[port] = menu_checkbox_get(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != gz.vcont_enabled[port])
+      menu_checkbox_set(item, gz.vcont_enabled[port]);
+  }
+  return 0;
+}
+
+static int vcont_plugged_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  int port = (int)data;
+  if (reason == MENU_CALLBACK_CHANGED) {
+    vcont_plugged[port] = menu_checkbox_get(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != vcont_plugged[port])
+      menu_checkbox_set(item, vcont_plugged[port]);
+  }
+  return 0;
+}
+
+static int vcont_joy_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  int port = (int)data / 2;
+  int axis = (int)data % 2;
+  int8_t *v = (axis == 0 ? &vcont_raw[port].x : &vcont_raw[port].y);
+  if (reason == MENU_CALLBACK_CHANGED) {
+    *v = menu_intinput_gets(item);
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_intinput_gets(item) != *v)
+      menu_intinput_set(item, *v);
+  }
+  return 0;
+}
+
+static int vcont_button_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  int port = (int)data / 16;
+  int button = (int)data % 16;
+  uint16_t button_mask = (1 << button);
+  if (reason == MENU_CALLBACK_CHANGED) {
+    if (menu_switch_get(item))
+      vcont_raw[port].pad |= button_mask;
+    else
+      vcont_raw[port].pad &= ~button_mask;
+    gz_vcont_set(port, vcont_plugged[port], &vcont_raw[port]);
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = vcont_raw[port].pad & button_mask;
+    if (menu_switch_get(item) != state)
+      menu_switch_set(item, state);
+  }
+  return 0;
+}
+
 struct menu *gz_macro_menu(void)
 {
   static struct menu menu;
+  static struct menu menu_settings;
+  static struct menu menu_vcont;
   struct menu_item *item;
 
-  /* initialize menu */
+  /* initialize menus */
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
+  menu_init(&menu_settings, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  menu_init(&menu_vcont, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
 
   /* load textures */
   struct gfx_texture *t_macro = resource_get(RES_ICON_MACRO);
@@ -434,6 +677,8 @@ struct menu *gz_macro_menu(void)
   struct gfx_texture *t_arrow = resource_get(RES_ICON_ARROW);
   struct gfx_texture *t_save = resource_get(RES_ICON_SAVE);
 
+  /* populate macro top menu */
+  menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
   /* create movie controls */
   item = menu_add_switch(&menu, 0, 2,
                          t_macro, 0, 0xFF0000, t_macro, 0, 0xFFFFFF, 1.f, 0,
@@ -461,7 +706,7 @@ struct menu *gz_macro_menu(void)
   item->tooltip = "trim macro";
   item = menu_add_intinput(&menu, 12, 4, 10, 6, movie_pos_proc, NULL);
   item->tooltip = "macro frame";
-  menu_add_watch(&menu, 19, 4, (uint32_t)&gz.movie_inputs.size,
+  menu_add_watch(&menu, 19, 4, (uint32_t)&gz.movie_input.size,
                  WATCH_TYPE_U32);
   item = menu_add_button_icon(&menu, 0, 6, t_save, 0, 0xFFFFFF,
                               import_macro_proc, NULL);
@@ -469,7 +714,6 @@ struct menu *gz_macro_menu(void)
   item = menu_add_button_icon(&menu, 3, 6, t_save, 1, 0xFFFFFF,
                               export_macro_proc, NULL);
   item->tooltip = "export macro";
-
   /* create state controls */
   menu_add_button_icon(&menu, 0, 8, t_arrow, 3, 0xFFFFFF,
                        prev_state_proc, NULL);
@@ -491,7 +735,6 @@ struct menu *gz_macro_menu(void)
   item = menu_add_button_icon(&menu, 12, 10, t_save, 1, 0xFFFFFF,
                               export_state_proc, NULL);
   item->tooltip = "export state";
-
   /* create movie controls */
   item = menu_add_button_icon(&menu, 0, 13, t_movie, 0, 0xFFFFFF,
                               quick_record_proc, NULL);
@@ -499,9 +742,112 @@ struct menu *gz_macro_menu(void)
   item = menu_add_button_icon(&menu, 3, 13, t_movie, 1, 0xFFFFFF,
                               quick_play_proc, NULL);
   item->tooltip = "quick play movie";
-
+  /* create settings controls */
+  menu_add_submenu(&menu, 0, 15, &menu_settings, "settings");
+  /* create virtual controller controls */
+  menu_add_submenu(&menu, 0, 16, &menu_vcont, "virtual controller");
   /* create tooltip */
-  menu_add_tooltip(&menu, 0, 15, gz.menu_main, 0xC0C0C0);
+  menu_add_tooltip(&menu, 8, 0, gz.menu_main, 0xC0C0C0);
+
+  /* populate settings menu */
+  menu_settings.selector = menu_add_submenu(&menu_settings, 0, 0, NULL,
+                                            "return");
+  menu_add_static(&menu_settings, 0, 1, "recording settings", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 2, hack_oca_input_proc, NULL);
+  menu_add_static(&menu_settings, 4, 2, "ocarina input hack", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 3, hack_oca_sync_proc, NULL);
+  menu_add_static(&menu_settings, 4, 3, "ocarina sync hack", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 4, hack_room_load_proc, NULL);
+  menu_add_static(&menu_settings, 4, 4, "room load hack", 0xC0C0C0);
+  menu_add_static(&menu_settings, 0, 5, "game settings", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 6, wiivc_cam_proc, NULL);
+  menu_add_static(&menu_settings, 4, 6, "wii vc camera", 0xC0C0C0);
+
+  /* populate virtual pad menu */
+  menu_vcont.selector = menu_add_submenu(&menu_vcont, 0, 0, NULL, "return");
+  struct gfx_texture *t_buttons = resource_get(RES_ICON_BUTTONS);
+  for (int i = 0; i < 4; ++i) {
+    char s[16];
+    sprintf(s, "controller %i", i + 1);
+    menu_add_static(&menu_vcont, 0, 1 + i * 4, s, 0xC0C0C0);
+    menu_add_checkbox(&menu_vcont, 14, 1 + i * 4,
+                      vcont_enable_proc, (void *)i);
+
+    menu_add_static(&menu_vcont, 2, 2 + i * 4, "plugged in", 0xC0C0C0);
+    menu_add_checkbox(&menu_vcont, 14, 2 + i * 4,
+                      vcont_plugged_proc, (void *)i);
+
+    menu_add_static(&menu_vcont, 2, 3 + i * 4, "joystick", 0xC0C0C0);
+    menu_add_intinput(&menu_vcont, 14, 3 + i * 4, -10, 4,
+                      vcont_joy_proc, (void *)(i * 2 + 0));
+    menu_add_intinput(&menu_vcont, 19, 3 + i * 4, -10, 4,
+                      vcont_joy_proc, (void *)(i * 2 + 1));
+
+    menu_add_static(&menu_vcont, 2, 4 + i * 4, "buttons", 0xC0C0C0);
+    static const int buttons[] =
+    {
+      15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
+    };
+    for (int j = 0; j < sizeof(buttons) / sizeof(*buttons); ++j) {
+      int b = buttons[j];
+      item = menu_add_switch(&menu_vcont, 14, 4 + i * 4,
+                             t_buttons, b, input_button_color[b],
+                             t_buttons, b, 0x808080,
+                             1.f, 0, vcont_button_proc, (void *)(i * 16 + b));
+      item->pxoffset = j * 10;
+    }
+  }
 
   return &menu;
+}
+
+void gz_vcont_set(int port, _Bool plugged, z64_controller_t *cont)
+{
+  z64_input_t *vcont = &gz.vcont_input[port];
+
+  vcont->raw_prev = vcont->raw;
+  vcont->status_prev = vcont->status;
+
+  if (plugged) {
+    vcont->raw = *cont;
+    vcont->status = 0x0000;
+  }
+  else {
+    vcont->raw.pad = 0x0000;
+    vcont->raw.x = 0;
+    vcont->raw.y = 0;
+    vcont->status = 0x0800;
+  }
+
+  vcont->x_diff += (vcont->raw.x - vcont->raw_prev.x);
+  vcont->y_diff += (vcont->raw.y - vcont->raw_prev.y);
+
+  uint16_t pad_changed = (vcont->raw.pad ^ vcont->raw_prev.pad);
+  vcont->pad_pressed |= (pad_changed & vcont->raw.pad);
+  vcont->pad_released |= (pad_changed & vcont->raw_prev.pad);
+
+  vcont->adjusted_x = zu_adjust_joystick(vcont->raw.x);
+  vcont->adjusted_y = zu_adjust_joystick(vcont->raw.y);
+}
+
+void gz_vcont_get(int port, z64_input_t *input)
+{
+  z64_input_t *vcont = &gz.vcont_input[port];
+
+  input->raw_prev = input->raw;
+  input->status_prev = input->status;
+
+  input->raw = vcont->raw;
+  input->status = vcont->status;
+  input->x_diff = vcont->x_diff;
+  input->y_diff = vcont->y_diff;
+  input->pad_pressed = vcont->pad_pressed;
+  input->pad_released = vcont->pad_released;
+  input->adjusted_x = vcont->adjusted_x;
+  input->adjusted_y = vcont->adjusted_y;
+
+  vcont->x_diff = 0;
+  vcont->y_diff = 0;
+  vcont->pad_pressed = 0;
+  vcont->pad_released = 0;
 }

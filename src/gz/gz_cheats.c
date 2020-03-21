@@ -20,6 +20,7 @@ static const char *cheat_names[] =
   "items usable",
   "no minimap",
   "isg",
+  "quick text",
 };
 
 static int cheat_proc(struct menu_item *item,
@@ -46,8 +47,10 @@ struct menu *gz_cheats_menu(void)
 
   /* populate cheat list */
   for (int i = 0; i < CHEAT_MAX; ++i) {
-    menu_add_checkbox(&menu, 0, 1 + i, cheat_proc, (void*)i);
-    menu_add_static(&menu, 2, 1 + i, cheat_names[i], 0xC0C0C0);
+    int x = (i / 16) * 16;
+    int y = (i % 16);
+    menu_add_checkbox(&menu, x + 0, y + 1, cheat_proc, (void*)i);
+    menu_add_static(&menu, x + 2, y + 1, cheat_names[i], 0xC0C0C0);
   }
 
   return &menu;

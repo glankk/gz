@@ -41,6 +41,19 @@ enum hit_view_state
   HITVIEW_STOP,
 };
 
+enum cam_mode
+{
+  CAMMODE_CAMERA,
+  CAMMODE_VIEW,
+};
+
+enum cam_bhv
+{
+  CAMBHV_MANUAL,
+  CAMBHV_BIRDSEYE,
+  CAMBHV_RADIAL,
+};
+
 struct memory_file
 {
   z64_file_t            z_file;
@@ -85,6 +98,25 @@ struct movie_seed
   uint32_t              new_seed;
 };
 
+struct movie_oca_input
+{
+  int32_t               frame_idx;
+  uint16_t              pad;
+  int8_t                adjusted_x;
+  int8_t                adjusted_y;
+};
+
+struct movie_oca_sync
+{
+  int32_t               frame_idx;
+  int32_t               audio_frames;
+};
+
+struct movie_room_load
+{
+  int32_t               frame_idx;
+};
+
 struct log_entry
 {
   char                 *msg;
@@ -115,22 +147,42 @@ struct gz
   uint32_t              disp_hook_d[4];
   enum movie_state      movie_state;
   z64_controller_t      movie_input_start;
-  struct vector         movie_inputs;
-  struct vector         movie_seeds;
+  struct vector         movie_input;
+  struct vector         movie_seed;
+  struct vector         movie_oca_input;
+  struct vector         movie_oca_sync;
+  struct vector         movie_room_load;
   int                   movie_frame;
   int                   movie_seed_pos;
+  int                   movie_oca_input_pos;
+  int                   movie_oca_sync_pos;
+  int                   movie_room_load_pos;
+  _Bool                 oca_input_flag;
+  _Bool                 oca_sync_flag;
+  _Bool                 room_load_flag;
+  z64_controller_t      z_input_mask;
+  _Bool                 vcont_enabled[4];
+  z64_input_t           vcont_input[4];
   int32_t               frame_counter;
   int32_t               lag_vi_offset;
-#ifndef WIIVC
   int64_t               cpu_counter;
+  int32_t               cpu_counter_freq;
   _Bool                 timer_active;
   int64_t               timer_counter_offset;
   int64_t               timer_counter_prev;
-#endif
   int                   col_view_state;
   int                   hit_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
+  _Bool                 free_cam;
+  _Bool                 lock_cam;
+  enum cam_mode         cam_mode;
+  enum cam_bhv          cam_bhv;
+  int16_t               cam_dist_min;
+  int16_t               cam_dist_max;
+  float                 cam_pitch;
+  float                 cam_yaw;
+  z64_xyzf_t            cam_pos;
   struct memory_file   *memfile;
   _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
   uint8_t               memfile_slot;
@@ -148,6 +200,7 @@ void          gz_save_memfile(struct memory_file *memfile);
 void          gz_load_memfile(struct memory_file *memfile);
 void          gz_warp(int16_t entrance_index,
                       uint16_t cutscene_index, int age);
+void          gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y);
 
 void          command_break(void);
 void          command_levitate(void);
@@ -177,21 +230,25 @@ void          command_colview(void);
 void          command_hitview(void);
 void          command_resetlag(void);
 void          command_togglewatches(void);
-#ifndef WIIVC
 void          command_timer(void);
 void          command_resettimer(void);
 void          command_starttimer(void);
 void          command_stoptimer(void);
 void          command_reset(void);
-#endif
 
 void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
 void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);
 void          gz_movie_rewind(void);
 void          gz_movie_seek(int frame);
 
+void          gz_vcont_set(int port, _Bool plugged, z64_controller_t *cont);
+void          gz_vcont_get(int port, z64_input_t *input);
+
 void          gz_col_view(void);
 void          gz_hit_view(void);
+
+void          gz_update_cam(void);
+void          gz_free_view(void);
 
 struct menu  *gz_warps_menu(void);
 struct menu  *gz_scene_menu(void);
