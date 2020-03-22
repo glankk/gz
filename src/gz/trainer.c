@@ -6,12 +6,14 @@
 #include "resource.h"
 #include "settings.h"
 #include "z64.h"
+#include "input.h"
 #include "trainer.h"
 
 
 struct roll roll;
 struct sidehop sidehop;
 struct hess hess;
+struct equip_swap equip_swap;
 
 bomb_t bomb1;
 
@@ -58,7 +60,27 @@ _Bool sidehop_pressed()
 _Bool a_pressed()
 {
   uint16_t pad = z64_game.common.input[0].raw.pad;
-  if(pad & 0x8000){
+  if(pad & BUTTON_A){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
+_Bool l_pressed()
+{
+  uint16_t pad = z64_game.common.input[0].raw.pad;
+  if(pad & BUTTON_Z){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
+_Bool r_pressed()
+{
+  uint16_t pad = z64_game.common.input[0].raw.pad;
+  if(pad & BUTTON_R){
     return 1;
   }else{
     return 0;
@@ -180,6 +202,25 @@ void hess_setup(bomb_t* bomb)
     }
     if(bomb->timer == 1){
       hess.setup = HESS_UNKOWN;
+    }
+  }
+}
+
+void update_equip_swap()
+{
+  // 0 is items, 1 is map, 2 is quest status, 3 is equipment
+  if (!equip_swap.changing_screen &&
+            ((z64_game.pause_ctxt.screen_idx == 3 && r_pressed()) || (z64_game.pause_ctxt.screen_idx == 1 && l_pressed())))
+  {
+    equip_swap.changing_screen = 1;
+    equip_swap.frames_since_menu_transition_start = 0;
+  }
+  else if (equip_swap.changing_screen)
+  {
+    equip_swap.frames_since_menu_transition_start += 1;
+    if (equip_swap.frames_since_menu_transition_start >= 32)
+    {
+      equip_swap.changing_screen = 0;
     }
   }
 }

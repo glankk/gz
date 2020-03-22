@@ -75,6 +75,14 @@ struct sidehop
   int     result;
 };
 
+struct equip_swap
+{
+  _Bool   changing_screen;
+  uint8_t frames_since_menu_transition_start;
+  int c_button_press;
+  int control_stick_moved;
+};
+
 _Bool is_rolling();
 _Bool roll_pressed();
 void update_roll();
@@ -86,6 +94,8 @@ void update_bombs();
 void hess_roll(bomb_t* bomb);
 void hess_setup(bomb_t* bomb);
 
+void update_equip_swap();
+
 void set_rgb_green();
 void set_rgb_lgreen();
 void set_rgb_yellow();
@@ -96,6 +106,7 @@ void set_rgb_white();
 extern struct roll roll;
 extern struct sidehop sidehop;
 extern struct hess hess;
+extern struct equip_swap equip_swap;
 extern bomb_t bomb1;
 
 #endif

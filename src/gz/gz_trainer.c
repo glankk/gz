@@ -18,8 +18,8 @@ static int roll_timing_draw_proc(struct menu_item *item,
   int y = draw_params->y;
 
   if(gz.frame_ran){
-  update_roll();
-  check_streak();
+    update_roll();
+    check_streak();
   }
 
   set_rgb_white();
@@ -73,7 +73,7 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
   int y = draw_params->y;
 
   if(gz.frame_ran){
-  update_sidehop();
+    update_sidehop();
   }
 
   set_rgb_white();
@@ -130,36 +130,66 @@ static int bomb_hess_draw_proc(struct menu_item *item,
   return 1;
 }
 
+static int equip_swap_draw_proc(struct menu_item *item,
+                               struct menu_draw_params *draw_params)
+{
+
+  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
+                                             draw_params->alpha));
+  struct gfx_font *font = draw_params->font;
+  int ch = menu_get_cell_height(item->owner, 1);
+  int x = draw_params->x;
+  int y = draw_params->y;
+
+  if(gz.frame_ran){
+    update_equip_swap();
+  }
+
+  set_rgb_white();
+  gfx_printf(font, x, y + ch * 0, "changing screen: %d", equip_swap.changing_screen);
+  gfx_printf(font, x, y + ch * 1, "timer: %d", equip_swap.frames_since_menu_transition_start);
+  gfx_printf(font, x, y + ch * 2, "screen: %u", z64_game.pause_ctxt.screen_idx);
+
+  return 1;
+}
+
 struct menu *gz_trainer_menu(void)
 {
   static struct menu menu;
   static struct menu roll_timing;
   static struct menu bomb_hess;
   static struct menu sidehop_timing;
+  static struct menu equip_swap_timing;
 
   /* initialize menu */
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&roll_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&bomb_hess, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu_init(&sidehop_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
+  menu_init(&equip_swap_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
 
   /* populate trainer top menu*/
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
   menu_add_submenu(&menu, 0, 1, &roll_timing, "roll timing");
   menu_add_submenu(&menu, 0, 2, &sidehop_timing, "sidehop timing");
   menu_add_submenu(&menu, 0, 3, &bomb_hess, "bomb hess");
+  menu_add_submenu(&menu, 0, 4, &equip_swap_timing, "equip swap timing");
 
   /*populate roll timing menu*/
   roll_timing.selector = menu_add_submenu(&roll_timing, 0, 0, NULL, "return");
   menu_add_static_custom(&roll_timing, 0, 1, roll_timing_draw_proc, NULL, 0xFFFFFF);
 
-  /*populate roll timing menu*/
+  /*populate sidehop timing menu*/
   sidehop_timing.selector = menu_add_submenu(&sidehop_timing, 0, 0, NULL, "return");
   menu_add_static_custom(&sidehop_timing, 0, 1, sidehop_timing_draw_proc, NULL, 0xFFFFFF);
 
   /*populate bomb_hess menu*/
   bomb_hess.selector = menu_add_submenu(&bomb_hess, 0, 0, NULL, "return");
   menu_add_static_custom(&bomb_hess, 0, 1, bomb_hess_draw_proc, NULL, 0xFFFFFF);
+
+  /*populate equip swap timing menu*/
+  bomb_hess.selector = menu_add_submenu(&equip_swap_timing, 0, 0, NULL, "return");
+  menu_add_static_custom(&equip_swap_timing, 0, 1, equip_swap_draw_proc, NULL, 0xFFFFFF);
 
   return &menu;
 }

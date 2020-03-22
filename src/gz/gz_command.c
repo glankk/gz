@@ -76,8 +76,8 @@ void gz_show_menu(void)
   menu_signal_enter(gz.menu_main, MENU_SWITCH_SHOW);
   gz.menu_active = 1;
   /*CHANGE THIS BACK WHEN YOURE DONE IDIOT*/
-  //input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
-  //              BUTTON_L);
+  input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
+                BUTTON_L);
   input_reservation_set(1);
 }
 
