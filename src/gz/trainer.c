@@ -67,24 +67,54 @@ _Bool a_pressed()
   }
 }
 
-_Bool l_pressed()
+_Bool z_pressed()
 {
-  uint16_t pad = z64_game.common.input[0].raw.pad;
-  if(pad & BUTTON_Z){
+  uint16_t pad = input_pad();
+  if (pad & BUTTON_Z){
     return 1;
-  }else{
+  } else {
     return 0;
   }
 }
 
 _Bool r_pressed()
 {
-  uint16_t pad = z64_game.common.input[0].raw.pad;
-  if(pad & BUTTON_R){
+  uint16_t pad = input_pad();
+  if (pad & BUTTON_R){
     return 1;
-  }else{
+  } else {
     return 0;
   }
+}
+
+_Bool equip_button_pressed()
+{
+  uint16_t pad = input_pad();
+  if (pad & BUTTON_C_LEFT || pad & BUTTON_C_DOWN || pad & BUTTON_C_RIGHT){
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+_Bool equip_button_pressed_previous()
+{
+  uint16_t pad = z64_game.common.input[0].raw_prev.pad;
+  if (pad & BUTTON_C_LEFT || pad & BUTTON_C_DOWN || pad & BUTTON_C_RIGHT){
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+int16_t control_stick_x_previous()
+{
+  return z64_game.common.input[0].raw_prev.x;
+}
+
+int16_t control_stick_y_previous()
+{
+  return z64_game.common.input[0].raw_prev.y;
 }
 
 void update_roll()
@@ -210,7 +240,7 @@ void update_equip_swap()
 {
   // 0 is items, 1 is map, 2 is quest status, 3 is equipment
   if (!equip_swap.changing_screen &&
-            ((z64_game.pause_ctxt.screen_idx == 3 && r_pressed()) || (z64_game.pause_ctxt.screen_idx == 1 && l_pressed())))
+            ((z64_game.pause_ctxt.screen_idx == 3 && r_pressed()) || (z64_game.pause_ctxt.screen_idx == 1 && z_pressed())))
   {
     equip_swap.changing_screen = 1;
     equip_swap.frames_since_menu_transition_start = 0;
@@ -218,6 +248,19 @@ void update_equip_swap()
   else if (equip_swap.changing_screen)
   {
     equip_swap.frames_since_menu_transition_start += 1;
+
+    if ((input_x() >= 38 || input_y() >= 38) &&
+            control_stick_x_previous() < 38 && control_stick_y_previous() < 38)
+    {
+      equip_swap.control_stick_moved_time = 15 - equip_swap.frames_since_menu_transition_start;
+    }
+
+    if (equip_button_pressed() && !equip_button_pressed_previous())
+    {
+      equip_swap.c_button_press_time = 15 - equip_swap.frames_since_menu_transition_start;
+    }
+
+    // 38 is min control stick value to move cursor
     if (equip_swap.frames_since_menu_transition_start >= 32)
     {
       equip_swap.changing_screen = 0;

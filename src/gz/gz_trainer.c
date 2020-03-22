@@ -150,6 +150,41 @@ static int equip_swap_draw_proc(struct menu_item *item,
   gfx_printf(font, x, y + ch * 1, "timer: %d", equip_swap.frames_since_menu_transition_start);
   gfx_printf(font, x, y + ch * 2, "screen: %u", z64_game.pause_ctxt.screen_idx);
 
+  if (equip_swap.c_button_press_time > 0)
+  {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * 3, "c button: early by %i frames", equip_swap.c_button_press_time);
+  }
+  else if (equip_swap.c_button_press_time == 0)
+  {
+    set_rgb_green();
+    gfx_printf(font, x,  y + ch * 3, "c button: perfect! (frame perfect)");
+  }
+  else if (equip_swap.c_button_press_time < 0)
+  {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * 3, "c button: late by %i frames", -equip_swap.c_button_press_time);
+  }
+
+  if (equip_swap.control_stick_moved_time > 0)
+  {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * 4, "stick: early by %i frames", equip_swap.control_stick_moved_time);
+  }
+  else if (equip_swap.control_stick_moved_time == 0)
+  {
+    set_rgb_green();
+    gfx_printf(font, x,  y + ch * 4, "stick: perfect! (frame perfect)");
+  }
+  else if (equip_swap.control_stick_moved_time < 0)
+  {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * 4, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
+  }
+
+  set_rgb_white();
+  gfx_printf(font, x, y + ch * 5, "pad: %4x", z64_game.common.input[0].raw_prev.pad);
+
   return 1;
 }
 

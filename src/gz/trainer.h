@@ -79,8 +79,10 @@ struct equip_swap
 {
   _Bool   changing_screen;
   uint8_t frames_since_menu_transition_start;
-  int c_button_press;
-  int control_stick_moved;
+  int     c_button_press_time;
+  int     control_stick_moved_time;
+  _Bool   c_button_pressed;
+  _Bool   control_stick_moved;
 };
 
 _Bool is_rolling();
