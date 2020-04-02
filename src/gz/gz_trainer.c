@@ -146,50 +146,58 @@ static int equip_swap_draw_proc(struct menu_item *item,
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "changing screen: %d", equip_swap.changing_screen);
-  gfx_printf(font, x, y + ch * 1, "timer: %d", equip_swap.timer);
-  gfx_printf(font, x, y + ch * 2, "screen: %u", z64_game.pause_ctxt.screen_idx);
+  gfx_printf(font, x, y + ch * 0, "streak: %d", equip_swap.streak);
 
   if (equip_swap.c_button_press_time > 0)
   {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * 3, "c button: early by %i frames", equip_swap.c_button_press_time);
+    gfx_printf(font, x,  y + ch * 1, "c button: early by %i frames", equip_swap.c_button_press_time);
   }
   else if (equip_swap.c_button_press_time == 0)
   {
     set_rgb_green();
-    gfx_printf(font, x,  y + ch * 3, "c button: perfect! (frame perfect)");
+    gfx_printf(font, x,  y + ch * 1, "c button: perfect! (frame perfect)");
   }
   else if (equip_swap.c_button_press_time < 0)
   {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * 3, "c button: late by %i frames", -equip_swap.c_button_press_time);
+    gfx_printf(font, x,  y + ch * 1, "c button: late by %i frames", -equip_swap.c_button_press_time);
   }
 
   if (equip_swap.control_stick_moved_time > 0)
   {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * 4, "stick: early by %i frames", equip_swap.control_stick_moved_time);
+    gfx_printf(font, x,  y + ch * 2, "stick: early by %i frames", equip_swap.control_stick_moved_time);
   }
   else if (equip_swap.control_stick_moved_time == 0)
   {
     set_rgb_green();
-    gfx_printf(font, x,  y + ch * 4, "stick: perfect! (frame perfect)");
+    gfx_printf(font, x,  y + ch * 2, "stick: perfect! (frame perfect)");
   }
   else if (equip_swap.control_stick_moved_time < 0)
   {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * 4, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
+    gfx_printf(font, x,  y + ch * 2, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
   }
-
-  set_rgb_white();
-  // gfx_printf(font, x, y + ch * 5, " x: %d", equip_swap.x);
-  // gfx_printf(font, x, y + ch * 6, " y: %d", equip_swap.y);
-  // gfx_printf(font, x, y + ch * 7, "px: %d", equip_swap.px);
-  // gfx_printf(font, x, y + ch * 8, "px: %d", equip_swap.py);
-  gfx_printf(font, x, y + ch * 9, "frame ran: %d", gz.frame_ran);
-
   return 1;
+}
+
+static int equip_swap_toggle_proc(struct menu_item *item,
+                      enum menu_callback_reason reason,
+                      void *data)
+{
+  struct menu_item* global_equip_swap_item = (struct menu_item*)data;
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+  {
+    global_equip_swap_item->enabled = 1;
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+  {
+    global_equip_swap_item->enabled = 0;
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, global_equip_swap_item->enabled);
+  return 0;
 }
 
 struct menu *gz_trainer_menu(void)
@@ -226,9 +234,14 @@ struct menu *gz_trainer_menu(void)
   bomb_hess.selector = menu_add_submenu(&bomb_hess, 0, 0, NULL, "return");
   menu_add_static_custom(&bomb_hess, 0, 1, bomb_hess_draw_proc, NULL, 0xFFFFFF);
 
-  /*populate equip swap timing menu*/
-  bomb_hess.selector = menu_add_submenu(&equip_swap_timing, 0, 0, NULL, "return");
-  menu_add_static_custom(&equip_swap_timing, 0, 1, equip_swap_draw_proc, NULL, 0xFFFFFF);
+  /*add equip swap display to global menu*/
+  struct menu_item* global_equip_swap_item =
+        menu_add_static_custom(gz.menu_global, 2, 10, equip_swap_draw_proc, NULL, 0xFFFFFF);
+  global_equip_swap_item->enabled = 0;
 
+  /*populate equip swap timing menu*/
+  equip_swap_timing.selector = menu_add_submenu(&equip_swap_timing, 0, 0, NULL, "return");
+  menu_add_checkbox(&equip_swap_timing, 0, 1, equip_swap_toggle_proc, global_equip_swap_item);
+  menu_add_static(&equip_swap_timing, 2, 1, "Enable Equip Swap Trainer", 0xC0C0C0);
   return &menu;
 }

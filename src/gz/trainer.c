@@ -250,21 +250,34 @@ void update_equip_swap()
   {
     equip_swap.timer += 1;
 
+    _Bool stickSet = 0;
     // 38 is min control stick value to move cursor
     if ((abs(input_x()) >= 38 || abs(input_y()) >= 38) &&
             abs(equip_swap_control_stick_x_previous()) < 38 && abs(equip_swap_control_stick_y_previous()) < 38)
     {
       equip_swap.control_stick_moved_time = 15 - equip_swap.timer;
+      stickSet = 1;
     }
 
     if (equip_button_pressed() && !equip_swap_equip_button_pressed_previous())
     {
       equip_swap.c_button_press_time = 15 - equip_swap.timer;
+
+      if (stickSet && equip_swap.control_stick_moved_time == 0 && equip_swap.c_button_press_time == 0)
+      {
+        /*
+          They properly did equip swap so we can increment their streak and stop checking inputs.
+          This also avoids letting the timer expire which clears their streak.
+        */
+        equip_swap.streak += 1;
+        equip_swap.changing_screen = 0;
+      }
     }
 
     if (equip_swap.timer >= 22)
     {
       equip_swap.changing_screen = 0;
+      equip_swap.streak = 0;
     }
   }
 
