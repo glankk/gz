@@ -97,9 +97,10 @@ _Bool equip_button_pressed()
   }
 }
 
-_Bool equip_button_pressed_previous()
+// Using z64_game.common.input[0].raw_prev was inconsistent so I store previous input myself
+_Bool equip_swap_equip_button_pressed_previous()
 {
-  uint16_t pad = z64_game.common.input[0].raw_prev.pad;
+  uint16_t pad = equip_swap.pad_prev;
   if (pad & BUTTON_C_LEFT || pad & BUTTON_C_DOWN || pad & BUTTON_C_RIGHT){
     return 1;
   } else {
@@ -107,14 +108,14 @@ _Bool equip_button_pressed_previous()
   }
 }
 
-int16_t control_stick_x_previous()
+int16_t equip_swap_control_stick_x_previous()
 {
-  return z64_game.common.input[0].raw_prev.x;
+  return equip_swap.x_prev;
 }
 
-int16_t control_stick_y_previous()
+int16_t equip_swap_control_stick_y_previous()
 {
-  return z64_game.common.input[0].raw_prev.y;
+  return equip_swap.y_prev;
 }
 
 void update_roll()
@@ -243,29 +244,37 @@ void update_equip_swap()
             ((z64_game.pause_ctxt.screen_idx == 3 && r_pressed()) || (z64_game.pause_ctxt.screen_idx == 1 && z_pressed())))
   {
     equip_swap.changing_screen = 1;
-    equip_swap.frames_since_menu_transition_start = 0;
+    equip_swap.timer = 0;
   }
   else if (equip_swap.changing_screen)
   {
-    equip_swap.frames_since_menu_transition_start += 1;
-
-    if ((input_x() >= 38 || input_y() >= 38) &&
-            control_stick_x_previous() < 38 && control_stick_y_previous() < 38)
-    {
-      equip_swap.control_stick_moved_time = 15 - equip_swap.frames_since_menu_transition_start;
-    }
-
-    if (equip_button_pressed() && !equip_button_pressed_previous())
-    {
-      equip_swap.c_button_press_time = 15 - equip_swap.frames_since_menu_transition_start;
-    }
+    equip_swap.timer += 1;
 
     // 38 is min control stick value to move cursor
-    if (equip_swap.frames_since_menu_transition_start >= 32)
+    if ((abs(input_x()) >= 38 || abs(input_y()) >= 38) &&
+            abs(equip_swap_control_stick_x_previous()) < 38 && abs(equip_swap_control_stick_y_previous()) < 38)
+    {
+      equip_swap.control_stick_moved_time = 15 - equip_swap.timer;
+    }
+
+    if (equip_button_pressed() && !equip_swap_equip_button_pressed_previous())
+    {
+      equip_swap.c_button_press_time = 15 - equip_swap.timer;
+    }
+
+    if (equip_swap.timer >= 22)
     {
       equip_swap.changing_screen = 0;
     }
   }
+
+  // manually store previous inputs
+  int16_t pad = input_pad();
+  int8_t inputx = input_x();
+  int8_t inputy = input_y();
+  equip_swap.x_prev = inputx;
+  equip_swap.y_prev = inputy;
+  equip_swap.pad_prev = pad;
 }
 
 /* set color functions */

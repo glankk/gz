@@ -147,7 +147,7 @@ static int equip_swap_draw_proc(struct menu_item *item,
 
   set_rgb_white();
   gfx_printf(font, x, y + ch * 0, "changing screen: %d", equip_swap.changing_screen);
-  gfx_printf(font, x, y + ch * 1, "timer: %d", equip_swap.frames_since_menu_transition_start);
+  gfx_printf(font, x, y + ch * 1, "timer: %d", equip_swap.timer);
   gfx_printf(font, x, y + ch * 2, "screen: %u", z64_game.pause_ctxt.screen_idx);
 
   if (equip_swap.c_button_press_time > 0)
@@ -183,7 +183,11 @@ static int equip_swap_draw_proc(struct menu_item *item,
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 5, "pad: %4x", z64_game.common.input[0].raw_prev.pad);
+  // gfx_printf(font, x, y + ch * 5, " x: %d", equip_swap.x);
+  // gfx_printf(font, x, y + ch * 6, " y: %d", equip_swap.y);
+  // gfx_printf(font, x, y + ch * 7, "px: %d", equip_swap.px);
+  // gfx_printf(font, x, y + ch * 8, "px: %d", equip_swap.py);
+  gfx_printf(font, x, y + ch * 9, "frame ran: %d", gz.frame_ran);
 
   return 1;
 }

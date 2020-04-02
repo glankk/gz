@@ -78,11 +78,14 @@ struct sidehop
 struct equip_swap
 {
   _Bool   changing_screen;
-  uint8_t frames_since_menu_transition_start;
+  uint8_t timer;
   int     c_button_press_time;
   int     control_stick_moved_time;
   _Bool   c_button_pressed;
   _Bool   control_stick_moved;
+  int8_t x_prev;
+  int8_t y_prev;
+  uint16_t pad_prev;
 };
 
 _Bool is_rolling();
