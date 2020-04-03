@@ -172,7 +172,7 @@ static int equip_swap_draw_proc(struct menu_item *item,
   else if (equip_swap.control_stick_moved_time == 0)
   {
     set_rgb_green();
-    gfx_printf(font, x,  y + ch * 2, "stick: perfect! (frame perfect)");
+    gfx_printf(font, x,  y + ch * 2, "stick: %s (frame perfect)", equip_swap.diagonal_warning ? "good" : "perfect!");
   }
   else if (equip_swap.control_stick_moved_time < 0)
   {

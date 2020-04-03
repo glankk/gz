@@ -270,7 +270,8 @@ void update_equip_swap()
     {
       equip_swap.c_button_press_time = 15 - equip_swap.timer;
 
-      if (stickSet && equip_swap.control_stick_moved_time == 0 && equip_swap.c_button_press_time == 0)
+      if (stickSet && equip_swap.control_stick_moved_time == 0 && equip_swap.c_button_press_time == 0 &&
+            !equip_swap.diagonal_warning)
       {
         /*
           They properly did equip swap so we can increment their streak and stop checking inputs.
