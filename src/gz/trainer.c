@@ -239,24 +239,31 @@ void hess_setup(bomb_t* bomb)
 
 void update_equip_swap()
 {
+  int8_t x = input_x();
+  int8_t y = input_y();
+
   // 0 is items, 1 is map, 2 is quest status, 3 is equipment
   if (!equip_swap.changing_screen &&
             ((z64_game.pause_ctxt.screen_idx == 3 && r_pressed()) || (z64_game.pause_ctxt.screen_idx == 1 && z_pressed())))
   {
     equip_swap.changing_screen = 1;
     equip_swap.timer = 0;
+    equip_swap.diagonal_warning = 0;
   }
   else if (equip_swap.changing_screen)
   {
     equip_swap.timer += 1;
 
+    int8_t abs_x = abs(x);
+    int8_t abs_y = abs(y);
     _Bool stickSet = 0;
     // 38 is min control stick value to move cursor
-    if ((abs(input_x()) >= 38 || abs(input_y()) >= 38) &&
+    if ((abs_x >= 38 || abs_y >= 38) &&
             abs(equip_swap_control_stick_x_previous()) < 38 && abs(equip_swap_control_stick_y_previous()) < 38)
     {
       equip_swap.control_stick_moved_time = 15 - equip_swap.timer;
       stickSet = 1;
+      equip_swap.diagonal_warning = abs_x < 38 || abs_y < 38;
     }
 
     if (equip_button_pressed() && !equip_swap_equip_button_pressed_previous())
@@ -283,10 +290,8 @@ void update_equip_swap()
 
   // manually store previous inputs
   int16_t pad = input_pad();
-  int8_t inputx = input_x();
-  int8_t inputy = input_y();
-  equip_swap.x_prev = inputx;
-  equip_swap.y_prev = inputy;
+  equip_swap.x_prev = x;
+  equip_swap.y_prev = y;
   equip_swap.pad_prev = pad;
 }
 

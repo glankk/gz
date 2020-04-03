@@ -179,6 +179,13 @@ static int equip_swap_draw_proc(struct menu_item *item,
     set_rgb_red();
     gfx_printf(font, x,  y + ch * 2, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
   }
+
+  if (equip_swap.diagonal_warning)
+  {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * 3, "stick input must be diagonal");
+  }
+
   return 1;
 }
 
