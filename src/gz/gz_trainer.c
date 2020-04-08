@@ -7,6 +7,10 @@
 #include "z64.h"
 #include "trainer.h"
 
+#define TRAINER_MENU_ITEM_COUNT 4
+
+static struct menu_item* trainer_menu_data[TRAINER_MENU_ITEM_COUNT];
+
 static int roll_timing_draw_proc(struct menu_item *item,
                                struct menu_draw_params *draw_params)
 {
@@ -189,66 +193,68 @@ static int equip_swap_draw_proc(struct menu_item *item,
   return 1;
 }
 
-static int equip_swap_toggle_proc(struct menu_item *item,
+static int trainer_radio_button_toggle_proc(struct menu_item *item,
                       enum menu_callback_reason reason,
                       void *data)
 {
-  struct menu_item* global_equip_swap_item = (struct menu_item*)data;
+  int index = (int)data;
   if (reason == MENU_CALLBACK_SWITCH_ON)
   {
-    global_equip_swap_item->enabled = 1;
+    for (int i = 0; i < TRAINER_MENU_ITEM_COUNT; i += 1)
+    {
+      if (i == index)
+        trainer_menu_data[i]->enabled = 1;
+      else
+        trainer_menu_data[i]->enabled = 0;
+    }
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF)
   {
-    global_equip_swap_item->enabled = 0;
+    trainer_menu_data[index]->enabled = 0;
   }
   else if (reason == MENU_CALLBACK_THINK)
-    menu_checkbox_set(item, global_equip_swap_item->enabled);
+    menu_checkbox_set(item, trainer_menu_data[index]->enabled);
   return 0;
 }
 
 struct menu *gz_trainer_menu(void)
 {
   static struct menu menu;
-  static struct menu roll_timing;
-  static struct menu bomb_hess;
-  static struct menu sidehop_timing;
-  static struct menu equip_swap_timing;
+  int global_x = 2;
+  int global_y = 10 + TRAINER_MENU_ITEM_COUNT;
+  int index = 0;
 
-  /* initialize menu */
+  /* setup menu */
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu_init(&roll_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu_init(&bomb_hess, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu_init(&sidehop_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-  menu_init(&equip_swap_timing, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
-
-  /* populate trainer top menu*/
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
-  menu_add_submenu(&menu, 0, 1, &roll_timing, "roll timing");
-  menu_add_submenu(&menu, 0, 2, &sidehop_timing, "sidehop timing");
-  menu_add_submenu(&menu, 0, 3, &bomb_hess, "bomb hess");
-  menu_add_submenu(&menu, 0, 4, &equip_swap_timing, "equip swap timing");
 
-  /*populate roll timing menu*/
-  roll_timing.selector = menu_add_submenu(&roll_timing, 0, 0, NULL, "return");
-  menu_add_static_custom(&roll_timing, 0, 1, roll_timing_draw_proc, NULL, 0xFFFFFF);
+  /*add roll timing option*/
+  trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, roll_timing_draw_proc, NULL, 0xFFFFFF);
+  trainer_menu_data[index]->enabled = 0;
+  menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
+  menu_add_static(&menu, 2, index + 1, "Enable Roll Timing Trainer", 0xC0C0C0);
+  index += 1;
 
-  /*populate sidehop timing menu*/
-  sidehop_timing.selector = menu_add_submenu(&sidehop_timing, 0, 0, NULL, "return");
-  menu_add_static_custom(&sidehop_timing, 0, 1, sidehop_timing_draw_proc, NULL, 0xFFFFFF);
+  /*add sidehop timing option*/
+  trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, sidehop_timing_draw_proc, NULL, 0xFFFFFF);
+  trainer_menu_data[index]->enabled = 0;
+  menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
+  menu_add_static(&menu, 2, index + 1, "Enable Sidehop Timing Trainer", 0xC0C0C0);
+  index += 1;
 
-  /*populate bomb_hess menu*/
-  bomb_hess.selector = menu_add_submenu(&bomb_hess, 0, 0, NULL, "return");
-  menu_add_static_custom(&bomb_hess, 0, 1, bomb_hess_draw_proc, NULL, 0xFFFFFF);
+  /*add bomb hess training option*/
+  trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, bomb_hess_draw_proc, NULL, 0xFFFFFF);
+  trainer_menu_data[index]->enabled = 0;
+  menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
+  menu_add_static(&menu, 2, index + 1, "Enable Bomb Hess Trainer", 0xC0C0C0);
+  index += 1;
 
-  /*add equip swap display to global menu*/
-  struct menu_item* global_equip_swap_item =
-        menu_add_static_custom(gz.menu_global, 2, 10, equip_swap_draw_proc, NULL, 0xFFFFFF);
-  global_equip_swap_item->enabled = 0;
+  /*add equip swap training option*/
+  trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, equip_swap_draw_proc, NULL, 0xFFFFFF);
+  trainer_menu_data[index]->enabled = 0;
+  menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
+  menu_add_static(&menu, 2, index + 1, "Enable Equip Swap Trainer", 0xC0C0C0);
+  index += 1;
 
-  /*populate equip swap timing menu*/
-  equip_swap_timing.selector = menu_add_submenu(&equip_swap_timing, 0, 0, NULL, "return");
-  menu_add_checkbox(&equip_swap_timing, 0, 1, equip_swap_toggle_proc, global_equip_swap_item);
-  menu_add_static(&equip_swap_timing, 2, 1, "Enable Equip Swap Trainer", 0xC0C0C0);
   return &menu;
 }
