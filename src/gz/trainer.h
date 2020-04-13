@@ -65,14 +65,15 @@ struct hess
 
 struct sidehop
 {
-  _Bool   sidehopping;
-  _Bool   landing;
-  _Bool   sidehop_timer_active;
-  _Bool   land_timer_active;
-  uint8_t sidehop_timer;
-  uint8_t land_timer;
-  int     a_press;
-  int     result;
+  _Bool     sidehopping;
+  _Bool     landing;
+  _Bool     sidehop_timer_active;
+  _Bool     land_timer_active;
+  uint8_t   sidehop_timer;
+  uint8_t   land_timer;
+  int       a_press;
+  int       result;
+  uint16_t  pad_prev;
 };
 
 struct equip_swap

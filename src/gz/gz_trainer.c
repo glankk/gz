@@ -83,22 +83,24 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
   set_rgb_white();
   int log_y = 1;
   gfx_printf(font, x, y + ch * 0, "streak: ");
-  //early isnt working for some reason
-  if((sidehop.a_press != 0) && (sidehop.landing)){
+  gfx_printf(font, x, y + ch * 2, "sidehop timer: %d", sidehop.sidehop_timer);
+  gfx_printf(font, x, y + ch * 3, "landing timer: %d", sidehop.land_timer);
+  gfx_printf(font, x, y + ch * 4, "a press: %d", sidehop.a_press);
+  gfx_printf(font, x, y + ch * 5, "landing: %d", sidehop.landing);
+
+  if (sidehop.result < 0) {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * log_y, "early by %i frames", (sidehop.sidehop_timer - sidehop.a_press));
-  }
-  if(sidehop.result == 1){
+    gfx_printf(font, x,  y + ch * log_y, "early by %i frames", -sidehop.result);
+  } else if (sidehop.result == 1) {
     set_rgb_green();
     gfx_printf(font, x,  y + ch * log_y, "perfect! (frame perfect)");
-  }
-  if(sidehop.result > 1){
+  } else if (sidehop.result > 1) {
     set_rgb_red();
-    gfx_printf(font, x,  y + ch * log_y, "late by %i frames", sidehop.result-1);
+    gfx_printf(font, x,  y + ch * log_y, "late by %i frames", sidehop.result - 1);
+  } else if (sidehop.a_press != 0) {
+    set_rgb_red();
+    gfx_printf(font, x,  y + ch * log_y, "early");
   }
-
-
-
 
   return 1;
 }

@@ -57,10 +57,10 @@ _Bool sidehop_pressed()
     return 0;
 }
 
-_Bool a_pressed()
+_Bool sidehop_a_pressed()
 {
   uint16_t pad = z64_game.common.input[0].raw.pad;
-  if(pad & BUTTON_A){
+  if(pad & BUTTON_A && !(sidehop.pad_prev & BUTTON_A)){
     return 1;
   }else{
     return 0;
@@ -156,9 +156,10 @@ void update_sidehop()
   if(sidehop_pressed()){
     sidehop.sidehop_timer = 0;
     sidehop.sidehop_timer_active = 1;
+    sidehop.result = 0;
   }
 
-  if(sidehop.sidehop_timer_active && (a_pressed())){
+  if(sidehop.sidehop_timer_active && (sidehop_a_pressed())){
     sidehop.a_press = sidehop.sidehop_timer;
   }
 
@@ -166,10 +167,16 @@ void update_sidehop()
     sidehop.sidehop_timer++;
   }
 
-  if(is_landing()){
+  if(is_landing()) {
+    // if they pressed a early
+    if (!sidehop.land_timer_active && sidehop.a_press != 0)
+      sidehop.result = sidehop.a_press - sidehop.sidehop_timer;
     sidehop.land_timer_active = 1;
+    sidehop.landing = 1;
+  } else {
+    sidehop.landing = 0;
   }
-
+  
   if(sidehop_pressed() && sidehop.land_timer_active){
     sidehop.result = sidehop.land_timer;
     sidehop.land_timer = 0;
@@ -187,6 +194,8 @@ void update_sidehop()
     sidehop.sidehop_timer_active = 0;
   }
 
+  // manually store previous inputs
+  sidehop.pad_prev = input_pad();
 }
 
 static void update_bomb_timers(bomb_t* bomb)
@@ -290,10 +299,9 @@ void update_equip_swap()
   }
 
   // manually store previous inputs
-  int16_t pad = input_pad();
   equip_swap.x_prev = x;
   equip_swap.y_prev = y;
-  equip_swap.pad_prev = pad;
+  equip_swap.pad_prev = input_pad();
 }
 
 /* set color functions */
