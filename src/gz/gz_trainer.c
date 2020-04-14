@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "gfx.h"
 #include "gz.h"
 #include "menu.h"
@@ -8,6 +9,9 @@
 #include "trainer.h"
 
 #define TRAINER_MENU_ITEM_COUNT 4
+#define SIDEHOP_LOG_LENGTH 4
+// length of "perfect! (frame perfect)"
+#define SIDEHOP_LOG_STRING_LENGTH 25
 
 static struct menu_item* trainer_menu_data[TRAINER_MENU_ITEM_COUNT];
 
@@ -69,6 +73,9 @@ static int roll_timing_draw_proc(struct menu_item *item,
 static int sidehop_timing_draw_proc(struct menu_item *item,
                                struct menu_draw_params *draw_params)
 {
+  static char log_messages[SIDEHOP_LOG_LENGTH][SIDEHOP_LOG_STRING_LENGTH];
+  static void (*log_message_colors[SIDEHOP_LOG_LENGTH])();
+
   gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
                                              draw_params->alpha));
   struct gfx_font *font = draw_params->font;
@@ -77,29 +84,48 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
   int y = draw_params->y;
 
   if(gz.frame_ran){
-    update_sidehop();
+    // if a new log entry should be added
+    if (update_sidehop()) {
+      // move the old messages up, but let "early" get overwritten
+      if (strcmp(log_messages[0], "early") != 0) {
+        for (int i = SIDEHOP_LOG_LENGTH - 2; i > -1; i -= 1) {
+          strcpy(log_messages[i + 1], log_messages[i]);
+          log_message_colors[i + 1] = log_message_colors[i];
+        }
+      }
+
+      if (sidehop.result < 0) {
+        log_message_colors[0] = set_rgb_red;
+        snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "early by %i frames", -sidehop.result);
+      } else if (sidehop.result == 1) {
+        log_message_colors[0] = set_rgb_green;
+        snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "perfect! (frame perfect)");
+      } else if (sidehop.result > 1) {
+        log_message_colors[0] = set_rgb_red;
+        snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "late by %i frames", sidehop.result - 1);
+      } else if (sidehop.a_press != 0) {
+        log_message_colors[0] = set_rgb_red;
+        snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "early");
+      }
+    }
   }
 
   set_rgb_white();
-  int log_y = 1;
   gfx_printf(font, x, y + ch * 0, "streak: ");
-  gfx_printf(font, x, y + ch * 2, "sidehop timer: %d", sidehop.sidehop_timer);
-  gfx_printf(font, x, y + ch * 3, "landing timer: %d", sidehop.land_timer);
-  gfx_printf(font, x, y + ch * 4, "a press: %d", sidehop.a_press);
-  gfx_printf(font, x, y + ch * 5, "landing: %d", sidehop.landing);
+  gfx_printf(font, x, y + ch * -5, "sidehop timer: %d", sidehop.sidehop_timer);
+  gfx_printf(font, x, y + ch * -4, "landing timer: %d", sidehop.land_timer);
+  gfx_printf(font, x, y + ch * -3, "a press: %d", sidehop.a_press);
+  gfx_printf(font, x, y + ch * -2, "landing: %d", sidehop.landing);
+  gfx_printf(font, x, y + ch * -1, "result: %d", sidehop.result);
 
-  if (sidehop.result < 0) {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * log_y, "early by %i frames", -sidehop.result);
-  } else if (sidehop.result == 1) {
-    set_rgb_green();
-    gfx_printf(font, x,  y + ch * log_y, "perfect! (frame perfect)");
-  } else if (sidehop.result > 1) {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * log_y, "late by %i frames", sidehop.result - 1);
-  } else if (sidehop.a_press != 0) {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * log_y, "early");
+  for (int i = 0; i < SIDEHOP_LOG_LENGTH; i += 1)
+  {
+    // the message is unset, stop searching for log messages to print
+    if (log_messages[i][0] == '\0')
+      break;
+
+    log_message_colors[i]();
+    gfx_printf(font, x, y + ch * (i + 1), log_messages[i]);
   }
 
   return 1;

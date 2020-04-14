@@ -151,8 +151,10 @@ void check_streak()
   }
 }
 
-void update_sidehop()
+// returns whether or not a new log entry should be added
+_Bool update_sidehop()
 {
+  _Bool ret = 0;
   if(sidehop_pressed()){
     sidehop.sidehop_timer = 0;
     sidehop.sidehop_timer_active = 1;
@@ -161,6 +163,9 @@ void update_sidehop()
 
   if(sidehop.sidehop_timer_active && (sidehop_a_pressed())){
     sidehop.a_press = sidehop.sidehop_timer;
+    // if they may be early
+    if (sidehop.result == 0)
+      ret = 1;
   }
 
   if(sidehop.sidehop_timer_active){
@@ -169,16 +174,21 @@ void update_sidehop()
 
   if(is_landing()) {
     // if they pressed a early
-    if (!sidehop.land_timer_active && sidehop.a_press != 0)
+    if (!sidehop.land_timer_active && sidehop.a_press != 0) {
       sidehop.result = sidehop.a_press - sidehop.sidehop_timer;
+      ret = 1;
+    }
     sidehop.land_timer_active = 1;
     sidehop.landing = 1;
   } else {
     sidehop.landing = 0;
   }
-  
+
   if(sidehop_pressed() && sidehop.land_timer_active){
-    sidehop.result = sidehop.land_timer;
+    if (sidehop.result == 0) {
+      sidehop.result = sidehop.land_timer;
+      ret = 1;
+    }
     sidehop.land_timer = 0;
     sidehop.land_timer_active = 0;
   }
@@ -196,6 +206,7 @@ void update_sidehop()
 
   // manually store previous inputs
   sidehop.pad_prev = input_pad();
+  return ret;
 }
 
 static void update_bomb_timers(bomb_t* bomb)

@@ -71,8 +71,14 @@ struct sidehop
   _Bool     land_timer_active;
   uint8_t   sidehop_timer;
   uint8_t   land_timer;
-  int       a_press;
-  int       result;
+  int8_t    a_press;
+  /*
+    Negative values: frames early
+    Zero: default
+    One: Successful
+    Greater than one: frames late + 1
+  */
+  int8_t    result;
   uint16_t  pad_prev;
 };
 
@@ -94,7 +100,7 @@ _Bool roll_pressed();
 void update_roll();
 void check_streak();
 
-void update_sidehop();
+_Bool update_sidehop();
 
 void update_bombs();
 void hess_roll(bomb_t* bomb);
