@@ -80,6 +80,7 @@ struct sidehop
   */
   int8_t    result;
   uint16_t  pad_prev;
+  uint8_t   streak;
 };
 
 struct equip_swap

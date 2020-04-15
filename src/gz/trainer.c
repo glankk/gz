@@ -158,7 +158,6 @@ _Bool update_sidehop()
   if(sidehop_pressed()){
     sidehop.sidehop_timer = 0;
     sidehop.sidehop_timer_active = 1;
-    sidehop.result = 0;
   }
 
   if(sidehop.sidehop_timer_active && (sidehop_a_pressed())){
@@ -202,6 +201,13 @@ _Bool update_sidehop()
     sidehop.sidehop_timer = 0;
     sidehop.land_timer_active = 0;
     sidehop.sidehop_timer_active = 0;
+    sidehop.result = 0;
+    sidehop.a_press = 0;
+  }
+
+  // reset the result after they pressed a early then sucessfully sidehopped
+  if (sidehop.result < 0 && sidehop_pressed()) {
+    sidehop.result = 0;
   }
 
   // manually store previous inputs

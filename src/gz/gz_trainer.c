@@ -9,7 +9,7 @@
 #include "trainer.h"
 
 #define TRAINER_MENU_ITEM_COUNT 4
-#define SIDEHOP_LOG_LENGTH 4
+#define SIDEHOP_LOG_LENGTH 6
 // length of "perfect! (frame perfect)"
 #define SIDEHOP_LOG_STRING_LENGTH 25
 
@@ -40,7 +40,7 @@ static int roll_timing_draw_proc(struct menu_item *item,
       int amnt = roll.last_roll_frame - 16;
       if (amnt < 0)
         gfx_printf(font, x, y + ch * log_y, "bad (%i frames early)", abs(amnt));
-      if (amnt > 0)
+      else
         gfx_printf(font, x, y + ch * log_y, "bad (%i frames late)", abs(amnt));
     }else{
       switch(roll.last_roll_frame)
@@ -100,23 +100,26 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
       } else if (sidehop.result == 1) {
         log_message_colors[0] = set_rgb_green;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "perfect! (frame perfect)");
+
+        sidehop.streak += 1;
+        sidehop.result = 0;
       } else if (sidehop.result > 1) {
-        log_message_colors[0] = set_rgb_red;
+        log_message_colors[0] = set_rgb_orange;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "late by %i frames", sidehop.result - 1);
+
+        sidehop.streak = 0;
+        sidehop.result = 0;
       } else if (sidehop.a_press != 0) {
         log_message_colors[0] = set_rgb_red;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "early");
+
+        sidehop.streak = 0;
       }
     }
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "streak: ");
-  gfx_printf(font, x, y + ch * -5, "sidehop timer: %d", sidehop.sidehop_timer);
-  gfx_printf(font, x, y + ch * -4, "landing timer: %d", sidehop.land_timer);
-  gfx_printf(font, x, y + ch * -3, "a press: %d", sidehop.a_press);
-  gfx_printf(font, x, y + ch * -2, "landing: %d", sidehop.landing);
-  gfx_printf(font, x, y + ch * -1, "result: %d", sidehop.result);
+  gfx_printf(font, x, y + ch * 0, "streak: %d", sidehop.streak);
 
   for (int i = 0; i < SIDEHOP_LOG_LENGTH; i += 1)
   {
