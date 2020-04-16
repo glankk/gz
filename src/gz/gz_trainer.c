@@ -8,7 +8,7 @@
 #include "z64.h"
 #include "trainer.h"
 
-#define TRAINER_MENU_ITEM_COUNT 4
+#define TRAINER_MENU_ITEM_COUNT 3
 #define SIDEHOP_LOG_LENGTH 6
 // length of "perfect! (frame perfect)"
 #define SIDEHOP_LOG_STRING_LENGTH 25
@@ -27,7 +27,7 @@ static int roll_timing_draw_proc(struct menu_item *item,
 
   if(gz.frame_ran){
     update_roll();
-    check_streak();
+    roll_check_streak();
   }
 
   set_rgb_white();
@@ -273,12 +273,12 @@ struct menu *gz_trainer_menu(void)
   menu_add_static(&menu, 2, index + 1, "Enable Sidehop Timing Trainer", 0xC0C0C0);
   index += 1;
 
-  /*add bomb hess training option*/
-  trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, bomb_hess_draw_proc, NULL, 0xFFFFFF);
+  /*add bomb hess training option - unfinished*/
+  /*trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, bomb_hess_draw_proc, NULL, 0xFFFFFF);
   trainer_menu_data[index]->enabled = 0;
   menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
   menu_add_static(&menu, 2, index + 1, "Enable Bomb Hess Trainer", 0xC0C0C0);
-  index += 1;
+  index += 1;*/
 
   /*add equip swap training option*/
   trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, equip_swap_draw_proc, NULL, 0xFFFFFF);

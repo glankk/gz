@@ -99,7 +99,7 @@ struct equip_swap
 _Bool is_rolling();
 _Bool roll_pressed();
 void update_roll();
-void check_streak();
+void roll_check_streak();
 
 _Bool update_sidehop();
 

@@ -141,7 +141,7 @@ void update_roll()
   }
 }
 
-void check_streak()
+void roll_check_streak()
 {
   if((roll_pressed()) && (roll.last_roll_frame == 16)){
     roll.streak++;
