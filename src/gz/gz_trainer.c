@@ -134,37 +134,6 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
   return 1;
 }
 
-static int bomb_hess_draw_proc(struct menu_item *item,
-                               struct menu_draw_params *draw_params)
-{
-
-  gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(draw_params->color,
-                                             draw_params->alpha));
-  struct gfx_font *font = draw_params->font;
-  int ch = menu_get_cell_height(item->owner, 1);
-  int x = draw_params->x;
-  int y = draw_params->y;
-
-  if(gz.frame_ran){
-    update_bombs();
-    hess_setup(&bomb1);
-    hess_roll(&bomb1);
-    //check ess when hit
-    //get z+r frame
-    //check z+r frame
-  }
-
-  set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "instance: %x", bomb1.instance);
-  gfx_printf(font, x, y + ch * 1, "timer: %i", bomb1.timer);
-  gfx_printf(font, x, y + ch * 2, "distance from link: %g", bomb1.distance_from_link);
-  gfx_printf(font, x, y + ch * 3, "current animation: %8x", z64_link.current_animation);
-  gfx_printf(font, x, y + ch * 4, "roll frame: %i", hess.roll_frame);
-  gfx_printf(font, x, y + ch * 5, "setup: %i", hess.setup);
-
-  return 1;
-}
-
 static int equip_swap_draw_proc(struct menu_item *item,
                                struct menu_draw_params *draw_params)
 {
@@ -272,13 +241,6 @@ struct menu *gz_trainer_menu(void)
   menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
   menu_add_static(&menu, 2, index + 1, "Enable Sidehop Timing Trainer", 0xC0C0C0);
   index += 1;
-
-  /*add bomb hess training option - unfinished*/
-  /*trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, bomb_hess_draw_proc, NULL, 0xFFFFFF);
-  trainer_menu_data[index]->enabled = 0;
-  menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
-  menu_add_static(&menu, 2, index + 1, "Enable Bomb Hess Trainer", 0xC0C0C0);
-  index += 1;*/
 
   /*add equip swap training option*/
   trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, equip_swap_draw_proc, NULL, 0xFFFFFF);

@@ -20,31 +20,6 @@ enum animation
 
 };
 
-enum hess_setup
-{
-  HESS_UNKOWN,
-  HESS_ROLL_INSTA,
-  HESS_ROLL_OVERHEAD,
-  HESS_BACKWALK_3,
-  HESS_BACKWALK_4
-};
-
-typedef struct
-{
-  z64_actor_t common;          /* 0x0000 */
-  char        unk_0x13C[0xAC]; /* 0x013C */
-  uint16_t    timer;           /* 0x01E8 */
-  uint16_t    state;           /* 0x01EA */
-  char        unk_0x1EA[0x1C]; /* 0x01EC */
-}z64_bomb_t;                   /* 0x0208 */
-
-typedef struct
-{
-  z64_bomb_t* instance;
-  uint16_t    timer;
-  float       distance_from_link;
-}bomb_t;
-
 struct roll
 {
   uint8_t     timer;
@@ -103,10 +78,6 @@ void roll_check_streak();
 
 _Bool update_sidehop();
 
-void update_bombs();
-void hess_roll(bomb_t* bomb);
-void hess_setup(bomb_t* bomb);
-
 void update_equip_swap();
 
 void set_rgb_green();
@@ -120,6 +91,5 @@ extern struct roll roll;
 extern struct sidehop sidehop;
 extern struct hess hess;
 extern struct equip_swap equip_swap;
-extern bomb_t bomb1;
 
 #endif

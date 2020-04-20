@@ -15,8 +15,6 @@ struct sidehop sidehop;
 struct hess hess;
 struct equip_swap equip_swap;
 
-bomb_t bomb1;
-
 _Bool is_rolling()
 {
   if((z64_link.current_animation == ANIM_ROLL) || (z64_link.current_animation == ANIM_ROLL_SHIELD))
@@ -213,54 +211,6 @@ _Bool update_sidehop()
   // manually store previous inputs
   sidehop.pad_prev = input_pad();
   return ret;
-}
-
-static void update_bomb_timers(bomb_t* bomb)
-{
-  if(bomb->instance->timer > 0){
-    bomb->timer++;
-  } else {
-    bomb->timer = 0;
-  }
-}
-
-void update_bombs()
-{
-  bomb1.instance = (z64_bomb_t*)z64_game.actor_list[3].first;
-  if(bomb1.instance){
-    update_bomb_timers(&bomb1);
-    bomb1.distance_from_link = bomb1.instance->common.dist_from_link_xz;
-  }else{
-    bomb1.timer = 0;
-  }
-}
-
-void hess_roll(bomb_t* bomb)
-{
-  if(bomb->instance){
-    if((bomb->timer > 55) && roll_pressed()){
-      hess.roll_frame = bomb->timer;
-    }
-    if(bomb->timer == 1){
-      hess.roll_frame = 0;
-    }
-  }
-}
-
-void hess_setup(bomb_t* bomb)
-{
-  if(bomb->instance){
-    if((bomb->instance->common.attached_a == 0) && (z64_link.linear_vel == 0) && (bomb->timer > 60)){
-      int dist_rounded;
-      dist_rounded = round(bomb->distance_from_link);
-      if (dist_rounded == 63){
-        hess.setup = HESS_ROLL_INSTA;
-      }
-    }
-    if(bomb->timer == 1){
-      hess.setup = HESS_UNKOWN;
-    }
-  }
 }
 
 void update_equip_swap()
