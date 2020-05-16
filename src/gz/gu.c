@@ -157,7 +157,7 @@ void guRotateRPYF(MtxF *mf, float r, float p, float h)
   mf->yz = sr * cp;
   mf->yw = 0.f;
   mf->zx = cr * sp * ch + sr * sh;
-  mf->zy = cr * sp * sh - sp * sh;
+  mf->zy = cr * sp * sh - sr * ch;
   mf->zz = cr * cp;
   mf->zw = 0.f;
   mf->wx = 0.f;
