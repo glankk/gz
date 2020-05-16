@@ -3,6 +3,7 @@
 #include <n64.h>
 #include <vector/vector.h>
 #include <stdint.h>
+#include "geometry.h"
 #include "gfx.h"
 #include "gu.h"
 #include "gz.h"
@@ -24,6 +25,16 @@ struct line
   int va;
   int vb;
 };
+
+static void vtxn_f2l(Vtx *r, z64_xyzf_t *v)
+{
+  *r = gdSPDefVtxN(floorf(0.5f + v->x * 128.f),
+                   floorf(0.5f + v->y * 128.f),
+                   floorf(0.5f + v->z * 128.f),
+                   0, 0,
+                   v->x * 127.f, v->y * 127.f, v->z * 127.f,
+                   0xFF);
+}
 
 static void tri_norm(z64_xyzf_t *v1, z64_xyzf_t *v2, z64_xyzf_t *v3,
                      z64_xyzf_t *norm)
@@ -87,7 +98,7 @@ static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
 
   if (!p_cyl_gfx) {
 #define CYL_DIVS 12
-    static Gfx cyl_gfx[4 + CYL_DIVS * 2];
+    static Gfx cyl_gfx[5 + CYL_DIVS * 2];
     static Vtx cyl_vtx[2 + CYL_DIVS * 2];
 
     p_cyl_gfx = cyl_gfx;
@@ -106,11 +117,11 @@ static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
                                            norm_x, 0, norm_z, 0xFF);
     }
 
-    gSPSetGeometryMode(cyl_gfx_p++, G_CULL_BACK);
+    gSPSetGeometryMode(cyl_gfx_p++, G_CULL_BACK | G_SHADING_SMOOTH);
 
     gSPVertex(cyl_gfx_p++, cyl_vtx, 2 + CYL_DIVS * 2, 0);
     for (int i = 0; i < CYL_DIVS; ++i) {
-      int p = (i == 0 ? CYL_DIVS : i) - 1;
+      int p = (i + CYL_DIVS - 1) % CYL_DIVS;
       int v[4] =
       {
         2 + p * 2 + 0,
@@ -119,7 +130,19 @@ static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
         2 + p * 2 + 1,
       };
       gSP2Triangles(cyl_gfx_p++, v[0], v[1], v[2], 0, v[0], v[2], v[3], 0);
-      gSP2Triangles(cyl_gfx_p++, 0,    v[1], v[0], 0, 1,    v[3], v[2], 0);
+    }
+
+    gSPClearGeometryMode(cyl_gfx_p++, G_SHADING_SMOOTH);
+    for (int i = 0; i < CYL_DIVS; ++i) {
+      int p = (i + CYL_DIVS - 1) % CYL_DIVS;
+      int v[4] =
+      {
+        2 + p * 2 + 0,
+        2 + i * 2 + 0,
+        2 + i * 2 + 1,
+        2 + p * 2 + 1,
+      };
+      gSP2Triangles(cyl_gfx_p++, 0, v[1], v[0], 0, 1, v[3], v[2], 0);
     }
 
     gSPClearGeometryMode(cyl_gfx_p++, G_CULL_BACK);
@@ -140,6 +163,206 @@ static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
   gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
             G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
   gSPDisplayList((*p_gfx_p)++, p_cyl_gfx);
+  gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
+}
+
+static void ico_sph_subdivide_edge(z64_xyzf_t *r, z64_xyzf_t *a, z64_xyzf_t *b)
+{
+  vec3f_add(r, a, b);
+  vec3f_norm(r, r);
+}
+
+static void draw_ico_sphere(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                            float x, float y, float z, float radius)
+{
+  static Gfx *p_sph_gfx = NULL;
+
+  if (!p_sph_gfx) {
+    z64_xyzf_t vtx[42];
+    int r0_n = 1,   r0_m = r0_n / 5,  r0_i = 0    + 0;
+    int r1_n = 5,   r1_m = r1_n / 5,  r1_i = r0_i + r0_n;
+    int r2_n = 10,  r2_m = r2_n / 5,  r2_i = r1_i + r1_n;
+    int r3_n = 10,  r3_m = r3_n / 5,  r3_i = r2_i + r2_n;
+    int r4_n = 10,  r4_m = r4_n / 5,  r4_i = r3_i + r3_n;
+    int r5_n = 5,   r5_m = r5_n / 5,  r5_i = r4_i + r4_n;
+    int r6_n = 1,   r6_m = r6_n / 5,  r6_i = r5_i + r5_n;
+
+    vtx[r0_i + (0 * r0_m + 0) % r0_n] = (z64_xyzf_t){0.f, 1.f, 0.f};
+    vtx[r6_i + (0 * r6_m + 0) % r6_n] = (z64_xyzf_t){0.f, -1.f, 0.f};
+    for (int i = 0; i < 5; ++i) {
+      float a_xz = 2.f * M_PI / 10.f;
+      float a_y = atanf(1.f / 2.f);
+      vtx[r2_i + (i * r2_m + 0) % r2_n] = (z64_xyzf_t)
+      {
+        cos(a_xz * (i * r2_m + 0)) * cos(a_y * 1.f),
+        sin(a_y * 1.f),
+        -sin(a_xz * (i * r2_m + 0)) * cos(a_y * 1.f),
+      };
+      vtx[r4_i + (i * r4_m + 0) % r4_n] = (z64_xyzf_t)
+      {
+        cos(a_xz * (i * r4_m + 1)) * cos(a_y * -1.f),
+        sin(a_y * -1.f),
+        -sin(a_xz * (i * r4_m + 1)) * cos(a_y * -1.f),
+      };
+    }
+    for (int i = 0; i < 5; ++i) {
+      ico_sph_subdivide_edge(&vtx[r1_i + (i * r1_m + 0) % r1_n],
+                             &vtx[r0_i + (i * r0_m + 0) % r0_n],
+                             &vtx[r2_i + (i * r2_m + 0) % r2_n]);
+      ico_sph_subdivide_edge(&vtx[r2_i + (i * r2_m + 1) % r2_n],
+                             &vtx[r2_i + (i * r2_m + 0) % r2_n],
+                             &vtx[r2_i + (i * r2_m + 2) % r2_n]);
+      ico_sph_subdivide_edge(&vtx[r3_i + (i * r3_m + 0) % r3_n],
+                             &vtx[r2_i + (i * r2_m + 0) % r2_n],
+                             &vtx[r4_i + (i * r4_m + 0) % r4_n]);
+      ico_sph_subdivide_edge(&vtx[r3_i + (i * r3_m + 1) % r3_n],
+                             &vtx[r4_i + (i * r4_m + 0) % r4_n],
+                             &vtx[r2_i + (i * r2_m + 2) % r2_n]);
+      ico_sph_subdivide_edge(&vtx[r4_i + (i * r4_m + 1) % r4_n],
+                             &vtx[r4_i + (i * r4_m + 0) % r4_n],
+                             &vtx[r4_i + (i * r4_m + 2) % r4_n]);
+      ico_sph_subdivide_edge(&vtx[r5_i + (i * r5_m + 0) % r5_n],
+                             &vtx[r4_i + (i * r4_m + 0) % r4_n],
+                             &vtx[r6_i + (i * r6_m + 0) % r6_n]);
+    }
+
+    static Vtx sph_vtx[42];
+    static Gfx sph_gfx[45];
+
+    for (int i = 0; i < 42; ++i)
+      vtxn_f2l(&sph_vtx[i], &vtx[i]);
+
+    p_sph_gfx = sph_gfx;
+    Gfx *sph_gfx_p = p_sph_gfx;
+
+    gSPSetGeometryMode(sph_gfx_p++, G_CULL_BACK | G_SHADING_SMOOTH);
+
+    gSPVertex(sph_gfx_p++, &sph_vtx[r0_i], r0_n + r1_n + r2_n + r3_n,
+              r0_i - r0_i);
+    r3_i -= r0_i;
+    r2_i -= r0_i;
+    r1_i -= r0_i;
+    r0_i -= r0_i;
+    for (int i = 0; i < 5; ++i) {
+      int v[24] =
+      {
+        r0_i + (i * r0_m + 0) % r0_n,
+        r1_i + (i * r1_m + 0) % r1_n,
+        r1_i + (i * r1_m + 1) % r1_n,
+
+        r1_i + (i * r1_m + 0) % r1_n,
+        r2_i + (i * r2_m + 0) % r2_n,
+        r2_i + (i * r2_m + 1) % r2_n,
+
+        r1_i + (i * r1_m + 0) % r1_n,
+        r2_i + (i * r2_m + 1) % r2_n,
+        r1_i + (i * r1_m + 1) % r1_n,
+
+        r1_i + (i * r1_m + 1) % r1_n,
+        r2_i + (i * r2_m + 1) % r2_n,
+        r2_i + (i * r2_m + 2) % r2_n,
+
+        r2_i + (i * r2_m + 0) % r2_n,
+        r3_i + (i * r3_m + 0) % r3_n,
+        r2_i + (i * r2_m + 1) % r2_n,
+
+        r2_i + (i * r2_m + 1) % r2_n,
+        r3_i + (i * r3_m + 0) % r3_n,
+        r3_i + (i * r3_m + 1) % r3_n,
+
+        r2_i + (i * r2_m + 1) % r2_n,
+        r3_i + (i * r3_m + 1) % r3_n,
+        r2_i + (i * r2_m + 2) % r2_n,
+
+        r2_i + (i * r2_m + 2) % r2_n,
+        r3_i + (i * r3_m + 1) % r3_n,
+        r3_i + (i * r3_m + 2) % r3_n,
+      };
+      gSP2Triangles(sph_gfx_p++,
+                    v[0],   v[1],   v[2],   0,
+                    v[3],   v[4],   v[5],   0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[6],   v[7],   v[8],   0,
+                    v[9],   v[10],  v[11],  0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[12],  v[13],  v[14],  0,
+                    v[15],  v[16],  v[17],  0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[18],  v[19],  v[20],  0,
+                    v[21],  v[22],  v[23],  0);
+    }
+
+    gSPVertex(sph_gfx_p++, &sph_vtx[r4_i], r4_n + r5_n + r6_n,
+              r4_i - r4_i);
+    r6_i -= r4_i;
+    r5_i -= r4_i;
+    r4_i -= r4_i;
+    for (int i = 0; i < 5; ++i) {
+      int v[24] =
+      {
+        r3_i + (i * r3_m + 1) % r3_n,
+        r4_i + (i * r4_m + 0) % r4_n,
+        r4_i + (i * r4_m + 1) % r4_n,
+
+        r3_i + (i * r3_m + 1) % r3_n,
+        r4_i + (i * r4_m + 1) % r4_n,
+        r3_i + (i * r3_m + 2) % r3_n,
+
+        r3_i + (i * r3_m + 2) % r3_n,
+        r4_i + (i * r4_m + 1) % r4_n,
+        r4_i + (i * r4_m + 2) % r4_n,
+
+        r3_i + (i * r3_m + 2) % r3_n,
+        r4_i + (i * r4_m + 2) % r4_n,
+        r3_i + (i * r3_m + 3) % r3_n,
+
+        r4_i + (i * r4_m + 0) % r4_n,
+        r5_i + (i * r5_m + 0) % r5_n,
+        r4_i + (i * r4_m + 1) % r4_n,
+
+        r4_i + (i * r4_m + 1) % r4_n,
+        r5_i + (i * r5_m + 0) % r5_n,
+        r5_i + (i * r5_m + 1) % r5_n,
+
+        r4_i + (i * r4_m + 1) % r4_n,
+        r5_i + (i * r5_m + 1) % r5_n,
+        r4_i + (i * r4_m + 2) % r4_n,
+
+        r5_i + (i * r5_m + 0) % r5_n,
+        r6_i + (i * r6_m + 0) % r6_n,
+        r5_i + (i * r5_m + 1) % r5_n,
+      };
+      gSP2Triangles(sph_gfx_p++,
+                    v[0],   v[1],   v[2],   0,
+                    v[3],   v[4],   v[5],   0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[6],   v[7],   v[8],   0,
+                    v[9],   v[10],  v[11],  0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[12],  v[13],  v[14],  0,
+                    v[15],  v[16],  v[17],  0);
+      gSP2Triangles(sph_gfx_p++,
+                    v[18],  v[19],  v[20],  0,
+                    v[21],  v[22],  v[23],  0);
+    }
+
+    gSPClearGeometryMode(sph_gfx_p++, G_CULL_BACK | G_SHADING_SMOOTH);
+    gSPEndDisplayList(sph_gfx_p++);
+  }
+
+  Mtx m;
+  {
+    MtxF mf;
+    guTranslateF(&mf, x, y, z);
+    MtxF ms;
+    guScaleF(&ms, radius / 128.f, radius / 128.f, radius / 128.f);
+    guMtxCatF(&ms, &mf, &mf);
+    guMtxF2L(&mf, &m);
+  }
+
+  gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
+            G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
+  gSPDisplayList((*p_gfx_p)++, p_sph_gfx);
   gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
 }
 
@@ -710,20 +933,19 @@ static void do_hitbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
     z64_hit_t *hit = hit_list[i];
 
     switch (hit->type) {
-      case Z64_HIT_CYL_LIST: {
-        z64_hit_cyl_list_t *hit_cyl_list = (z64_hit_cyl_list_t *)hit;
+      case Z64_HIT_SPH_LIST: {
+        z64_hit_sph_list_t *hit_sph_list = (z64_hit_sph_list_t *)hit;
 
-        for (int j = 0; j < hit_cyl_list->n_ent; ++j) {
-          z64_hit_cyl_ent_t *ent = &hit_cyl_list->ent_list[j];
+        for (int j = 0; j < hit_sph_list->n_ent; ++j) {
+          z64_hit_sph_ent_t *ent = &hit_sph_list->ent_list[j];
 
-          /* make zero radius cylinders just appear really small */
+          /* make zero radius spheres just appear really small */
           int radius = ent->radius;
           if (radius == 0)
             radius = 1;
 
-          draw_cyl(p_gfx_p, p_gfx_d,
-                   ent->pos.x, ent->pos.y - radius,
-                   ent->pos.z, radius, radius * 2);
+          draw_ico_sphere(p_gfx_p, p_gfx_d,
+                          ent->pos.x, ent->pos.y, ent->pos.z, radius);
         }
 
         break;
@@ -731,7 +953,7 @@ static void do_hitbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
       case Z64_HIT_CYL: {
         z64_hit_cyl_t *hit_cyl = (z64_hit_cyl_t *)hit;
 
-        /* ditto */
+        /* ditto for cylinders */
         int radius = hit_cyl->radius;
         if (radius == 0)
           radius = 1;
