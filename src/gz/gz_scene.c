@@ -509,7 +509,7 @@ struct menu *gz_scene_menu(void)
   menu_add_checkbox(&collision, 16, 9, hit_view_at_proc, NULL);
   menu_add_static(&collision, 2, 10, "hurt (ac)", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 10, hit_view_ac_proc, NULL);
-  menu_add_static(&collision, 2, 11, "bump (ot)", 0xC0C0C0);
+  menu_add_static(&collision, 2, 11, "bump (oc)", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 11, hit_view_oc_proc, NULL);
   menu_add_static(&collision, 2, 12, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 12, hit_view_xlu_proc, NULL);
