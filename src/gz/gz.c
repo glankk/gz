@@ -1088,6 +1088,7 @@ static void init(void)
     menu_init(&global, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
     gz.menu_main = &menu;
     gz.menu_global = &global;
+    gz.menu_watches = &watches;
 
     /* populate top menu */
     menu.selector = menu_add_button(&menu, 0, 0, "return",

@@ -130,6 +130,7 @@ struct gz
   struct menu          *menu_global;
   struct menu          *menu_main;
   struct menu          *menu_explorer;
+  struct menu          *menu_watches;
   struct menu          *menu_mem;
   struct menu_item     *menu_watchlist;
   _Bool                 menu_active;
