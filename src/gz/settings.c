@@ -64,6 +64,9 @@ void settings_load_default(void)
   d->bits.col_view_upd = 1;
   d->bits.hit_view_xlu = 1;
   d->bits.hit_view_shade = 1;
+  d->bits.hit_view_at = 0;
+  d->bits.hit_view_ac = 0;
+  d->bits.hit_view_oc = 0;
   d->bits.watches_visible = 1;
   d->menu_x = 20;
   d->menu_y = 64;

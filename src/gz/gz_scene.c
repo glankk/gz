@@ -91,12 +91,24 @@ static int hit_view_proc(struct menu_item *item,
                          void *data)
 {
   if (reason == MENU_CALLBACK_SWITCH_ON) {
-    if (gz.hit_view_state == HITVIEW_INACTIVE)
+    if (gz.hit_view_state == HITVIEW_INACTIVE) {
       gz.hit_view_state = HITVIEW_START;
+      if (!settings->bits.hit_view_at &&
+          !settings->bits.hit_view_ac &&
+          !settings->bits.hit_view_oc) {
+        settings->bits.hit_view_at = 1;
+        settings->bits.hit_view_ac = 1;
+        settings->bits.hit_view_oc = 1;
+      }
+    }
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
-    if (gz.hit_view_state != HITVIEW_INACTIVE)
+    if (gz.hit_view_state != HITVIEW_INACTIVE) {
       gz.hit_view_state = HITVIEW_BEGIN_STOP;
+      settings->bits.hit_view_at = 0;
+      settings->bits.hit_view_ac = 0;
+      settings->bits.hit_view_oc = 0;
+    }
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.hit_view_state == HITVIEW_START ||
@@ -169,6 +181,76 @@ static int col_view_rd_proc(struct menu_item *item,
     settings->bits.col_view_rd = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->bits.col_view_rd);
+  return 0;
+}
+
+static void hit_view_check_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (!settings->bits.hit_view_at &&
+      !settings->bits.hit_view_ac &&
+      !settings->bits.hit_view_oc)
+    hit_view_proc(item, MENU_CALLBACK_SWITCH_OFF, data);
+  else if (settings->bits.hit_view_at &&
+      settings->bits.hit_view_ac &&
+      settings->bits.hit_view_oc)
+    hit_view_proc(item, MENU_CALLBACK_SWITCH_ON, data);
+  else
+    hit_view_proc(item, MENU_CALLBACK_SWITCH_ON, data);
+}
+
+static int hit_view_at_proc(struct menu_item *item,
+                       enum menu_callback_reason reason,
+                       void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    settings->bits.hit_view_at = 1;
+    if (gz.hit_view_state == HITVIEW_INACTIVE)
+      hit_view_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    settings->bits.hit_view_at = 0;
+    hit_view_check_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_at);
+  return 0;
+}
+
+static int hit_view_ac_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    settings->bits.hit_view_ac = 1;
+    if (gz.hit_view_state == HITVIEW_INACTIVE)
+      hit_view_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    settings->bits.hit_view_ac = 0;
+    hit_view_check_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_ac);
+  return 0;
+}
+
+static int hit_view_oc_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    settings->bits.hit_view_oc = 1;
+    if (gz.hit_view_state == HITVIEW_INACTIVE)
+      hit_view_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    settings->bits.hit_view_oc = 0;
+    hit_view_check_proc(item, reason, data);
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_oc);
   return 0;
 }
 
@@ -423,10 +505,16 @@ struct menu *gz_scene_menu(void)
   /* hitbox view controls */
   menu_add_static(&collision, 0, 8, "show hitboxes", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 8, hit_view_proc, NULL);
-  menu_add_static(&collision, 2, 9, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 9, hit_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 10, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 10, hit_view_shade_proc, NULL);
+  menu_add_static(&collision, 2, 9, "hit (at)", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 9, hit_view_at_proc, NULL);
+  menu_add_static(&collision, 2, 10, "hurt (ac)", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 10, hit_view_ac_proc, NULL);
+  menu_add_static(&collision, 2, 11, "bump (ot)", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 11, hit_view_oc_proc, NULL);
+  menu_add_static(&collision, 2, 12, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 12, hit_view_xlu_proc, NULL);
+  menu_add_static(&collision, 2, 13, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 13, hit_view_shade_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");

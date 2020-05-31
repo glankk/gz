@@ -1018,12 +1018,19 @@ void gz_hit_view(void)
     init_poly_gfx(&hit_gfx_p, &hit_gfx_d, SETTINGS_COLVIEW_SURFACE,
                                           settings->bits.hit_view_xlu,
                                           settings->bits.hit_view_shade);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_ot, z64_game.hit_ctxt.ot_list, 0xFFFFFF);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list, 0x0000FF);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
+
+    if (settings->bits.hit_view_oc)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_oc, z64_game.hit_ctxt.oc_list, 0xFFFFFF);
+
+    if (settings->bits.hit_view_ac)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list, 0x0000FF);
+
+    if (settings->bits.hit_view_at)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
+
     gSPEndDisplayList(hit_gfx_p++);
     cache_writeback_data(hit_gfx, sizeof(*hit_gfx) * hit_gfx_cap);
 

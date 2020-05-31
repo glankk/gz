@@ -1248,8 +1248,8 @@ typedef struct
   z64_hit_t        *at_list[50];              /* 0x0004 */
   int32_t           n_ac;                     /* 0x00CC */
   z64_hit_t        *ac_list[60];              /* 0x00D0 */
-  int32_t           n_ot;                     /* 0x01C0 */
-  z64_hit_t        *ot_list[50];              /* 0x01C4 */
+  int32_t           n_oc;                     /* 0x01C0 */
+  z64_hit_t        *oc_list[50];              /* 0x01C4 */
                                               /* 0x028C */
 } z64_hit_ctxt_t;
 
