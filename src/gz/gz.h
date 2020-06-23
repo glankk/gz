@@ -41,6 +41,15 @@ enum hit_view_state
   HITVIEW_STOP,
 };
 
+enum path_view_state
+{
+  PATHVIEW_INACTIVE,
+  PATHVIEW_START,
+  PATHVIEW_ACTIVE,
+  PATHVIEW_BEGIN_STOP,
+  PATHVIEW_STOP,
+};
+
 enum cam_mode
 {
   CAMMODE_CAMERA,
@@ -171,6 +180,7 @@ struct gz
   int64_t               timer_counter_prev;
   int                   col_view_state;
   int                   hit_view_state;
+  int                   path_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;
@@ -227,6 +237,7 @@ void          command_recordmacro(void);
 void          command_playmacro(void);
 void          command_colview(void);
 void          command_hitview(void);
+void          command_pathview(void);
 void          command_resetlag(void);
 void          command_togglewatches(void);
 void          command_timer(void);
@@ -245,6 +256,7 @@ void          gz_vcont_get(int port, z64_input_t *input);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);
+void          gz_path_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);

@@ -36,6 +36,19 @@ static void vtxn_f2l(Vtx *r, z64_xyzf_t *v)
                    0xFF);
 }
 
+static void draw_line(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                     z64_xyz_t *v1, z64_xyz_t *v2)
+{
+  Vtx v[2] =
+  {
+    gdSPDefVtxC(v1->x, v1->y, v1->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+    gdSPDefVtxC(v2->x, v2->y, v2->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+  };
+
+  gSPVertex((*p_gfx_p)++, gDisplayListData(p_gfx_d, v), 2, 0);
+  gSPLine3D((*p_gfx_p)++, 0, 1, 0);
+}
+
 static void tri_norm(z64_xyzf_t *v1, z64_xyzf_t *v2, z64_xyzf_t *v3,
                      z64_xyzf_t *norm)
 {
@@ -1036,5 +1049,79 @@ void gz_hit_view(void)
     release_mem(&hit_gfx_buf[1]);
 
     gz.hit_view_state = HITVIEW_INACTIVE;
+  }
+}
+
+static void do_path_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                           z64_path_t *path_list)
+{
+  const float path_marker_radius = 18.0f;
+
+  z64_path_t *cur_path = path_list;
+
+  if (cur_path != NULL && (settings->bits.path_view_points || settings->bits.path_view_lines)) {
+    while (((cur_path->points << 4) >> 28) == Z64_SEG_SCENE && cur_path->numpoints != 0) {
+      z64_xyz_t *points = (z64_xyz_t*)((z64_stab.seg[Z64_SEG_SCENE]+0x80000000) + (cur_path->points & 0x00FFFFFF));
+      if (settings->bits.path_view_lines) {
+        load_l3dex2(p_gfx_p);
+        init_line_gfx(p_gfx_p, p_gfx_d, settings->bits.path_view_xlu);
+        for (int i = 0; i < cur_path->numpoints; ++i) {
+          if (i + 1 != cur_path->numpoints) {
+            draw_line(p_gfx_p, p_gfx_d, &points[i], &points[i+1]);
+          }
+        }
+        zu_set_lighting_ext(p_gfx_p, p_gfx_d);
+        unload_l3dex2(p_gfx_p);
+      }
+      if (settings->bits.path_view_points) {
+        for (int i = 0; i < cur_path->numpoints; ++i) {
+          draw_ico_sphere(p_gfx_p, p_gfx_d, points[i].x, points[i].y, points[i].z, path_marker_radius);
+        }
+      }
+      cur_path++;
+    }
+  }
+}
+
+void gz_path_view(void)
+{
+  const int path_gfx_cap = 0x800;
+
+  static Gfx *path_gfx_buf[2];
+  static int  path_gfx_idx = 0;
+
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
+
+  if (enable && gz.path_view_state == PATHVIEW_START) {
+    path_gfx_buf[0] = malloc(sizeof(*path_gfx_buf[0]) * path_gfx_cap);
+    path_gfx_buf[1] = malloc(sizeof(*path_gfx_buf[1]) * path_gfx_cap);
+
+    gz.path_view_state = PATHVIEW_ACTIVE;
+  }
+  if (enable && gz.path_view_state == PATHVIEW_ACTIVE) {
+    Gfx **p_gfx_p;
+    if (settings->bits.path_view_xlu)
+      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+    else
+      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
+
+    Gfx *path_gfx = path_gfx_buf[path_gfx_idx];
+    Gfx *path_gfx_p = path_gfx;
+    Gfx *path_gfx_d = path_gfx + path_gfx_cap;
+    path_gfx_idx = (path_gfx_idx + 1) % 2;
+
+    do_path_list(&path_gfx_p, &path_gfx_d, z64_game.path_list);
+    gSPEndDisplayList(path_gfx_p++);
+    cache_writeback_data(path_gfx, sizeof(*path_gfx) * path_gfx_cap);
+
+    gSPDisplayList((*p_gfx_p)++, path_gfx);
+  }
+  if (gz.path_view_state == PATHVIEW_BEGIN_STOP)
+    gz.path_view_state = PATHVIEW_STOP;
+  else if (gz.path_view_state == PATHVIEW_STOP) {
+    release_mem(&path_gfx_buf[0]);
+    release_mem(&path_gfx_buf[1]);
+
+    gz.path_view_state = PATHVIEW_INACTIVE;
   }
 }

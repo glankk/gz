@@ -364,6 +364,9 @@ static void main_hook(void)
   gz_col_view();
   gz_hit_view();
 
+  /* execute and draw path view */
+  gz_path_view();
+
   /* execute free camera in view mode */
   gz_free_view();
 
@@ -1043,6 +1046,7 @@ static void init(void)
   gz.timer_counter_prev = gz.cpu_counter;
   gz.col_view_state = COLVIEW_INACTIVE;
   gz.hit_view_state = HITVIEW_INACTIVE;
+  gz.path_view_state = PATHVIEW_INACTIVE;
   gz.hide_rooms = 0;
   gz.hide_actors = 0;
   gz.free_cam = 0;
