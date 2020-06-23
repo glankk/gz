@@ -1038,3 +1038,94 @@ void gz_hit_view(void)
     gz.hit_view_state = HITVIEW_INACTIVE;
   }
 }
+
+static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                           int n_waterboxes, z64_col_water_t *waterbox_list, int cur_room,
+                           uint32_t color)
+{
+  const float water_max_depth = -4000.0f;
+
+  gDPSetPrimColor((*p_gfx_p)++, 0, 0,
+                  (color >> 16) & 0xFF,
+                  (color >> 8)  & 0xFF,
+                  (color >> 0)  & 0xFF,
+                  0xFF);
+
+  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
+    if (cur_water->flags.group == 0x3F || cur_water->flags.group == cur_room) {
+      z64_xyzf_t points[] = {
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
+      };
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+    }
+  }
+}
+
+void gz_water_view(void)
+{
+  const int water_gfx_cap = 0x800;
+
+  static Gfx *water_gfx_buf[2];
+  static int  water_gfx_idx = 0;
+
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
+
+  if (enable && gz.water_view_state == WATERVIEW_START) {
+    water_gfx_buf[0] = malloc(sizeof(*water_gfx_buf[0]) * water_gfx_cap);
+    water_gfx_buf[1] = malloc(sizeof(*water_gfx_buf[1]) * water_gfx_cap);
+
+    gz.water_view_state = WATERVIEW_ACTIVE;
+  }
+  if (enable && gz.water_view_state == WATERVIEW_ACTIVE && z64_game.col_ctxt.col_hdr->n_water != 0) {
+    Gfx **p_gfx_p;
+    if (settings->bits.water_view_xlu)
+      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+    else
+      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
+
+    Gfx *water_gfx = water_gfx_buf[water_gfx_idx];
+    Gfx *water_gfx_p = water_gfx;
+    Gfx *water_gfx_d = water_gfx + water_gfx_cap;
+    water_gfx_idx = (water_gfx_idx + 1) % 2;
+
+    init_poly_gfx(&water_gfx_p, &water_gfx_d, SETTINGS_COLVIEW_SURFACE,
+                                          settings->bits.water_view_xlu,
+                                          settings->bits.water_view_shade);
+    do_waterbox_list(&water_gfx_p, &water_gfx_d, 
+                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water, 
+                    z64_game.room_ctxt.rooms[0].index, 0x57ACF3);
+    for (int i = 0; i < 50; ++i) {
+      if (z64_game.col_ctxt.dyn_flags[i].active) {
+        z64_col_hdr_t *dyn_col_hdr = z64_game.col_ctxt.dyn_col[i].col_hdr;
+
+        do_waterbox_list(&water_gfx_p, &water_gfx_d,
+                    dyn_col_hdr->n_water, dyn_col_hdr->water, 
+                    z64_game.room_ctxt.rooms[0].index, 0x57ACF3);
+      }
+    }
+
+    gSPEndDisplayList(water_gfx_p++);
+    cache_writeback_data(water_gfx, sizeof(*water_gfx) * water_gfx_cap);
+
+    gSPDisplayList((*p_gfx_p)++, water_gfx);
+  }
+  if (gz.water_view_state == WATERVIEW_BEGIN_STOP)
+    gz.water_view_state = WATERVIEW_STOP;
+  else if (gz.water_view_state == WATERVIEW_STOP) {
+    release_mem(&water_gfx_buf[0]);
+    release_mem(&water_gfx_buf[1]);
+
+    gz.water_view_state = WATERVIEW_INACTIVE;
+  }
+}
