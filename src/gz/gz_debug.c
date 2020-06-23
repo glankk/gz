@@ -436,7 +436,9 @@ static void delete_actor_proc(struct menu_item *item, void *data)
     z64_actor_t *actor = z64_game.actor_list[adi->type].first;
     for (int i = 0; i < adi->index; ++i)
       actor = actor->next;
-    z64_DeleteActor(&z64_game, &z64_game.actor_ctxt, actor);
+    actor->draw_proc = NULL;
+    actor->main_proc = NULL;
+    actor->flags &= ~1;
   }
 }
 
