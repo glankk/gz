@@ -145,6 +145,7 @@ void roll_check_streak()
     roll.streak++;
     if (roll.streak > settings->trainer_roll_pb) {
       settings->trainer_roll_pb = roll.streak;
+      settings_save(gz.profile);
     }
   }
   if(roll.last_roll_frame != 16){
@@ -259,6 +260,7 @@ void update_equip_swap()
         equip_swap.streak += 1;
         if (equip_swap.streak > settings->trainer_equip_swap_pb) {
             settings->trainer_equip_swap_pb = equip_swap.streak;
+            settings_save(gz.profile);
         }
 
         equip_swap.changing_screen = 0;

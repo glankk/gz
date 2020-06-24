@@ -105,6 +105,7 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
         sidehop.streak += 1;
         if (sidehop.streak > settings->trainer_sidehop_pb) {
           settings->trainer_sidehop_pb = sidehop.streak;
+          settings_save(gz.profile);
         }
         sidehop.result = 0;
       } else if (sidehop.result > 1) {
