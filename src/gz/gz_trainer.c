@@ -25,48 +25,56 @@ static int roll_timing_draw_proc(struct menu_item *item,
   int x = draw_params->x;
   int y = draw_params->y;
 
-  if(gz.frame_ran){
+  if(gz.frame_ran && !gz.menu_active){
     update_roll();
     roll_check_streak();
   }
 
-  set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %i", settings->trainer_roll_pb);
-  gfx_printf(font, x, y + ch * 1, "streak: %i", roll.streak);
-  int log_y = 2;
+  if (!gz.menu_active) {
+      set_rgb_white();
+      gfx_printf(font, x, y + ch * 0, "best: %i", settings->trainer_roll_pb);
+      gfx_printf(font, x, y + ch * 1, "streak: %i", roll.streak);
+      int log_y = 2;
 
-  if (!roll.is_first_roll && roll.timer_active){
-    if((roll.last_roll_frame < 14) || (roll.last_roll_frame > 19)){
-      set_rgb_red();
-      int amnt = roll.last_roll_frame - 16;
-      if (amnt < 0)
-        gfx_printf(font, x, y + ch * log_y, "bad (%i frames early)", abs(amnt));
-      else
-        gfx_printf(font, x, y + ch * log_y, "bad (%i frames late)", abs(amnt));
-    }else{
-      switch(roll.last_roll_frame)
-      {
-        case 14: set_rgb_orange();
-                 gfx_printf(font, x, y + ch * log_y, "okay (2 frames early)");
-                 break;
-        case 15: set_rgb_lgreen();
-                 gfx_printf(font, x, y + ch * log_y, "good (1 frame early)");
-                 break;
-        case 16: set_rgb_green();
-                 gfx_printf(font, x, y + ch * log_y, "perfect! (frame perfect)");
-                 break;
-        case 17: set_rgb_lgreen();
-                 gfx_printf(font, x, y + ch * log_y, "good (1 frame late)");
-                 break;
-        case 18: set_rgb_yellow();
-                 gfx_printf(font, x, y + ch * log_y, "okay (2 frames late)");
-                 break;
-        case 19: set_rgb_orange();
-                 gfx_printf(font, x, y + ch * log_y, "okay (3 frames late)");
-                 break;
-        default: break;
+      if (!roll.is_first_roll && roll.timer_active) {
+          if ((roll.last_roll_frame < 14) || (roll.last_roll_frame > 19)) {
+              set_rgb_red();
+              int amnt = roll.last_roll_frame - 16;
+              if (amnt < 0)
+                  gfx_printf(font, x, y + ch * log_y, "bad (%i frames early)", abs(amnt));
+              else
+                  gfx_printf(font, x, y + ch * log_y, "bad (%i frames late)", abs(amnt));
+          } else {
+              switch (roll.last_roll_frame) {
+                  case 14:
+                      set_rgb_orange();
+                      gfx_printf(font, x, y + ch * log_y, "okay (2 frames early)");
+                      break;
+                  case 15:
+                      set_rgb_lgreen();
+                      gfx_printf(font, x, y + ch * log_y, "good (1 frame early)");
+                      break;
+                  case 16:
+                      set_rgb_green();
+                      gfx_printf(font, x, y + ch * log_y, "perfect! (frame perfect)");
+                      break;
+                  case 17:
+                      set_rgb_lgreen();
+                      gfx_printf(font, x, y + ch * log_y, "good (1 frame late)");
+                      break;
+                  case 18:
+                      set_rgb_yellow();
+                      gfx_printf(font, x, y + ch * log_y, "okay (2 frames late)");
+                      break;
+                  case 19:
+                      set_rgb_orange();
+                      gfx_printf(font, x, y + ch * log_y, "okay (3 frames late)");
+                      break;
+                  default:
+                      break;
+              }
+          }
       }
-    }
   }
   return 1;
 }
@@ -84,7 +92,7 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
   int x = draw_params->x;
   int y = draw_params->y;
 
-  if(gz.frame_ran){
+  if(gz.frame_ran && !gz.menu_active){
     // if a new log entry should be added
     if (update_sidehop()) {
       // move the old messages up, but let "early" get overwritten
@@ -121,18 +129,20 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
     }
   }
 
-  set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_sidehop_pb);
-  gfx_printf(font, x, y + ch * 1, "streak: %d", sidehop.streak);
+  if (!gz.menu_active) {
+      set_rgb_white();
+      gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_sidehop_pb);
+      gfx_printf(font, x, y + ch * 1, "streak: %d", sidehop.streak);
 
-  for (int i = 0; i < SIDEHOP_LOG_LENGTH; i += 1)
-  {
-    // the message is unset, stop searching for log messages to print
-    if (log_messages[i][0] == '\0')
-      break;
+      for (int i = 0; i < SIDEHOP_LOG_LENGTH; i += 1)
+      {
+          // the message is unset, stop searching for log messages to print
+          if (log_messages[i][0] == '\0')
+              break;
 
-    log_message_colors[i]();
-    gfx_printf(font, x, y + ch * (i + 2), log_messages[i]);
+          log_message_colors[i]();
+          gfx_printf(font, x, y + ch * (i + 2), log_messages[i]);
+      }
   }
 
   return 1;
@@ -149,50 +159,52 @@ static int equip_swap_draw_proc(struct menu_item *item,
   int x = draw_params->x;
   int y = draw_params->y;
 
-  if(gz.frame_ran){
+  if(gz.frame_ran && !gz.menu_active){
     update_equip_swap();
   }
 
-  set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_equip_swap_pb);
-  gfx_printf(font, x, y + ch * 1, "streak: %d", equip_swap.streak);
+  if (!gz.menu_active) {
+      set_rgb_white();
+      gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_equip_swap_pb);
+      gfx_printf(font, x, y + ch * 1, "streak: %d", equip_swap.streak);
 
-  if (equip_swap.c_button_press_time > 0)
-  {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * 2, "c button: early by %i frames", equip_swap.c_button_press_time);
-  }
-  else if (equip_swap.c_button_press_time == 0)
-  {
-    set_rgb_green();
-    gfx_printf(font, x,  y + ch * 2, "c button: perfect! (frame perfect)");
-  }
-  else if (equip_swap.c_button_press_time < 0)
-  {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * 2, "c button: late by %i frames", -equip_swap.c_button_press_time);
-  }
+      if (equip_swap.c_button_press_time > 0)
+      {
+          set_rgb_red();
+          gfx_printf(font, x,  y + ch * 2, "c button: early by %i frames", equip_swap.c_button_press_time);
+      }
+      else if (equip_swap.c_button_press_time == 0)
+      {
+          set_rgb_green();
+          gfx_printf(font, x,  y + ch * 2, "c button: perfect! (frame perfect)");
+      }
+      else if (equip_swap.c_button_press_time < 0)
+      {
+          set_rgb_red();
+          gfx_printf(font, x,  y + ch * 2, "c button: late by %i frames", -equip_swap.c_button_press_time);
+      }
 
-  if (equip_swap.control_stick_moved_time > 0)
-  {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * 3, "stick: early by %i frames", equip_swap.control_stick_moved_time);
-  }
-  else if (equip_swap.control_stick_moved_time == 0)
-  {
-    set_rgb_green();
-    gfx_printf(font, x,  y + ch * 3, "stick: %s (frame perfect)", equip_swap.diagonal_warning ? "good" : "perfect!");
-  }
-  else if (equip_swap.control_stick_moved_time < 0)
-  {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * 3, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
-  }
+      if (equip_swap.control_stick_moved_time > 0)
+      {
+          set_rgb_red();
+          gfx_printf(font, x,  y + ch * 3, "stick: early by %i frames", equip_swap.control_stick_moved_time);
+      }
+      else if (equip_swap.control_stick_moved_time == 0)
+      {
+          set_rgb_green();
+          gfx_printf(font, x,  y + ch * 3, "stick: %s (frame perfect)", equip_swap.diagonal_warning ? "good" : "perfect!");
+      }
+      else if (equip_swap.control_stick_moved_time < 0)
+      {
+          set_rgb_red();
+          gfx_printf(font, x,  y + ch * 3, "stick: late by %i frames", -equip_swap.control_stick_moved_time);
+      }
 
-  if (equip_swap.diagonal_warning)
-  {
-    set_rgb_red();
-    gfx_printf(font, x,  y + ch * 4, "stick input must be diagonal");
+      if (equip_swap.diagonal_warning)
+      {
+          set_rgb_red();
+          gfx_printf(font, x,  y + ch * 4, "stick input must be diagonal");
+      }
   }
 
   return 1;
