@@ -25,6 +25,7 @@ struct roll
   uint8_t     timer;
   uint8_t     timer_active;
   int         streak;
+  int         best;
   uint8_t     is_first_roll;
   uint8_t     last_roll_frame;
 };
@@ -56,6 +57,7 @@ struct sidehop
   int8_t    result;
   uint16_t  pad_prev;
   uint8_t   streak;
+  uint8_t   best;
 };
 
 struct equip_swap
@@ -68,6 +70,7 @@ struct equip_swap
   int8_t    y_prev;
   uint16_t  pad_prev;
   uint8_t   streak;
+  uint8_t   best;
   _Bool     diagonal_warning;
 };
 

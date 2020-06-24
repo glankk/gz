@@ -143,6 +143,9 @@ void roll_check_streak()
 {
   if((roll_pressed()) && (roll.last_roll_frame == 16)){
     roll.streak++;
+    if (roll.streak > roll.best) {
+      roll.best = roll.streak;
+    }
   }
   if(roll.last_roll_frame != 16){
     roll.streak = 0;
@@ -254,6 +257,10 @@ void update_equip_swap()
           This also avoids letting the timer expire which clears their streak.
         */
         equip_swap.streak += 1;
+        if (equip_swap.streak > equip_swap.best) {
+            equip_swap.best = equip_swap.streak;
+        }
+
         equip_swap.changing_screen = 0;
       }
     }
