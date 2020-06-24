@@ -104,7 +104,7 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "perfect! (frame perfect)");
         sidehop.streak += 1;
         if (sidehop.streak > settings->trainer_sidehop_pb) {
-          settings->trainer_sidehop_pb = sidehop.streak
+          settings->trainer_sidehop_pb = sidehop.streak;
         }
         sidehop.result = 0;
       } else if (sidehop.result > 1) {
