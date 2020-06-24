@@ -236,21 +236,21 @@ struct menu *gz_trainer_menu(void)
   trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, roll_timing_draw_proc, NULL, 0xFFFFFF);
   trainer_menu_data[index]->enabled = 0;
   menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
-  menu_add_static(&menu, 2, index + 1, "Enable Roll Timing Trainer", 0xC0C0C0);
+  menu_add_static(&menu, 2, index + 1, "roll trainer", 0xC0C0C0);
   index += 1;
 
   /*add sidehop timing option*/
   trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, sidehop_timing_draw_proc, NULL, 0xFFFFFF);
   trainer_menu_data[index]->enabled = 0;
   menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
-  menu_add_static(&menu, 2, index + 1, "Enable Sidehop Timing Trainer", 0xC0C0C0);
+  menu_add_static(&menu, 2, index + 1, "sidehop trainer", 0xC0C0C0);
   index += 1;
 
   /*add equip swap training option*/
   trainer_menu_data[index] = menu_add_static_custom(gz.menu_global, global_x, global_y, equip_swap_draw_proc, NULL, 0xFFFFFF);
   trainer_menu_data[index]->enabled = 0;
   menu_add_checkbox(&menu, 0, index + 1, trainer_radio_button_toggle_proc, (void*)index);
-  menu_add_static(&menu, 2, index + 1, "Enable Equip Swap Trainer", 0xC0C0C0);
+  menu_add_static(&menu, 2, index + 1, "equip swap trainer", 0xC0C0C0);
   index += 1;
 
   return &menu;
