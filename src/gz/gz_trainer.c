@@ -31,7 +31,7 @@ static int roll_timing_draw_proc(struct menu_item *item,
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %i", roll.best);
+  gfx_printf(font, x, y + ch * 0, "best: %i", settings->trainer_roll_pb);
   gfx_printf(font, x, y + ch * 1, "streak: %i", roll.streak);
   int log_y = 2;
 
@@ -98,32 +98,30 @@ static int sidehop_timing_draw_proc(struct menu_item *item,
       if (sidehop.result < 0) {
         log_message_colors[0] = set_rgb_red;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "early by %i frames", -sidehop.result);
+        sidehop.streak = 0;
       } else if (sidehop.result == 1) {
         log_message_colors[0] = set_rgb_green;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "perfect! (frame perfect)");
-
         sidehop.streak += 1;
-        if (sidehop.streak > sidehop.best) {
-            sidehop.best = sidehop.streak;
+        if (sidehop.streak > settings->trainer_sidehop_pb) {
+          settings->trainer_sidehop_pb = sidehop.streak
         }
         sidehop.result = 0;
       } else if (sidehop.result > 1) {
         log_message_colors[0] = set_rgb_orange;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "late by %i frames", sidehop.result - 1);
-
         sidehop.streak = 0;
         sidehop.result = 0;
       } else if (sidehop.a_press != 0) {
         log_message_colors[0] = set_rgb_red;
         snprintf(log_messages[0], SIDEHOP_LOG_STRING_LENGTH, "early");
-
         sidehop.streak = 0;
       }
     }
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %d", sidehop.best);
+  gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_sidehop_pb);
   gfx_printf(font, x, y + ch * 1, "streak: %d", sidehop.streak);
 
   for (int i = 0; i < SIDEHOP_LOG_LENGTH; i += 1)
@@ -155,7 +153,7 @@ static int equip_swap_draw_proc(struct menu_item *item,
   }
 
   set_rgb_white();
-  gfx_printf(font, x, y + ch * 0, "best: %d", equip_swap.best);
+  gfx_printf(font, x, y + ch * 0, "best: %d", settings->trainer_equip_swap_pb);
   gfx_printf(font, x, y + ch * 1, "streak: %d", equip_swap.streak);
 
   if (equip_swap.c_button_press_time > 0)
