@@ -1070,6 +1070,29 @@ static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
       draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
     }
   }
+  /*
+   * There is a special hardcoded check for Zora's Domain in a function related to handling collision
+   * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
+   * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
+   */
+  if (z64_game.scene_index == 0x58) {
+    z64_xyzf_t points[] = {
+      { -348.0, 877.0, -1746.0 },
+      { 205.0, 877.0, -1746.0 },
+      { 205.0, 877.0, -967.0 },
+      { -348.0, 877.0, -967.0 },
+      { -348.0, 777.0, -1746.0 },
+      { 205.0, 777.0, -1746.0 },
+      { 205.0, 777.0, -967.0 },
+      { -348.0, 777.0, -967.0 },
+    };
+    draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+    draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+    draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
+    draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
+    draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+    draw_quad(p_gfx_p, p_gfx_d, &points[4], &points[5], &points[6], &points[7]);
+  }
 }
 
 void gz_water_view(void)
