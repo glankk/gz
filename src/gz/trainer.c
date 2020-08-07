@@ -267,7 +267,7 @@ void update_equip_swap()
       }
     }
 
-    if (equip_swap.timer >= 22)
+    if (equip_swap.timer >= 20)
     {
       equip_swap.changing_screen = 0;
       equip_swap.streak = 0;
