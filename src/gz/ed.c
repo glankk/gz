@@ -460,6 +460,71 @@ enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
   return e;
 }
 
+static void memcpy_from_cart(void *dst, const void *src, uint32_t size)
+{
+  uint32_t src_addr = (uint32_t)src;
+  uint32_t src_aligned = (src_addr + 3) & ~3;
+  uint32_t pad = src_addr - src_aligned;
+  const uint32_t *p_src = (const void *)src_aligned;
+  uint8_t *p_dst = (void *)dst;
+  if (pad > 0) {
+    uint32_t n = pad < size ? pad : size;
+    uint32_t w = *(p_src - 1);
+    for (int i = 0; i < n; ++i)
+      *p_dst++ = w >> (pad - 1 - i) * 8;
+    size -= n;
+  }
+  while (size > 3) {
+    uint32_t w = *p_src++;
+    *p_dst++ = w >> 24;
+    *p_dst++ = w >> 16;
+    *p_dst++ = w >> 8;
+    *p_dst++ = w >> 0;
+    size -= 4;
+  }
+  if (size > 0) {
+    uint32_t w = *p_src;
+    for (int i = 0; i < size; ++i)
+      *p_dst++ = w >> (3 - i) * 8;
+  }
+}
+
+static void memcpy_to_cart(void *dst, const void *src, uint32_t size)
+{
+  uint32_t dst_addr = (uint32_t)src;
+  uint32_t dst_aligned = (dst_addr + 3) & ~3;
+  uint32_t pad = dst_addr - dst_aligned;
+  uint32_t *p_dst = (void *)dst_aligned;
+  const uint8_t *p_src = (const void *)src;
+  if (pad > 0) {
+    uint32_t n = pad < size ? pad : size;
+    uint32_t w = *(p_dst - 1);
+    for (int i = 0; i < n; ++i) {
+      w &= ~((uint32_t)0xFF << (pad - 1 - i) * 8);
+      w |= *p_src++ << (pad - 1 - i) * 8;
+    }
+    *(p_dst - 1) = w;
+    size -= n;
+  }
+  while (size > 3) {
+    uint32_t w = 0;
+    w |= *p_src++ << 24;
+    w |= *p_src++ << 16;
+    w |= *p_src++ << 8;
+    w |= *p_src++ << 0;
+    *p_dst++ = w;
+    size -= 4;
+  }
+  if (size > 0) {
+    uint32_t w = *p_dst;
+    w <<= size * 8;
+    w >>= size * 8;
+    for (int i = 0; i < size; ++i)
+      w |= *p_src++ << (3 - i) * 8;
+    *p_dst = w;
+  }
+}
+
 enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
 {
   const uint32_t cart_addr = 0xB2000000;
@@ -499,7 +564,7 @@ enum ed_error ed_sd_read_dma(uint32_t lba, uint32_t n_blocks, void *dst)
   if ((uint32_t)dst % 0x10 == 0)
     dma_read(dst, cart_addr, n_blocks * 0x200);
   else
-    memcpy(dst, (void*)cart_addr, n_blocks * 0x200);
+    memcpy_from_cart(dst, (void*)cart_addr, n_blocks * 0x200);
   /* restore interrupts */
   set_int(ie);
   return ED_ERROR_SUCCESS;
@@ -541,7 +606,7 @@ enum ed_error ed_fifo_read(void *dst, uint32_t n_blocks)
   if ((uint32_t)dst % 0x10 == 0)
     dma_read(dst, cart_addr, n_blocks * 0x200);
   else
-    memcpy(dst, (void*)cart_addr, n_blocks * 0x200);
+    memcpy_from_cart(dst, (void*)cart_addr, n_blocks * 0x200);
   /* restore interrupts */
   set_int(ie);
   /* check for dma timeout */
@@ -559,7 +624,7 @@ enum ed_error ed_fifo_write(void *src, uint32_t n_blocks)
   if ((uint32_t)src % 0x8 == 0)
     dma_write(src, cart_addr, n_blocks * 0x200);
   else
-    memcpy((void*)cart_addr, src, n_blocks * 0x200);
+    memcpy_to_cart((void*)cart_addr, src, n_blocks * 0x200);
   /* dma cart to fifo */
   ed_regs.cfg;
   ed_regs.dma_len = n_blocks - 1;

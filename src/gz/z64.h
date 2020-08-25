@@ -1167,7 +1167,7 @@ typedef struct
 
 enum
 {
-  Z64_HIT_CYL_LIST,
+  Z64_HIT_SPH_LIST,
   Z64_HIT_CYL,
   Z64_HIT_TRI_LIST,
   Z64_HIT_QUAD,
@@ -1190,7 +1190,6 @@ typedef struct
   struct
   {
     z64_xyz_t       pos;                      /* 0x0030 */
-    /* also the distance from the center to the bottom and top */
     int16_t         radius;                   /* 0x0036 */
   };
   /* not used by hit tests */
@@ -1198,15 +1197,15 @@ typedef struct
   uint8_t           b_0x3C;                   /* 0x003C */
   char              unk_0x3D[0x0003];         /* 0x003D */
                                               /* 0x0040 */
-} z64_hit_cyl_ent_t;
+} z64_hit_sph_ent_t;
 
 typedef struct
 {
   z64_hit_t         base;                     /* 0x0000 */
   int32_t           n_ent;                    /* 0x0018 */
-  z64_hit_cyl_ent_t*ent_list;                 /* 0x001C */
+  z64_hit_sph_ent_t*ent_list;                 /* 0x001C */
                                               /* 0x0020 */
-} z64_hit_cyl_list_t;
+} z64_hit_sph_list_t;
 
 typedef struct
 {
