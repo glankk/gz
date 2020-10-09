@@ -520,3 +520,34 @@ void menu_get_file(struct menu *menu, enum get_file_mode mode,
   set_name(defname);
   menu_enter(menu, &gf_menu);
 }
+
+int get_next_prefix_number(const char *suffix)
+{
+  DIR *dir = opendir(".");
+  if (!dir) {
+    return 0;
+  }
+
+  int max_num_found = -1;
+  int sl = strlen(suffix);
+
+  /* enumerate entries */
+  struct dirent *dirent;
+  while ((dirent = readdir(dir))) {
+    if (!(dirent->mode & S_IRUSR))
+      continue;
+    int nl = strlen(dirent->d_name);
+    if (nl < sl || !stricmp(&dirent->d_name[nl - sl], suffix))
+      continue;
+    
+    int cur_num;
+    int ret = sscanf(dirent->d_name, "%d", &cur_num);
+    if (ret == EOF || ret < 1)
+      continue;
+    if (cur_num > max_num_found)
+      max_num_found = cur_num;
+  }
+
+  closedir(dir);
+  return max_num_found + 1;
+}

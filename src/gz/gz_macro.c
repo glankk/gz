@@ -443,7 +443,8 @@ static void export_state_proc(struct menu_item *item, void *data)
   if (gz.state_buf[gz.state_slot]) {
     struct state_meta *state = gz.state_buf[gz.state_slot];
     char defname[32];
-    snprintf(defname, sizeof(defname), "000-%s",
+    snprintf(defname, sizeof(defname), "%03d-%s",
+             get_next_prefix_number(".gzs"),
              zu_scene_info[state->scene_idx].scene_name);
     menu_get_file(gz.menu_main, GETFILE_SAVE, defname, ".gzs",
                   do_export_state, NULL);
