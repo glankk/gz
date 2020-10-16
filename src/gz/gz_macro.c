@@ -707,7 +707,7 @@ struct menu *gz_macro_menu(void)
   item = menu_add_intinput(&menu, 12, 4, 10, 6, movie_pos_proc, NULL);
   item->tooltip = "macro frame";
   menu_add_watch(&menu, 19, 4, (uint32_t)&gz.movie_input.size,
-                 WATCH_TYPE_U32);
+                 WATCH_TYPE_U32, 0, 0);
   item = menu_add_button_icon(&menu, 0, 6, t_save, 0, 0xFFFFFF,
                               import_macro_proc, NULL);
   item->tooltip = "import macro";

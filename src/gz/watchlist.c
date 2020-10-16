@@ -68,7 +68,7 @@ static void anchor_member(struct member_data *member_data)
   member_data->anchored = 1;
   menu_item_disable(member_data->positioning);
   struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-  watch->x = 13;
+  watch->x = 15;
   watch->y = 0;
   watch->pxoffset = 0;
   watch->pyoffset = 0;
@@ -156,7 +156,8 @@ static int position_proc(struct menu_item *item,
 static void remove_button_proc(struct menu_item *item, void *data);
 static int add_member(struct item_data *data,
                       uint32_t address, enum watch_type type, int position,
-                      _Bool anchored, int x, int y, _Bool position_set)
+                      _Bool anchored, _Bool pointer, int offset, int x, int y, 
+                      _Bool position_set)
 {
   if (data->members.size >= SETTINGS_WATCHES_MAX ||
       position < 0 || position > data->members.size)
@@ -180,7 +181,8 @@ static int add_member(struct item_data *data,
   member_data->anchor_button->data = member_data;
   member_data->positioning = menu_add_positioning(imenu, 4, 0,
                                                   position_proc, member_data);
-  member_data->userwatch = menu_add_userwatch(imenu, 6, 0, address, type);
+  member_data->userwatch = menu_add_userwatch(imenu, 6, 0, address, type, 
+                                              pointer, offset);
   member_data->anchored = 1;
   member_data->anchor_anim_state = 0;
   member_data->x = x;
@@ -230,14 +232,19 @@ static void add_button_proc(struct menu_item *item, void *data)
   struct item_data *item_data = data;
   uint32_t address = 0x80000000;
   enum watch_type type = WATCH_TYPE_U8;
+  _Bool pointer = 0;
+  int offset = 0;
   if (item_data->members.size > 0) {
     struct member_data *member_data = get_member(item_data,
                                                  item_data->members.size - 1);
     struct menu_item *last_watch = menu_userwatch_watch(member_data->userwatch);
     address = menu_watch_get_address(last_watch);
     type = menu_watch_get_type(last_watch);
+    pointer = menu_watch_get_pointer(last_watch);
+    offset = menu_watch_get_offset(last_watch);
   }
-  add_member(item_data, address, type, item_data->members.size, 1, 0, 0, 0);
+  add_member(item_data, address, type, item_data->members.size, 1, pointer, 
+             offset, 0, 0, 0);
 }
 
 static int import_callback(const char *path, void *data);
@@ -336,10 +343,12 @@ void watchlist_store(struct menu_item *item)
     struct member_data *member_data = get_member(data, i);
     struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
     settings->watch_address[i] = menu_watch_get_address(watch);
+    settings->watch_offset[i] = menu_watch_get_offset(watch);
     settings->watch_x[i] = member_data->x;
     settings->watch_y[i] = member_data->y;
     settings->watch_info[i].type = menu_watch_get_type(watch);
     settings->watch_info[i].anchored = member_data->anchored;
+    settings->watch_info[i].pointer = menu_watch_get_pointer(watch);
     settings->watch_info[i].position_set = member_data->position_set;
   }
 }
@@ -351,7 +360,8 @@ void watchlist_fetch(struct menu_item *item)
     remove_member(data, i);
   for (int i = 0; i < settings->n_watches; ++i)
     add_member(data, settings->watch_address[i], settings->watch_info[i].type,
-               i, settings->watch_info[i].anchored,
+               i, settings->watch_info[i].anchored, 
+               settings->watch_info[i].pointer, settings->watch_offset[i],
                settings->watch_x[i], settings->watch_y[i],
                settings->watch_info[i].position_set);
 }
@@ -460,7 +470,7 @@ static int entry_activate_proc(struct menu_item *item)
   }
   else {
     add_member(watchfile_list_data, address, entry->type,
-               watchfile_list_data->members.size, 1, 0, 0, 0);
+               watchfile_list_data->members.size, 1, 0, 0, 0, 0, 0);
   }
   return 1;
 }

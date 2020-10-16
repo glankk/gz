@@ -276,7 +276,7 @@ struct menu *gz_settings_menu(void)
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
   /* profile select */
   menu_add_static(&menu, 0, 1, "profile", 0xC0C0C0);
-  menu_add_watch(&menu, 18, 1, (uint32_t)&gz.profile, WATCH_TYPE_U8);
+  menu_add_watch(&menu, 18, 1, (uint32_t)&gz.profile, WATCH_TYPE_U8, 0, 0);
   menu_add_button(&menu, 16, 1, "-", profile_dec_proc, NULL);
   menu_add_button(&menu, 20, 1, "+", profile_inc_proc, NULL);
   /* appearance controls */

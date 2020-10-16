@@ -389,18 +389,20 @@ struct menu *gz_scene_menu(void)
   /* teleport controls */
   menu_add_static(&menu, 0, 10, "teleport slot", 0xC0C0C0);
   menu_add_watch(&menu, 18, 10,
-                 (uint32_t)&settings->teleport_slot, WATCH_TYPE_U8);
+                 (uint32_t)&settings->teleport_slot, WATCH_TYPE_U8, 0, 0);
   menu_add_button(&menu, 16, 10, "-", teleport_dec_proc, NULL);
   menu_add_button(&menu, 20, 10, "+", teleport_inc_proc, NULL);
   /* scene info watches */
   menu_add_static(&menu, 0, 11, "current scene", 0xC0C0C0);
   menu_add_watch(&menu, 16, 11,
-                 (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16);
+                 (uint32_t)&z64_game.scene_index, WATCH_TYPE_U16, 0, 0);
   menu_add_static(&menu, 0, 12, "current room", 0xC0C0C0);
   menu_add_watch(&menu, 16, 12,
-                 (uint32_t)&z64_game.room_ctxt.rooms[0].index, WATCH_TYPE_U8);
+                 (uint32_t)&z64_game.room_ctxt.rooms[0].index, WATCH_TYPE_U8,
+                 0, 0);
   menu_add_static(&menu, 0, 13, "no. rooms", 0xC0C0C0);
-  menu_add_watch(&menu, 16, 13, (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8);
+  menu_add_watch(&menu, 16, 13, (uint32_t)&z64_game.n_rooms, WATCH_TYPE_U8, 
+                 0, 0);
 
   /* populate collision menu */
   collision.selector = menu_add_submenu(&collision, 0, 0, NULL, "return");

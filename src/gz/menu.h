@@ -41,6 +41,12 @@ enum menu_switch_reason
   MENU_SWITCH_HIDE,
 };
 
+enum menu_checkbox_type
+{
+  MENU_CHECKBOX_CHECK,
+  MENU_CHECKBOX_POINTER
+};
+
 struct menu_draw_params
 {
   int               x;
@@ -227,18 +233,27 @@ void                menu_prompt(struct menu *menu, const char *prompt,
                                 menu_prompt_callback callback_proc,
                                 void *callback_data);
 struct menu_item   *menu_add_watch(struct menu *menu, int x, int y,
-                                   uint32_t address, enum watch_type type);
+                                   uint32_t address, enum watch_type type,
+                                   _Bool pointer, int offset);
 uint32_t            menu_watch_get_address(struct menu_item *item);
 void                menu_watch_set_address(struct menu_item *item,
                                            uint32_t address);
+int                 menu_watch_get_offset(struct menu_item *item);
+void                menu_watch_set_offset(struct menu_item *item,
+                                          int offset);
+_Bool               menu_watch_get_pointer(struct menu_item *item);
+void                menu_watch_set_pointer(struct menu_item *item,
+                                           _Bool pointer);
 enum watch_type     menu_watch_get_type(struct menu_item *item);
 void                menu_watch_set_type(struct menu_item *item,
                                         enum watch_type type);
 struct menu_item   *menu_add_userwatch(struct menu *menu, int x, int y,
-                                       uint32_t address, enum watch_type type);
+                                       uint32_t address, enum watch_type type,
+                                       _Bool pointer, int offset);
 struct menu_item   *menu_userwatch_address(struct menu_item *item);
 struct menu_item   *menu_userwatch_type(struct menu_item *item);
 struct menu_item   *menu_userwatch_watch(struct menu_item *item);
+struct menu_item   *menu_userwatch_pointer(struct menu_item *item);
 struct menu_item   *menu_add_submenu(struct menu *menu, int x, int y,
                                      struct menu *submenu, const char *name);
 struct menu_item   *menu_add_switch(struct menu *menu, int x, int y,
@@ -270,6 +285,8 @@ struct menu_item   *menu_add_positioning(struct menu *menu, int x, int y,
 struct menu_item   *menu_add_checkbox(struct menu *menu, int x, int y,
                                       menu_generic_callback callback_proc,
                                       void *callback_data);
+void                menu_checkbox_set_type(struct menu_item *item, 
+                                           enum menu_checkbox_type type);
 _Bool               menu_checkbox_get(struct menu_item *item);
 void                menu_checkbox_set(struct menu_item *item, _Bool state);
 
