@@ -21,6 +21,7 @@ static const char *cheat_names[] =
   "no minimap",
   "isg",
   "quick text",
+  "no hud",
 };
 
 static int cheat_proc(struct menu_item *item,
