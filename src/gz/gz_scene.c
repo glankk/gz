@@ -599,10 +599,12 @@ struct menu *gz_scene_menu(void)
   /* populate collision menu */
   collision.selector = menu_add_submenu(&collision, 0, 0, NULL, "return");
   /* collision view controls */
-  menu_add_static(&collision, 0, 1, "show collision", 0xC0C0C0);
-  menu_add_checkbox(&collision, 17, 1, col_view_proc, NULL);
-  menu_add_static(&collision, 2, 2, "mode", 0xC0C0C0);
-  menu_add_option(&collision, 17, 2, "decal\0""surface\0",
+  menu_add_static(&collision, 0, 1, "collision", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 1, col_view_proc, NULL);
+  menu_add_static(&collision, 2, 2, "auto update", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 2, col_view_upd_proc, NULL);
+  menu_add_static(&collision, 2, 3, "mode", 0xC0C0C0);
+  menu_add_option(&collision, 16, 3, "decal\0""surface\0",
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
