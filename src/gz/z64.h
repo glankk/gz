@@ -772,7 +772,7 @@ typedef struct
   int8_t            night_sfx;                /* 0x13E1 */
   char              unk_0x13E2[0x0006];       /* 0x13E2 */
   uint16_t          hud_flag;                 /* 0x13E8 */
-  char              unk_0x13E9[0x11];         /* 0x13E9 */
+  char              unk_0x13EB[0x10];         /* 0x13EB */
   uint16_t          event_inf[4];             /* 0x13FA */
   char              unk_0x1402[0x0001];       /* 0x1402 */
   uint8_t           minimap_index;            /* 0x1403 */
