@@ -132,6 +132,7 @@ static void update_view(_Bool enable, _Bool select)
     }
     else if (gf_mode == GETFILE_LOAD) {
       menu_item_disable(gf_name);
+      menu_item_disable(gf_make_dir);
       menu_item_disable(gf_accept);
       menu_item_disable(gf_clear);
     }
@@ -489,6 +490,7 @@ static void gf_menu_init(void)
     vector_init(&gf_dir_state, sizeof(struct dir_state));
     set_init(&gf_dir_entries, sizeof(struct dir_entry), dir_entry_comp);
     struct dir_state *ds = vector_insert(&gf_dir_state, 0, 1, NULL);
+    struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
     ds->scroll = 0;
     ds->index = 0;
     /* initialize menus */
@@ -498,13 +500,13 @@ static void gf_menu_init(void)
     gf_reset = menu_add_button(menu, 0, 1, "reset disk", reset_proc, NULL);
     gf_location = menu_add_static(menu, 0, 2, NULL, 0xC0C0C0);
     gf_location->text = malloc(32);
-    gf_make_dir = menu_add_button(menu, 0, 3, "dir", mkdir_proc, NULL);
-    gf_name = menu_item_add(menu, 10, 3, NULL, 0xFFFFFF);
+    gf_make_dir = menu_add_button_icon(menu, 0, 3, file_icons, 3, 0xFFFFFF, mkdir_proc, NULL);;
+    gf_name = menu_item_add(menu, 2, 2, NULL, 0xFFFFFF);
     gf_name->text = malloc(32);
     gf_name->text[0] = 0;
     gf_name->activate_proc = name_activate_proc;
     gf_accept = menu_add_button(menu, 0, 4, "accept", accept_proc, NULL);
-    gf_clear = menu_add_button(menu, 10, 4, "clear", clear_proc, NULL);
+    gf_clear = menu_add_button(menu, 7, 4, "clear", clear_proc, NULL);
     for (int i = 0; i < FILE_VIEW_ROWS; ++i) {
       struct menu_item *item = menu_item_add(menu, 2, 5 + i, NULL, 0xFFFFFF);
       item->data = (void*)i;
