@@ -133,6 +133,21 @@ static int col_view_xlu_proc(struct menu_item *item,
   return 0;
 }
 
+static int col_view_wfc_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    settings->bits.col_view_wfc = 1;
+    gz.col_view_state = COLVIEW_RESTART;
+  } else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    settings->bits.col_view_wfc = 0;
+    gz.col_view_state = COLVIEW_RESTART;
+  } else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.col_view_wfc);
+  return 0;
+}
+
 static int col_view_line_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
@@ -412,21 +427,23 @@ struct menu *gz_scene_menu(void)
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 4, "wireframe", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 4, col_view_line_proc, NULL);
-  menu_add_static(&collision, 2, 5, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 5, col_view_shade_proc, NULL);
-  menu_add_static(&collision, 2, 6, "reduced", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 6, col_view_rd_proc, NULL);
-  menu_add_static(&collision, 2, 7, "auto update", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 7, col_view_upd_proc, NULL);
+  menu_add_static(&collision, 2, 4, "walls/floors/ceilings", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 4, col_view_wfc_proc, NULL);
+  menu_add_static(&collision, 2, 5, "wireframe", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 5, col_view_line_proc, NULL);
+  menu_add_static(&collision, 2, 6, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 6, col_view_shade_proc, NULL);
+  menu_add_static(&collision, 2, 7, "reduced", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 7, col_view_rd_proc, NULL);
+  menu_add_static(&collision, 2, 8, "auto update", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 8, col_view_upd_proc, NULL);
   /* hitbox view controls */
-  menu_add_static(&collision, 0, 8, "show hitboxes", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 8, hit_view_proc, NULL);
-  menu_add_static(&collision, 2, 9, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 9, hit_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 10, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 10, hit_view_shade_proc, NULL);
+  menu_add_static(&collision, 0, 9, "show hitboxes", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 9, hit_view_proc, NULL);
+  menu_add_static(&collision, 2, 10, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 10, hit_view_xlu_proc, NULL);
+  menu_add_static(&collision, 2, 11, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 11, hit_view_shade_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");

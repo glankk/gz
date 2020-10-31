@@ -514,7 +514,7 @@ static void line_writer_add(line_writer_t *writer, Vtx *v, int n_vtx)
 static void do_poly_list(poly_writer_t *poly_writer,
                          line_writer_t *line_writer, struct vector *line_set,
                          z64_xyz_t *vtx_list, z64_col_poly_t *poly_list,
-                         z64_col_type_t *type_list, int n_poly, _Bool rd)
+                         z64_col_type_t *type_list, int n_poly, _Bool rd, _Bool wfc)
 {
   for (int i = 0; i < n_poly; ++i) {
     z64_col_poly_t *poly = &poly_list[i];
@@ -527,22 +527,32 @@ static void do_poly_list(poly_writer_t *poly_writer,
     if (poly_writer) {
       uint32_t color;
       _Bool skip = 0;
-      if (type->flags_2.hookshot)
-        color = 0x8080FFFF;
-      else if (type->flags_1.interaction > 0x01)
-        color = 0xC000C0FF;
-      else if (type->flags_1.special == 0x0C)
-        color = 0xFF0000FF;
-      else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
-        color = 0x00FF00FF;
-      else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
-        color = 0xC0FFC0FF;
-      else if (type->flags_2.terrain == 0x01)
-        color = 0xFFFF80FF;
-      else if (rd)
-        skip = 1;
-      else
-        color = 0xFFFFFFFF;
+      if (wfc) {
+        float normal_y = poly->norm.y;
+        if (normal_y < -0.8f)
+          color = 0xFF0000FF;
+        else if (normal_y > 0.5f)
+          color = 0x0000FFFF;
+        else
+          color = 0x00FF00FF;
+      } else {
+        if (type->flags_2.hookshot)
+          color = 0x8080FFFF;
+        else if (type->flags_1.interaction > 0x01)
+          color = 0xC000C0FF;
+        else if (type->flags_1.special == 0x0C)
+          color = 0xFF0000FF;
+        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+          color = 0x00FF00FF;
+        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+          color = 0xC0FFC0FF;
+        else if (type->flags_2.terrain == 0x01)
+          color = 0xFFFF80FF;
+        else if (rd)
+          skip = 1;
+        else
+          color = 0xFFFFFFFF;
+      }
       if (!skip) {
         Vtx v[3] =
         {
@@ -607,7 +617,7 @@ static void do_poly_list(poly_writer_t *poly_writer,
 static void do_dyn_list(poly_writer_t *poly_writer,
                         line_writer_t *line_writer,
                         z64_col_hdr_t *col_hdr,
-                        uint16_t list_idx, _Bool rd)
+                        uint16_t list_idx, _Bool rd, _Bool wfc)
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
@@ -616,7 +626,7 @@ static void do_dyn_list(poly_writer_t *poly_writer,
 
     do_poly_list(poly_writer, line_writer, NULL,
                  col_ctxt->dyn_vtx, &col_ctxt->dyn_poly[list->poly_idx],
-                 col_hdr->type, 1, rd);
+                 col_hdr->type, 1, rd, wfc);
 
     list_idx = list->list_next;
   }
@@ -624,7 +634,7 @@ static void do_dyn_list(poly_writer_t *poly_writer,
 
 static void do_dyn_col(poly_writer_t *poly_writer,
                        line_writer_t *line_writer,
-                       _Bool rd)
+                       _Bool rd, _Bool wfc)
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
@@ -633,11 +643,11 @@ static void do_dyn_col(poly_writer_t *poly_writer,
       z64_dyn_col_t *dyn_col = &col_ctxt->dyn_col[i];
 
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->ceil_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->ceil_list_idx, rd, wfc);
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->wall_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->wall_list_idx, rd, wfc);
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->floor_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->floor_list_idx, rd, wfc);
     }
 }
 
@@ -827,7 +837,7 @@ void gz_col_view(void)
     /* generate static display lists */
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
-                 col_view_rd);
+                 col_view_rd, settings->bits.col_view_wfc);
 
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
     gSPEndDisplayList(stc_poly_p++);
@@ -872,7 +882,7 @@ void gz_col_view(void)
       line_writer_init(p_line_writer, dyn_line_p, dyn_line_d);
     }
 
-    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd);
+    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd, settings->bits.col_view_wfc);
 
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
     gSPEndDisplayList(dyn_poly_p++);
