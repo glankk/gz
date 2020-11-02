@@ -468,8 +468,8 @@ static int mkdir_osk_callback_proc(const char *str, void *data)
 {
     char path_buf[256];
     getcwd(path_buf, sizeof(path_buf));
-    strncat(path_buf, "/", sizeof(path_buf));
-    strncat(path_buf, str, sizeof(path_buf));
+    strncat(path_buf, "/", sizeof(path_buf) - 1);
+    strncat(path_buf, str, sizeof(path_buf) - 1);
     mkdir(path_buf, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     update_view(update_list(), 1);
     return 0;
@@ -478,7 +478,6 @@ static int mkdir_osk_callback_proc(const char *str, void *data)
 static void mkdir_proc(struct menu_item *item, void *data)
 {
     menu_get_osk_string(item->owner, NULL, mkdir_osk_callback_proc, NULL);
-    return 1;
 }
 
 static void gf_menu_init(void)
