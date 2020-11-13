@@ -473,8 +473,9 @@ static int mkdir_osk_callback_proc(const char *str, void *data)
     return 1;
   }
   else {
+    menu_return(&gf_menu);
     update_view(update_list(), 1);
-    return 0;
+    return 1;
   }
 }
 
