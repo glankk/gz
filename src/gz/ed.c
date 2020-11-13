@@ -449,7 +449,8 @@ enum ed_error ed_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
     e = ed_sd_write_r(lba, n_blocks, p, &n_write);
     lba += n_write;
     n_blocks -= n_write;
-    p += n_write * 0x200;
+    if (p)
+      p += n_write * 0x200;
     if (e == ED_ERROR_SD_WR_CRC)
       ++i;
     else if (e)
