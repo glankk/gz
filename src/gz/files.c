@@ -28,7 +28,7 @@ static struct menu_item    *gf_location;
 static struct menu_item    *gf_name;
 static struct menu_item    *gf_accept;
 static struct menu_item    *gf_clear;
-static struct menu_item    *gf_make_dir;
+static struct menu_item    *gf_mkdir;
 static struct menu_item    *gf_scroll_up;
 static struct menu_item    *gf_scroll_down;
 static struct menu_item    *gf_files[FILE_VIEW_ROWS];
@@ -124,7 +124,7 @@ static void update_view(_Bool enable, _Bool select)
     int y = 3;
     if (gf_mode == GETFILE_SAVE) {
       menu_item_enable(gf_name);
-      menu_item_enable(gf_make_dir);
+      menu_item_enable(gf_mkdir);
       menu_item_enable(gf_accept);
       menu_item_enable(gf_clear);
       gf_name->y = y++;
@@ -132,7 +132,7 @@ static void update_view(_Bool enable, _Bool select)
     }
     else if (gf_mode == GETFILE_LOAD) {
       menu_item_disable(gf_name);
-      menu_item_disable(gf_make_dir);
+      menu_item_disable(gf_mkdir);
       menu_item_disable(gf_accept);
       menu_item_disable(gf_clear);
     }
@@ -165,7 +165,7 @@ static void update_view(_Bool enable, _Bool select)
   }
   else {
     menu_item_disable(gf_name);
-    menu_item_disable(gf_make_dir);
+    menu_item_disable(gf_mkdir);
     menu_item_disable(gf_accept);
     menu_item_disable(gf_clear);
     menu_item_disable(gf_scroll_up);
@@ -466,18 +466,21 @@ static void scroll_down_proc(struct menu_item *item, void *data)
 
 static int mkdir_osk_callback_proc(const char *str, void *data)
 {
-    char path_buf[256];
-    getcwd(path_buf, sizeof(path_buf));
-    strncat(path_buf, "/", sizeof(path_buf) - 1);
-    strncat(path_buf, str, sizeof(path_buf) - 1);
-    mkdir(path_buf, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (*str == '\0')
+    return 0;
+  else if (mkdir(str, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
+    menu_prompt(&gf_menu, strerror(errno), "return\0", 0, NULL, NULL);
+    return 1;
+  }
+  else {
     update_view(update_list(), 1);
     return 0;
+  }
 }
 
 static void mkdir_proc(struct menu_item *item, void *data)
 {
-    menu_get_osk_string(item->owner, NULL, mkdir_osk_callback_proc, NULL);
+  menu_get_osk_string(item->owner, NULL, mkdir_osk_callback_proc, NULL);
 }
 
 static void gf_menu_init(void)
@@ -499,7 +502,8 @@ static void gf_menu_init(void)
     gf_reset = menu_add_button(menu, 0, 1, "reset disk", reset_proc, NULL);
     gf_location = menu_add_static(menu, 0, 2, NULL, 0xC0C0C0);
     gf_location->text = malloc(32);
-    gf_make_dir = menu_add_button_icon(menu, 0, 3, file_icons, 3, 0xFFFFFF, mkdir_proc, NULL);;
+    gf_mkdir = menu_add_button_icon(menu, 0, 3, file_icons, 3, 0xFFFFFF,
+                                    mkdir_proc, NULL);
     gf_name = menu_item_add(menu, 2, 2, NULL, 0xFFFFFF);
     gf_name->text = malloc(32);
     gf_name->text[0] = 0;
