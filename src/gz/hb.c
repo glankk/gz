@@ -48,15 +48,24 @@ int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
 {
   if (hb_check() == -1)
     return -1;
-  hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(src);
-  hb_regs.sd_n_blocks = n_blocks;
-  hb_regs.sd_write_lba = lba;
-  while (hb_regs.status & HB_STATUS_SD_BUSY)
-    ;
-  if (hb_regs.status & HB_STATUS_ERROR)
-    return -1;
-  else
+  if (src) {
+    hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(src);
+    hb_regs.sd_n_blocks = n_blocks;
+    hb_regs.sd_write_lba = lba;
+    while (hb_regs.status & HB_STATUS_SD_BUSY)
+      ;
+    if (hb_regs.status & HB_STATUS_ERROR)
+      return -1;
+    else
+      return 0;
+  }
+  else {
+    char data[0x200] = {0};
+    while (n_blocks--)
+      if (hb_sd_write(lba++, 1, data))
+        return -1;
     return 0;
+  }
 }
 
 int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)

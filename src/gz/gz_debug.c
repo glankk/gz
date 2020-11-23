@@ -429,7 +429,7 @@ static void edit_actor_proc(struct menu_item *item, void *data)
   }
 }
 
-static void delete_actor_proc(struct menu_item *item, void *data)
+static void kill_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *adi = data;
   if (adi->index < z64_game.actor_list[adi->type].length) {
@@ -573,7 +573,7 @@ struct menu *gz_debug_menu(void)
   item->text = malloc(9);
   item->text[0] = 0;
   adi.edit_item = item;
-  menu_add_button(&actors, 0, 5, "delete", &delete_actor_proc, &adi);
+  menu_add_button(&actors, 0, 5, "kill", &kill_actor_proc, &adi);
   menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &adi);
   /* actor spawn controls */
   static struct actor_spawn_info asi;
