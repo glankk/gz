@@ -55,6 +55,7 @@ enum cheats
   CHEAT_NOMAP,
   CHEAT_ISG,
   CHEAT_QUICKTEXT,
+  CHEAT_NOHUD,
   CHEAT_MAX,
 };
 
