@@ -454,6 +454,36 @@ static void goto_actor_proc(struct menu_item *item, void *data)
   }
 }
 
+static void toggle_cullzone_proc(struct menu_item *item, void *data)
+{
+  if(gz.cull_view_state != CULLVIEW_INACTIVE && gz.cull_view_state != CULLVIEW_ACTIVE)
+    return;
+
+  struct actor_debug_info *adi = data;
+  if (adi->index >= z64_game.actor_list[adi->type].length)
+    return;
+
+  z64_actor_t *actor = z64_game.actor_list[adi->type].first;
+  for (int i = 0; i < adi->index; ++i)
+    actor = actor->next;
+  
+  if (gz.cull_view_state == CULLVIEW_INACTIVE)
+  {
+	gz.cull_view_state = CULLVIEW_START;
+	gz.selected_actor.ptr = actor;
+    gz.selected_actor.type = actor->actor_type;
+    gz.selected_actor.id = actor->actor_id;
+  }
+  else if (gz.selected_actor.ptr == actor && gz.selected_actor.id == actor->actor_id)
+	gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+  else
+  {
+	gz.selected_actor.ptr = actor;
+    gz.selected_actor.type = actor->actor_type;
+    gz.selected_actor.id = actor->actor_id;
+  }
+}
+
 static void spawn_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_spawn_info *asi = data;
@@ -575,6 +605,7 @@ struct menu *gz_debug_menu(void)
   adi.edit_item = item;
   menu_add_button(&actors, 0, 5, "kill", &kill_actor_proc, &adi);
   menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &adi);
+  menu_add_button(&actors, 17, 5, "cull zone", &toggle_cullzone_proc, &adi);
   /* actor spawn controls */
   static struct actor_spawn_info asi;
   menu_add_static(&actors, 0, 7, "actor id", 0xC0C0C0);
