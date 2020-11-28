@@ -1052,7 +1052,7 @@ struct z64_ctxt
   uint32_t          unk_0xA0;                 /* 0x00A0 */
   char              unk_0xA4[0x18];           /* 0x00A4 */
   z64_view_t        view;                     /* 0x00B8 */
-                                              /* 0x00A4 */
+                                              /* 0x01E0 */
 };
 
 typedef struct z64_part_s z64_part_t;
