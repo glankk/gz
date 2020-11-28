@@ -1050,6 +1050,8 @@ struct z64_ctxt
   int32_t           state_continue;           /* 0x0098 */
   int32_t           state_frames;             /* 0x009C */
   uint32_t          unk_0xA0;                 /* 0x00A0 */
+  char              unk_0xA4[0x18];           /* 0x00A4 */
+  z64_view_t        view;                     /* 0x00B8 */
                                               /* 0x00A4 */
 };
 
@@ -2016,6 +2018,36 @@ typedef struct
   uint32_t          lo;                       /* 0x0004 */
                                               /* 0x0008 */
 } z64_afx_cmd_t;
+
+typedef struct {
+    /* string literal "VIEW" / 0x56494557 */
+    uint32_t        magic;                    /* 0x0000 */
+    /* pointer to gfx ctx */
+    z64_gfx_t*      gfx;                      /* 0x0004 */
+    /* view properties */
+    float           viewport[4];              /* 0x0008 */    
+    float           fovy;                     /* 0x0018 */
+    float           zNear;                    /* 0x001C */       
+    float           zFar;                     /* 0x0020 */
+    float           scale;                    /* 0x0024 */ 
+    z64_xyzf_t      eye;                      /* 0x0028 */   
+    z64_xyzf_t      at;                       /* 0x0034 */           
+    z64_xyzf_t      up;                       /* 0x0040 */       
+    uint8_t         vp[16];                   /* 0x0050 */
+    Mtx             projection;               /* 0x0060 */  
+    Mtx             viewing;                  /* 0x00A0 */   
+    Mtx*            projectionPtr;            /* 0x00E0 */   
+    Mtx*            viewingPtr;               /* 0x00E4 */
+    /* unknown */
+    z64_xyzf_t      unk_E8;                   /* 0x00E8 */ 
+    z64_xyzf_t      unk_F4;                   /* 0x00F4 */   
+    float           unk_100;                  /* 0x0100 */      
+    z64_xyzf_t      unk_104;                  /* 0x0104 */    
+    z64_xyzf_t      unk_110;                  /* 0x0110 */      
+    uint16_t        normal;                   /* 0x011C */
+    uint32_t        flags;                    /* 0x0120 */
+    uint32_t        unk_124;                  /* 0x0124 */     
+} z64_view_t; // size = 0x128
 
 /* file indices */
 #if Z64_VERSION == Z64_OOT10 || \
