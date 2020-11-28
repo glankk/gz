@@ -1057,8 +1057,9 @@ typedef struct {
     z64_xyzf_t      unk_110;                  /* 0x0110 */      
     uint16_t        normal;                   /* 0x011C */
     uint32_t        flags;                    /* 0x0120 */
-    uint32_t        unk_124;                  /* 0x0124 */     
-} z64_view_t; // size = 0x128
+    uint32_t        unk_124;                  /* 0x0124 */  
+                                              /* 0x0128 */   
+} z64_view_t;
 
 /* state context base */
 typedef struct z64_ctxt z64_ctxt_t;
@@ -1080,9 +1081,7 @@ struct z64_ctxt
   int32_t           state_continue;           /* 0x0098 */
   int32_t           state_frames;             /* 0x009C */
   uint32_t          unk_0xA0;                 /* 0x00A0 */
-  char              unk_0xA4[0x18];           /* 0x00A4 */
-  z64_view_t        view;                     /* 0x00B8 */
-                                              /* 0x01E0 */
+                                              /* 0x00A4 */
 };
 
 typedef struct z64_part_s z64_part_t;
@@ -1575,16 +1574,9 @@ typedef struct
   uint16_t          scene_index;              /* 0x000A4 */
   char              unk_0xA6[0x000A];         /* 0x000A6 */
   void             *scene_file;               /* 0x000B0 */
-  char              unk_0xB4[0x000C];         /* 0x000B4 */
-  uint32_t          screen_top;               /* 0x000C0 */
-  uint32_t          screen_bottom;            /* 0x000C4 */
-  uint32_t          screen_left;              /* 0x000C8 */
-  uint32_t          screen_right;             /* 0x000CC */
-  float             camera_distance;          /* 0x000D0 */
-  float             fog_distance;             /* 0x000D4 */
-  float             z_distance;               /* 0x000D8 */
-  float             unk_0xDC;                 /* 0x000DC */
-  char              unk_0xE0[0x0190];         /* 0x000E0 */
+  char              unk_0xB4[0x0004];         /* 0x000B4 */
+  z64_view_t        view;                     /* 0x000B8 */
+  char              unk_0xE0[0x0090];         /* 0x001E0 */
   z64_actor_t      *camera_focus;             /* 0x00270 */
   char              unk_0x274[0x00AE];        /* 0x00274 */
   uint16_t          camera_mode;              /* 0x00322 */
