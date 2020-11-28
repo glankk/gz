@@ -129,3 +129,16 @@ float angle_dif(float a, float b)
     d -= M_PI * 2.f;
   return d;
 }
+
+z64_xyzf_t *vec3f_MtxF_mul(z64_xyzf_t *r, z64_xyzf_t *a, MtxF *b)
+{
+  /* ignore w element of output and assume a.w = 1*/
+  z64_xyzf_t v =
+  {
+    a->x * b->xx + a->y * b->yx + a->z * b->zx + b->wx,
+    a->x * b->xy + a->y * b->yy + a->z * b->zy + b->wy,
+    a->x * b->xz + a->y * b->yz + a->z * b->zz + b->wz,
+  };
+  *r = v;
+  return r;
+}

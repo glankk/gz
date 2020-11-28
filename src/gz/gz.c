@@ -365,6 +365,7 @@ static void main_hook(void)
   /* execute and draw collision view */
   gz_col_view();
   gz_hit_view();
+  gz_cull_view();
 
   /* execute free camera in view mode */
   gz_free_view();

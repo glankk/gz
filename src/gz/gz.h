@@ -267,6 +267,7 @@ void          gz_vcont_get(int port, z64_input_t *input);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);
+void          gz_cull_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);

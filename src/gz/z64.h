@@ -965,11 +965,11 @@ struct z64_actor_s
   /* struct end */
   z64_xyzf_t        unk_0xCC;                 /* 0x00CC */
   z64_xyzf_t        unk_0xD8;                 /* 0x00D8 */
-  z64_xyzf_t        unk_0xE4;                 /* 0x00E4 */
-  float             unk_0xF0;                 /* 0x00F0 */
-  float             unk_0xF4;                 /* 0x00F4 */
-  float             unk_0xF8;                 /* 0x00F8 */
-  float             unk_0xFC;                 /* 0x00FC */
+  z64_xyzf_t        projectedPos;             /* 0x00E4 */
+  float             projectedW;               /* 0x00F0 */
+  float             uncullZoneForward;        /* 0x00F4 */
+  float             uncullZoneScale;          /* 0x00F8 */
+  float             uncullZoneDownward;       /* 0x00FC */
   z64_xyzf_t        pos_4;                    /* 0x0100 */
   uint16_t          unk_0x10C;                /* 0x010C */
   uint16_t          text_id;                  /* 0x010E */
