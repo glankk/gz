@@ -1164,7 +1164,7 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
 
 void gz_cull_view(void)
 {
-  const int cull_gfx_cap = 0x800;
+  const int cull_gfx_cap = 0x3B0;
   static Gfx *cull_gfx_buf[2];
   static int cull_gfx_idx = 0;
   z64_xyzf_t this_A[4];
