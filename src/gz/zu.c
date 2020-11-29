@@ -970,31 +970,3 @@ int zu_adjust_joystick(int v)
       return v - 7;
   }
 }
-
-void zu_inverseLookAtF(MtxF *mf,
-                       float xEye, float yEye, float zEye,
-                       float xAt, float yAt, float zAt,
-                       float xUp, float yUp, float zUp)
-{
-  /* get the usual matrix */
-  guLookAtF(mf, xEye, yEye, zEye, xAt, yAt, zAt, xUp, yUp, zUp);
-
-  /* invert rotational part */
-  float temp;
-  temp = mf->xy;
-  mf->xy = mf->yx;
-  mf->yx = temp;
-
-  temp = mf->xz;
-  mf->xz = mf->zx;
-  mf->zx = temp;
-
-  temp = mf->yz;
-  mf->yz = mf->zy;
-  mf->zy = temp;
-
-  /* inverted translation part is just the eye vector */
-  mf->wx = xEye;
-  mf->wy = yEye;
-  mf->wz = zEye;
-}

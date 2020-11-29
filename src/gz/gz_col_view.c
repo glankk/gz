@@ -1039,35 +1039,62 @@ void gz_hit_view(void)
   }
 }
 
+static void inverseLookAtF(MtxF *mf,
+                           float xEye, float yEye, float zEye,
+                           float xAt, float yAt, float zAt,
+                           float xUp, float yUp, float zUp)
+{
+  /* get the usual matrix */
+  guLookAtF(mf, xEye, yEye, zEye, xAt, yAt, zAt, xUp, yUp, zUp);
+
+  /* invert rotational part */
+  float temp;
+  temp = mf->xy;
+  mf->xy = mf->yx;
+  mf->yx = temp;
+
+  temp = mf->xz;
+  mf->xz = mf->zx;
+  mf->zx = temp;
+
+  temp = mf->yz;
+  mf->yz = mf->zy;
+  mf->zy = temp;
+
+  /* inverted translation part is just the eye vector */
+  mf->wx = xEye;
+  mf->wy = yEye;
+  mf->wz = zEye;
+}
+
 static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
 {
-  MtxF mf_persp;
-  MtxF mf_inv_look;
-
-  z64_xyzf_t A[4];
-  z64_xyzf_t B[4];
-  z64_xyzf_t C[4];
-
   if (gz.selected_actor.ptr == NULL)
     return;
+
+  z64_view_t *view = &z64_game.view;
 
   /* wiivc cull logic: */
   float scale;
   if (settings->bits.wiivc_cam)
     scale = 1.f;
   else
-    scale = z64_game.view.scale;
+    scale = view->scale;
 
   /* get perspective and inverse lookAt matrices */
-  guPerspectiveF(&mf_persp, NULL, z64_game.view.fovy * M_PI / 180.f, 4.0f/3.0f,
-                 z64_game.view.zNear, z64_game.view.zFar, scale);
-  z64_xyzf_t *eye = &z64_game.view.eye;
-  z64_xyzf_t *at = &z64_game.view.at;
-  z64_xyzf_t *up = &z64_game.view.up;
-  zu_inverseLookAtF(&mf_inv_look,
-                    eye->x, eye->y, eye->z,
-                    at->x, at->y, at->z,
-                    up->x, up->y, up->z);
+  MtxF mf_persp;
+  guPerspectiveF(&mf_persp, NULL, view->fovy * M_PI / 180.f, 4.f / 3.f,
+                 view->zNear, view->zFar, scale);
+
+  MtxF mf_inv_look;
+  inverseLookAtF(&mf_inv_look,
+                 view->eye.x, view->eye->y, view->eye.z,
+                 view->at.x, view->at.y. view->at.z,
+                 view->up.x, view->up.y, view->up.z);
+
+  float p1 = gz.selected_actor.ptr->uncullZoneForward;
+  float p2 = gz.selected_actor.ptr->uncullZoneScale;
+  float p3 = gz.selected_actor.ptr->uncullZoneDownward;
 
   float x1;
   float x2;
@@ -1075,16 +1102,16 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
   float y2;
   float z;
 
-  float p1 = gz.selected_actor.ptr->uncullZoneForward;
-  float p2 = gz.selected_actor.ptr->uncullZoneScale;
-  float p3 = gz.selected_actor.ptr->uncullZoneDownward;
-
   /* Front face vertices */
   z = (p1 + p2 - mf_persp.wz) / mf_persp.zz;
   y1 = (-z * mf_persp.zw - p3) / mf_persp.yy;
   y2 = (z * mf_persp.zw + p2) / mf_persp.yy;
   x1 = (z * mf_persp.zw + p2) / mf_persp.xx;
   x2 = -x1;
+
+  z64_xyzf_t A[4];
+  z64_xyzf_t B[4];
+  z64_xyzf_t C[4];
 
   A[0].x = x1;
   A[0].y = y1;
