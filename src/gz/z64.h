@@ -1044,7 +1044,7 @@ typedef struct {
     z64_xyzf_t      eye;                      /* 0x0028 */
     z64_xyzf_t      at;                       /* 0x0034 */
     z64_xyzf_t      up;                       /* 0x0040 */
-    uint8_t         vp[16];                   /* 0x0050 */
+    Vp              vp;                       /* 0x0050 */
     Mtx             projection;               /* 0x0060 */
     Mtx             viewing;                  /* 0x00A0 */
     Mtx            *projectionPtr;            /* 0x00E0 */
