@@ -153,8 +153,6 @@ void zu_inverseLookAtF(MtxF *mf,
                        float xAt, float yAt, float zAt,
                        float xUp, float yUp, float zUp);
 
-void zu_MtxToMtxF(Mtx* src, MtxF* dest);
-
 extern struct zu_scene_info zu_scene_info[];
 
 #endif
