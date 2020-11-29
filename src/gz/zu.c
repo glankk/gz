@@ -972,54 +972,52 @@ int zu_adjust_joystick(int v)
 }
 
 void zu_inverseLookAtF(MtxF *mf,
-               float xEye, float yEye, float zEye,
-               float xAt, float yAt, float zAt,
-               float xUp, float yUp, float zUp)
+                       float xEye, float yEye, float zEye,
+                       float xAt, float yAt, float zAt,
+                       float xUp, float yUp, float zUp)
 {
-  /* get the usual matrix*/
-  guLookAtF(mf,
-               xEye, yEye, zEye,
-               xAt, yAt, zAt,
-               xUp, yUp, zUp);
-  
-  /* invert rotational part*/
+  /* get the usual matrix */
+  guLookAtF(mf, xEye, yEye, zEye, xAt, yAt, zAt, xUp, yUp, zUp);
+
+  /* invert rotational part */
   float temp;
   temp = mf->xy;
   mf->xy = mf->yx;
   mf->yx = temp;
-  
+
   temp = mf->xz;
   mf->xz = mf->zx;
   mf->zx = temp;
-  
+
   temp = mf->yz;
   mf->yz = mf->zy;
   mf->zy = temp;
-  
+
   /* inverted translation part is just the eye vector */
   mf->wx = xEye;
   mf->wy = yEye;
   mf->wz = zEye;
 }
 
-void zu_MtxToMtxF(Mtx* src, MtxF* dest) {
-    uint16_t* m1 = (uint16_t*)&src->m[0][0];
-    uint16_t* m2 = (uint16_t*)&src->m[2][0];
+void zu_MtxToMtxF(Mtx *src, MtxF *dest)
+{
+    uint16_t *m1 = (uint16_t *)&src->m[0][0];
+    uint16_t *m2 = (uint16_t *)&src->m[2][0];
 
-    dest->xx = ((m1[0] << 0x10) | m2[0]) * (1 / 65536.0f);
-    dest->xy = ((m1[1] << 0x10) | m2[1]) * (1 / 65536.0f);
-    dest->xz = ((m1[2] << 0x10) | m2[2]) * (1 / 65536.0f);
-    dest->xw = ((m1[3] << 0x10) | m2[3]) * (1 / 65536.0f);
-    dest->yx = ((m1[4] << 0x10) | m2[4]) * (1 / 65536.0f);
-    dest->yy = ((m1[5] << 0x10) | m2[5]) * (1 / 65536.0f);
-    dest->yz = ((m1[6] << 0x10) | m2[6]) * (1 / 65536.0f);
-    dest->yw = ((m1[7] << 0x10) | m2[7]) * (1 / 65536.0f);
-    dest->zx = ((m1[8] << 0x10) | m2[8]) * (1 / 65536.0f);
-    dest->zy = ((m1[9] << 0x10) | m2[9]) * (1 / 65536.0f);
-    dest->zz = ((m1[10] << 0x10) | m2[10]) * (1 / 65536.0f);
-    dest->zw = ((m1[11] << 0x10) | m2[11]) * (1 / 65536.0f);
-    dest->wx = ((m1[12] << 0x10) | m2[12]) * (1 / 65536.0f);
-    dest->wy = ((m1[13] << 0x10) | m2[13]) * (1 / 65536.0f);
-    dest->wz = ((m1[14] << 0x10) | m2[14]) * (1 / 65536.0f);
-    dest->ww = ((m1[15] << 0x10) | m2[15]) * (1 / 65536.0f);
+    dest->xx = ((m1[0] << 16) | m2[0]) * (1.f / 0x10000);
+    dest->xy = ((m1[1] << 16) | m2[1]) * (1.f / 0x10000);
+    dest->xz = ((m1[2] << 16) | m2[2]) * (1.f / 0x10000);
+    dest->xw = ((m1[3] << 16) | m2[3]) * (1.f / 0x10000);
+    dest->yx = ((m1[4] << 16) | m2[4]) * (1.f / 0x10000);
+    dest->yy = ((m1[5] << 16) | m2[5]) * (1.f / 0x10000);
+    dest->yz = ((m1[6] << 16) | m2[6]) * (1.f / 0x10000);
+    dest->yw = ((m1[7] << 16) | m2[7]) * (1.f / 0x10000);
+    dest->zx = ((m1[8] << 16) | m2[8]) * (1.f / 0x10000);
+    dest->zy = ((m1[9] << 16) | m2[9]) * (1.f / 0x10000);
+    dest->zz = ((m1[10] << 16) | m2[10]) * (1.f / 0x10000);
+    dest->zw = ((m1[11] << 16) | m2[11]) * (1.f / 0x10000);
+    dest->wx = ((m1[12] << 16) | m2[12]) * (1.f / 0x10000);
+    dest->wy = ((m1[13] << 16) | m2[13]) * (1.f / 0x10000);
+    dest->wz = ((m1[14] << 16) | m2[14]) * (1.f / 0x10000);
+    dest->ww = ((m1[15] << 16) | m2[15]) * (1.f / 0x10000);
 }
