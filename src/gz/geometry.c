@@ -139,6 +139,7 @@ z64_xyzf_t *vec3f_MtxF_mul(z64_xyzf_t *r, float *w, z64_xyzf_t *a, MtxF *b)
     a->x * b->xy + a->y * b->yy + a->z * b->zy + b->wy,
     a->x * b->xz + a->y * b->yz + a->z * b->zz + b->wz,
   };
-  *w = a->x * b->xw + a->y * b->yw + a->z * b->zw + b->ww
+  *w = a->x * b->xw + a->y * b->yw + a->z * b->zw + b->ww;
   *r = v;
+  return r;
 }
