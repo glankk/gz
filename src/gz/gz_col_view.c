@@ -1141,20 +1141,21 @@ static void actor_cull_vertex(z64_xyzf_t* Av, z64_xyzf_t* Bv, z64_xyzf_t* Cv)
   C[3].z = z;
   
   // Apply inverse lookAt to move shape to camera:
-  vec3f_MtxF_mul(&Av[0], &A[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[1], &A[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[2], &A[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[3], &A[3], &mf_inv_look);
+  float w;
+  vec3f_MtxF_mul(&Av[0], &w, &A[0], &mf_inv_look);
+  vec3f_MtxF_mul(&Av[1], &w, &A[1], &mf_inv_look);
+  vec3f_MtxF_mul(&Av[2], &w, &A[2], &mf_inv_look);
+  vec3f_MtxF_mul(&Av[3], &w, &A[3], &mf_inv_look);
   
-  vec3f_MtxF_mul(&Bv[0], &B[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[1], &B[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[2], &B[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[3], &B[3], &mf_inv_look);
+  vec3f_MtxF_mul(&Bv[0], &w, &B[0], &mf_inv_look);
+  vec3f_MtxF_mul(&Bv[1], &w, &B[1], &mf_inv_look);
+  vec3f_MtxF_mul(&Bv[2], &w, &B[2], &mf_inv_look);
+  vec3f_MtxF_mul(&Bv[3], &w, &B[3], &mf_inv_look);
   
-  vec3f_MtxF_mul(&Cv[0], &C[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[1], &C[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[2], &C[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[3], &C[3], &mf_inv_look);
+  vec3f_MtxF_mul(&Cv[0], &w, &C[0], &mf_inv_look);
+  vec3f_MtxF_mul(&Cv[1], &w, &C[1], &mf_inv_look);
+  vec3f_MtxF_mul(&Cv[2], &w, &C[2], &mf_inv_look);
+  vec3f_MtxF_mul(&Cv[3], &w, &C[3], &mf_inv_look);
 }
 
 void gz_cull_view(void)
