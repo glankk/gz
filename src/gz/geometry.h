@@ -17,6 +17,6 @@ z64_xyzf_t *vec3f_norm    (z64_xyzf_t *r, z64_xyzf_t *a);
 z64_xyzf_t *vec3f_proj    (z64_xyzf_t *r, z64_xyzf_t *a, z64_xyzf_t *b);
 z64_xyzf_t *vec3f_rej     (z64_xyzf_t *r, z64_xyzf_t *a, z64_xyzf_t *b);
 float       angle_dif     (float a, float b);
-z64_xyzf_t *vec3f_MtxF_mul(z64_xyzf_t *r, z64_xyzf_t *a, MtxF *b);
+z64_xyzf_t *vec3f_MtxF_mul(z64_xyzf_t *r, float *w, z64_xyzf_t *a, MtxF *b);
 
 #endif
