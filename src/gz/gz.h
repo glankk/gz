@@ -45,7 +45,6 @@ enum cull_view_state
 {
   CULLVIEW_INACTIVE,
   CULLVIEW_START,
-  CULLVIEW_BEGIN_ACTIVE,
   CULLVIEW_ACTIVE,
   CULLVIEW_BEGIN_STOP,
   CULLVIEW_STOP,
@@ -138,9 +137,6 @@ struct selected_actor
   z64_actor_t          *ptr;
   int32_t               id;
   int32_t               type;
-  z64_xyzf_t            last_A[4];
-  z64_xyzf_t            last_B[4];
-  z64_xyzf_t            last_C[4];
 };
 
 struct gz

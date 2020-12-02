@@ -1039,62 +1039,19 @@ void gz_hit_view(void)
   }
 }
 
-static void inverseLookAtF(MtxF *mf,
-                           float xEye, float yEye, float zEye,
-                           float xAt, float yAt, float zAt,
-                           float xUp, float yUp, float zUp)
-{
-  /* get the usual matrix */
-  guLookAtF(mf, xEye, yEye, zEye, xAt, yAt, zAt, xUp, yUp, zUp);
-
-  /* invert rotational part */
-  float temp;
-  temp = mf->xy;
-  mf->xy = mf->yx;
-  mf->yx = temp;
-
-  temp = mf->xz;
-  mf->xz = mf->zx;
-  mf->zx = temp;
-
-  temp = mf->yz;
-  mf->yz = mf->zy;
-  mf->zy = temp;
-
-  /* inverted translation part is just the eye vector */
-  mf->wx = xEye;
-  mf->wy = yEye;
-  mf->wz = zEye;
-}
-
 static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
 {
-  if (gz.selected_actor.ptr == NULL)
-    return;
+  MtxF mf;
 
-  z64_view_t *view = &z64_game.view;
+  z64_xyzf_t A[4];
+  float Aw;
+  z64_xyzf_t B[4];
+  float Bw;
+  z64_xyzf_t C[4];
+  float Cw;
 
-  /* wiivc cull logic: */
-  float scale;
-  if (settings->bits.wiivc_cam)
-    scale = 1.f;
-  else
-    scale = view->scale;
-
-  /* get perspective and inverse lookAt matrices */
-  MtxF mf_persp;
-  guPerspectiveF(&mf_persp, NULL, view->fovy * M_PI / 180.f, 4.f / 3.f,
-                 view->zNear, view->zFar, scale);
-
-  MtxF mf_inv_look;
-  inverseLookAtF(&mf_inv_look,
-                 view->eye.x, view->eye->y, view->eye.z,
-                 view->at.x, view->at.y. view->at.z,
-                 view->up.x, view->up.y, view->up.z);
-
-  float p1 = gz.selected_actor.ptr->uncullZoneForward;
-  float p2 = gz.selected_actor.ptr->uncullZoneScale;
-  float p3 = gz.selected_actor.ptr->uncullZoneDownward;
+  /* get inverse projection matrix */
+  guMtxInvertF(&z64_game.mf_11D60, &mf);
 
   float x1;
   float x2;
@@ -1102,16 +1059,17 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
   float y2;
   float z;
 
-  /* Front face vertices */
-  z = (p1 + p2 - mf_persp.wz) / mf_persp.zz;
-  y1 = (-z * mf_persp.zw - p3) / mf_persp.yy;
-  y2 = (z * mf_persp.zw + p2) / mf_persp.yy;
-  x1 = (z * mf_persp.zw + p2) / mf_persp.xx;
-  x2 = -x1;
+  float p1 = gz.selected_actor.ptr->uncullZoneForward;
+  float p2 = gz.selected_actor.ptr->uncullZoneScale;
+  float p3 = gz.selected_actor.ptr->uncullZoneDownward;
 
-  z64_xyzf_t A[4];
-  z64_xyzf_t B[4];
-  z64_xyzf_t C[4];
+  /* Front face vertices */
+  Aw = (1.f - (p1 + p2) * mf.zw) / mf.ww;
+  z = p1 + p2;
+  y1 = -(Aw + p3);
+  y2 = Aw + p2;
+  x1 = Aw + p2;
+  x2 = -(Aw + p2);
 
   A[0].x = x1;
   A[0].y = y1;
@@ -1130,11 +1088,12 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
   A[3].z = z;
 
   /* middle vertices */
-  z = 1.f / mf_persp.zw;
-  y1 = (-1.f - p1) / mf_persp.yy;
-  y2 = (1.f + p2) / mf_persp.yy;
-  x1 = (1.f + p2) / mf_persp.xx;
-  x2 = -x1;
+  Bw = 1.f;
+  z = (1.f - mf.ww) / mf.zw;
+  y1 = -(Bw + p3);
+  y2 = Bw + p2;
+  x1 = Bw + p2;
+  x2 = -(Bw + p2);
 
   B[0].x = x1;
   B[0].y = y1;
@@ -1152,8 +1111,13 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
   B[3].y = y1;
   B[3].z = z;
 
-  /* tail face vertices have same x,y as above */
-  z = (-p2 - mf_persp.wz) / mf_persp.zz;
+  /* tail face vertices */
+  Cw = (1.f + p2 * mf.zw) / mf.ww;
+  z = -p2;
+  y1 = -(1.f + p3);
+  y2 = 1.f + p2;
+  x1 = 1.f + p2;
+  x2 = -(1.f + p2);
 
   C[0].x = x1;
   C[0].y = y1;
@@ -1171,22 +1135,11 @@ static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
   C[3].y = y1;
   C[3].z = z;
 
-  // Apply inverse lookAt to move shape to camera:
-  float w;
-  vec3f_MtxF_mul(&Av[0], &w, &A[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[1], &w, &A[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[2], &w, &A[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Av[3], &w, &A[3], &mf_inv_look);
-  
-  vec3f_MtxF_mul(&Bv[0], &w, &B[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[1], &w, &B[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[2], &w, &B[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Bv[3], &w, &B[3], &mf_inv_look);
-  
-  vec3f_MtxF_mul(&Cv[0], &w, &C[0], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[1], &w, &C[1], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[2], &w, &C[2], &mf_inv_look);
-  vec3f_MtxF_mul(&Cv[3], &w, &C[3], &mf_inv_look);
+  for (int i = 0; i < 4; i++) {
+    vec3f_xfmw(&Av[i], &A[i], Aw, &mf);
+    vec3f_xfmw(&Bv[i], &B[i], Bw, &mf);
+    vec3f_xfmw(&Cv[i], &C[i], Cw, &mf);
+  }
 }
 
 void gz_cull_view(void)
@@ -1194,36 +1147,17 @@ void gz_cull_view(void)
   const int cull_gfx_cap = 0x3B0;
   static Gfx *cull_gfx_buf[2];
   static int cull_gfx_idx = 0;
-  z64_xyzf_t this_A[4];
-  z64_xyzf_t this_B[4];
-  z64_xyzf_t this_C[4];
-  z64_xyzf_t A[4];
-  z64_xyzf_t B[4];
-  z64_xyzf_t C[4];
   _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
 
   if (enable && gz.cull_view_state == CULLVIEW_START) {
     cull_gfx_buf[0] = malloc(sizeof(*cull_gfx_buf[0]) * cull_gfx_cap);
     cull_gfx_buf[1] = malloc(sizeof(*cull_gfx_buf[1]) * cull_gfx_cap);
 
-    /* If in c-up, don't activate cullview until 1 frame has passed */
-    if (z64_link.state_flags_1 & 0x00100000)
-      gz.cull_view_state = CULLVIEW_BEGIN_ACTIVE;
-    else
-      gz.cull_view_state = CULLVIEW_ACTIVE;
-
-    /* Retrieve cull vertices on this frame, to use next frame */
-    actor_cull_vertex(gz.selected_actor.last_A,
-                      gz.selected_actor.last_B,
-                      gz.selected_actor.last_C);
+    gz.cull_view_state = CULLVIEW_ACTIVE;
   }
-  else if (enable && gz.cull_view_state == CULLVIEW_BEGIN_ACTIVE) {
-    if (gz.frames_queued != 0)
-      gz.cull_view_state = CULLVIEW_ACTIVE;
-  }
-  else if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
-    /* If actor has no type, stop */
-    if (gz.selected_actor.type == -1) {
+  if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
+    /* If no actor is selected, stop */
+    if (!gz.selected_actor.ptr) {
       gz.cull_view_state = CULLVIEW_BEGIN_STOP;
       return;
     }
@@ -1253,27 +1187,15 @@ void gz_cull_view(void)
 
     /* Check if we found it and if not, turn off cull view */
     if (!actor_found) {
-      gz.selected_actor.ptr = NULL;
-      gz.selected_actor.id = -1;
-      gz.selected_actor.type = -1;
       gz.cull_view_state = CULLVIEW_BEGIN_STOP;
       return;
     }
 
     /* Get all 12 vertices for current frame */
-    actor_cull_vertex(this_A, this_B, this_C);
-
-    /* if in c-up mode, use last frame's vertices */
-    if (z64_link.state_flags_1 & 0x00100000) {
-      memcpy(&A, &gz.selected_actor.last_A, sizeof(A));
-      memcpy(&B, &gz.selected_actor.last_B, sizeof(B));
-      memcpy(&C, &gz.selected_actor.last_C, sizeof(C));
-    }
-    else {
-      memcpy(&A, &this_A, sizeof(A));
-      memcpy(&B, &this_B, sizeof(B));
-      memcpy(&C, &this_C, sizeof(C));
-    }
+    z64_xyzf_t A[4];
+    z64_xyzf_t B[4];
+    z64_xyzf_t C[4];
+    actor_cull_vertex(A, B, C);
 
     /* Drawing: */
     Gfx **p_gfx_p;
@@ -1317,23 +1239,13 @@ void gz_cull_view(void)
     cache_writeback_data(cull_gfx, sizeof(*cull_gfx) * cull_gfx_cap);
 
     gSPDisplayList((*p_gfx_p)++, cull_gfx);
-
-    /* Update last frame A,B,C */
-    if (gz.frames_queued != 0) {
-      memcpy(&gz.selected_actor.last_A, this_A, sizeof(this_A));
-      memcpy(&gz.selected_actor.last_B, this_B, sizeof(this_B));
-      memcpy(&gz.selected_actor.last_C, this_C, sizeof(this_C));
-    }
   }
-  else if (gz.cull_view_state == CULLVIEW_BEGIN_STOP)
+  if (gz.cull_view_state == CULLVIEW_BEGIN_STOP)
     gz.cull_view_state = CULLVIEW_STOP;
   else if (gz.cull_view_state == CULLVIEW_STOP) {
     release_mem(&cull_gfx_buf[0]);
     release_mem(&cull_gfx_buf[1]);
 
     gz.cull_view_state = CULLVIEW_INACTIVE;
-    gz.selected_actor.ptr = NULL;
-    gz.selected_actor.type = -1;
-    gz.selected_actor.id = -1;
   }
 }

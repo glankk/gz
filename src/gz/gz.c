@@ -1014,8 +1014,6 @@ static void init(void)
   for (int i = 0; i < SETTINGS_LOG_MAX; ++i)
     gz.log[i].msg = NULL;
   gz.selected_actor.ptr = NULL;
-  gz.selected_actor.id = -1;
-  gz.selected_actor.type = -1;
   gz.entrance_override_once = 0;
   gz.entrance_override_next = 0;
   gz.next_entrance = -1;

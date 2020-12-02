@@ -1653,7 +1653,10 @@ typedef struct
   char              unk_0x10B17[0x0C8D];      /* 0x10B17 */
   z64_obj_ctxt_t    obj_ctxt;                 /* 0x117A4 */
   z64_room_ctxt_t   room_ctxt;                /* 0x11CBC */
-  char              unk_0x11D3C[0x00A8];      /* 0x11D3C */
+  char              unk_0x11D3C[0x0024];      /* 0x11D3C */
+  MtxF              mf_11D60;                 /* 0x11D60 */
+  MtxF              mf_11DA0;                 /* 0x11DA0 */
+  char              unk_0x11DE0[0x0004];      /* 0x11DE0 */
   uint32_t          gameplay_frames;          /* 0x11DE4 */
   uint8_t           link_age;                 /* 0x11DE8 */
   char              unk_0x11DE9;              /* 0x11DE9 */
