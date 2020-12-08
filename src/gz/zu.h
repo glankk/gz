@@ -148,6 +148,11 @@ void zu_set_lighting_ext(Gfx **p_gfx_p, Gfx **p_gfx_d);
 
 int zu_adjust_joystick(int v);
 
+void zu_inverseLookAtF(MtxF *mf,
+                       float xEye, float yEye, float zEye,
+                       float xAt, float yAt, float zAt,
+                       float xUp, float yUp, float zUp);
+
 extern struct zu_scene_info zu_scene_info[];
 
 #endif
