@@ -1150,5 +1150,213 @@ void gz_water_view(void)
     release_mem(&water_gfx_buf[1]);
 
     gz.water_view_state = WATERVIEW_INACTIVE;
+static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
+{
+  MtxF mf;
+
+  z64_xyzf_t A[4];
+  float Aw;
+  z64_xyzf_t B[4];
+  float Bw;
+  z64_xyzf_t C[4];
+  float Cw;
+
+  /* get inverse projection matrix */
+  guMtxInvertF(&z64_game.mf_11D60, &mf);
+
+  float x1;
+  float x2;
+  float y1;
+  float y2;
+  float z;
+
+  float p1 = gz.selected_actor.ptr->uncullZoneForward;
+  float p2 = gz.selected_actor.ptr->uncullZoneScale;
+  float p3 = gz.selected_actor.ptr->uncullZoneDownward;
+
+  /* Front face vertices */
+  Aw = (1.f - (p1 + p2) * mf.zw) / mf.ww;
+  z = p1 + p2;
+  y1 = -(Aw + p3);
+  y2 = Aw + p2;
+  x1 = Aw + p2;
+  x2 = -(Aw + p2);
+
+  A[0].x = x1;
+  A[0].y = y1;
+  A[0].z = z;
+
+  A[1].x = x1;
+  A[1].y = y2;
+  A[1].z = z;
+
+  A[2].x = x2;
+  A[2].y = y2;
+  A[2].z = z;
+
+  A[3].x = x2;
+  A[3].y = y1;
+  A[3].z = z;
+
+  /* middle vertices */
+  Bw = 1.f;
+  z = (1.f - mf.ww) / mf.zw;
+  y1 = -(Bw + p3);
+  y2 = Bw + p2;
+  x1 = Bw + p2;
+  x2 = -(Bw + p2);
+
+  B[0].x = x1;
+  B[0].y = y1;
+  B[0].z = z;
+
+  B[1].x = x1;
+  B[1].y = y2;
+  B[1].z = z;
+
+  B[2].x = x2;
+  B[2].y = y2;
+  B[2].z = z;
+
+  B[3].x = x2;
+  B[3].y = y1;
+  B[3].z = z;
+
+  /* tail face vertices */
+  Cw = (1.f + p2 * mf.zw) / mf.ww;
+  z = -p2;
+  y1 = -(1.f + p3);
+  y2 = 1.f + p2;
+  x1 = 1.f + p2;
+  x2 = -(1.f + p2);
+
+  C[0].x = x1;
+  C[0].y = y1;
+  C[0].z = z;
+
+  C[1].x = x1;
+  C[1].y = y2;
+  C[1].z = z;
+
+  C[2].x = x2;
+  C[2].y = y2;
+  C[2].z = z;
+
+  C[3].x = x2;
+  C[3].y = y1;
+  C[3].z = z;
+
+  for (int i = 0; i < 4; i++) {
+    vec3f_xfmw(&Av[i], &A[i], Aw, &mf);
+    vec3f_xfmw(&Bv[i], &B[i], Bw, &mf);
+    vec3f_xfmw(&Cv[i], &C[i], Cw, &mf);
+  }
+}
+
+void gz_cull_view(void)
+{
+  const int cull_gfx_cap = 0x3B0;
+  static Gfx *cull_gfx_buf[2];
+  static int cull_gfx_idx = 0;
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
+
+  if (enable && gz.cull_view_state == CULLVIEW_START) {
+    cull_gfx_buf[0] = malloc(sizeof(*cull_gfx_buf[0]) * cull_gfx_cap);
+    cull_gfx_buf[1] = malloc(sizeof(*cull_gfx_buf[1]) * cull_gfx_cap);
+
+    gz.cull_view_state = CULLVIEW_ACTIVE;
+  }
+  if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
+    /* If no actor is selected, stop */
+    if (!gz.selected_actor.ptr) {
+      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      return;
+    }
+    /* Now look through actor type list */
+    _Bool actor_found = 0;
+    uint16_t n_entries = z64_game.actor_list[gz.selected_actor.type].length;
+    z64_actor_t *actor = z64_game.actor_list[gz.selected_actor.type].first;
+
+    /* If first actor is not the same mem address and ID, loop through until
+     * you find it.
+     */
+    if (actor != gz.selected_actor.ptr ||
+        actor->actor_id != gz.selected_actor.id)
+    {
+      for (int i = 0; i < n_entries-1; ++i) {
+        actor = actor->next;
+        if (actor == gz.selected_actor.ptr &&
+            actor->actor_id == gz.selected_actor.id)
+        {
+          actor_found = 1;
+          break;
+        }
+      }
+    }
+    else
+      actor_found = 1;
+
+    /* Check if we found it and if not, turn off cull view */
+    if (!actor_found) {
+      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      return;
+    }
+
+    /* Get all 12 vertices for current frame */
+    z64_xyzf_t A[4];
+    z64_xyzf_t B[4];
+    z64_xyzf_t C[4];
+    actor_cull_vertex(A, B, C);
+
+    /* Drawing: */
+    Gfx **p_gfx_p;
+    p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+
+    Gfx *cull_gfx = cull_gfx_buf[cull_gfx_idx];
+    Gfx *cull_gfx_p = cull_gfx;
+    Gfx *cull_gfx_d = cull_gfx + cull_gfx_cap;
+    cull_gfx_idx = (cull_gfx_idx + 1) % 2;
+    init_poly_gfx(&cull_gfx_p, &cull_gfx_d, SETTINGS_COLVIEW_SURFACE,
+                  1 /* xlu */,
+                  0 /* shaded */);
+
+    uint32_t color;
+    if (gz.selected_actor.ptr->flags & 0x0040)
+      color = 0x008000; /* green */
+    else
+      color = 0x800000; /* red */
+
+    gDPSetPrimColor((*p_gfx_p)++, 0, 0,
+                    (color >> 16) & 0xFF,
+                    (color >> 8)  & 0xFF,
+                    (color >> 0)  & 0xFF,
+                    0xFF);
+    /* Front face */
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &A[0], &A[1], &A[2], &A[3]);
+    /* Front Sides */
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &A[2], &A[3], &B[3], &B[2]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &A[0], &A[1], &B[1], &B[0]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &A[0], &A[3], &B[3], &B[0]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &A[1], &A[2], &B[2], &B[1]);
+    /* Tail Sides */
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &B[2], &B[3], &C[3], &C[2]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &B[0], &B[1], &C[1], &C[0]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &B[0], &B[3], &C[3], &C[0]);
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &B[1], &B[2], &C[2], &C[1]);
+    /* Tail face */
+    draw_quad(&cull_gfx_p, &cull_gfx_d, &C[0], &C[1], &C[2], &C[3]);
+
+    gSPEndDisplayList(cull_gfx_p++);
+    cache_writeback_data(cull_gfx, sizeof(*cull_gfx) * cull_gfx_cap);
+
+    gSPDisplayList((*p_gfx_p)++, cull_gfx);
+  }
+  if (gz.cull_view_state == CULLVIEW_BEGIN_STOP)
+    gz.cull_view_state = CULLVIEW_STOP;
+  else if (gz.cull_view_state == CULLVIEW_STOP) {
+    release_mem(&cull_gfx_buf[0]);
+    release_mem(&cull_gfx_buf[1]);
+
+    gz.cull_view_state = CULLVIEW_INACTIVE;
   }
 }
