@@ -41,15 +41,6 @@ enum hit_view_state
   HITVIEW_STOP,
 };
 
-enum water_view_state
-{
-  WATERVIEW_INACTIVE,
-  WATERVIEW_START,
-  WATERVIEW_ACTIVE,
-  WATERVIEW_BEGIN_STOP,
-  WATERVIEW_STOP,
-};
-
 enum cull_view_state
 {
   CULLVIEW_INACTIVE,
@@ -196,7 +187,6 @@ struct gz
   int64_t               timer_counter_prev;
   int                   col_view_state;
   int                   hit_view_state;
-  int                   water_view_state;
   int                   cull_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
@@ -255,7 +245,6 @@ void          command_recordmacro(void);
 void          command_playmacro(void);
 void          command_colview(void);
 void          command_hitview(void);
-void          command_waterview(void);
 void          command_resetlag(void);
 void          command_togglewatches(void);
 void          command_timer(void);
@@ -274,7 +263,6 @@ void          gz_vcont_get(int port, z64_input_t *input);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);
-void          gz_water_view(void);
 void          gz_cull_view(void);
 
 void          gz_update_cam(void);

@@ -64,8 +64,6 @@ void settings_load_default(void)
   d->bits.col_view_upd = 1;
   d->bits.hit_view_xlu = 1;
   d->bits.hit_view_shade = 1;
-  d->bits.water_view_xlu = 1;
-  d->bits.water_view_shade = 1;
   d->bits.watches_visible = 1;
   d->menu_x = 20;
   d->menu_y = 64;
@@ -119,7 +117,6 @@ void settings_load_default(void)
   d->binds[COMMAND_PLAYMACRO] = bind_make(0);
   d->binds[COMMAND_COLVIEW] = bind_make(0);
   d->binds[COMMAND_HITVIEW] = bind_make(0);
-  d->binds[COMMAND_WATERVIEW] = bind_make(0);
   d->binds[COMMAND_PREVROOM] = bind_make(2, BUTTON_R, BUTTON_D_DOWN);
   d->binds[COMMAND_NEXTROOM] = bind_make(2, BUTTON_R, BUTTON_D_UP);
   d->binds[COMMAND_RESETLAG] = bind_make(3, BUTTON_R, BUTTON_B, BUTTON_D_RIGHT);

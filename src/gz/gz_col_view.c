@@ -628,7 +628,7 @@ static void do_dyn_col(poly_writer_t *poly_writer,
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
-  for (int i = 0; i < 32; ++i)
+  for (int i = 0; i < 50; ++i)
     if (col_ctxt->dyn_flags[i].active) {
       z64_dyn_col_t *dyn_col = &col_ctxt->dyn_col[i];
 
@@ -639,6 +639,43 @@ static void do_dyn_col(poly_writer_t *poly_writer,
       do_dyn_list(poly_writer, line_writer,
                   dyn_col->col_hdr, dyn_col->floor_list_idx, rd);
     }
+}
+
+static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                           int n_waterboxes, z64_col_water_t *waterbox_list,
+                           uint32_t color)
+{
+  const float water_max_depth = -4000.0f;
+
+  if (waterbox_list == 0 || n_waterboxes == 0)
+    return;
+
+  gDPSetPrimColor((*p_gfx_p)++, 0, 0,
+                  (color >> 16) & 0xFF,
+                  (color >> 8)  & 0xFF,
+                  (color >> 0)  & 0xFF,
+                  0xFF);
+
+  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
+    if (cur_water->flags.group == z64_game.room_ctxt.rooms[0].index || cur_water->flags.group == 0x3F || 
+        cur_water->flags.group == z64_game.room_ctxt.rooms[1].index) {
+      z64_xyzf_t points[] = {
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
+      };
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+    }
+  }
 }
 
 static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
@@ -734,8 +771,8 @@ static void release_mem(void *p_ptr)
 
 void gz_col_view(void)
 {
-  const int dyn_poly_cap = 0x1000;
-  const int dyn_line_cap = 0x1000;
+  const int dyn_poly_cap = 0x1600;
+  const int dyn_line_cap = 0x1200;
 
   static Gfx *stc_poly;
   static Gfx *stc_line;
@@ -828,8 +865,8 @@ void gz_col_view(void)
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
                  col_view_rd);
-
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
+
     gSPEndDisplayList(stc_poly_p++);
     cache_writeback_data(stc_poly, sizeof(*stc_poly) * stc_poly_cap);
 
@@ -873,8 +910,48 @@ void gz_col_view(void)
     }
 
     do_dyn_col(p_poly_writer, p_line_writer, col_view_rd);
-
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
+
+    gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
+
+    // which waterbox to draw depends on currently loaded room, so even
+    // static waterboxes may need updating
+    do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water, 
+                    0x57ACF3);
+
+    for (int i = 0; i < 50; ++i) {
+      if (z64_game.col_ctxt.dyn_flags[i].active) {
+        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+        do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water, 
+                        0x57ACF3);
+      }
+    }
+    /*
+    * There is a special hardcoded check for Zora's Domain in a function related to handling collision
+    * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
+    * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
+    */
+    if (z64_game.scene_index == 0x58) {
+      z64_xyzf_t points[] = {
+        { -348.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -967.0 },
+        { -348.0, 877.0, -967.0 },
+        { -348.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -967.0 },
+        { -348.0, 777.0, -967.0 },
+      };
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[3], &points[0], &points[4], &points[7]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[4], &points[5], &points[6], &points[7]);
+    }
+
     gSPEndDisplayList(dyn_poly_p++);
     cache_writeback_data(dyn_poly, sizeof(*dyn_poly) * dyn_poly_cap);
 
@@ -1039,117 +1116,6 @@ void gz_hit_view(void)
   }
 }
 
-static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
-                           int n_waterboxes, z64_col_water_t *waterbox_list, int cur_room,
-                           uint32_t color)
-{
-  const float water_max_depth = -4000.0f;
-
-  gDPSetPrimColor((*p_gfx_p)++, 0, 0,
-                  (color >> 16) & 0xFF,
-                  (color >> 8)  & 0xFF,
-                  (color >> 0)  & 0xFF,
-                  0xFF);
-
-  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
-    if (cur_water->flags.group == 0x3F || cur_water->flags.group == cur_room) {
-      z64_xyzf_t points[] = {
-        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
-      };
-      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
-    }
-  }
-  /*
-   * There is a special hardcoded check for Zora's Domain in a function related to handling collision
-   * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
-   * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
-   */
-  if (z64_game.scene_index == 0x58) {
-    z64_xyzf_t points[] = {
-      { -348.0, 877.0, -1746.0 },
-      { 205.0, 877.0, -1746.0 },
-      { 205.0, 877.0, -967.0 },
-      { -348.0, 877.0, -967.0 },
-      { -348.0, 777.0, -1746.0 },
-      { 205.0, 777.0, -1746.0 },
-      { 205.0, 777.0, -967.0 },
-      { -348.0, 777.0, -967.0 },
-    };
-    draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
-    draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
-    draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
-    draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
-    draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
-    draw_quad(p_gfx_p, p_gfx_d, &points[4], &points[5], &points[6], &points[7]);
-  }
-}
-
-void gz_water_view(void)
-{
-  const int water_gfx_cap = 0x800;
-
-  static Gfx *water_gfx_buf[2];
-  static int  water_gfx_idx = 0;
-
-  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
-
-  if (enable && gz.water_view_state == WATERVIEW_START) {
-    water_gfx_buf[0] = malloc(sizeof(*water_gfx_buf[0]) * water_gfx_cap);
-    water_gfx_buf[1] = malloc(sizeof(*water_gfx_buf[1]) * water_gfx_cap);
-
-    gz.water_view_state = WATERVIEW_ACTIVE;
-  }
-  if (enable && gz.water_view_state == WATERVIEW_ACTIVE && z64_game.col_ctxt.col_hdr->n_water != 0) {
-    Gfx **p_gfx_p;
-    if (settings->bits.water_view_xlu)
-      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
-    else
-      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
-
-    Gfx *water_gfx = water_gfx_buf[water_gfx_idx];
-    Gfx *water_gfx_p = water_gfx;
-    Gfx *water_gfx_d = water_gfx + water_gfx_cap;
-    water_gfx_idx = (water_gfx_idx + 1) % 2;
-
-    init_poly_gfx(&water_gfx_p, &water_gfx_d, SETTINGS_COLVIEW_SURFACE,
-                                          settings->bits.water_view_xlu,
-                                          settings->bits.water_view_shade);
-    do_waterbox_list(&water_gfx_p, &water_gfx_d, 
-                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water, 
-                    z64_game.room_ctxt.rooms[0].index, 0x57ACF3);
-    for (int i = 0; i < 50; ++i) {
-      if (z64_game.col_ctxt.dyn_flags[i].active) {
-        z64_col_hdr_t *dyn_col_hdr = z64_game.col_ctxt.dyn_col[i].col_hdr;
-
-        do_waterbox_list(&water_gfx_p, &water_gfx_d,
-                    dyn_col_hdr->n_water, dyn_col_hdr->water, 
-                    z64_game.room_ctxt.rooms[0].index, 0x57ACF3);
-      }
-    }
-
-    gSPEndDisplayList(water_gfx_p++);
-    cache_writeback_data(water_gfx, sizeof(*water_gfx) * water_gfx_cap);
-
-    gSPDisplayList((*p_gfx_p)++, water_gfx);
-  }
-  if (gz.water_view_state == WATERVIEW_BEGIN_STOP)
-    gz.water_view_state = WATERVIEW_STOP;
-  else if (gz.water_view_state == WATERVIEW_STOP) {
-    release_mem(&water_gfx_buf[0]);
-    release_mem(&water_gfx_buf[1]);
-
-    gz.water_view_state = WATERVIEW_INACTIVE;
 static void actor_cull_vertex(z64_xyzf_t *Av, z64_xyzf_t *Bv, z64_xyzf_t *Cv)
 {
   MtxF mf;
