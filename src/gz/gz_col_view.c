@@ -642,8 +642,7 @@ static void do_dyn_col(poly_writer_t *poly_writer,
 }
 
 static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
-                           int n_waterboxes, z64_col_water_t *waterbox_list,
-                           uint32_t color)
+                            int n_waterboxes, z64_col_water_t *waterbox_list)
 {
   const float water_max_depth = -4000.0f;
 
