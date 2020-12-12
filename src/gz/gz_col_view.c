@@ -650,12 +650,6 @@ static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
   if (waterbox_list == 0 || n_waterboxes == 0)
     return;
 
-  gDPSetPrimColor((*p_gfx_p)++, 0, 0,
-                  (color >> 16) & 0xFF,
-                  (color >> 8)  & 0xFF,
-                  (color >> 0)  & 0xFF,
-                  0xFF);
-
   for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
     if (cur_water->flags.group == z64_game.room_ctxt.rooms[0].index || cur_water->flags.group == 0x3F || 
         cur_water->flags.group == z64_game.room_ctxt.rooms[1].index) {
@@ -771,8 +765,8 @@ static void release_mem(void *p_ptr)
 
 void gz_col_view(void)
 {
-  const int dyn_poly_cap = 0x1600;
-  const int dyn_line_cap = 0x1200;
+  const int dyn_poly_cap = 0x1400;
+  const int dyn_line_cap = 0x1000;
 
   static Gfx *stc_poly;
   static Gfx *stc_line;
@@ -913,19 +907,18 @@ void gz_col_view(void)
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
 
     gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
+    gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
 
     // which waterbox to draw depends on currently loaded room, so even
     // static waterboxes may need updating
     do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
-                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water, 
-                    0x57ACF3);
+                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water);
 
     for (int i = 0; i < 50; ++i) {
       if (z64_game.col_ctxt.dyn_flags[i].active) {
         z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
         do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
-                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water, 
-                        0x57ACF3);
+                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
       }
     }
     /*
