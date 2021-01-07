@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include "menu.h"
 #include "util.h"
+#include "settings.h"
 
 struct item_data
 {
@@ -32,7 +33,7 @@ static int draw_proc(struct menu_item *item,
   if (address < 0x80000000 || address >= 0x80800000 ||
       data->type < 0 || data->type >= WATCH_TYPE_MAX)
     return 1;
-  if (data->pointer) {
+  if (data->pointer && settings->bits.pointer_watches) {
     address -= address % 4;
     address = *(uint32_t*)address;
     address = address + data->offset;

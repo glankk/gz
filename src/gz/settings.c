@@ -42,6 +42,7 @@ void settings_load_default(void)
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
   d->bits.timer = 0;
   d->bits.pause_display = 1;
+  d->bits.pointer_watches = 0;
   d->bits.macro_input = 0;
   d->bits.hack_oca_input = 1;
   d->bits.hack_oca_sync = 1;

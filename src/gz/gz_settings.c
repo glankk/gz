@@ -156,6 +156,23 @@ static int pause_display_proc(struct menu_item *item,
   return 0;
 }
 
+static int pointer_watches_proc(struct menu_item *item,
+                              enum menu_callback_reason reason,
+                              void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    settings->bits.pointer_watches = 1;
+    watchlist_refresh(gz.menu_watchlist);
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    settings->bits.pointer_watches = 0;
+    watchlist_refresh(gz.menu_watchlist);
+  }
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.pointer_watches);
+  return 0;
+}
+
 static int macro_input_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
@@ -308,17 +325,19 @@ struct menu *gz_settings_menu(void)
                        generic_position_proc, &settings->timer_x);
   menu_add_static(&menu, 0, 9, "pause display", 0xC0C0C0);
   menu_add_checkbox(&menu, 16, 9, pause_display_proc, NULL);
+  menu_add_static(&menu, 0, 10, "pointer watches", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 10, pointer_watches_proc, NULL);
   /* behavior controls */
-  menu_add_static(&menu, 0, 10, "macro input", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 10, macro_input_proc, NULL);
-  menu_add_static(&menu, 0, 11, "break type", 0xC0C0C0);
-  menu_add_option(&menu, 16, 11, "normal\0""aggressive\0",
+  menu_add_static(&menu, 0, 11, "macro input", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 11, macro_input_proc, NULL);
+  menu_add_static(&menu, 0, 12, "break type", 0xC0C0C0);
+  menu_add_option(&menu, 16, 12, "normal\0""aggressive\0",
                   break_type_proc, NULL);
-  menu_add_submenu(&menu, 0, 12, &commands, "commands");
+  menu_add_submenu(&menu, 0, 13, &commands, "commands");
   /* settings commands */
-  menu_add_button(&menu, 0, 13, "save settings", save_settings_proc, NULL);
-  menu_add_button(&menu, 0, 14, "load settings", load_settings_proc, NULL);
-  menu_add_button(&menu, 0, 15, "restore defaults",
+  menu_add_button(&menu, 0, 14, "save settings", save_settings_proc, NULL);
+  menu_add_button(&menu, 0, 15, "load settings", load_settings_proc, NULL);
+  menu_add_button(&menu, 0, 16, "restore defaults",
                   restore_settings_proc, NULL);
 
   /* populate commands menu */

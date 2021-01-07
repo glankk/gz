@@ -3,7 +3,7 @@ PACKAGE_URL          ?= github.com/glankk/gz
 ifeq ($(origin PACKAGE_VERSION), undefined)
 PACKAGE_VERSION      := $(shell git describe --tags --dirty 2>/dev/null)
 ifeq ('$(PACKAGE_VERSION)', '')
-PACKAGE_VERSION       = Unknown version
+PACKAGE_VERSION       = pointer-watch-beta-0.01
 endif
 endif
 target                = mips64

@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "menu.h"
 #include "input.h"
+#include "settings.h"
 
 struct item_data
 {
@@ -76,20 +77,34 @@ struct menu_item *menu_add_userwatch(struct menu *menu, int x, int y,
   struct menu *imenu;
   struct menu_item *item = menu_add_imenu(menu, x, y, &imenu);
   struct item_data *data = malloc(sizeof(*data));
-  data->pointer = menu_add_checkbox(imenu, 0, 0, pointer_proc, data);
-  data->edit_offset = 0;
-  menu_checkbox_set(data->pointer, pointer);
-  menu_checkbox_set_type(data->pointer, MENU_CHECKBOX_POINTER);
-  data->address = menu_add_intinput(imenu, 2, 0, 16, 8, address_proc, data);
-  menu_intinput_set(data->address, address);
-  data->type = menu_add_option(imenu, 11, 0,
-                               "u8\0""s8\0""x8\0"
-                               "u16\0""s16\0""x16\0"
-                               "u32\0""s32\0""x32\0"
-                               "f32\0",
-                               type_proc, data);
-  menu_option_set(data->type, type);
-  data->watch = menu_add_watch(imenu, 15, 0, address, type, pointer, offset);
+  if (settings->bits.pointer_watches) {
+    data->pointer = menu_add_checkbox(imenu, 0, 0, pointer_proc, data);
+    data->edit_offset = 0;
+    menu_checkbox_set(data->pointer, pointer);
+    menu_checkbox_set_type(data->pointer, MENU_CHECKBOX_POINTER);
+    data->address = menu_add_intinput(imenu, 2, 0, 16, 8, address_proc, data);
+    menu_intinput_set(data->address, address);
+    data->type = menu_add_option(imenu, 11, 0,
+                                 "u8\0""s8\0""x8\0"
+                                 "u16\0""s16\0""x16\0"
+                                 "u32\0""s32\0""x32\0"
+                                 "f32\0",
+                                 type_proc, data);
+    menu_option_set(data->type, type);
+    data->watch = menu_add_watch(imenu, 15, 0, address, type, pointer, offset);
+  } else {
+    data->edit_offset = 0;
+    data->address = menu_add_intinput(imenu, 0, 0, 16, 8, address_proc, data);
+    menu_intinput_set(data->address, address);
+    data->type = menu_add_option(imenu, 9, 0,
+                                 "u8\0""s8\0""x8\0"
+                                 "u16\0""s16\0""x16\0"
+                                 "u32\0""s32\0""x32\0"
+                                 "f32\0",
+                                 type_proc, data);
+    menu_option_set(data->type, type);
+    data->watch = menu_add_watch(imenu, 13, 0, address, type, pointer, offset);
+  }
   item->data = data;
   return item;
 }

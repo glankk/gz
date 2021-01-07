@@ -68,7 +68,7 @@ static void anchor_member(struct member_data *member_data)
   member_data->anchored = 1;
   menu_item_disable(member_data->positioning);
   struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-  watch->x = 15;
+  watch->x = settings->bits.pointer_watches ? 15 : 13;
   watch->y = 0;
   watch->pxoffset = 0;
   watch->pyoffset = 0;
@@ -350,6 +350,26 @@ void watchlist_store(struct menu_item *item)
     settings->watch_info[i].anchored = member_data->anchored;
     settings->watch_info[i].pointer = menu_watch_get_pointer(watch);
     settings->watch_info[i].position_set = member_data->position_set;
+  }
+}
+
+void watchlist_refresh(struct menu_item *item)
+{
+  struct item_data *data = item->data;
+  for (int i = 0; i < data->members.size; ++i) {
+    struct member_data *member_data = get_member(data, 0);
+    struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+    int address = menu_watch_get_address(watch);
+    int offset = menu_watch_get_offset(watch);
+    int16_t x = member_data->x;
+    int16_t y = member_data->y;
+    enum watch_type type = menu_watch_get_type(watch);
+    _Bool anchored = member_data->anchored;
+    _Bool pointer = menu_watch_get_pointer(watch);
+    _Bool position_set = member_data->position_set;
+    remove_member(data, 0);
+    add_member(data, address, type, data->members.size, anchored, 
+               pointer, offset, x, y, position_set);
   }
 }
 
