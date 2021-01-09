@@ -764,7 +764,7 @@ static void release_mem(void *p_ptr)
 
 void gz_col_view(void)
 {
-  const int dyn_poly_cap = 0x1400;
+  const int dyn_poly_cap = 0x1000;
   const int dyn_line_cap = 0x1000;
 
   static Gfx *stc_poly;
