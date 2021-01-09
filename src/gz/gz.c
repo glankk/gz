@@ -365,6 +365,7 @@ static void main_hook(void)
   /* execute and draw collision view */
   gz_col_view();
   gz_hit_view();
+  gz_cull_view();
 
   /* execute and draw path view */
   gz_path_view();
@@ -1015,6 +1016,7 @@ static void init(void)
   gz.menu_active = 0;
   for (int i = 0; i < SETTINGS_LOG_MAX; ++i)
     gz.log[i].msg = NULL;
+  gz.selected_actor.ptr = NULL;
   gz.entrance_override_once = 0;
   gz.entrance_override_next = 0;
   gz.next_entrance = -1;
@@ -1049,6 +1051,7 @@ static void init(void)
   gz.col_view_state = COLVIEW_INACTIVE;
   gz.hit_view_state = HITVIEW_INACTIVE;
   gz.path_view_state = PATHVIEW_INACTIVE;
+  gz.cull_view_state = CULLVIEW_INACTIVE;
   gz.hide_rooms = 0;
   gz.hide_actors = 0;
   gz.free_cam = 0;

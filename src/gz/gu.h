@@ -41,5 +41,8 @@ void guRotateRPYF(MtxF *mf, float r, float p, float h);
 void guScaleF(MtxF *mf, float x, float y, float z);
 void guTranslateF(MtxF *mf, float x, float y, float z);
 void guMtxF2L(const MtxF *mf, Mtx *m);
+void guMtxL2F(MtxF *mf, const Mtx *m);
+float guMtxDetF(const MtxF *mf);
+void guMtxInvertF(const MtxF *mf, MtxF *r);
 
 #endif
