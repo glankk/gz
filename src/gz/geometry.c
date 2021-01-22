@@ -129,3 +129,15 @@ float angle_dif(float a, float b)
     d -= M_PI * 2.f;
   return d;
 }
+
+z64_xyzf_t *vec3f_xfmw(z64_xyzf_t *r, z64_xyzf_t *a, float w, MtxF *b)
+{
+  z64_xyzf_t v =
+  {
+    a->x * b->xx + a->y * b->yx + a->z * b->zx + w * b->wx,
+    a->x * b->xy + a->y * b->yy + a->z * b->zy + w * b->wy,
+    a->x * b->xz + a->y * b->yz + a->z * b->zz + w * b->wz,
+  };
+  *r = v;
+  return r;
+}
