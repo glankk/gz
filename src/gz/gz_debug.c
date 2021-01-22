@@ -463,9 +463,7 @@ static void bring_to_link(struct menu_item* item, void * data)
       actor = actor->next;
      actor->pos_2 = z64_link.common.pos_1;
   }
-
 }
-
 
 static void toggle_cullzone_proc(struct menu_item *item, void *data)
 {
