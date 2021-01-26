@@ -207,8 +207,6 @@ struct gz
   _Bool                 reset_flag;
   _Bool                 frame_flag;
   struct selected_actor selected_actor;
-  _Bool isZTargetForced;
-  _Bool isHoldForced;
 };
 
 void          gz_apply_settings();

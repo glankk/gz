@@ -267,12 +267,12 @@ static int byte_ztarget_proc(struct menu_item *item,
                             enum menu_callback_reason reason,
                             void *data)
 {
-  switch(menu_option_get(item))
-  {
-    case 0: gz.isZTargetForced = 0; break;
-    case 1: gz.isZTargetForced = 1; gz.isHoldForced = 0; break;
-    case 2: gz.isZTargetForced = 1; gz.isHoldForced = 1; break;
+  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+    if (menu_option_get(item) != settings->bits.ztarget_type)
+        menu_option_set(item, settings->bits.ztarget_type);
   }
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
+    settings->bits.ztarget_type = menu_option_get(item);  
   return 0;
 }
 

@@ -177,11 +177,10 @@ static void main_hook(void)
       z64_file.hud_flag = 0x001;
 
   /* force z target option */
-  if (gz.isZTargetForced == 1)
-  {
-    if (gz.isHoldForced  == 0) z64_file.z_targeting = 0x00;
-    else z64_file.z_targeting = 0x01;
-  }
+  if (settings->bits.ztarget_type == 1) 
+    z64_file.z_targeting = 0x00;
+  else if (settings->bits.ztarget_type == 2) 
+    z64_file.z_targeting = 0x01;
 
   /* handle commands */
   for (int i = 0; i < COMMAND_MAX; ++i) {
