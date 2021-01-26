@@ -176,6 +176,13 @@ static void main_hook(void)
   if (settings->cheats & (1 << CHEAT_NOHUD))
       z64_file.hud_flag = 0x001;
 
+  /* force z target option */
+  if (gz.isZTargetForced == 1)
+  {
+    if (gz.isHoldForced  == 0) z64_file.z_targeting = 0x00;
+    else z64_file.z_targeting = 0x01;
+  }
+
   /* handle commands */
   for (int i = 0; i < COMMAND_MAX; ++i) {
     _Bool active = 0;
