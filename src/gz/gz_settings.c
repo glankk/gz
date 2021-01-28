@@ -263,19 +263,6 @@ static void restore_settings_proc(struct menu_item *item, void *data)
   gz_log("loaded defaults");
 }
 
-static int byte_ztarget_proc(struct menu_item *item,
-                            enum menu_callback_reason reason,
-                            void *data)
-{
-  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (menu_option_get(item) != settings->bits.ztarget_type)
-        menu_option_set(item, settings->bits.ztarget_type);
-  }
-  else if (reason == MENU_CALLBACK_DEACTIVATE)
-    settings->bits.ztarget_type = menu_option_get(item);  
-  return 0;
-}
-
 struct menu *gz_settings_menu(void)
 {
   static struct menu menu;
@@ -327,17 +314,11 @@ struct menu *gz_settings_menu(void)
   menu_add_static(&menu, 0, 11, "break type", 0xC0C0C0);
   menu_add_option(&menu, 16, 11, "normal\0""aggressive\0",
                   break_type_proc, NULL);
-
-  /* forced target option */
-  menu_add_static(&menu, 0, 12, "forced target", 0xC0C0C0);
-  menu_add_option(&menu, 16, 12, "off\0""switch\0""hold\0",
-                  byte_ztarget_proc, NULL);
-
-  menu_add_submenu(&menu, 0, 13, &commands, "commands");
+  menu_add_submenu(&menu, 0, 12, &commands, "commands");
   /* settings commands */
-  menu_add_button(&menu, 0, 14, "save settings", save_settings_proc, NULL);
-  menu_add_button(&menu, 0, 15, "load settings", load_settings_proc, NULL);
-  menu_add_button(&menu, 0, 16, "restore defaults",
+  menu_add_button(&menu, 0, 13, "save settings", save_settings_proc, NULL);
+  menu_add_button(&menu, 0, 14, "load settings", load_settings_proc, NULL);
+  menu_add_button(&menu, 0, 15, "restore defaults",
                   restore_settings_proc, NULL);
 
   /* populate commands menu */
