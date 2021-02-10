@@ -488,7 +488,7 @@ static int get_clust(struct fat *fat, uint32_t clust, uint32_t *value)
     *value = get_word(block, offset, 4);
     *value &= 0x0FFFFFFF;
   }
-  if (clust == fat->free_lb && value != 0)
+  if (clust == fat->free_lb && *value != 0)
     ++fat->free_lb;
   return 0;
 }
