@@ -14,6 +14,7 @@
 #include "ucode.h"
 #include "z64.h"
 
+
 struct actor_debug_info
 {
   struct menu_item     *edit_item;
@@ -31,6 +32,12 @@ struct actor_spawn_info
   uint16_t              rx;
   uint16_t              ry;
   uint16_t              rz;
+};
+
+struct actor_info
+{
+  struct actor_debug_info* adi;
+  struct actor_spawn_info* asi;
 };
 
 static int byte_optionmod_proc(struct menu_item *item,
@@ -494,6 +501,18 @@ static void spawn_actor_proc(struct menu_item *item, void *data)
                  asi->variable);
 }
 
+static void spawn_actor_attached_b_proc(struct menu_item *item, void *data)
+{
+  struct actor_info *ai = data;
+
+  if (ai->adi->index < z64_game.actor_list[ai->adi->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[ai->adi->type].first;
+    for (int i = 0; i < ai->adi->index; ++i)
+      actor = actor->next;
+    z64_SpawnActorAttachedB(&z64_game.actor_ctxt, actor, &z64_game, ai->asi->actor_no, ai->asi->x, ai->asi->y, ai->asi->z, ai->asi->rx, ai->asi->ry, ai->asi->rz, ai->asi->variable);
+  }
+}
+
 static void fetch_actor_info_proc(struct menu_item *item, void *data)
 {
   struct actor_spawn_info *asi = data;
@@ -623,7 +642,11 @@ struct menu *gz_debug_menu(void)
   menu_add_intinput(&actors, 17, 10, 10, 5, halfword_mod_proc, &asi.ry);
   menu_add_intinput(&actors, 24, 10, 10, 5, halfword_mod_proc, &asi.rz);
   menu_add_button(&actors, 0, 11, "spawn", spawn_actor_proc, &asi);
-  menu_add_button(&actors, 10, 11,"fetch from link",
+  static struct actor_info ai;
+  ai.adi = &adi;
+  ai.asi = &asi;
+  menu_add_button(&actors, 7, 11, "spawn as child", spawn_actor_attached_b_proc, &ai);
+  menu_add_button(&actors, 22, 11,"fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */

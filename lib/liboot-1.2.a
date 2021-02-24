@@ -17,6 +17,7 @@ z64_ftab                          = 0x8000B780 ;
 z64_DrawActors                    = 0x800250F4 ;
 z64_DeleteActor                   = 0x80025620 ;
 z64_SpawnActor                    = 0x80025750 ;
+z64_SpawnActorAttachedB           = 0x80025A30 ;
 z64_CreateStaticCollision         = 0x8002ED4C ;
 z64_camera_hook                   = 0x80049070 ;
 z64_LoadMinimap                   = 0x8006C564 ;
