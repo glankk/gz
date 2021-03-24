@@ -45,14 +45,15 @@ struct fat_cache
   char      data[0x200 * FAT_MAX_CACHE_SECT];
 };
 
-typedef int (*fat_io_proc)(uint32_t lba, uint32_t n_block, void *buf);
+typedef int (*fat_rd_proc)(size_t lba, size_t n_block, void *buf);
+typedef int (*fat_wr_proc)(size_t lba, size_t n_block, const void *buf);
 
 /* fat context */
 struct fat
 {
   /* block io interface */
-  fat_io_proc       read;
-  fat_io_proc       write;
+  fat_rd_proc       read;
+  fat_wr_proc       write;
   /* file system info */
   enum fat_type     type;
   uint32_t          part_lba;
@@ -152,8 +153,8 @@ int               fat_remove(struct fat_entry *entry);
 int               fat_attrib(struct fat_entry *entry, uint8_t attrib);
 int               fat_atime(struct fat_entry *entry, time_t timeval);
 int               fat_mtime(struct fat_entry *entry, time_t timeval);
-int               fat_init(struct fat *fat, fat_io_proc read,
-                           fat_io_proc write, uint32_t rec_lba, int part);
+int               fat_init(struct fat *fat, fat_rd_proc read,
+                           fat_wr_proc write, uint32_t rec_lba, int part);
 int               fat_flush(struct fat *fat);
 
 #endif

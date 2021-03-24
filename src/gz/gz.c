@@ -11,8 +11,8 @@
 #include "gfx.h"
 #include "gu.h"
 #include "gz.h"
-#include "hb.h"
 #include "input.h"
+#include "io.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
@@ -31,16 +31,8 @@ struct gz gz =
 static void update_cpu_counter(void)
 {
   static uint32_t count = 0;
-  uint32_t new_count;
-  if (hb_get_timebase(NULL, &new_count) == 0)
-    gz.cpu_counter_freq = HB_TIMEBASE_FREQ;
-  else {
-    __asm__ volatile ("mfc0    $t0, $9;"
-                      "nop;"
-                      "sw      $t0, %[new_count];"
-                      : [new_count] "=m"(new_count) :: "t0");
-    gz.cpu_counter_freq = OS_CPU_COUNTER;
-  }
+  uint32_t new_count = clock_ticks();
+  gz.cpu_counter_freq = clock_freq();
   gz.cpu_counter += new_count - count;
   count = new_count;
 }
@@ -321,7 +313,7 @@ static void main_hook(void)
 
   /* execute and draw lag counter */
   if (settings->bits.lag_counter) {
-    int32_t lag_frames = (int32_t)z64_vi_counter +
+    int32_t lag_frames = (int32_t)__osViIntrCount +
                          gz.lag_vi_offset - gz.frame_counter;
     int x = settings->lag_counter_x - cw * 8;
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
@@ -445,13 +437,13 @@ HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
   maybe_init_gp();
   if (!gz.ready || gz.movie_state == MOVIE_IDLE) {
     /* default behavior */
-    return z64_osRecvMesg(mq, msg, flag);
+    return osRecvMesg(mq, msg, flag);
   }
   /* if recording, use sync hack setting to decide whether or not to block */
   else if (gz.movie_state == MOVIE_RECORDING) {
     if (settings->bits.hack_room_load)
       flag = OS_MESG_BLOCK;
-    int result = z64_osRecvMesg(mq, msg, flag);
+    int result = osRecvMesg(mq, msg, flag);
     /* record a load frame if the result differs from the hack value */
     if (result == -1) {
       struct movie_room_load *rl;
@@ -475,7 +467,7 @@ HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
       return -1;
     }
     else
-      return z64_osRecvMesg(mq, msg, OS_MESG_BLOCK);
+      return osRecvMesg(mq, msg, OS_MESG_BLOCK);
   }
 }
 
@@ -499,9 +491,11 @@ HOOK void entrance_offset_hook(void)
     }
     gz.next_entrance = -1;
   }
-  __asm__ volatile (".set  noat;"
-                    "lw    $v1, %0;"
-                    "la    $at, %1;" :: "m"(offset), "i"(0x51) : "v1", "at");
+  __asm__ (".set    push;"
+           ".set    noat;"
+           "lw      $v1, %0;"
+           "la      $at, %1;"
+           ".set    pop;" :: "m"(offset), "i"(0x51) : "v1", "at");
 }
 
 HOOK void draw_room_hook(z64_game_t *game, z64_room_t *room, int unk_a2)
@@ -666,23 +660,9 @@ static void state_main_hook(void)
     /* execute a scheduled reset */
     if (gz.reset_flag) {
       gz.reset_flag = 0;
-      gz.lag_vi_offset += (int32_t)z64_vi_counter - gz.frame_counter;
+      gz.lag_vi_offset += (int32_t)__osViIntrCount - gz.frame_counter;
       gz.frame_counter = 0;
-      /* try doing a homeboy reset */
-      if (hb_check() == 0) {
-        /* simulate 0.5s nmi delay */
-        uint64_t tb;
-        uint64_t tb_wait;
-        hb_get_timebase64(&tb);
-        tb_wait = tb + HB_TIMEBASE_FREQ / 2;
-        while (tb < tb_wait)
-          hb_get_timebase64(&tb);
-        hb_reset(0x00400000, 0x00400000);
-      }
-      else {
-        /* no homeboy interface, do a normal reset */
-        zu_reset();
-      }
+      cpu_reset();
     }
   }
   else {
@@ -869,14 +849,14 @@ HOOK void ocarina_sync_hook(void)
     uint32_t t1;
     uint32_t t6;
   } regs;
-  __asm__ volatile ("la      $v0, %[regs];"
-                    "sw      $v1, 0x0000($v0);"
-                    "sw      $a1, 0x0008($v0);"
-                    "sw      $a3, 0x000C($v0);"
-                    "sw      $t0, 0x0010($v0);"
-                    "sw      $t1, 0x0014($v0);"
-                    "sw      $t6, 0x0018($v0);"
-                    : [regs] "=m"(regs) :: "v0");
+  __asm__ ("la      $v0, %[regs];"
+           "sw      $v1, 0x0000($v0);"
+           "sw      $a1, 0x0008($v0);"
+           "sw      $a3, 0x000C($v0);"
+           "sw      $t0, 0x0010($v0);"
+           "sw      $t1, 0x0014($v0);"
+           "sw      $t6, 0x0018($v0);"
+           : [regs] "=m"(regs) :: "v0");
   int audio_frames;
   /* default behavior */
   if (regs.t6)
@@ -919,16 +899,16 @@ HOOK void ocarina_sync_hook(void)
     }
   }
   regs.a0 = audio_frames;
-  __asm__ volatile ("la      $v0, %[regs];"
-                    "lw      $v1, 0x0000($v0);"
-                    "lw      $a0, 0x0004($v0);"
-                    "lw      $a1, 0x0008($v0);"
-                    "lw      $a3, 0x000C($v0);"
-                    "lw      $t0, 0x0010($v0);"
-                    "lw      $t1, 0x0014($v0);"
-                    "lw      $t6, 0x0018($v0);"
-                    :: [regs] "m"(regs)
-                    : "v0", "v1", "a0", "a1", "a3", "t0", "t1", "t6");
+  __asm__ ("la      $v0, %[regs];"
+           "lw      $v1, 0x0000($v0);"
+           "lw      $a0, 0x0004($v0);"
+           "lw      $a1, 0x0008($v0);"
+           "lw      $a3, 0x000C($v0);"
+           "lw      $t0, 0x0010($v0);"
+           "lw      $t1, 0x0014($v0);"
+           "lw      $t6, 0x0018($v0);"
+           :: [regs] "m"(regs)
+           : "v0", "v1", "a0", "a1", "a3", "t0", "t1", "t6");
 }
 
 HOOK uint32_t afx_rand_hook(void)
@@ -954,9 +934,9 @@ HOOK void guPerspectiveF_hook(MtxF *mf)
   maybe_init_gp();
   if (gz.ready && settings->bits.wiivc_cam) {
     /* overwrite the scale argument in guPerspectiveF */
-    __asm__ volatile ("la      $t0, 0x3F800000;"
-                      "sw      $t0, 0x0048($sp);"
-                      ::: "t0");
+    __asm__ ("la      $t0, 0x3F800000;"
+             "sw      $t0, 0x0048($sp);"
+             ::: "t0");
   }
   mf->xx = 1.f;
   mf->xy = 0.f;
@@ -979,8 +959,8 @@ HOOK void guPerspectiveF_hook(MtxF *mf)
 HOOK void camera_hook(void *camera)
 {
   void (*camera_func)(void *camera);
-  __asm__ volatile ("sw      $t9, %[camera_func]"
-                    : [camera_func] "=m"(camera_func));
+  __asm__ ("sw      $t9, %[camera_func]"
+           : [camera_func] "=m"(camera_func));
 
   if (!gz.ready || !gz.free_cam || gz.cam_mode != CAMMODE_CAMERA)
     return camera_func(camera);
@@ -1039,7 +1019,7 @@ static void init(void)
     gz_vcont_set(i, 0, NULL);
   }
   gz.frame_counter = 0;
-  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+  gz.lag_vi_offset = -(int32_t)__osViIntrCount;
   gz.cpu_counter = 0;
   update_cpu_counter();
   gz.timer_active = 0;
@@ -1069,6 +1049,9 @@ static void init(void)
     gz.state_buf[i] = NULL;
   gz.state_slot = 0;
   gz.reset_flag = 0;
+
+  /* initialize io device */
+  io_init();
 
   /* load settings */
   if (input_z_pad() == BUTTON_START || !settings_load(gz.profile))

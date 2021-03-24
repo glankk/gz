@@ -2189,12 +2189,8 @@ z64_extern  OSThread              z64_thread_idle;
 z64_extern  OSThread              z64_thread_main;
 z64_extern  OSThread              z64_thread_dmamgr;
 z64_extern  OSMesgQueue           z64_file_mq;
-z64_extern  OSThread              z64_thread_pimgr;
-z64_extern  uint32_t              z64_vi_counter;
-z64_extern  OSThread              z64_thread_vimgr;
 z64_extern  z64_ftab_t            z64_ftab[];
 z64_extern  z64_part_t           *z64_part_space;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoTextStart[];
 z64_extern  int32_t               z64_part_pos;
 z64_extern  int32_t               z64_part_max;
 z64_extern  z64_part_ovl_t        z64_part_ovl_tab[37];
@@ -2246,7 +2242,6 @@ z64_extern  uint32_t              z64_random;
 z64_extern  char                  z64_message_state[];
 z64_extern  char                  z64_staff_notes[];
 z64_extern  int16_t               z64_gameover_countdown;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoDataStart[];
 z64_extern  z64_pfx_t             z64_pfx;
 z64_extern  char                  z64_fw_state_1[];
 z64_extern  char                  z64_fw_state_2[];
@@ -2287,19 +2282,6 @@ z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
 
 /* functions */
-int32_t   z64_osSendMesg              (OSMesgQueue *mq, OSMesg msg,
-                                       int32_t flag);
-void      z64_osStopThread            (OSThread *t);
-int32_t   z64_osRecvMesg              (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t flag);
-void      z64_osDestroyThread         (OSThread *t);
-void      z64_osCreateThread          (OSThread *t, OSId id,
-                                       void (*entry)(void *arg), void *arg,
-                                       void *sp, OSPri pri);
-void      z64_osSetEventMesg          (OSEvent e, OSMesgQueue *mq, OSMesg m);
-void      z64_osCreateMesgQueue       (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t count);
-void      z64_osStartThread           (OSThread *t);
 void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
@@ -2346,6 +2328,5 @@ uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,
                                        void *dst);
 void      z64_SeedRandom              (uint32_t seed);
-OSThread *z64_osGetCurrFaultedThread  (void);
 
 #endif

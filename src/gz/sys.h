@@ -19,12 +19,6 @@ struct dirent
   off_t   size;
 };
 
-enum sys_io_mode
-{
-  SYS_IO_PIO,
-  SYS_IO_DMA,
-};
-
 int             open(const char *path, int oflags, ...);
 int             creat(const char *path, mode_t mode);
 int             fstat(int fildes, struct stat *buf);
@@ -52,7 +46,6 @@ int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
 char           *getcwd(char *buf, size_t size);
 time_t          time(time_t *tloc);
-int             sys_io_mode(int mode);
 void            sys_reset(void);
 
 #endif

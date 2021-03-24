@@ -1,13 +1,14 @@
+#include <stddef.h>
 #include <stdint.h>
-#include <errno.h>
 #include <mips.h>
 #include "hb.h"
+#include "iodev.h"
 
 /*  Homeboy devices are currently only implemented on systems that don't
  *  emulate the CPU cache. No flushing/invalidating is done.
  */
 
-int hb_check(void)
+static int hb_check(void)
 {
   if (hb_regs.key == 0x1234)
     return 0;
@@ -15,13 +16,12 @@ int hb_check(void)
     return -1;
 }
 
-int hb_sd_init(void)
+static int hb_sd_init(void)
 {
-  if (hb_check() == -1)
-    return -1;
   hb_regs.status = HB_STATUS_SD_INIT;
   while (hb_regs.status & HB_STATUS_SD_BUSY)
     ;
+
   uint32_t status = hb_regs.status;
   if ((status & HB_STATUS_SD_READY) && (status & HB_STATUS_SD_INSERTED))
     return 0;
@@ -29,73 +29,93 @@ int hb_sd_init(void)
     return -1;
 }
 
-int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst)
+static int hb_sd_read(size_t lba, size_t n_blocks, void *dst)
 {
-  if (hb_check() == -1)
-    return -1;
   hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(dst);
   hb_regs.sd_n_blocks = n_blocks;
   hb_regs.sd_read_lba = lba;
   while (hb_regs.status & HB_STATUS_SD_BUSY)
     ;
+
   if (hb_regs.status & HB_STATUS_ERROR)
     return -1;
   else
     return 0;
 }
 
-int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src)
+static int hb_sd_write(size_t lba, size_t n_blocks, const void *src)
 {
-  if (hb_check() == -1)
-    return -1;
-  if (src) {
+  if (src != NULL) {
     hb_regs.sd_dram_addr = MIPS_KSEG0_TO_PHYS(src);
     hb_regs.sd_n_blocks = n_blocks;
     hb_regs.sd_write_lba = lba;
     while (hb_regs.status & HB_STATUS_SD_BUSY)
       ;
+
     if (hb_regs.status & HB_STATUS_ERROR)
       return -1;
     else
       return 0;
   }
   else {
-    char data[0x200] = {0};
-    while (n_blocks--)
-      if (hb_sd_write(lba++, 1, data))
+    char data[512] = {0};
+
+    while (n_blocks != 0) {
+      if (hb_sd_write(lba, 1, data))
         return -1;
+
+      n_blocks--;
+      lba++;
+    }
+
     return 0;
   }
 }
 
-int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)
+static int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len)
 {
-  if (hb_check() == -1)
-    return -1;
   hb_regs.dram_save_addr = dram_save_addr;
   hb_regs.dram_save_len = dram_save_len;
   hb_regs.status = HB_STATUS_RESET;
+
   return 0;
 }
 
-int hb_get_timebase(uint32_t *hi, uint32_t *lo)
+static uint64_t hb_get_timebase64(void)
 {
-  if (hb_check() == -1)
-    return -1;
-  if (hi)
-    *hi = hb_regs.timebase_hi;
-  if (lo)
-    *lo = hb_regs.timebase_lo;
-  return 0;
+  return ((uint64_t)hb_regs.timebase_hi << 32) | hb_regs.timebase_lo;
 }
 
-int hb_get_timebase64(uint64_t *tb)
+static unsigned int clock_ticks(void)
 {
-  uint32_t hi;
-  uint32_t lo;
-  if (hb_get_timebase(&hi, &lo) == -1)
-    return -1;
-  if (tb)
-    *tb = (((uint64_t)hi << 32) | (uint64_t)lo);
-  return 0;
+  return hb_regs.timebase_lo;
 }
+
+static unsigned int clock_freq(void)
+{
+  return HB_TIMEBASE_FREQ;
+}
+
+static void cpu_reset(void)
+{
+  /* simulate 0.5s nmi delay */
+  uint64_t tb_wait = hb_get_timebase64() + HB_TIMEBASE_FREQ / 2;
+  while (hb_get_timebase64() < tb_wait)
+    ;
+
+  hb_reset(0x00400000, 0x00400000);
+}
+
+struct iodev homeboy_iodev =
+{
+  .probe        = hb_check,
+
+  .disk_init    = hb_sd_init,
+  .disk_read    = hb_sd_read,
+  .disk_write   = hb_sd_write,
+
+  .clock_ticks  = clock_ticks,
+  .clock_freq   = clock_freq,
+
+  .cpu_reset    = cpu_reset,
+};

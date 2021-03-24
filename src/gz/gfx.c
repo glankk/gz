@@ -196,7 +196,7 @@ void gfx_flush(void)
 {
   flush_chars();
   gSPEndDisplayList(gfx_disp_p++);
-  cache_writeback_data(gfx_disp, GFX_DISP_SIZE);
+  dcache_wb(gfx_disp, GFX_DISP_SIZE);
   gSPDisplayList(z64_ctxt.gfx->overlay.p++, gfx_disp);
 
   Gfx *disp_w = gfx_disp_w;

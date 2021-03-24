@@ -836,8 +836,8 @@ void load_state(void *state)
   }
 
   /* wait for gfx task to finish */
-  z64_osRecvMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_BLOCK);
-  z64_osSendMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_NOBLOCK);
+  osRecvMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_BLOCK);
+  osSendMesg(&z64_ctxt.gfx->task_mq, NULL, OS_MESG_NOBLOCK);
 
   /* save allocation info */
   struct alloc
@@ -1068,7 +1068,7 @@ void load_state(void *state)
     }
     /* start async room load */
     if (room_ctxt->load_active)
-      z64_osSendMesg(&z64_file_mq, &room_ctxt->load_getfile, OS_MESG_NOBLOCK);
+      osSendMesg(&z64_file_mq, &room_ctxt->load_getfile, OS_MESG_NOBLOCK);
   }
 
   /* load objects */
