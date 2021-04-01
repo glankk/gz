@@ -422,13 +422,13 @@ struct menu *gz_scene_menu(void)
   /* collision view controls */
   menu_add_static(&collision, 0, 1, "show collision", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 1, col_view_proc, NULL);
+  menu_add_static(&collision, 2, 4, "polygon class", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 4, col_view_wfc_proc, NULL);
   menu_add_static(&collision, 2, 2, "mode", 0xC0C0C0);
   menu_add_option(&collision, 16, 2, "decal\0""surface\0",
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 4, "walls/floors/ceilings", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 4, col_view_wfc_proc, NULL);
   menu_add_static(&collision, 2, 5, "wireframe", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 5, col_view_line_proc, NULL);
   menu_add_static(&collision, 2, 6, "shaded", 0xC0C0C0);
