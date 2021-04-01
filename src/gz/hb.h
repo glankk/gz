@@ -36,12 +36,4 @@ typedef struct
                               /* 0x002C */
 } hb_regs_t;
 
-int hb_check(void);
-int hb_sd_init(void);
-int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
-int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
-int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len);
-int hb_get_timebase(uint32_t *hi, uint32_t *lo);
-int hb_get_timebase64(uint64_t *tb);
-
 #endif

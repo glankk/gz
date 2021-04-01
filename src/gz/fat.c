@@ -488,7 +488,7 @@ static int get_clust(struct fat *fat, uint32_t clust, uint32_t *value)
     *value = get_word(block, offset, 4);
     *value &= 0x0FFFFFFF;
   }
-  if (clust == fat->free_lb && value != 0)
+  if (clust == fat->free_lb && *value != 0)
     ++fat->free_lb;
   return 0;
 }
@@ -2104,7 +2104,7 @@ static int check_rec(struct fat *fat, uint32_t rec_lba, int part)
   return 0;
 }
 
-int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
+int fat_init(struct fat *fat, fat_rd_proc read, fat_wr_proc write,
              uint32_t rec_lba, int part)
 {
   /* initialize cache */

@@ -770,7 +770,9 @@ typedef struct
   char              unk_0x13D6[0x000A];       /* 0x13D6 */
   int8_t            seq_index;                /* 0x13E0 */
   int8_t            night_sfx;                /* 0x13E1 */
-  char              unk_0x13E2[0x0018];       /* 0x13E2 */
+  char              unk_0x13E2[0x0006];       /* 0x13E2 */
+  uint16_t          hud_flag;                 /* 0x13E8 */
+  char              unk_0x13EA[0x10];         /* 0x13EA */
   uint16_t          event_inf[4];             /* 0x13FA */
   char              unk_0x1402[0x0001];       /* 0x1402 */
   uint8_t           minimap_index;            /* 0x1403 */
@@ -963,11 +965,11 @@ struct z64_actor_s
   /* struct end */
   z64_xyzf_t        unk_0xCC;                 /* 0x00CC */
   z64_xyzf_t        unk_0xD8;                 /* 0x00D8 */
-  z64_xyzf_t        unk_0xE4;                 /* 0x00E4 */
-  float             unk_0xF0;                 /* 0x00F0 */
-  float             unk_0xF4;                 /* 0x00F4 */
-  float             unk_0xF8;                 /* 0x00F8 */
-  float             unk_0xFC;                 /* 0x00FC */
+  z64_xyzf_t        projectedPos;             /* 0x00E4 */
+  float             projectedW;               /* 0x00F0 */
+  float             uncullZoneForward;        /* 0x00F4 */
+  float             uncullZoneScale;          /* 0x00F8 */
+  float             uncullZoneDownward;       /* 0x00FC */
   z64_xyzf_t        pos_4;                    /* 0x0100 */
   uint16_t          unk_0x10C;                /* 0x010C */
   uint16_t          text_id;                  /* 0x010E */
@@ -1027,6 +1029,37 @@ typedef struct
   char              unk_0x16[0x0002];         /* 0x0016 */
                                               /* 0x0018 */
 } z64_input_t;
+
+typedef struct {
+    /* string literal "VIEW" / 0x56494557 */
+    uint32_t        magic;                    /* 0x0000 */
+    /* pointer to gfx ctx */
+    z64_gfx_t      *gfx;                      /* 0x0004 */
+    /* view properties */
+    float           viewport[4];              /* 0x0008 */
+    float           fovy;                     /* 0x0018 */
+    float           zNear;                    /* 0x001C */
+    float           zFar;                     /* 0x0020 */
+    float           scale;                    /* 0x0024 */
+    z64_xyzf_t      eye;                      /* 0x0028 */
+    z64_xyzf_t      at;                       /* 0x0034 */
+    z64_xyzf_t      up;                       /* 0x0040 */
+    Vp              vp;                       /* 0x0050 */
+    Mtx             projection;               /* 0x0060 */
+    Mtx             viewing;                  /* 0x00A0 */
+    Mtx            *projectionPtr;            /* 0x00E0 */
+    Mtx            *viewingPtr;               /* 0x00E4 */
+    /* unknown */
+    z64_xyzf_t      unk_E8;                   /* 0x00E8 */
+    z64_xyzf_t      unk_F4;                   /* 0x00F4 */
+    float           unk_100;                  /* 0x0100 */
+    z64_xyzf_t      unk_104;                  /* 0x0104 */
+    z64_xyzf_t      unk_110;                  /* 0x0110 */
+    uint16_t        normal;                   /* 0x011C */
+    uint32_t        flags;                    /* 0x0120 */
+    uint32_t        unk_124;                  /* 0x0124 */
+                                              /* 0x0128 */
+} z64_view_t;
 
 /* state context base */
 typedef struct z64_ctxt z64_ctxt_t;
@@ -1541,16 +1574,9 @@ typedef struct
   uint16_t          scene_index;              /* 0x000A4 */
   char              unk_0xA6[0x000A];         /* 0x000A6 */
   void             *scene_file;               /* 0x000B0 */
-  char              unk_0xB4[0x000C];         /* 0x000B4 */
-  uint32_t          screen_top;               /* 0x000C0 */
-  uint32_t          screen_bottom;            /* 0x000C4 */
-  uint32_t          screen_left;              /* 0x000C8 */
-  uint32_t          screen_right;             /* 0x000CC */
-  float             camera_distance;          /* 0x000D0 */
-  float             fog_distance;             /* 0x000D4 */
-  float             z_distance;               /* 0x000D8 */
-  float             unk_0xDC;                 /* 0x000DC */
-  char              unk_0xE0[0x0190];         /* 0x000E0 */
+  char              unk_0xB4[0x0004];         /* 0x000B4 */
+  z64_view_t        view;                     /* 0x000B8 */
+  char              unk_0xE0[0x0090];         /* 0x001E0 */
   z64_actor_t      *camera_focus;             /* 0x00270 */
   char              unk_0x274[0x00AE];        /* 0x00274 */
   uint16_t          camera_mode;              /* 0x00322 */
@@ -1627,7 +1653,10 @@ typedef struct
   char              unk_0x10B17[0x0C8D];      /* 0x10B17 */
   z64_obj_ctxt_t    obj_ctxt;                 /* 0x117A4 */
   z64_room_ctxt_t   room_ctxt;                /* 0x11CBC */
-  char              unk_0x11D3C[0x00A8];      /* 0x11D3C */
+  char              unk_0x11D3C[0x0024];      /* 0x11D3C */
+  MtxF              mf_11D60;                 /* 0x11D60 */
+  MtxF              mf_11DA0;                 /* 0x11DA0 */
+  char              unk_0x11DE0[0x0004];      /* 0x11DE0 */
   uint32_t          gameplay_frames;          /* 0x11DE4 */
   uint8_t           link_age;                 /* 0x11DE8 */
   char              unk_0x11DE9;              /* 0x11DE9 */
@@ -2160,12 +2189,8 @@ z64_extern  OSThread              z64_thread_idle;
 z64_extern  OSThread              z64_thread_main;
 z64_extern  OSThread              z64_thread_dmamgr;
 z64_extern  OSMesgQueue           z64_file_mq;
-z64_extern  OSThread              z64_thread_pimgr;
-z64_extern  uint32_t              z64_vi_counter;
-z64_extern  OSThread              z64_thread_vimgr;
 z64_extern  z64_ftab_t            z64_ftab[];
 z64_extern  z64_part_t           *z64_part_space;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoTextStart[];
 z64_extern  int32_t               z64_part_pos;
 z64_extern  int32_t               z64_part_max;
 z64_extern  z64_part_ovl_t        z64_part_ovl_tab[37];
@@ -2217,7 +2242,6 @@ z64_extern  uint32_t              z64_random;
 z64_extern  char                  z64_message_state[];
 z64_extern  char                  z64_staff_notes[];
 z64_extern  int16_t               z64_gameover_countdown;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoDataStart[];
 z64_extern  z64_pfx_t             z64_pfx;
 z64_extern  char                  z64_fw_state_1[];
 z64_extern  char                  z64_fw_state_2[];
@@ -2258,19 +2282,6 @@ z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
 
 /* functions */
-int32_t   z64_osSendMesg              (OSMesgQueue *mq, OSMesg msg,
-                                       int32_t flag);
-void      z64_osStopThread            (OSThread *t);
-int32_t   z64_osRecvMesg              (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t flag);
-void      z64_osDestroyThread         (OSThread *t);
-void      z64_osCreateThread          (OSThread *t, OSId id,
-                                       void (*entry)(void *arg), void *arg,
-                                       void *sp, OSPri pri);
-void      z64_osSetEventMesg          (OSEvent e, OSMesgQueue *mq, OSMesg m);
-void      z64_osCreateMesgQueue       (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t count);
-void      z64_osStartThread           (OSThread *t);
 void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
@@ -2317,6 +2328,5 @@ uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,
                                        void *dst);
 void      z64_SeedRandom              (uint32_t seed);
-OSThread *z64_osGetCurrFaultedThread  (void);
 
 #endif

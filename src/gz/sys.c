@@ -2,17 +2,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "io.h"
 #include "sys.h"
-#include "ed.h"
 #include "fat.h"
-#include "hb.h"
-
-enum device_type
-{
-  DEVICE_NONE,
-  DEVICE_EVERDRIVE,
-  DEVICE_HOMEBOY,
-};
 
 struct desc
 {
@@ -35,84 +27,18 @@ struct dir_desc
   struct dirent     dirent;
 };
 
-static enum device_type device_type = DEVICE_NONE;
 static _Bool            fat_ready = 0;
 static struct fat       fat;
 static void            *desc_list[OPEN_MAX] = {NULL};
 static struct fat_path *wd = NULL;
-static int              io_mode = SYS_IO_PIO;
-
-static int read_sd(uint32_t lba, uint32_t n_blocks, void *buf)
-{
-  switch (device_type) {
-    case DEVICE_EVERDRIVE: {
-      enum ed_error e;
-      if (io_mode == SYS_IO_PIO)
-        e = ed_sd_read(lba, n_blocks, buf);
-      else if (io_mode == SYS_IO_DMA)
-        e = ed_sd_read_dma(lba, n_blocks, buf);
-      else {
-        errno = EINVAL;
-        return -1;
-      }
-      if (e != ED_ERROR_SUCCESS) {
-        errno = EIO;
-        return -1;
-      }
-      return 0;
-    }
-    case DEVICE_HOMEBOY: {
-      if (hb_sd_read(lba, n_blocks, buf)) {
-        errno = EIO;
-        return -1;
-      }
-      return 0;
-    }
-    default: {
-      errno = ENODEV;
-      return -1;
-    }
-  }
-}
-
-static int write_sd(uint32_t lba, uint32_t n_blocks, void *buf)
-{
-  switch (device_type) {
-    case DEVICE_EVERDRIVE: {
-      if (ed_sd_write(lba, n_blocks, buf) != ED_ERROR_SUCCESS) {
-        errno = EIO;
-        return -1;
-      }
-      return 0;
-    }
-    case DEVICE_HOMEBOY: {
-      if (hb_sd_write(lba, n_blocks, buf)) {
-        errno = EIO;
-        return -1;
-      }
-      return 0;
-    }
-    default: {
-      errno = ENODEV;
-      return -1;
-    }
-  }
-}
 
 static int init_fat(void)
 {
   if (fat_ready)
     return 0;
-  /* checking for a homeboy device is faster, so do that first */
-  if (hb_sd_init() == 0)
-    device_type = DEVICE_HOMEBOY;
-  else if (ed_sd_init() == 0)
-    device_type = DEVICE_EVERDRIVE;
-  else {
-    errno = ENODEV;
+  if (disk_init())
     return -1;
-  }
-  if (fat_init(&fat, read_sd, write_sd, 0, 0))
+  if (fat_init(&fat, disk_read, disk_write, 0, 0))
     return -1;
   wd = fat_path(&fat, NULL, "", NULL);
   if (!wd)
@@ -778,13 +704,6 @@ time_t time(time_t *tloc)
   if (tloc)
     *tloc = 0;
   return 0;
-}
-
-int sys_io_mode(int mode)
-{
-  int p_mode = io_mode;
-  io_mode = mode;
-  return p_mode;
 }
 
 void sys_reset(void)

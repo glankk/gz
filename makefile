@@ -21,8 +21,8 @@ LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
 LDSCRIPT              = gl-n64.ld
 ALL_CPPFLAGS          = -DPACKAGE_TARNAME='$(PACKAGE_TARNAME)' -DPACKAGE_URL='$(PACKAGE_URL)' -DPACKAGE_VERSION='$(PACKAGE_VERSION)' -DF3DEX_GBI_2 $(CPPFLAGS)
-ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections $(CFLAGS)
-ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections $(CXXFLAGS)
+ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections -mno-check-zero-division $(CFLAGS)
+ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections -mno-check-zero-division $(CXXFLAGS)
 ALL_LDFLAGS           = -T $(LDSCRIPT) -L$(LIBDIR) -nostartfiles -specs=nosys.specs -Wl,--gc-sections $(LDFLAGS)
 ALL_LDLIBS            = $(LDLIBS)
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
@@ -178,11 +178,11 @@ else
 $(OBJ-VC)             : ALL_CPPFLAGS         += -DWIIVC
 endif
 
-$(OBJ-N64)            : CFLAGS               ?= -O3 -flto -ffat-lto-objects
-$(OBJ-N64)            : CXXFLAGS             ?= -O3 -flto -ffat-lto-objects
-$(ELF-N64)            : LDFLAGS              ?= -O3 -flto
-$(OBJ-VC)             : CFLAGS               ?= -O1 -fno-reorder-blocks
-$(OBJ-VC)             : CXXFLAGS             ?= -O1 -fno-reorder-blocks
+$(OBJ-N64)            : CFLAGS               ?= -O2 -g -flto -ffat-lto-objects
+$(OBJ-N64)            : CXXFLAGS             ?= -O2 -g -flto -ffat-lto-objects
+$(ELF-N64)            : LDFLAGS              ?= -O2 -flto
+$(OBJ-VC)             : CFLAGS               ?= -O1 -g -fno-reorder-blocks
+$(OBJ-VC)             : CXXFLAGS             ?= -O1 -g -fno-reorder-blocks
 $(ELF-VC)             : LDFLAGS              ?=
 
 $(eval $(call bin_template,ldr,ldr,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(HOOKDIR)/ldr,$(LDR_ADDRESS)))

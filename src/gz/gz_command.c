@@ -468,7 +468,7 @@ void command_hitview(void)
 void command_resetlag(void)
 {
   gz.frame_counter = 0;
-  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+  gz.lag_vi_offset = -(int32_t)__osViIntrCount;
 }
 
 void command_togglewatches(void)

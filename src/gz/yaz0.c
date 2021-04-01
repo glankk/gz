@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <mips.h>
-#include "util.h"
+#include "pi.h"
 
 struct yaz0
 {
@@ -23,11 +23,8 @@ static uint8_t      yaz0_buf[0x1000];
 
 static uint8_t yaz0_get_code(void)
 {
-  if ((yaz0_cp & 0x3FF) == 0) {
-    _Bool ie = enter_dma_section();
-    dma_read(yaz0_code_buf, (uint32_t)&yaz0->code[yaz0_cp], 0x400);
-    set_int(ie);
-  }
+  if ((yaz0_cp & 0x3FF) == 0)
+    pi_read((uint32_t)&yaz0->code[yaz0_cp], yaz0_code_buf, 0x400);
   return yaz0_code_buf[yaz0_cp++ & 0x3FF];
 }
 
