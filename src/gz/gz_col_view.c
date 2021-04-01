@@ -528,13 +528,15 @@ static void do_poly_list(poly_writer_t *poly_writer,
       uint32_t color;
       _Bool skip = 0;
       if (wfc) {
-        float normal_y = poly->norm.y;
-        if (normal_y < -0.8f)
+#define COLPOLY_SNORMAL(x) ((int16_t)((x) * 32767.0f))
+        int16_t normal_y = poly->norm.y;
+        if (normal_y < COLPOLY_SNORMAL(-0.8f))
           color = 0xFF0000FF;
-        else if (normal_y > 0.5f)
+        else if (normal_y > COLPOLY_SNORMAL(0.5f))
           color = 0x0000FFFF;
         else
           color = 0x00FF00FF;
+#undef COLPOLY_SNORMAL
       } else {
         if (type->flags_2.hookshot)
           color = 0x8080FFFF;
