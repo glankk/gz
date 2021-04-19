@@ -3,9 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-//void __osPiGetAccess(void);
-//void __osPiRelAccess(void);
-
 void pi_write_locked(uint32_t dev_addr, const void *src, size_t size);
 void pi_read_locked(uint32_t dev_addr, void *dst, size_t size);
 void pi_write(uint32_t dev_addr, const void *src, size_t size);

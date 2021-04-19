@@ -1,12 +1,39 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "ed64_io.h"
+#include <n64.h>
 #include "ed64_x.h"
 #include "iodev.h"
 #include "pi.h"
 #include "sd_host.h"
+#include "util.h"
 
+static int      cart_irqf;
+static uint32_t cart_lat;
+static uint32_t cart_pwd;
 static uint16_t spi_cfg;
+
+static void cart_lock(void)
+{
+  __osPiGetAccess();
+
+  cart_irqf = set_irqf(0);
+
+  cart_lat = pi_regs.dom1_lat;
+  cart_pwd = pi_regs.dom1_pwd;
+
+  pi_regs.dom1_lat = 4;
+  pi_regs.dom1_pwd = 12;
+}
+
+static void cart_unlock(void)
+{
+  pi_regs.dom1_lat = cart_lat;
+  pi_regs.dom1_pwd = cart_pwd;
+
+  __osPiRelAccess();
+
+  set_irqf(cart_irqf);
+}
 
 static inline uint32_t reg_rd(int reg)
 {
@@ -181,8 +208,8 @@ static struct sd_host sd_host =
 {
   .proto      = SD_PROTO_SDBUS,
 
-  .lock       = ed64_get_access,
-  .unlock     = ed64_rel_access,
+  .lock       = cart_lock,
+  .unlock     = cart_unlock,
   .set_spd    = sd_set_spd,
 
   .cmd_rx     = sd_cmd_rx,
@@ -199,7 +226,7 @@ static struct sd_host sd_host =
 
 static int probe(void)
 {
-  ed64_get_access();
+  cart_lock();
 
   /* open registers */
   reg_wr(REG_KEY, 0xAA55);
@@ -208,12 +235,12 @@ static int probe(void)
   if ((reg_rd(REG_EDID) >> 16) != 0xED64)
     goto nodev;
 
-  ed64_rel_access();
+  cart_unlock();
   return 0;
 
 nodev:
   reg_wr(REG_KEY, 0);
-  ed64_rel_access();
+  cart_unlock();
   return -1;
 }
 
@@ -236,12 +263,12 @@ static int fifo_poll(void)
 {
   int ret;
 
-  ed64_get_access();
+  cart_lock();
   if ((reg_rd(REG_USB_CFG) & (USB_STA_PWR | USB_STA_RXF)) == USB_STA_PWR)
     ret = 1;
   else
     ret = 0;
-  ed64_rel_access();
+  cart_unlock();
 
   return ret;
 }
@@ -250,7 +277,7 @@ static int fifo_read(void *dst, size_t n_blocks)
 {
   const size_t blk_size = 512;
 
-  ed64_get_access();
+  cart_lock();
 
   char *p = dst;
   while (n_blocks != 0) {
@@ -271,7 +298,7 @@ static int fifo_read(void *dst, size_t n_blocks)
     n_blocks--;
   }
 
-  ed64_rel_access();
+  cart_unlock();
   return 0;
 }
 
@@ -279,7 +306,7 @@ static int fifo_write(const void *src, size_t n_blocks)
 {
   const size_t blk_size = 512;
 
-  ed64_get_access();
+  cart_lock();
 
   const char *p = src;
   while (n_blocks != 0) {
@@ -300,7 +327,7 @@ static int fifo_write(const void *src, size_t n_blocks)
     n_blocks--;
   }
 
-  ed64_rel_access();
+  cart_unlock();
   return 0;
 }
 
