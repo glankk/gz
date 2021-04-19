@@ -107,7 +107,7 @@ static _Bool char_is_sfn(char c, enum sfn_case *cse)
   return (c >= '@' && c <= 'Z') || (c >= '0' && c <= '9') ||
          (c >= '#' && c <= ')') || (c >= '^' && c <= '`') ||
          (c >= '\x80' && c <= '\xFF') ||
-         c == ' ' || c == '!' || c == '-' || c == '{' || c == '}' || c == '~';
+         c == '!' || c == '-' || c == '{' || c == '}' || c == '~';
 }
 
 /* convert an lfn name component to sfn characters */
@@ -147,8 +147,6 @@ static _Bool name_is_sfn(const char *s, _Bool *lower_name, _Bool *lower_ext)
   int ext_l;
   name_split(s, &name, &ext, &name_l, &ext_l);
   if (name_l == 0 || name_l > 8 || (ext && ext_l > 3))
-    return 0;
-  if (name[name_l - 1] == ' ' || (ext && ext[ext_l - 1] == ' '))
     return 0;
   enum sfn_case name_cse = SFN_CASE_ANY;
   enum sfn_case ext_cse = SFN_CASE_ANY;
@@ -203,9 +201,15 @@ static _Bool validate_sfn(const char *sfn)
   }
   /* validate characters */
   enum sfn_case cse = SFN_CASE_UPPER;
-  for (int i = 0; i < 11; ++i)
-    if (!char_is_sfn(sfn[i], &cse))
+  _Bool spc = 0;
+  for (int i = 0; i < 11; ++i) {
+    if (i == 8)
+      spc = 0;
+    if (sfn[i] == ' ')
+      spc = 1;
+    else if (spc || !char_is_sfn(sfn[i], &cse))
       return 0;
+  }
   return 1;
 }
 
