@@ -872,8 +872,8 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
     uint32_t chunk_start = clust;
     uint32_t chunk_length = 1;
     /* compute consecutive cluster chunk length */
+    uint32_t p_clust = clust;
     while (1) {
-      uint32_t p_clust = clust;
       if (get_clust(fat, clust, &clust))
         return n_copy;
       if (clust >= 0x0FFFFFF7 || clust != p_clust + 1 ||
@@ -881,6 +881,7 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
       {
         break;
       }
+      p_clust = clust;
       ++chunk_length;
     }
     /* copy chunk */
@@ -899,6 +900,8 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
     file->p_off += n_byte;
     file->p_clust_seq += chunk_length;
     if (clust < 2 || clust >= 0x0FFFFFF7) {
+      file->p_clust_seq--;
+      file->p_clust = p_clust;
       file->p_clust_sect = fat->n_clust_sect - 1;
       file->p_sect_off = fat->n_sect_byte;
       if (eof)
