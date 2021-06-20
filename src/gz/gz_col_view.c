@@ -821,8 +821,11 @@ void gz_col_view(void)
     /* allocate dynamic display lists */
     dyn_poly_buf[0] = malloc(sizeof(*dyn_poly_buf[0]) * dyn_poly_cap);
     dyn_poly_buf[1] = malloc(sizeof(*dyn_poly_buf[1]) * dyn_poly_cap);
-    dyn_line_buf[0] = malloc(sizeof(*dyn_line_buf[0]) * dyn_line_cap);
-    dyn_line_buf[1] = malloc(sizeof(*dyn_line_buf[1]) * dyn_line_cap);
+
+    if (col_view_line) {
+      dyn_line_buf[0] = malloc(sizeof(*dyn_line_buf[0]) * dyn_line_cap);
+      dyn_line_buf[1] = malloc(sizeof(*dyn_line_buf[1]) * dyn_line_cap);
+    }
 
     /* generate static display lists */
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
