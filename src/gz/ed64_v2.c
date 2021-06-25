@@ -12,7 +12,7 @@ static uint32_t cart_lat;
 static uint32_t cart_pwd;
 static uint16_t spi_cfg;
 
-static void cart_lock(void)
+static void cart_lock_safe(void)
 {
   __osPiGetAccess();
 
@@ -20,6 +20,11 @@ static void cart_lock(void)
 
   cart_lat = pi_regs.dom2_lat;
   cart_pwd = pi_regs.dom2_pwd;
+}
+
+static void cart_lock(void)
+{
+  cart_lock_safe();
 
   pi_regs.dom2_lat = 4;
   pi_regs.dom2_pwd = 12;
@@ -200,7 +205,7 @@ static struct sd_host sd_host =
 
 static int probe(void)
 {
-  cart_lock();
+  cart_lock_safe();
 
   /* open registers */
   reg_wr(REG_KEY, 0x1234);
