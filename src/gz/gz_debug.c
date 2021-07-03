@@ -645,8 +645,8 @@ struct menu *gz_debug_menu(void)
   static struct actor_info ai;
   ai.adi = &adi;
   ai.asi = &asi;
-  menu_add_button(&actors, 7, 11, "spawn as child", spawn_actor_attached_b_proc, &ai);
-  menu_add_button(&actors, 22, 11,"fetch from link",
+  menu_add_button(&actors, 10, 11, "attach", spawn_actor_attached_b_proc, &ai);
+  menu_add_button(&actors, 17, 11,"fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */
