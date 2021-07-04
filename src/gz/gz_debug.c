@@ -641,12 +641,13 @@ struct menu *gz_debug_menu(void)
   menu_add_intinput(&actors, 10, 10, 10, 5, halfword_mod_proc, &asi.rx);
   menu_add_intinput(&actors, 17, 10, 10, 5, halfword_mod_proc, &asi.ry);
   menu_add_intinput(&actors, 24, 10, 10, 5, halfword_mod_proc, &asi.rz);
-  menu_add_button(&actors, 0, 11, "spawn", spawn_actor_proc, &asi);
   static struct actor_info ai;
   ai.adi = &adi;
   ai.asi = &asi;
-  menu_add_button(&actors, 10, 11, "attach", spawn_actor_attached_b_proc, &ai);
-  menu_add_button(&actors, 17, 11,"fetch from link",
+  menu_add_button(&actors, 0, 11, "spawn",spawn_actor_proc , &asi);
+  menu_add_button(&actors, 10, 11, "spawn as child", spawn_actor_attached_b_proc, &ai);
+
+  menu_add_button(&actors, 0, 12,"fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */
