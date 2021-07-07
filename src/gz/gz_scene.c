@@ -121,7 +121,9 @@ static int path_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.path_view_state == PATHVIEW_START ||
-                  gz.path_view_state == PATHVIEW_ACTIVE;
+                  gz.path_view_state == PATHVIEW_ACTIVE ||
+                  gz.path_view_state == PATHVIEW_BEGIN_RESTART ||
+                  gz.path_view_state == PATHVIEW_RESTART;
     if (menu_checkbox_get(item) != state)
       menu_checkbox_set(item, state);
   }

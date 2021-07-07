@@ -41,15 +41,6 @@ enum hit_view_state
   HITVIEW_STOP,
 };
 
-enum path_view_state
-{
-  PATHVIEW_INACTIVE,
-  PATHVIEW_START,
-  PATHVIEW_ACTIVE,
-  PATHVIEW_BEGIN_STOP,
-  PATHVIEW_STOP,
-};
-
 enum cull_view_state
 {
   CULLVIEW_INACTIVE,
@@ -57,6 +48,17 @@ enum cull_view_state
   CULLVIEW_ACTIVE,
   CULLVIEW_BEGIN_STOP,
   CULLVIEW_STOP,
+};
+
+enum path_view_state
+{
+  PATHVIEW_INACTIVE,
+  PATHVIEW_START,
+  PATHVIEW_ACTIVE,
+  PATHVIEW_BEGIN_STOP,
+  PATHVIEW_STOP,
+  PATHVIEW_BEGIN_RESTART,
+  PATHVIEW_RESTART,
 };
 
 enum cam_mode
@@ -196,8 +198,8 @@ struct gz
   int64_t               timer_counter_prev;
   int                   col_view_state;
   int                   hit_view_state;
-  int                   path_view_state;
   int                   cull_view_state;
+  int                   path_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;
@@ -274,8 +276,8 @@ void          gz_vcont_get(int port, z64_input_t *input);
 
 void          gz_col_view(void);
 void          gz_hit_view(void);
-void          gz_path_view(void);
 void          gz_cull_view(void);
+void          gz_path_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);
