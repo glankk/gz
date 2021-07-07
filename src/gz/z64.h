@@ -1567,6 +1567,13 @@ typedef struct
 typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
                                     z64_actor_t*);
 
+typedef struct
+{
+  int8_t            numpoints;
+  // segment address to z64_xyz_t points array
+  uint32_t          points;
+} z64_path_t;
+
 /* game context */
 typedef struct
 {
@@ -1669,7 +1676,7 @@ typedef struct
   void             *map_actor_list;           /* 0x11DF8 */
   char              unk_0x11DFC[0x0008];      /* 0x11DFC */
   void             *scene_exit_list;          /* 0x11E04 */
-  char              unk_0x11E08[0x0004];      /* 0x11E08 */
+  z64_path_t       *path_list;                /* 0x11E08 */
   void             *elf_message;              /* 0x11E0C */
   char              unk_0x11E10[0x0004];      /* 0x11E10 */
   uint8_t           skybox_type;              /* 0x11E14 */

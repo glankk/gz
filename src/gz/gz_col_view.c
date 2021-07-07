@@ -36,6 +36,19 @@ static void vtxn_f2l(Vtx *r, z64_xyzf_t *v)
                    0xFF);
 }
 
+static void draw_line(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                     z64_xyz_t *v1, z64_xyz_t *v2)
+{
+  Vtx v[2] =
+  {
+    gdSPDefVtxC(v1->x, v1->y, v1->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+    gdSPDefVtxC(v2->x, v2->y, v2->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+  };
+
+  gSPVertex((*p_gfx_p)++, gDisplayListData(p_gfx_d, v), 2, 0);
+  gSPLine3D((*p_gfx_p)++, 0, 1, 0);
+}
+
 static void tri_norm(z64_xyzf_t *v1, z64_xyzf_t *v2, z64_xyzf_t *v3,
                      z64_xyzf_t *norm)
 {
@@ -1039,6 +1052,102 @@ void gz_hit_view(void)
     release_mem(&hit_gfx_buf[1]);
 
     gz.hit_view_state = HITVIEW_INACTIVE;
+  }
+}
+
+static void do_path_list(Gfx **p_gfx_p, Gfx **p_gfx_d, Gfx **l_gfx_p, Gfx **l_gfx_d,
+                           z64_path_t *path_list)
+{
+  const float path_marker_radius = 18.0f;
+
+  z64_path_t *cur_path = path_list;
+
+  if (cur_path != NULL && (settings->bits.path_view_points || settings->bits.path_view_lines)) {
+    while (((cur_path->points << 4) >> 28) == Z64_SEG_SCENE && cur_path->numpoints != 0) {
+      z64_xyz_t *points = zu_zseg_locate(cur_path->points);
+      if (settings->bits.path_view_lines) {
+        for (int i = 0; i < cur_path->numpoints; ++i) {
+          if (i + 1 != cur_path->numpoints) {
+            draw_line(l_gfx_p, l_gfx_d, &points[i], &points[i+1]);
+          }
+        }
+      }
+      if (settings->bits.path_view_points) {
+        for (int i = 0; i < cur_path->numpoints; ++i) {
+          draw_ico_sphere(p_gfx_p, p_gfx_d, points[i].x, points[i].y, points[i].z, path_marker_radius);
+        }
+      }
+      cur_path++;
+    }
+  }
+}
+
+void gz_path_view(void)
+{
+  const int path_sph_gfx_cap = 0x480;
+  const int path_line_gfx_cap = 0x380;
+
+  static Gfx *path_sph_gfx_buf[2];
+  static Gfx *path_line_gfx_buf[2];
+  static int  path_sph_gfx_idx = 0;
+  static int  path_line_gfx_idx = 0;
+
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
+
+  if (enable && gz.path_view_state == PATHVIEW_START) {
+    path_sph_gfx_buf[0] = malloc(sizeof(*path_sph_gfx_buf[0]) * path_sph_gfx_cap);
+    path_sph_gfx_buf[1] = malloc(sizeof(*path_sph_gfx_buf[1]) * path_sph_gfx_cap);
+    path_line_gfx_buf[0] = malloc(sizeof(*path_line_gfx_buf[0]) * path_line_gfx_cap);
+    path_line_gfx_buf[1] = malloc(sizeof(*path_line_gfx_buf[1]) * path_line_gfx_cap);
+
+    gz.path_view_state = PATHVIEW_ACTIVE;
+  }
+  if (enable && gz.path_view_state == PATHVIEW_ACTIVE) {
+    Gfx **p_gfx_p;
+    if (settings->bits.path_view_xlu)
+      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+    else
+      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
+
+    Gfx *path_sph_gfx = path_sph_gfx_buf[path_sph_gfx_idx];
+    Gfx *path_sph_gfx_p = path_sph_gfx;
+    Gfx *path_sph_gfx_d = path_sph_gfx + path_sph_gfx_cap;
+    path_sph_gfx_idx = (path_sph_gfx_idx + 1) % 2;
+
+    Gfx *path_line_gfx = path_line_gfx_buf[path_line_gfx_idx];
+    Gfx *path_line_gfx_p = path_line_gfx;
+    Gfx *path_line_gfx_d = path_line_gfx + path_line_gfx_cap;
+    path_line_gfx_idx = (path_line_gfx_idx + 1) % 2;
+
+    init_poly_gfx(&path_sph_gfx_p, &path_sph_gfx_d, 1, settings->bits.path_view_xlu, 1);
+    gDPSetPrimColor(path_sph_gfx_p++, 0, 0,
+                    0x00, 0x00, 0x00, 0xFF);
+
+    load_l3dex2(&path_line_gfx_p);
+    init_line_gfx(&path_line_gfx_p, &path_line_gfx_d, settings->bits.path_view_xlu);
+
+    do_path_list(&path_sph_gfx_p, &path_sph_gfx_d, &path_line_gfx_p, &path_line_gfx_d, z64_game.path_list);
+
+    gSPEndDisplayList(path_sph_gfx_p++);
+    cache_writeback_data(path_sph_gfx, sizeof(*path_sph_gfx) * path_sph_gfx_cap);
+
+    zu_set_lighting_ext(&path_line_gfx_p, &path_line_gfx_d);
+    unload_l3dex2(&path_line_gfx_p);
+    gSPEndDisplayList(path_line_gfx_p++);
+    cache_writeback_data(path_line_gfx, sizeof(*path_line_gfx) * path_line_gfx_cap);
+
+    gSPDisplayList((*p_gfx_p)++, path_sph_gfx);
+    gSPDisplayList((*p_gfx_p)++, path_line_gfx);
+  }
+  if (gz.path_view_state == PATHVIEW_BEGIN_STOP)
+    gz.path_view_state = PATHVIEW_STOP;
+  else if (gz.path_view_state == PATHVIEW_STOP) {
+    release_mem(&path_sph_gfx_buf[0]);
+    release_mem(&path_sph_gfx_buf[1]);
+    release_mem(&path_line_gfx_buf[0]);
+    release_mem(&path_line_gfx_buf[1]);
+
+    gz.path_view_state = PATHVIEW_INACTIVE;
   }
 }
 
