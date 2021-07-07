@@ -705,21 +705,23 @@ static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
   gDPSetEnvColor((*p_gfx_p)++, 0xFF, 0xFF, 0xFF, alpha);
 }
 
-static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, _Bool xlu)
+static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, int mode, _Bool xlu)
 {
   uint32_t rm_c1;
   uint32_t rm_c2;
   uint8_t alpha;
 
-  if (xlu) {
-    rm_c1 = G_RM_AA_ZB_XLU_LINE;
-    rm_c2 = G_RM_AA_ZB_XLU_LINE2;
+  if (xlu)
     alpha = 0x80;
-  }
-  else {
+  else
+    alpha = 0xFF;
+  if (mode == SETTINGS_COLVIEW_DECAL) {
     rm_c1 = G_RM_AA_ZB_DEC_LINE;
     rm_c2 = G_RM_AA_ZB_DEC_LINE2;
-    alpha = 0xFF;
+  }
+  else {
+    rm_c1 = G_RM_AA_ZB_XLU_LINE;
+    rm_c2 = G_RM_AA_ZB_XLU_LINE2;
   }
 
   Mtx *p_m = gDisplayListAlloc(p_gfx_d, sizeof(*p_m));
@@ -926,7 +928,8 @@ void gz_col_view(void)
     /* lines */
     if (col_view_line) {
       load_l3dex2(p_gfx_p);
-      init_line_gfx(p_gfx_p, p_gfx_d, settings->bits.col_view_xlu);
+      init_line_gfx(p_gfx_p, p_gfx_d, settings->bits.col_view_mode,
+                    settings->bits.col_view_xlu);
       gSPDisplayList((*p_gfx_p)++, stc_line);
       gSPDisplayList((*p_gfx_p)++, dyn_line_buf[dyn_gfx_idx]);
       unload_l3dex2(p_gfx_p);
@@ -1162,7 +1165,7 @@ void gz_path_view(void)
       Gfx *line_gfx_d = line_gfx + line_gfx_cap;
 
       load_l3dex2(&line_gfx_p);
-      init_line_gfx(&line_gfx_p, &line_gfx_d, xlu);
+      init_line_gfx(&line_gfx_p, &line_gfx_d, SETTINGS_COLVIEW_SURFACE, xlu);
 
       for (z64_path_t *path = z64_game.path_list; path_valid(path); ++path) {
         z64_xyz_t *points = zu_zseg_locate(path->points);
