@@ -2296,6 +2296,7 @@ void      z64_DrawRoom                (z64_game_t *game, z64_room_t *room,
                                        int unk_a2);
 void      z64_UnloadRoom              (z64_game_t *game,
                                        z64_room_ctxt_t *room_ctxt);
+void      z64_Sram_LoadDebugSave      (void);
 void      z64_Io                      (uint32_t dev_addr, void *dram_addr,
                                        uint32_t size, int32_t direction);
 void      z64_CreateSkyGfx            (z64_sky_ctxt_t *sky_ctxt,

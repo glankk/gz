@@ -31,6 +31,7 @@ z64_LoadRoom                      = 0x80081064 ;
 z64_room_load_sync_hook           = 0x800811F8 ;
 z64_DrawRoom                      = 0x80081270 ;
 z64_UnloadRoom                    = 0x800812C0 ;
+z64_Sram_LoadDebugSave            = 0x8009073C ;
 z64_Io                            = 0x80091AB4 ;
 z64_CreateSkyGfx                  = 0x8009618C ;
 z64_CreateSkyVtx                  = 0x8009633C ;
