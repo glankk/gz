@@ -81,6 +81,11 @@ static void call_navi_proc(struct menu_item *item, void *data)
 static void load_debug_file_proc(struct menu_item *item, void *data)
 {
   z64_Sram_LoadDebugSave();
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_B);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CL);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CD);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CR);
+  z64_UpdateEquipment(&z64_game, &z64_link);
 }
 
 static void memfile_dec_proc(struct menu_item *item, void *data)
