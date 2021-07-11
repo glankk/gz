@@ -96,6 +96,12 @@
     "format":       "ia16",
     "tile_height":  8
   },
+  "wrench.png": {
+    "type": "texture",
+    "name": "wrench",
+    "format": "ia16",
+    "tile_height": 8
+  },
   "check_icons.png":
   {
     "type":         "texture",
