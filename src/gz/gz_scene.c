@@ -137,13 +137,11 @@ static int col_view_wfc_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
 {
-  if (reason == MENU_CALLBACK_SWITCH_ON) {
+  if (reason == MENU_CALLBACK_SWITCH_ON)
     settings->bits.col_view_wfc = 1;
-    gz.col_view_state = COLVIEW_RESTART;
-  } else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
     settings->bits.col_view_wfc = 0;
-    gz.col_view_state = COLVIEW_RESTART;
-  } else if (reason == MENU_CALLBACK_THINK)
+  else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->bits.col_view_wfc);
   return 0;
 }

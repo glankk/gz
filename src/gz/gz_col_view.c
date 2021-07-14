@@ -758,6 +758,7 @@ void gz_col_view(void)
   static int col_view_scene;
   static int col_view_line;
   static int col_view_rd;
+  static int col_view_wfc;
 
   poly_writer_t poly_writer;
   line_writer_t line_writer;
@@ -771,7 +772,8 @@ void gz_col_view(void)
       settings->bits.col_view_upd &&
       (col_view_scene != z64_game.scene_index ||
        col_view_line != settings->bits.col_view_line ||
-       col_view_rd != settings->bits.col_view_rd))
+       col_view_rd != settings->bits.col_view_rd ||
+       col_view_wfc != settings->bits.col_view_wfc))
   {
     gz.col_view_state = COLVIEW_BEGIN_RESTART;
   }
@@ -803,6 +805,7 @@ void gz_col_view(void)
     col_view_scene = z64_game.scene_index;
     col_view_line = settings->bits.col_view_line;
     col_view_rd = settings->bits.col_view_rd;
+    col_view_wfc = settings->bits.col_view_wfc;
 
     z64_col_hdr_t *col_hdr = z64_game.col_ctxt.col_hdr;
 
@@ -839,7 +842,7 @@ void gz_col_view(void)
     /* generate static display lists */
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
-                 col_view_rd, settings->bits.col_view_wfc);
+                 col_view_rd, col_view_wfc);
 
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
     gSPEndDisplayList(stc_poly_p++);
@@ -884,7 +887,7 @@ void gz_col_view(void)
       line_writer_init(p_line_writer, dyn_line_p, dyn_line_d);
     }
 
-    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd, settings->bits.col_view_wfc);
+    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd, col_view_wfc);
 
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
     gSPEndDisplayList(dyn_poly_p++);
