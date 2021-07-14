@@ -1156,18 +1156,19 @@ void load_state(void *state)
         zu_getfile(start, c_ptr, end - start);
       }
 
-      for (int i = 0; i < sizeof(z64_game.col_ctxt.dyn_col) / sizeof(*z64_game.col_ctxt.dyn_col); i++) {
-        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
-        if(!dyn_col->actor) {
-          continue;
-        }
+    }
 
-        z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[dyn_col->actor->alloc_index];
-        z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
-
-        uint32_t offset = (uint32_t)dyn_col->col_hdr - (uint32_t)obj->data;
-        reloc_col_hdr(0x06000000 | offset);
+    for (int i = 0; i < sizeof(z64_game.col_ctxt.dyn_col) / sizeof(*z64_game.col_ctxt.dyn_col); i++) {
+      z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+      if(!dyn_col->actor) {
+        continue;
       }
+
+      z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[dyn_col->actor->alloc_index];
+      z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
+
+      uint32_t offset = (uint32_t)dyn_col->col_hdr - (uint32_t)obj->data;
+      reloc_col_hdr(0x06000000 | offset);
     }
   }
 
