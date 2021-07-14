@@ -641,7 +641,7 @@ static void do_dyn_col(poly_writer_t *poly_writer,
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
-  for (int i = 0; i < 32; ++i)
+  for (int i = 0; i < 50; ++i)
     if (col_ctxt->dyn_flags[i].active) {
       z64_dyn_col_t *dyn_col = &col_ctxt->dyn_col[i];
 
@@ -652,6 +652,36 @@ static void do_dyn_col(poly_writer_t *poly_writer,
       do_dyn_list(poly_writer, line_writer,
                   dyn_col->col_hdr, dyn_col->floor_list_idx, rd);
     }
+}
+
+static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                            int n_waterboxes, z64_col_water_t *waterbox_list)
+{
+  const float water_max_depth = -4000.0f;
+
+  if (waterbox_list == 0 || n_waterboxes == 0)
+    return;
+
+  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
+    if (cur_water->flags.group == z64_game.room_ctxt.rooms[0].index || cur_water->flags.group == 0x3F || 
+        cur_water->flags.group == z64_game.room_ctxt.rooms[1].index) {
+      z64_xyzf_t points[] = {
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
+      };
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+    }
+  }
 }
 
 static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
@@ -846,8 +876,8 @@ void gz_col_view(void)
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
                  col_view_rd);
-
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
+
     gSPEndDisplayList(stc_poly_p++);
     dcache_wb(stc_poly, sizeof(*stc_poly) * stc_poly_cap);
 
@@ -891,8 +921,47 @@ void gz_col_view(void)
     }
 
     do_dyn_col(p_poly_writer, p_line_writer, col_view_rd);
-
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
+
+    gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
+    gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
+
+    // which waterbox to draw depends on currently loaded room, so even
+    // static waterboxes may need updating
+    do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water);
+
+    for (int i = 0; i < 50; ++i) {
+      if (z64_game.col_ctxt.dyn_flags[i].active) {
+        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+        do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+      }
+    }
+    /*
+    * There is a special hardcoded check for Zora's Domain in a function related to handling collision
+    * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
+    * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
+    */
+    if (z64_game.scene_index == 0x58) {
+      z64_xyzf_t points[] = {
+        { -348.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -967.0 },
+        { -348.0, 877.0, -967.0 },
+        { -348.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -967.0 },
+        { -348.0, 777.0, -967.0 },
+      };
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[3], &points[0], &points[4], &points[7]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[4], &points[5], &points[6], &points[7]);
+    }
+
     gSPEndDisplayList(dyn_poly_p++);
     dcache_wb(dyn_poly, sizeof(*dyn_poly) * dyn_poly_cap);
 
