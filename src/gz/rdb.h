@@ -4,8 +4,8 @@
 
 #define RDB_INTR_OP     MIPS_TEQ(MIPS_R0, MIPS_R0, 0x151)
 #define rdb_interrupt() ({ \
-                          __asm__ volatile (".word   %[op];" \
-                                            :: [op] "i"(RDB_INTR_OP)); \
+                          __asm__ (".word   %[op];" \
+                                   :: [op] "i"(RDB_INTR_OP)); \
                         })
 
 void  rdb_start(void);

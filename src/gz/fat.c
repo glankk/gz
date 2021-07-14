@@ -107,7 +107,7 @@ static _Bool char_is_sfn(char c, enum sfn_case *cse)
   return (c >= '@' && c <= 'Z') || (c >= '0' && c <= '9') ||
          (c >= '#' && c <= ')') || (c >= '^' && c <= '`') ||
          (c >= '\x80' && c <= '\xFF') ||
-         c == ' ' || c == '!' || c == '-' || c == '{' || c == '}' || c == '~';
+         c == '!' || c == '-' || c == '{' || c == '}' || c == '~';
 }
 
 /* convert an lfn name component to sfn characters */
@@ -147,8 +147,6 @@ static _Bool name_is_sfn(const char *s, _Bool *lower_name, _Bool *lower_ext)
   int ext_l;
   name_split(s, &name, &ext, &name_l, &ext_l);
   if (name_l == 0 || name_l > 8 || (ext && ext_l > 3))
-    return 0;
-  if (name[name_l - 1] == ' ' || (ext && ext[ext_l - 1] == ' '))
     return 0;
   enum sfn_case name_cse = SFN_CASE_ANY;
   enum sfn_case ext_cse = SFN_CASE_ANY;
@@ -203,9 +201,15 @@ static _Bool validate_sfn(const char *sfn)
   }
   /* validate characters */
   enum sfn_case cse = SFN_CASE_UPPER;
-  for (int i = 0; i < 11; ++i)
-    if (!char_is_sfn(sfn[i], &cse))
+  _Bool spc = 0;
+  for (int i = 0; i < 11; ++i) {
+    if (i == 8)
+      spc = 0;
+    if (sfn[i] == ' ')
+      spc = 1;
+    else if (spc || !char_is_sfn(sfn[i], &cse))
       return 0;
+  }
   return 1;
 }
 
@@ -488,7 +492,7 @@ static int get_clust(struct fat *fat, uint32_t clust, uint32_t *value)
     *value = get_word(block, offset, 4);
     *value &= 0x0FFFFFFF;
   }
-  if (clust == fat->free_lb && value != 0)
+  if (clust == fat->free_lb && *value != 0)
     ++fat->free_lb;
   return 0;
 }
@@ -868,8 +872,8 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
     uint32_t chunk_start = clust;
     uint32_t chunk_length = 1;
     /* compute consecutive cluster chunk length */
+    uint32_t p_clust = clust;
     while (1) {
-      uint32_t p_clust = clust;
       if (get_clust(fat, clust, &clust))
         return n_copy;
       if (clust >= 0x0FFFFFF7 || clust != p_clust + 1 ||
@@ -877,6 +881,7 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
       {
         break;
       }
+      p_clust = clust;
       ++chunk_length;
     }
     /* copy chunk */
@@ -895,6 +900,8 @@ static uint32_t clust_rw(struct fat_file *file, enum fat_rw rw, void *buf,
     file->p_off += n_byte;
     file->p_clust_seq += chunk_length;
     if (clust < 2 || clust >= 0x0FFFFFF7) {
+      file->p_clust_seq--;
+      file->p_clust = p_clust;
       file->p_clust_sect = fat->n_clust_sect - 1;
       file->p_sect_off = fat->n_sect_byte;
       if (eof)
@@ -2104,7 +2111,7 @@ static int check_rec(struct fat *fat, uint32_t rec_lba, int part)
   return 0;
 }
 
-int fat_init(struct fat *fat, fat_io_proc read, fat_io_proc write,
+int fat_init(struct fat *fat, fat_rd_proc read, fat_wr_proc write,
              uint32_t rec_lba, int part)
 {
   /* initialize cache */

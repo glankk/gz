@@ -43,6 +43,7 @@ struct command_info command_info[COMMAND_MAX] =
   {"play macro",        command_playmacro,     CMDACT_PRESS_ONCE},
   {"collision view",    command_colview,       CMDACT_PRESS_ONCE},
   {"hitbox view",       command_hitview,       CMDACT_PRESS_ONCE},
+  {"path view",         command_pathview,      CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                  CMDACT_PRESS},
   {"explore next room", NULL,                  CMDACT_PRESS},
   {"reset lag counter", command_resetlag,      CMDACT_HOLD},
@@ -465,10 +466,18 @@ void command_hitview(void)
     gz.hit_view_state = HITVIEW_BEGIN_STOP;
 }
 
+void command_pathview(void)
+{
+  if (gz.path_view_state == PATHVIEW_INACTIVE)
+    gz.path_view_state = PATHVIEW_START;
+  else
+    gz.path_view_state = PATHVIEW_BEGIN_STOP;
+}
+
 void command_resetlag(void)
 {
   gz.frame_counter = 0;
-  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+  gz.lag_vi_offset = -(int32_t)__osViIntrCount;
 }
 
 void command_togglewatches(void)

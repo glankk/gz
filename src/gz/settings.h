@@ -89,6 +89,7 @@ enum commands
   COMMAND_PLAYMACRO,
   COMMAND_COLVIEW,
   COMMAND_HITVIEW,
+  COMMAND_PATHVIEW,
   COMMAND_PREVROOM,
   COMMAND_NEXTROOM,
   COMMAND_RESETLAG,
@@ -110,34 +111,37 @@ struct watch_info
 
 struct settings_bits
 {
-  uint8_t ignore_target    : 1;
-  uint32_t font_resource   : 4;
-  uint32_t drop_shadow     : 1;
-  uint32_t input_display   : 1;
-  uint32_t log             : 1;
-  uint32_t lag_counter     : 1;
-  uint32_t lag_unit        : 1;
-  uint32_t timer           : 1;
-  uint32_t pause_display   : 1;
-  uint32_t macro_input     : 1;
-  uint32_t hack_oca_input  : 1;
-  uint32_t hack_oca_sync   : 1;
-  uint32_t hack_room_load  : 1;
-  uint32_t wiivc_cam       : 1;
-  uint32_t break_type      : 1;
-  uint32_t warp_age        : 2;
-  uint32_t warp_cutscene   : 5;
-  uint32_t load_to         : 2;
-  uint32_t on_load         : 2;
-  uint32_t col_view_mode   : 1;
-  uint32_t col_view_xlu    : 1;
-  uint32_t col_view_line   : 1;
-  uint32_t col_view_shade  : 1;
-  uint32_t col_view_rd     : 1;
-  uint32_t col_view_upd    : 1;
-  uint32_t hit_view_xlu    : 1;
-  uint32_t hit_view_shade  : 1;
-  uint32_t watches_visible : 1;
+  uint8_t ignore_target     : 1;
+  uint32_t font_resource    : 4;
+  uint32_t drop_shadow      : 1;
+  uint32_t input_display    : 1;
+  uint32_t log              : 1;
+  uint32_t lag_counter      : 1;
+  uint32_t lag_unit         : 1;
+  uint32_t timer            : 1;
+  uint32_t pause_display    : 1;
+  uint32_t macro_input      : 1;
+  uint32_t hack_oca_input   : 1;
+  uint32_t hack_oca_sync    : 1;
+  uint32_t hack_room_load   : 1;
+  uint32_t wiivc_cam        : 1;
+  uint32_t break_type       : 1;
+  uint32_t warp_age         : 2;
+  uint32_t warp_cutscene    : 5;
+  uint32_t load_to          : 2;
+  uint32_t on_load          : 2;
+  uint32_t col_view_mode    : 1;
+  uint32_t col_view_xlu     : 1;
+  uint32_t col_view_line    : 1;
+  uint32_t col_view_shade   : 1;
+  uint32_t col_view_rd      : 1;
+  uint32_t col_view_upd     : 1;
+  uint32_t hit_view_xlu     : 1;
+  uint32_t hit_view_shade   : 1;
+  uint32_t path_view_xlu    : 1;
+  uint32_t path_view_points : 1;
+  uint32_t path_view_lines  : 1;
+  uint32_t watches_visible  : 1;
 };
 
 struct settings_data
