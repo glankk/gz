@@ -42,14 +42,12 @@ static void cart_unlock(void)
 
 static inline uint32_t reg_rd(int reg)
 {
-  REGS_PTR[REG_CFG];
-  return REGS_PTR[reg];
+  return __pi_read_raw((uint32_t)&REGS_PTR[reg]);
 }
 
 static inline void reg_wr(int reg, uint32_t dat)
 {
-  REGS_PTR[REG_CFG];
-  REGS_PTR[reg] = dat;
+  return __pi_write_raw((uint32_t)&REGS_PTR[reg], dat);
 }
 
 static inline void spi_mode(int cfg)

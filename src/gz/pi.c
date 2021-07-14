@@ -20,7 +20,7 @@ static void pio_write(uint32_t dev_addr, uint32_t ram_addr, size_t size)
   uint32_t ram_p = ram_addr - (dev_addr - dev_s);
 
   while (dev_p < dev_e) {
-    uint32_t w = *(volatile uint32_t *)dev_p;
+    uint32_t w = __pi_read_raw(dev_p);
     for (int i = 0; i < 4; i++) {
       uint8_t b;
       if (ram_p >= ram_s && ram_p < ram_e)
@@ -30,7 +30,7 @@ static void pio_write(uint32_t dev_addr, uint32_t ram_addr, size_t size)
       w = (w << 8) | b;
       ram_p++;
     }
-    *(volatile uint32_t *)dev_p = w;
+    __pi_write_raw(dev_p, w);
     dev_p += 4;
   }
 }
@@ -49,7 +49,7 @@ static void pio_read(uint32_t dev_addr, uint32_t ram_addr, size_t size)
   uint32_t ram_p = ram_addr - (dev_addr - dev_s);
 
   while (dev_p < dev_e) {
-    uint32_t w = *(volatile uint32_t *)dev_p;
+    uint32_t w = __pi_read_raw(dev_p);
     for (int i = 0; i < 4; i++) {
       if (ram_p >= ram_s && ram_p < ram_e)
         *(uint8_t *)ram_p = w >> 24;
@@ -88,9 +88,7 @@ static void dma_write(uint32_t dev_addr, uint32_t ram_addr, size_t size)
     __osEventStateTab[OS_EVENT_PI] = pi_event;
   }
   else {
-    while (pi_regs.status & PI_STATUS_DMA_BUSY)
-      ;
-
+    __pi_wait();
     pi_regs.status = PI_STATUS_CLR_INTR;
   }
 }
@@ -123,9 +121,7 @@ static void dma_read(uint32_t dev_addr, uint32_t ram_addr, size_t size)
     __osEventStateTab[OS_EVENT_PI] = pi_event;
   }
   else {
-    while (pi_regs.status & PI_STATUS_DMA_BUSY)
-      ;
-
+    __pi_wait();
     pi_regs.status = PI_STATUS_CLR_INTR;
   }
 }
