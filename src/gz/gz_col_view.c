@@ -36,6 +36,19 @@ static void vtxn_f2l(Vtx *r, z64_xyzf_t *v)
                    0xFF);
 }
 
+static void draw_line(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                     z64_xyz_t *v1, z64_xyz_t *v2)
+{
+  Vtx v[2] =
+  {
+    gdSPDefVtxC(v1->x, v1->y, v1->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+    gdSPDefVtxC(v2->x, v2->y, v2->z, 0, 0, 0x00, 0x00, 0x00, 0xFF),
+  };
+
+  gSPVertex((*p_gfx_p)++, gDisplayListData(p_gfx_d, v), 2, 0);
+  gSPLine3D((*p_gfx_p)++, 0, 1, 0);
+}
+
 static void tri_norm(z64_xyzf_t *v1, z64_xyzf_t *v2, z64_xyzf_t *v3,
                      z64_xyzf_t *norm)
 {
@@ -628,7 +641,7 @@ static void do_dyn_col(poly_writer_t *poly_writer,
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
-  for (int i = 0; i < 32; ++i)
+  for (int i = 0; i < 50; ++i)
     if (col_ctxt->dyn_flags[i].active) {
       z64_dyn_col_t *dyn_col = &col_ctxt->dyn_col[i];
 
@@ -639,6 +652,36 @@ static void do_dyn_col(poly_writer_t *poly_writer,
       do_dyn_list(poly_writer, line_writer,
                   dyn_col->col_hdr, dyn_col->floor_list_idx, rd);
     }
+}
+
+static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
+                            int n_waterboxes, z64_col_water_t *waterbox_list)
+{
+  const float water_max_depth = -4000.0f;
+
+  if (waterbox_list == 0 || n_waterboxes == 0)
+    return;
+
+  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
+    if (cur_water->flags.group == z64_game.room_ctxt.rooms[0].index || cur_water->flags.group == 0x3F || 
+        cur_water->flags.group == z64_game.room_ctxt.rooms[1].index) {
+      z64_xyzf_t points[] = {
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
+        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
+        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
+      };
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+    }
+  }
 }
 
 static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
@@ -692,21 +735,23 @@ static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
   gDPSetEnvColor((*p_gfx_p)++, 0xFF, 0xFF, 0xFF, alpha);
 }
 
-static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, _Bool xlu)
+static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, int mode, _Bool xlu)
 {
   uint32_t rm_c1;
   uint32_t rm_c2;
   uint8_t alpha;
 
-  if (xlu) {
-    rm_c1 = G_RM_AA_ZB_XLU_LINE;
-    rm_c2 = G_RM_AA_ZB_XLU_LINE2;
+  if (xlu)
     alpha = 0x80;
-  }
-  else {
+  else
+    alpha = 0xFF;
+  if (mode == SETTINGS_COLVIEW_DECAL) {
     rm_c1 = G_RM_AA_ZB_DEC_LINE;
     rm_c2 = G_RM_AA_ZB_DEC_LINE2;
-    alpha = 0xFF;
+  }
+  else {
+    rm_c1 = G_RM_AA_ZB_XLU_LINE;
+    rm_c2 = G_RM_AA_ZB_XLU_LINE2;
   }
 
   Mtx *p_m = gDisplayListAlloc(p_gfx_d, sizeof(*p_m));
@@ -821,22 +866,25 @@ void gz_col_view(void)
     /* allocate dynamic display lists */
     dyn_poly_buf[0] = malloc(sizeof(*dyn_poly_buf[0]) * dyn_poly_cap);
     dyn_poly_buf[1] = malloc(sizeof(*dyn_poly_buf[1]) * dyn_poly_cap);
-    dyn_line_buf[0] = malloc(sizeof(*dyn_line_buf[0]) * dyn_line_cap);
-    dyn_line_buf[1] = malloc(sizeof(*dyn_line_buf[1]) * dyn_line_cap);
+
+    if (col_view_line) {
+      dyn_line_buf[0] = malloc(sizeof(*dyn_line_buf[0]) * dyn_line_cap);
+      dyn_line_buf[1] = malloc(sizeof(*dyn_line_buf[1]) * dyn_line_cap);
+    }
 
     /* generate static display lists */
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
                  col_view_rd);
-
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
+
     gSPEndDisplayList(stc_poly_p++);
-    cache_writeback_data(stc_poly, sizeof(*stc_poly) * stc_poly_cap);
+    dcache_wb(stc_poly, sizeof(*stc_poly) * stc_poly_cap);
 
     if (col_view_line) {
       line_writer_finish(p_line_writer, &stc_line_p, &stc_line_d);
       gSPEndDisplayList(stc_line_p++);
-      cache_writeback_data(stc_line, sizeof(*stc_line) * stc_line_cap);
+      dcache_wb(stc_line, sizeof(*stc_line) * stc_line_cap);
       vector_destroy(&line_set);
     }
 
@@ -873,15 +921,54 @@ void gz_col_view(void)
     }
 
     do_dyn_col(p_poly_writer, p_line_writer, col_view_rd);
-
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
+
+    gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
+    gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
+
+    // which waterbox to draw depends on currently loaded room, so even
+    // static waterboxes may need updating
+    do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water);
+
+    for (int i = 0; i < 50; ++i) {
+      if (z64_game.col_ctxt.dyn_flags[i].active) {
+        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+        do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
+                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+      }
+    }
+    /*
+    * There is a special hardcoded check for Zora's Domain in a function related to handling collision
+    * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
+    * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
+    */
+    if (z64_game.scene_index == 0x58) {
+      z64_xyzf_t points[] = {
+        { -348.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -1746.0 },
+        { 205.0, 877.0, -967.0 },
+        { -348.0, 877.0, -967.0 },
+        { -348.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -1746.0 },
+        { 205.0, 777.0, -967.0 },
+        { -348.0, 777.0, -967.0 },
+      };
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[2], &points[3]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[5], &points[4]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[1], &points[2], &points[6], &points[5]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[2], &points[3], &points[7], &points[6]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[3], &points[0], &points[4], &points[7]);
+      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[4], &points[5], &points[6], &points[7]);
+    }
+
     gSPEndDisplayList(dyn_poly_p++);
-    cache_writeback_data(dyn_poly, sizeof(*dyn_poly) * dyn_poly_cap);
+    dcache_wb(dyn_poly, sizeof(*dyn_poly) * dyn_poly_cap);
 
     if (col_view_line) {
       line_writer_finish(p_line_writer, &dyn_line_p, &dyn_line_d);
       gSPEndDisplayList(dyn_line_p++);
-      cache_writeback_data(dyn_line, sizeof(*dyn_line) * dyn_line_cap);
+      dcache_wb(dyn_line, sizeof(*dyn_line) * dyn_line_cap);
     }
   }
 
@@ -910,7 +997,8 @@ void gz_col_view(void)
     /* lines */
     if (col_view_line) {
       load_l3dex2(p_gfx_p);
-      init_line_gfx(p_gfx_p, p_gfx_d, settings->bits.col_view_xlu);
+      init_line_gfx(p_gfx_p, p_gfx_d, settings->bits.col_view_mode,
+                    settings->bits.col_view_xlu);
       gSPDisplayList((*p_gfx_p)++, stc_line);
       gSPDisplayList((*p_gfx_p)++, dyn_line_buf[dyn_gfx_idx]);
       unload_l3dex2(p_gfx_p);
@@ -1025,7 +1113,7 @@ void gz_hit_view(void)
     do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
                    z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
     gSPEndDisplayList(hit_gfx_p++);
-    cache_writeback_data(hit_gfx, sizeof(*hit_gfx) * hit_gfx_cap);
+    dcache_wb(hit_gfx, sizeof(*hit_gfx) * hit_gfx_cap);
 
     gSPDisplayList((*p_gfx_p)++, hit_gfx);
   }
@@ -1036,6 +1124,132 @@ void gz_hit_view(void)
     release_mem(&hit_gfx_buf[1]);
 
     gz.hit_view_state = HITVIEW_INACTIVE;
+  }
+}
+
+static inline int path_valid(z64_path_t *path)
+{
+  return path->numpoints != 0 && (path->points >> 24) == Z64_SEG_SCENE;
+}
+
+void gz_path_view(void)
+{
+  const int poly_gfx_cap = 0x480;
+  const int line_gfx_cap = 0x380;
+
+  static Gfx *poly_gfx_buf[2];
+  static Gfx *line_gfx_buf[2];
+  static int path_gfx_idx = 0;
+
+  static _Bool path_view_points;
+  static _Bool path_view_lines;
+
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0 &&
+                 z64_game.path_list != NULL;
+  _Bool init = gz.path_view_state == PATHVIEW_START ||
+               gz.path_view_state == PATHVIEW_RESTART;
+
+  /* restart if needed */
+  if (enable && gz.path_view_state == PATHVIEW_ACTIVE &&
+      (path_view_points != settings->bits.path_view_points ||
+       path_view_lines != settings->bits.path_view_lines))
+  {
+    gz.path_view_state = PATHVIEW_BEGIN_RESTART;
+  }
+
+  /* update state */
+  switch (gz.path_view_state) {
+    case PATHVIEW_BEGIN_STOP:
+      gz.path_view_state = PATHVIEW_STOP;
+      break;
+
+    case PATHVIEW_BEGIN_RESTART:
+      gz.path_view_state = PATHVIEW_RESTART;
+      break;
+
+    case PATHVIEW_STOP:
+      gz.path_view_state = PATHVIEW_INACTIVE;
+    case PATHVIEW_RESTART:
+      release_mem(&poly_gfx_buf[0]);
+      release_mem(&poly_gfx_buf[1]);
+      release_mem(&line_gfx_buf[0]);
+      release_mem(&line_gfx_buf[1]);
+      break;
+  }
+
+  if (enable && init) {
+    path_view_points = settings->bits.path_view_points;
+    path_view_lines = settings->bits.path_view_lines;
+
+    if (path_view_points) {
+      poly_gfx_buf[0] = malloc(sizeof(*poly_gfx_buf[0]) * poly_gfx_cap);
+      poly_gfx_buf[1] = malloc(sizeof(*poly_gfx_buf[1]) * poly_gfx_cap);
+    }
+
+    if (path_view_lines) {
+      line_gfx_buf[0] = malloc(sizeof(*line_gfx_buf[0]) * line_gfx_cap);
+      line_gfx_buf[1] = malloc(sizeof(*line_gfx_buf[1]) * line_gfx_cap);
+    }
+
+    gz.path_view_state = PATHVIEW_ACTIVE;
+  }
+
+  if (enable && gz.path_view_state == PATHVIEW_ACTIVE) {
+    int xlu = settings->bits.path_view_xlu;
+    Gfx **p_gfx_p;
+    if (xlu)
+      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+    else
+      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
+
+    if (path_view_points) {
+      Gfx *poly_gfx = poly_gfx_buf[path_gfx_idx];
+      Gfx *poly_gfx_p = poly_gfx;
+      Gfx *poly_gfx_d = poly_gfx + poly_gfx_cap;
+
+      init_poly_gfx(&poly_gfx_p, &poly_gfx_d, SETTINGS_COLVIEW_SURFACE, xlu, 1);
+
+      for (z64_path_t *path = z64_game.path_list; path_valid(path); ++path) {
+        z64_xyz_t *points = zu_zseg_locate(path->points);
+        for (int i = 0; i < path->numpoints; ++i) {
+          if (path->numpoints == 1)
+            gDPSetPrimColor(poly_gfx_p++, 0, 0, 0x00, 0xFF, 0xFF, 0xFF);
+          else {
+            uint8_t r = 0xFF * i / (path->numpoints - 1);
+            gDPSetPrimColor(poly_gfx_p++, 0, 0, r, 0xFF, 0xFF - r, 0xFF);
+          }
+          draw_ico_sphere(&poly_gfx_p, &poly_gfx_d,
+                          points[i].x, points[i].y, points[i].z, 18.f);
+        }
+      }
+
+      gSPEndDisplayList(poly_gfx_p++);
+      dcache_wb(poly_gfx, sizeof(*poly_gfx) * poly_gfx_cap);
+      gSPDisplayList((*p_gfx_p)++, poly_gfx);
+    }
+
+    if (path_view_lines) {
+      Gfx *line_gfx = line_gfx_buf[path_gfx_idx];
+      Gfx *line_gfx_p = line_gfx;
+      Gfx *line_gfx_d = line_gfx + line_gfx_cap;
+
+      load_l3dex2(&line_gfx_p);
+      init_line_gfx(&line_gfx_p, &line_gfx_d, SETTINGS_COLVIEW_SURFACE, xlu);
+
+      for (z64_path_t *path = z64_game.path_list; path_valid(path); ++path) {
+        z64_xyz_t *points = zu_zseg_locate(path->points);
+        for (int i = 0; i + 1 < path->numpoints; ++i)
+          draw_line(&line_gfx_p, &line_gfx_d, &points[i], &points[i + 1]);
+      }
+
+      unload_l3dex2(&line_gfx_p);
+      zu_set_lighting_ext(&line_gfx_p, &line_gfx_d);
+      gSPEndDisplayList(line_gfx_p++);
+      dcache_wb(line_gfx, sizeof(*line_gfx) * line_gfx_cap);
+      gSPDisplayList((*p_gfx_p)++, line_gfx);
+    }
+
+    path_gfx_idx = (path_gfx_idx + 1) % 2;
   }
 }
 
@@ -1236,7 +1450,7 @@ void gz_cull_view(void)
     draw_quad(&cull_gfx_p, &cull_gfx_d, &C[0], &C[1], &C[2], &C[3]);
 
     gSPEndDisplayList(cull_gfx_p++);
-    cache_writeback_data(cull_gfx, sizeof(*cull_gfx) * cull_gfx_cap);
+    dcache_wb(cull_gfx, sizeof(*cull_gfx) * cull_gfx_cap);
 
     gSPDisplayList((*p_gfx_p)++, cull_gfx);
   }

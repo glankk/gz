@@ -5,79 +5,57 @@
 #include <n64.h>
 #include <startup.h>
 
-/* set interrupt enable bit and return previous value */
-static inline _Bool set_int(_Bool enable)
+/* set irq bit and return previous value */
+static inline int set_irqf(int irqf)
 {
   uint32_t sr;
-  __asm__ volatile ("mfc0    %[sr], $12;" : [sr] "=r"(sr));
-  _Bool ie = sr & MIPS_STATUS_IE;
-  if (enable)
-    sr |= MIPS_STATUS_IE;
-  else
-    sr &= ~MIPS_STATUS_IE;
-  __asm__ volatile ("mtc0    %[sr], $12;" :: [sr] "r"(sr));
-  return ie;
+
+  __asm__ ("mfc0    %[sr], $12;" : [sr] "=r"(sr));
+  int old_irqf = sr & MIPS_STATUS_IE;
+
+  sr = (sr & ~MIPS_STATUS_IE) | (irqf & MIPS_STATUS_IE);
+  __asm__ ("mtc0    %[sr], $12;" :: [sr] "r"(sr));
+
+  return old_irqf;
 }
 
-static inline void cache_writeback_data(void *ptr, uint32_t len)
+static inline int get_irqf(void)
 {
-  char *p = ptr;
-  char *e = p + len;
+  uint32_t sr;
+
+  __asm__ ("mfc0    %[sr], $12;" : [sr] "=r"(sr));
+
+  return sr & MIPS_STATUS_IE;
+}
+
+static inline void dcache_inv(const void *ptr, size_t len)
+{
+  uint32_t p = (uint32_t)ptr & ~0xF;
+  uint32_t e = (uint32_t)ptr + len;
   while (p < e) {
-    __asm__ volatile ("cache   0x19, 0x0000(%[p]);" :: [p] "r"(p));
+    __asm__ ("cache   0x11, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
   }
 }
 
-static inline void cache_invalidate_data(void *ptr, uint32_t len)
+static inline void dcache_wbinv(const void *ptr, size_t len)
 {
-  char *p = ptr;
-  char *e = p + len;
+  uint32_t p = (uint32_t)ptr & ~0xF;
+  uint32_t e = (uint32_t)ptr + len;
   while (p < e) {
-    __asm__ volatile ("cache   0x11, 0x0000(%[p]);" :: [p] "r"(p));
+    __asm__ ("cache   0x15, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
   }
 }
 
-/* wait for dma and disable interrupts */
-static inline _Bool enter_dma_section(void)
+static inline void dcache_wb(const void *ptr, size_t len)
 {
-  _Bool ie;
-  while (1) {
-    if (pi_regs.status & PI_STATUS_DMA_BUSY)
-      continue;
-    ie = set_int(0);
-    if (pi_regs.status & PI_STATUS_DMA_BUSY) {
-      set_int(ie);
-      continue;
-    }
-    break;
+  uint32_t p = (uint32_t)ptr & ~0xF;
+  uint32_t e = (uint32_t)ptr + len;
+  while (p < e) {
+    __asm__ ("cache   0x19, 0x0000(%[p]);" :: [p] "r"(p));
+    p += 0x10;
   }
-  return ie;
-}
-
-/* dma cart to ram and invalidate cache */
-static inline void dma_read(void *dst, uint32_t cart_addr, uint32_t len)
-{
-  cache_invalidate_data(dst, len);
-  pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(dst);
-  pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
-  pi_regs.wr_len = len - 1;
-  while (pi_regs.status & PI_STATUS_DMA_BUSY)
-    ;
-  pi_regs.status = PI_STATUS_CLR_INTR;
-}
-
-/* flush cache and dma ram to cart */
-static inline void dma_write(void *src, uint32_t cart_addr, uint32_t len)
-{
-  cache_writeback_data(src, len);
-  pi_regs.dram_addr = MIPS_KSEG0_TO_PHYS(src);
-  pi_regs.cart_addr = MIPS_KSEG1_TO_PHYS(cart_addr);
-  pi_regs.rd_len = len - 1;
-  while (pi_regs.status & PI_STATUS_DMA_BUSY)
-    ;
-  pi_regs.status = PI_STATUS_CLR_INTR;
 }
 
 /* safe (non-signaling) nan check */

@@ -1567,6 +1567,13 @@ typedef struct
 typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
                                     z64_actor_t*);
 
+typedef struct
+{
+  int8_t            numpoints;
+  // segment address to z64_xyz_t points array
+  uint32_t          points;
+} z64_path_t;
+
 /* game context */
 typedef struct
 {
@@ -1669,7 +1676,7 @@ typedef struct
   void             *map_actor_list;           /* 0x11DF8 */
   char              unk_0x11DFC[0x0008];      /* 0x11DFC */
   void             *scene_exit_list;          /* 0x11E04 */
-  char              unk_0x11E08[0x0004];      /* 0x11E08 */
+  z64_path_t       *path_list;                /* 0x11E08 */
   void             *elf_message;              /* 0x11E0C */
   char              unk_0x11E10[0x0004];      /* 0x11E10 */
   uint8_t           skybox_type;              /* 0x11E14 */
@@ -2189,12 +2196,8 @@ z64_extern  OSThread              z64_thread_idle;
 z64_extern  OSThread              z64_thread_main;
 z64_extern  OSThread              z64_thread_dmamgr;
 z64_extern  OSMesgQueue           z64_file_mq;
-z64_extern  OSThread              z64_thread_pimgr;
-z64_extern  uint32_t              z64_vi_counter;
-z64_extern  OSThread              z64_thread_vimgr;
 z64_extern  z64_ftab_t            z64_ftab[];
 z64_extern  z64_part_t           *z64_part_space;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoTextStart[];
 z64_extern  int32_t               z64_part_pos;
 z64_extern  int32_t               z64_part_max;
 z64_extern  z64_part_ovl_t        z64_part_ovl_tab[37];
@@ -2246,7 +2249,6 @@ z64_extern  uint32_t              z64_random;
 z64_extern  char                  z64_message_state[];
 z64_extern  char                  z64_staff_notes[];
 z64_extern  int16_t               z64_gameover_countdown;
-z64_extern  char                  z64_gspF3DEX2_NoN_fifoDataStart[];
 z64_extern  z64_pfx_t             z64_pfx;
 z64_extern  char                  z64_fw_state_1[];
 z64_extern  char                  z64_fw_state_2[];
@@ -2287,19 +2289,6 @@ z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
 
 /* functions */
-int32_t   z64_osSendMesg              (OSMesgQueue *mq, OSMesg msg,
-                                       int32_t flag);
-void      z64_osStopThread            (OSThread *t);
-int32_t   z64_osRecvMesg              (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t flag);
-void      z64_osDestroyThread         (OSThread *t);
-void      z64_osCreateThread          (OSThread *t, OSId id,
-                                       void (*entry)(void *arg), void *arg,
-                                       void *sp, OSPri pri);
-void      z64_osSetEventMesg          (OSEvent e, OSMesgQueue *mq, OSMesg m);
-void      z64_osCreateMesgQueue       (OSMesgQueue *mq, OSMesg *msg,
-                                       int32_t count);
-void      z64_osStartThread           (OSThread *t);
 void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
@@ -2325,6 +2314,7 @@ void      z64_DrawRoom                (z64_game_t *game, z64_room_t *room,
                                        int unk_a2);
 void      z64_UnloadRoom              (z64_game_t *game,
                                        z64_room_ctxt_t *room_ctxt);
+void      z64_Sram_LoadDebugSave      (void);
 void      z64_Io                      (uint32_t dev_addr, void *dram_addr,
                                        uint32_t size, int32_t direction);
 void      z64_CreateSkyGfx            (z64_sky_ctxt_t *sky_ctxt,
@@ -2346,6 +2336,5 @@ uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,
                                        void *dst);
 void      z64_SeedRandom              (uint32_t seed);
-OSThread *z64_osGetCurrFaultedThread  (void);
 
 #endif
