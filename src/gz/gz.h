@@ -50,6 +50,15 @@ enum cull_view_state
   CULLVIEW_STOP,
 };
 
+enum holl_view_state
+{
+  HOLLVIEW_INACTIVE,
+  HOLLVIEW_START,
+  HOLLVIEW_ACTIVE,
+  HOLLVIEW_BEGIN_STOP,
+  HOLLVIEW_STOP,
+};
+
 enum path_view_state
 {
   PATHVIEW_INACTIVE,
@@ -200,6 +209,7 @@ struct gz
   int                   hit_view_state;
   int                   cull_view_state;
   int                   path_view_state;
+  int                   holl_view_state;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;
@@ -278,6 +288,7 @@ void          gz_col_view(void);
 void          gz_hit_view(void);
 void          gz_cull_view(void);
 void          gz_path_view(void);
+void          gz_holl_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);

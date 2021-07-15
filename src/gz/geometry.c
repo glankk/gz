@@ -141,3 +141,17 @@ z64_xyzf_t *vec3f_xfmw(z64_xyzf_t *r, z64_xyzf_t *a, float w, MtxF *b)
   *r = v;
   return r;
 }
+
+z64_xyzf_t vec3f_actor_to_world(z64_actor_t *actor, z64_xyzf_t *relative_pos)
+{
+  float cosRotY = cos(actor->shape.rot.y * (M_PI/32768.0f));
+  float sinRotY = sin(actor->shape.rot.y * (M_PI/32768.0f));
+  float dx = relative_pos->x - actor->world.pos.x;
+  float dz = relative_pos->z - actor->world.pos.z;
+
+  return (z64_xyzf_t){
+    dx * cosRotY - dz * sinRotY, 
+    relative_pos->y - actor->world.pos.y, 
+    dx * sinRotY + dz * cosRotY
+  };
+}

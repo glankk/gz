@@ -1463,3 +1463,127 @@ void gz_cull_view(void)
     gz.cull_view_state = CULLVIEW_INACTIVE;
   }
 }
+
+/*
+ *  En_Holl Params
+ *
+ *  1111110000000000    = Transition actor id
+ *  0000000111000000    = Type
+ *    00  Two-Way Vertical Fading
+ *    01  One-Way Horizontal Fading
+ *    02  Two-Way Horizontal No Fade
+ *    03  Switch-Flag Vertical Fading
+ *    04  Two-Way Vertical No Fade
+ *    05  Two-Way Horizontal Fading
+ *    06  Two-Way Vertical No Fade Wider
+ *  0000000000111111    = Switch flag (relevant to type 3 only)
+ */
+enum {
+  /* 0 */ HOLL_TWO_WAY_VERTICAL_FADING,      // Two-Way Vertical Fading
+  /* 1 */ HOLL_ONE_WAY_HORIZONTAL_FADING,    // One-Way Horizontal Fading
+  /* 2 */ HOLL_TWO_WAY_HORIZONTAL_NO_FADE,   // Two-Way Horizontal No Fade
+  /* 3 */ HOLL_SWITCH_FLAG_VERTICAL_FADING,  // Switch-Flag Vertical Fading
+  /* 4 */ HOLL_TWO_WAY_VERTICAL_NO_FADE,     // Two-Way Vertical No Fade
+  /* 5 */ HOLL_TWO_WAY_HORIZONTAL_FADING,    // Two-Way Horizontal Fading
+  /* 6 */ HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE // Two-Way Vertical No Fade Wider
+};
+
+void gz_holl_view(void)
+{
+  const int holl_gfx_cap = 0x400;
+  static Gfx *holl_gfx_buf[2];
+  static int holl_gfx_idx = 0;
+
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
+
+  if (enable && gz.holl_view_state == HOLLVIEW_START) {
+    holl_gfx_buf[0] = malloc(sizeof(*holl_gfx_buf[0]) * holl_gfx_cap);
+    holl_gfx_buf[1] = malloc(sizeof(*holl_gfx_buf[1]) * holl_gfx_cap);
+
+    gz.holl_view_state = HOLLVIEW_ACTIVE;
+  }
+  if (enable && gz.holl_view_state == HOLLVIEW_ACTIVE) {
+    Gfx **p_gfx_p;
+    if (settings->bits.holl_view_xlu)
+      p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
+    else
+      p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
+
+    Gfx *holl_gfx = holl_gfx_buf[holl_gfx_idx];
+    Gfx *holl_gfx_p = holl_gfx;
+    Gfx *holl_gfx_d = holl_gfx + holl_gfx_cap;
+    holl_gfx_idx = (holl_gfx_idx + 1) % 2;
+
+    init_poly_gfx(&holl_gfx_p, &holl_gfx_d, SETTINGS_COLVIEW_SURFACE,
+                                          settings->bits.holl_view_xlu,
+                                          settings->bits.holl_view_shade);
+
+    for (z64_actor_t *actor = z64_game.actor_list[Z64_ACTORTYPE_DOOR].first; actor != NULL; actor = actor->next)
+    {
+      if (actor->id == Z64_ACTOR_EN_HOLL)
+      {
+        z64_xyzf_t points[4];
+
+        gDPSetPrimColor(holl_gfx_p++, 0, 0,
+                        (0 >> 16) & 0xFF,
+                        (0xFF >> 8)  & 0xFF,
+                        (0 >> 0)  & 0xFF,
+                        0xFF);
+
+        switch ((actor->params >> 6) & 7)
+        {
+#define HOLL_MIN_Y -50.0f
+#define HOLL_MAX_Y 200.0f
+#define HOLL_HALFWIDTH_X 100.0f
+          case HOLL_TWO_WAY_VERTICAL_FADING:
+            points[0] = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MIN_Y , 0.0f },
+            points[0] = (z64_xyzf_t){ HOLL_HALFWIDTH_X , HOLL_MIN_Y , 0.0f },
+            points[0] = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MAX_Y , 0.0f },
+            points[0] = (z64_xyzf_t){ HOLL_HALFWIDTH_X , HOLL_MAX_Y , 0.0f },
+            break;
+          case HOLL_ONE_WAY_HORIZONTAL_FADING:
+            // this one might need a cylinder ..?
+            points[0] = (z64_xyzf_t){ 0.0f, 0.0f, 0.0f};
+            points[1] = (z64_xyzf_t){ 0.0f, 0.0f, 0.0f};
+            points[2] = (z64_xyzf_t){ 0.0f, 0.0f, 0.0f};
+            points[3] = (z64_xyzf_t){ 0.0f, 0.0f, 0.0f};
+            break;
+          case HOLL_TWO_WAY_HORIZONTAL_NO_FADE:
+            
+            break;
+          case HOLL_SWITCH_FLAG_VERTICAL_FADING:
+
+            break;
+          case HOLL_TWO_WAY_VERTICAL_NO_FADE:
+
+            break;
+          case HOLL_TWO_WAY_HORIZONTAL_FADING:
+
+            break;
+          case HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE:
+
+            break;
+        }
+        // Transform from actor-relative to world-relative positions
+        points[0] = vec3f_actor_to_world(actor, &points[0]);
+        points[1] = vec3f_actor_to_world(actor, &points[0]);
+        points[2] = vec3f_actor_to_world(actor, &points[0]);
+        points[3] = vec3f_actor_to_world(actor, &points[0]);
+
+        draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
+      }
+    }
+    gSPEndDisplayList(holl_gfx_p++);
+    dcache_wb(holl_gfx, sizeof(*holl_gfx) * holl_gfx_cap);
+
+    gSPDisplayList((*p_gfx_p)++, holl_gfx);
+  }
+  if (gz.holl_view_state == HOLLVIEW_BEGIN_STOP)
+    gz.holl_view_state = HOLLVIEW_STOP;
+  else if (gz.holl_view_state == HOLLVIEW_STOP) {
+    release_mem(&holl_gfx_buf[0]);
+    release_mem(&holl_gfx_buf[1]);
+
+    gz.holl_view_state = HOLLVIEW_INACTIVE;
+  }
+}
