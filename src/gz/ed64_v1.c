@@ -1,23 +1,53 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "ed64_io.h"
+#include <n64.h>
 #include "ed64_l.h"
 #include "iodev.h"
 #include "pi.h"
 #include "sd_host.h"
+#include "util.h"
 
+static int      cart_irqf;
+static uint32_t cart_lat;
+static uint32_t cart_pwd;
 static uint16_t spi_cfg;
+
+static void cart_lock_safe(void)
+{
+  __osPiGetAccess();
+
+  cart_irqf = set_irqf(0);
+
+  cart_lat = pi_regs.dom2_lat;
+  cart_pwd = pi_regs.dom2_pwd;
+}
+
+static void cart_lock(void)
+{
+  cart_lock_safe();
+
+  pi_regs.dom2_lat = 4;
+  pi_regs.dom2_pwd = 12;
+}
+
+static void cart_unlock(void)
+{
+  pi_regs.dom2_lat = cart_lat;
+  pi_regs.dom2_pwd = cart_pwd;
+
+  __osPiRelAccess();
+
+  set_irqf(cart_irqf);
+}
 
 static inline uint32_t reg_rd(int reg)
 {
-  REGS_PTR[REG_CFG];
-  return REGS_PTR[reg];
+  return __pi_read_raw((uint32_t)&REGS_PTR[reg]);
 }
 
 static inline void reg_wr(int reg, uint32_t dat)
 {
-  REGS_PTR[REG_CFG];
-  REGS_PTR[reg] = dat;
+  return __pi_write_raw((uint32_t)&REGS_PTR[reg], dat);
 }
 
 static inline void spi_tx(uint8_t dat)
@@ -121,8 +151,8 @@ static struct sd_host sd_host =
 {
   .proto      = SD_PROTO_SPIBUS,
 
-  .lock       = ed64_get_access,
-  .unlock     = ed64_rel_access,
+  .lock       = cart_lock,
+  .unlock     = cart_unlock,
   .set_spd    = sd_set_spd,
 
   .spi_ss     = sd_spi_ss,
@@ -136,7 +166,7 @@ static struct sd_host sd_host =
 
 static int probe(void)
 {
-  ed64_get_access();
+  cart_lock_safe();
 
   /* open registers */
   reg_wr(REG_KEY, 0x1234);
@@ -161,13 +191,13 @@ static int probe(void)
   uint16_t dat = reg_rd(REG_SPI);
   if (dat == 0xFF) {
     /* spi seems to work as expected */
-    ed64_rel_access();
+    cart_unlock();
     return 0;
   }
 
 nodev:
   reg_wr(REG_KEY, 0);
-  ed64_rel_access();
+  cart_unlock();
   return -1;
 }
 

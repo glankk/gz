@@ -568,7 +568,7 @@ int sd_init(struct sd_host *host)
   }
   ret = card_cmd(host, GO_IDLE_STATE, 0, NULL);
   if (ret != 0)
-    return ret;
+    goto exit;
 
   /* 2.7V - 3.6V, check pattern 0b10101010 */
   ret = card_cmd(host, SEND_IF_COND, IF_COND_VHS_VDD1 | 0xAA, NULL);

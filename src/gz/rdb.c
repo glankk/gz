@@ -592,7 +592,12 @@ static OSThread *rdb_step(OSThread *thread)
     rdb_set_bkp(&step_bkp[0], pc + 4);
 
   /* run */
+  OSThread *cthread = thread;
+  OSPri cpri = cthread->priority;
+  if (cpri < OS_PRIORITY_APPMAX)
+    cthread->priority = OS_PRIORITY_APPMAX;
   thread = rdb_continue();
+  cthread->priority = cpri;
 
   /* clear breakpoints */
   rdb_clear_bkp(&step_bkp[0]);
