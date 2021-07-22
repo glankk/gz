@@ -13,9 +13,10 @@ void noclip_init(void)
                 BUTTON_A | BUTTON_B | BUTTON_R);
   input_reservation_set(1);
   input_bind_set_override(COMMAND_NOCLIP, 1);
-  gz.noclip_state = NOCLIP_ACTIVE;
+  gz.noclip_on = 1;
 }
 
+// Link will use this as his update function while noclip is active
 void noclip_update(z64_link_t* player, z64_game_t* global_ctx)
 {
     uint16_t input_held = input_pad();
@@ -60,5 +61,5 @@ void noclip_stop(void)
              BUTTON_A | BUTTON_B | BUTTON_R);
   input_reservation_set(0);
   input_bind_set_override(COMMAND_NOCLIP, 0);
-  gz.noclip_state = NOCLIP_INACTIVE;
+  gz.noclip_on = 0;
 }

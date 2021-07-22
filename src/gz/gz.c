@@ -1030,6 +1030,7 @@ static void init(void)
   gz.hit_view_state = HITVIEW_INACTIVE;
   gz.cull_view_state = CULLVIEW_INACTIVE;
   gz.path_view_state = PATHVIEW_INACTIVE;
+  gz.noclip_on = 0;
   gz.hide_rooms = 0;
   gz.hide_actors = 0;
   gz.free_cam = 0;

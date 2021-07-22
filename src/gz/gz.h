@@ -61,12 +61,6 @@ enum path_view_state
   PATHVIEW_RESTART,
 };
 
-enum noclip_state
-{
-  NOCLIP_INACTIVE,
-  NOCLIP_ACTIVE,
-};
-
 enum cam_mode
 {
   CAMMODE_CAMERA,
@@ -206,7 +200,7 @@ struct gz
   int                   hit_view_state;
   int                   cull_view_state;
   int                   path_view_state;
-  int                   noclip_state;
+  _Bool                 noclip_on;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;

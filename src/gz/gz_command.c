@@ -267,10 +267,10 @@ void command_turbo(void)
 
 void command_noclip(void)
 {
-    if (gz.noclip_state == NOCLIP_INACTIVE) {
+    if (!gz.noclip_on) {
       noclip_init();
       gz_log("noclip on");
-    } else if (gz.noclip_state == NOCLIP_ACTIVE) {
+    } else {
       noclip_stop();
       gz_log("noclip off");
     }
