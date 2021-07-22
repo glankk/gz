@@ -5,6 +5,7 @@
 #include <string.h>
 #include "gfx.h"
 #include "gz.h"
+#include "gz_noclip.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
@@ -21,6 +22,7 @@ struct command_info command_info[COMMAND_MAX] =
   {"levitate",          command_levitate,      CMDACT_HOLD},
   {"fall",              command_fall,          CMDACT_HOLD},
   {"turbo",             command_turbo,         CMDACT_HOLD},
+  {"noclip",            command_noclip,        CMDACT_PRESS_ONCE},
   {"file select",       command_fileselect,    CMDACT_PRESS_ONCE},
   {"reload scene",      command_reload,        CMDACT_PRESS_ONCE},
   {"void out",          command_void,          CMDACT_PRESS_ONCE},
@@ -261,6 +263,17 @@ void command_fall(void)
 void command_turbo(void)
 {
   z64_link.linear_vel = 27.f;
+}
+
+void command_noclip(void)
+{
+    if (gz.noclip_state == NOCLIP_INACTIVE) {
+      noclip_init();
+      gz_log("noclip on");
+    } else if (gz.noclip_state == NOCLIP_ACTIVE) {
+      noclip_stop();
+      gz_log("noclip off");
+    }
 }
 
 void command_fileselect(void)
