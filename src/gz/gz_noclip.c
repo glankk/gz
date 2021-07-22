@@ -47,9 +47,9 @@ void noclip_update(z64_link_t* player, z64_game_t* global_ctx)
     player->common.xz_speed = 0.0f;
     player->linear_vel = 0.0f;
     player->common.gravity = 0.0f;
-    player->common.vel_1.z = 0.0f;
-    player->common.vel_1.y = 0.0f;
     player->common.vel_1.x = 0.0f;
+    player->common.vel_1.y = 0.0f;
+    player->common.vel_1.z = 0.0f;
     player->common.pos_1 = player->common.pos_2;
 }
 
