@@ -441,7 +441,7 @@ static void export_state_proc(struct menu_item *item, void *data)
     char defname[32];
     snprintf(defname, sizeof(defname), "000-%s",
              zu_scene_info[state->scene_idx].scene_name);
-    menu_get_file(gz.menu_main, GETFILE_SAVE, defname, ".gzs",
+    menu_get_file(gz.menu_main, GETFILE_SAVE_PREFIX_INC, defname, ".gzs",
                   do_export_state, NULL);
   }
 }

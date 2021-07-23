@@ -6,6 +6,7 @@ enum get_file_mode
 {
   GETFILE_LOAD,
   GETFILE_SAVE,
+  GETFILE_SAVE_PREFIX_INC,
 };
 
 typedef int (*get_file_callback_t)(const char *path, void *data);
