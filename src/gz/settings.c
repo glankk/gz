@@ -132,6 +132,7 @@ void settings_load_default(void)
   d->binds[COMMAND_STARTTIMER] = bind_make(0);
   d->binds[COMMAND_STOPTIMER] = bind_make(0);
   d->binds[COMMAND_RESET] = bind_make(0);
+  d->bits.ignore_target = 0;
 }
 
 void settings_save(int profile)
