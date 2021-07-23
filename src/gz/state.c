@@ -864,12 +864,13 @@ void load_state(void *state)
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
-  if(settings->bits.ignore_target == 1) {
+  if (settings->bits.ignore_target == 1) {
     uint8_t last_target = z64_file.z_targeting;
     serial_read(&p, &z64_file, sizeof(z64_file));
     z64_file.z_targeting = last_target;
   }
-  else serial_read(&p, &z64_file, sizeof(z64_file));
+  else
+    serial_read(&p, &z64_file, sizeof(z64_file));
 
   serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */

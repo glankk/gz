@@ -527,7 +527,8 @@ static void line_writer_add(line_writer_t *writer, Vtx *v, int n_vtx)
 static void do_poly_list(poly_writer_t *poly_writer,
                          line_writer_t *line_writer, struct vector *line_set,
                          z64_xyz_t *vtx_list, z64_col_poly_t *poly_list,
-                         z64_col_type_t *type_list, int n_poly, _Bool rd, _Bool wfc)
+                         z64_col_type_t *type_list, int n_poly, _Bool rd,
+                         _Bool wfc)
 {
   for (int i = 0; i < n_poly; ++i) {
     z64_col_poly_t *poly = &poly_list[i];

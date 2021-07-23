@@ -271,14 +271,14 @@ typedef struct
 
 typedef struct
 {
-  uint16_t          mode;                       /* 0x0000 */
-  uint16_t          unk_0x002;                  /* 0x0002 */
+  uint16_t          mode;                     /* 0x0000 */
+  uint16_t          unk_0x2;                  /* 0x0002 */
   /* segment address of z64_camera_params_t */
-  uint32_t          seg_params;                 /* 0x0004 */
-  char              unk_0x008[0x12C];           /* 0x0008 */
-  z64_xyz_t         input_dir;                  /* 0x0134 */
-  char              unk_0x13A[0x032];           /* 0x013A */
-} z64_camera_t;                                 /* 0x016C */
+  uint32_t          seg_params;               /* 0x0004 */
+  char              unk_0x8[0x012C];          /* 0x0008 */
+  z64_xyz_t         input_dir;                /* 0x0134 */
+  char              unk_0x13A[0x0032];        /* 0x013A */
+} z64_camera_t;                               /* 0x016C */
 
 typedef struct
 {
@@ -938,7 +938,7 @@ struct z64_actor_s
   uint8_t           wall_poly_source;         /* 0x007C */
   uint8_t           floor_poly_source;        /* 0x007D */
   int16_t           wall_rot;                 /* 0x007E */
-  float             floor_height;             /* 0x0080 */ //maybe?
+  float             floor_height;             /* 0x0080 */
   float             water_surface_dist;       /* 0x0084 */
   uint16_t          bgcheck_flags;            /* 0x0088 */
   int16_t           unk_0x8A_rot;             /* 0x008A */
@@ -1572,7 +1572,7 @@ typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
 typedef struct
 {
   int8_t            numpoints;
-  // segment address to z64_xyz_t points array
+  /* segment address to z64_xyz_t points array */
   uint32_t          points;
 } z64_path_t;
 
@@ -2301,10 +2301,12 @@ void      z64_SpawnActor              (void *actor_ctxt, z64_game_t *game,
                                        uint16_t actor_id, float x, float y,
                                        float z, uint16_t rx, uint16_t ry,
                                        uint16_t rz, uint16_t variable);
-z64_actor_t*      z64_SpawnActorAttachedB     (void *actor_ctxt,z64_actor_t* actor, z64_game_t *game,
-                                       uint16_t actor_id, float x, float y,
-                                       float z, uint16_t rx, uint16_t ry,
-                                       uint16_t rz, uint16_t variable);
+z64_actor_t *
+          z64_SpawnActorAttachedB     (void *actor_ctxt, z64_actor_t *actor,
+                                       z64_game_t *game, uint16_t actor_id,
+                                       float x, float y, float z, uint16_t rx,
+                                       uint16_t ry, uint16_t rz,
+                                       uint16_t variable);
 void      z64_CreateStaticCollision   (z64_col_ctxt_t *col_ctxt,
                                        z64_game_t *game,
                                        z64_col_lut_t *col_lut);

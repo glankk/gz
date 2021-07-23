@@ -5,7 +5,6 @@
 #include <string.h>
 #include "gfx.h"
 #include "gz.h"
-#include "gz_noclip.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
@@ -268,10 +267,11 @@ void command_turbo(void)
 void command_noclip(void)
 {
     if (!gz.noclip_on) {
-      noclip_init();
+      gz_noclip_start();
       gz_log("noclip on");
-    } else {
-      noclip_stop();
+    }
+    else {
+      gz_noclip_stop();
       gz_log("noclip off");
     }
 }

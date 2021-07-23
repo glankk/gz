@@ -181,9 +181,8 @@ static void update_view(_Bool enable, _Bool select)
 static int get_next_prefix_number()
 {
   DIR *dir = opendir(".");
-  if (!dir) {
+  if (!dir)
     return 0;
-  }
 
   int max_num_found = -1;
   int sl = strlen(gf_suffix);
@@ -196,7 +195,7 @@ static int get_next_prefix_number()
     int nl = strlen(dirent->d_name);
     if (nl < sl || !stricmp(&dirent->d_name[nl - sl], gf_suffix))
       continue;
-    
+
     int cur_num;
     int ret = sscanf(dirent->d_name, "%d", &cur_num);
     if (ret == EOF || ret < 1)
@@ -217,9 +216,9 @@ static void set_name(const char *name, _Bool dirty)
     gf_untitled = 1;
   }
   else {
-    if (gf_dirty_name || gf_mode != GETFILE_SAVE_PREFIX_INC) {
+    if (gf_dirty_name || gf_mode != GETFILE_SAVE_PREFIX_INC)
       strncpy(gf_name->text, name, 31);
-    } else {
+    else {
       int ignore, prefix_length;
       sscanf(name, "%d%n", &ignore, &prefix_length);
       int prefix = get_next_prefix_number();
@@ -252,7 +251,9 @@ static void return_path(const char *name)
       path[dl] = '/';
       strcpy(&path[dl + 1], name);
       strcpy(&path[dl + 1 + nl], gf_suffix);
-      if ((gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) && stat(path, NULL) == 0) {
+      if ((gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) &&
+          stat(path, NULL) == 0)
+      {
         char prompt[48];
         sprintf(prompt, "'%.31s' exists", name);
         menu_prompt(&gf_menu, prompt, "overwrite\0""cancel\0", 1,
@@ -331,10 +332,9 @@ static int file_activate_proc(struct menu_item *item)
       ds->index = 0;
     }
 
-    // Update the prefix
-    if (gf_mode == GETFILE_SAVE_PREFIX_INC) {
+    /* Update the prefix */
+    if (gf_mode == GETFILE_SAVE_PREFIX_INC)
       set_name(gf_name->text, 0);
-    }
 
     update_view(update_list(), 1);
   }

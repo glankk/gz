@@ -509,7 +509,11 @@ static void spawn_actor_attached_b_proc(struct menu_item *item, void *data)
     z64_actor_t *actor = z64_game.actor_list[ai->adi->type].first;
     for (int i = 0; i < ai->adi->index; ++i)
       actor = actor->next;
-    z64_SpawnActorAttachedB(&z64_game.actor_ctxt, actor, &z64_game, ai->asi->actor_no, ai->asi->x, ai->asi->y, ai->asi->z, ai->asi->rx, ai->asi->ry, ai->asi->rz, ai->asi->variable);
+    z64_SpawnActorAttachedB(&z64_game.actor_ctxt, actor, &z64_game,
+                            ai->asi->actor_no,
+                            ai->asi->x, ai->asi->y, ai->asi->z,
+                            ai->asi->rx, ai->asi->ry, ai->asi->rz,
+                            ai->asi->variable);
   }
 }
 
@@ -645,9 +649,9 @@ struct menu *gz_debug_menu(void)
   ai.adi = &adi;
   ai.asi = &asi;
   menu_add_button(&actors, 0, 11, "spawn",spawn_actor_proc , &asi);
-  menu_add_button(&actors, 10, 11, "spawn as child", spawn_actor_attached_b_proc, &ai);
-
-  menu_add_button(&actors, 0, 12,"fetch from link",
+  menu_add_button(&actors, 10, 11, "spawn as child",
+                  spawn_actor_attached_b_proc, &ai);
+  menu_add_button(&actors, 0, 12, "fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */

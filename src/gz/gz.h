@@ -284,6 +284,9 @@ void          gz_path_view(void);
 void          gz_update_cam(void);
 void          gz_free_view(void);
 
+void          gz_noclip_start(void);
+void          gz_noclip_stop(void);
+
 struct menu  *gz_warps_menu(void);
 struct menu  *gz_scene_menu(void);
 struct menu  *gz_cheats_menu(void);
