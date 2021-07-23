@@ -2298,7 +2298,11 @@ void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
 void      z64_SpawnActor              (void *actor_ctxt, z64_game_t *game,
-                                       int actor_id, float x, float y,
+                                       uint16_t actor_id, float x, float y,
+                                       float z, uint16_t rx, uint16_t ry,
+                                       uint16_t rz, uint16_t variable);
+z64_actor_t*      z64_SpawnActorAttachedB     (void *actor_ctxt,z64_actor_t* actor, z64_game_t *game,
+                                       uint16_t actor_id, float x, float y,
                                        float z, uint16_t rx, uint16_t ry,
                                        uint16_t rz, uint16_t variable);
 void      z64_CreateStaticCollision   (z64_col_ctxt_t *col_ctxt,
