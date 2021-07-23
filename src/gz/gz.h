@@ -200,6 +200,7 @@ struct gz
   int                   hit_view_state;
   int                   cull_view_state;
   int                   path_view_state;
+  _Bool                 noclip_on;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;
@@ -235,6 +236,7 @@ void          command_break(void);
 void          command_levitate(void);
 void          command_fall(void);
 void          command_turbo(void);
+void          command_noclip(void);
 void          command_fileselect(void);
 void          command_reload(void);
 void          command_void(void);

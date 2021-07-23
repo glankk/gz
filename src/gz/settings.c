@@ -98,6 +98,7 @@ void settings_load_default(void)
   d->binds[COMMAND_LEVITATE] = bind_make(1, BUTTON_L);
   d->binds[COMMAND_FALL] = bind_make(2, BUTTON_Z, BUTTON_L);
   d->binds[COMMAND_TURBO] = bind_make(0);
+  d->binds[COMMAND_NOCLIP] = bind_make(2, BUTTON_L, BUTTON_D_RIGHT);
   d->binds[COMMAND_FILESELECT] = bind_make(2, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_RELOAD] = bind_make(2, BUTTON_A, BUTTON_L);
   d->binds[COMMAND_VOID] = bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);

@@ -271,12 +271,14 @@ typedef struct
 
 typedef struct
 {
-  uint16_t          mode;                     /* 0x0000 */
-  uint16_t          unk_0x2;                  /* 0x0002 */
+  uint16_t          mode;                       /* 0x0000 */
+  uint16_t          unk_0x002;                  /* 0x0002 */
   /* segment address of z64_camera_params_t */
-  uint32_t          seg_params;               /* 0x0004 */
-                                              /* 0x0008 */
-} z64_camera_t;
+  uint32_t          seg_params;                 /* 0x0004 */
+  char              unk_0x008[0x12C];           /* 0x0008 */
+  z64_xyz_t         input_dir;                  /* 0x0134 */
+  char              unk_0x13A[0x032];           /* 0x013A */
+} z64_camera_t;                                 /* 0x016C */
 
 typedef struct
 {
@@ -1591,7 +1593,10 @@ typedef struct
   uint16_t          camera_flag_1;            /* 0x0033E */
   char              unk_0x340[0x016C];        /* 0x00340 */
   int16_t           event_flag;               /* 0x004AC */
-  char              unk_0x4AE[0x02F6];        /* 0x004AE */
+  char              unk_0x4AE[0x02E2];        /* 0x004AE */
+  z64_camera_t*     camera_ptrs[4];           /* 0x00790 */
+  uint16_t          active_camera;            /* 0x007A0 */
+  uint16_t          next_camera;              /* 0x007A2 */
   uint8_t           seq_idx;                  /* 0x007A4 */
   uint8_t           night_sfx;                /* 0x007A5 */
   char              unk_0x7A6[0x0002];        /* 0x007A6 */
@@ -2299,6 +2304,9 @@ void      z64_SpawnActor              (void *actor_ctxt, z64_game_t *game,
 void      z64_CreateStaticCollision   (z64_col_ctxt_t *col_ctxt,
                                        z64_game_t *game,
                                        z64_col_lut_t *col_lut);
+void      z64_Camera_ChangeMode       (z64_camera_t *camera, int16_t mode);
+float     z64_Math_SinS               (int16_t angle);
+float     z64_Math_CosS               (int16_t angle);
 void      z64_LoadMinimap             (z64_game_t *game, int room_idx);
 void      z64_SwitchAgeEquips         (void);
 void      z64_UpdateItemButton        (z64_game_t *game, int button_index);
