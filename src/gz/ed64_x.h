@@ -2,6 +2,39 @@
 #define ED64_X_H
 #include <stdint.h>
 
+/*
+ *  SD_CMD: 8-bit shift register for IO on CMD.
+ *  SD_DAT: 16-bit shift register for IO on DAT0 - DAT3.
+ *
+ *  Shift registers shift right-to-left, lsb in and msb out.
+ *
+ *  REG_SD_CMD_RD (R/W)
+ *    W: Send SD_CFG_BITLEN clocks, shifting 1 bit per clock in to SD_CMD.
+ *    R: Read SD_CMD.
+ *
+ *  REG_SD_CMD_WR (W)
+ *    W: Store 8 bits in SD_CMD and send SD_CFG_BITLEN clocks, shifting 1 bit
+ *       per clock out of SD_CMD.
+ *
+ *  REG_SD_DAT_RD (R/W)
+ *    W: Send SD_CFG_BITLEN clocks, shifting 4 bits per clock in to SD_DAT.
+ *    R: Read SD_DAT.
+ *
+ *  REG_SD_DAT_WR (W)
+ *    W: Store 16 bits in SD_DAT and send SD_CFG_BITLEN clocks, shifting 4 bits
+ *       per clock out of SD_DAT.
+ *
+ *  REG_SD_STATUS (R/W)
+ *    [0:3] SD_CFG_BITLEN
+ *      0-15: Number of clocks per IO operation
+ *    [4] SD_CFG_SPD
+ *      0: < 400KHz
+ *      1: 50MHz
+ *    [5] SD_STA_BUSY
+ *      0: SD IO ready
+ *      1: SD IO busy
+*/
+
 #define REG_BASE          0xBF800000
 #define REG_FPG_CFG       0x0000
 #define REG_USB_CFG       0x0001
@@ -67,17 +100,5 @@
 #define SD_CFG_BITLEN     0x000F
 #define SD_CFG_SPD        0x0010
 #define SD_STA_BUSY       0x0080
-
-#define SPI_SPEED_50      0x0000
-#define SPI_SPEED_25      0x0001
-#define SPI_SPEED_LO      0x0002
-#define SPI_SPEED         0x0003
-#define SPI_SS            0x0004
-#define SPI_RD            0x0008
-#define SPI_WR            0x0000
-#define SPI_DAT           0x0010
-#define SPI_CMD           0x0000
-#define SPI_BIT           0x0020
-#define SPI_BYTE          0x0000
 
 #endif

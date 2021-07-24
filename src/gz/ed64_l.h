@@ -2,6 +2,59 @@
 #define ED64_L_H
 #include <stdint.h>
 
+/*
+ *  FW < 1.16:
+ *    SPI: 8-bit shift register. Shifts right-to-left, lsb in and msb out.
+ *
+ *    REG_SPI (R/W)
+ *      W: Store 8 bits in SPI. Send 8 clocks on SCLK, shifting bits out of SPI
+ *         on MOSI, and in to SPI on MISO.
+ *      R: Read SPI.
+ *
+ *    REG_SPI_CFG (R/W)
+ *      [1:0] SPI_SPEED
+ *        0: 50MHz
+ *        1: 25MHz
+ *        2: < 400KHz
+ *      [2] SPI_SS
+ *        0: SS line low (on)
+ *        1: SS line high (off)
+ *
+ *  FW >= 1.16:
+ *    SPI: 8-bit shift register. Shifts right-to-left, lsb in and msb out.
+ *
+ *    REG_SPI (R/W)
+ *      W: Store 8 bits in SPI.
+ *        If ~SPI_DAT and ~SPI_1BIT:
+ *          Send 8 clocks, shifting 1 bit per clock on CMD.
+ *        If ~SPI_DAT and SPI_1BIT:
+ *          Send 1 clock, shifting 1 bit per clock on CMD.
+ *        If SPI_DAT and ~SPI_1BIT:
+ *          Send 2 clocks, shifting 4 bits per clock on DAT0 - DAT3.
+ *        If SPI_DAT and SPI_1BIT:
+ *          Send 1 clock, shifting 4 bits per clock on DAT0 - DAT3.
+ *        If ~SPI_RD:
+ *          Shift bits out of SPI.
+ *        If SPI_RD:
+ *          Shift bits in to SPI.
+ *      R: Read SPI.
+ *
+ *    REG_SPI_CFG (R/W)
+ *      [1:0] SPI_SPEED
+ *        0: 50MHz
+ *        1: 25MHz
+ *        2: < 400KHz
+ *      [3] SPI_RD
+ *        0: Shift bits out of SPI
+ *        1: Shift bits in to SPI
+ *      [4] SPI_DAT
+ *        0: Shift bits on CMD
+ *        1: Shift bits on DAT0 - DAT3
+ *      [5] SPI_1BIT
+ *        0: Send 8 clocks if ~SPI_DAT or 2 clocks if SPI_DAT
+ *        1: Send 1 clock
+ */
+
 #define REG_BASE          0xA8040000
 #define REG_CFG           0
 #define REG_STATUS        1
