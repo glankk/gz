@@ -748,6 +748,8 @@ HOOK void srand_hook(uint32_t seed)
           z64_random = ms->new_seed;
           return;
         }
+        else
+          gz_log("rng desync detected");
       }
 #endif
     }
