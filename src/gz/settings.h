@@ -112,7 +112,7 @@ struct watch_info
 
 struct settings_bits
 {
-  uint8_t  ignore_target    : 1;
+  uint32_t ignore_target    : 1;
   uint32_t font_resource    : 4;
   uint32_t drop_shadow      : 1;
   uint32_t input_display    : 1;
