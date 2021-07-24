@@ -50,7 +50,6 @@ void gz_noclip_start(void)
   z64_Camera_ChangeMode(z64_game.camera_ptrs[0], 8);
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_A | BUTTON_B | BUTTON_R);
-  input_reservation_set(1);
   input_bind_set_override(COMMAND_NOCLIP, 1);
   gz.noclip_on = 1;
 }
@@ -61,7 +60,6 @@ void gz_noclip_stop(void)
   saved_player_update_func = NULL;
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_A | BUTTON_B | BUTTON_R);
-  input_reservation_set(0);
   input_bind_set_override(COMMAND_NOCLIP, 0);
   gz.noclip_on = 0;
 }

@@ -79,7 +79,6 @@ void gz_show_menu(void)
   gz.menu_active = 1;
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_L);
-  input_reservation_set(1);
 }
 
 void gz_hide_menu(void)
@@ -88,7 +87,6 @@ void gz_hide_menu(void)
   gz.menu_active = 0;
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_L);
-  input_reservation_set(0);
 }
 
 void gz_log(const char *fmt, ...)

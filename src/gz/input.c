@@ -15,7 +15,6 @@ static int        button_time[16];
 static uint16_t   pad_pressed_raw;
 static uint16_t   pad_pressed;
 static uint16_t   pad_released;
-static _Bool      reservation_enabled;
 static uint16_t   pad_reserved;
 static int        button_reserve_count[16];
 static int        bind_component_state[COMMAND_MAX];
@@ -124,8 +123,7 @@ void input_update(void)
     int j;
     uint16_t c;
     if (!input_enabled || bind_disable[i] ||
-        (reservation_enabled && !bind_override[i] &&
-        (pad_reserved & bind_pad[i])))
+        (!bind_override[i] && (pad_reserved & bind_pad[i])))
     {
       *cs = 0;
     }
@@ -227,11 +225,6 @@ uint16_t input_released(void)
     return pad_released;
   else
     return 0;
-}
-
-void input_reservation_set(_Bool enabled)
-{
-  reservation_enabled = enabled;
 }
 
 void input_reserve(uint16_t bitmask)

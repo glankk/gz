@@ -36,7 +36,6 @@ uint16_t  input_pad(void);
 uint16_t  input_pressed_raw(void);
 uint16_t  input_pressed(void);
 uint16_t  input_released(void);
-void      input_reservation_set(_Bool enabled);
 void      input_reserve(uint16_t bitmask);
 void      input_free(uint16_t bitmask);
 void      input_bind_set_disable(int index, _Bool value);
