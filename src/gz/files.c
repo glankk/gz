@@ -533,7 +533,6 @@ static void mkdir_proc(struct menu_item *item, void *data)
 static void gf_menu_init(void)
 {
   static _Bool ready = 0;
-  gf_dirty_name = 0;
   if (!ready) {
     ready = 1;
     /* initialize data */
@@ -583,6 +582,7 @@ void menu_get_file(struct menu *menu, enum get_file_mode mode,
                    get_file_callback_t callback_proc, void *callback_data)
 {
   gf_mode = mode;
+  gf_dirty_name = 0;
   if (gf_suffix)
     free(gf_suffix);
   gf_suffix = malloc(strlen(suffix) + 1);
