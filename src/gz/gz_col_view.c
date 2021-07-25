@@ -718,7 +718,7 @@ static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
     alpha = 0x80;
   }
   else {
-    rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | FORCE_BL;
+    rm = Z_CMP | Z_UPD | CVG_DST_CLAMP | FORCE_BL;
     blc1 = GBL_c1(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
     blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
     alpha = 0xFF;
