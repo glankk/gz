@@ -258,15 +258,23 @@ static void main_hook(void)
     int d_x;
     int d_y;
     uint16_t d_pad;
+    uint16_t d_pressed;
+    uint16_t d_released;
     if (gz.movie_state == MOVIE_PLAYING &&
         gz.movie_frame < gz.movie_input.size)
     {
       z64_input_t zi;
-      movie_to_z(gz.movie_frame, &zi, NULL);
+      _Bool reset_flag;
+      movie_to_z(gz.movie_frame, &zi, &reset_flag);
       d_x = zi.raw.x;
       d_y = zi.raw.y;
       d_pad = zi.raw.pad;
-      d_pad |= zi.pad_pressed;
+      d_pressed = zi.pad_pressed;
+      d_released = zi.pad_released;
+      if (!settings->bits.input_pressrel)
+        d_pad |= d_pressed;
+      if (reset_flag)
+        d_pad |= 0x0080;
       if (settings->bits.macro_input) {
         if (abs(d_x) < 8)
           d_x = input_x();
@@ -274,16 +282,26 @@ static void main_hook(void)
           d_y = input_y();
         d_pad |= input_pad();
       }
-      d_pad &= ~BUTTON_L;
-      d_pad &= ~BUTTON_D_UP;
-      d_pad &= ~BUTTON_D_DOWN;
-      d_pad &= ~BUTTON_D_LEFT;
-      d_pad &= ~BUTTON_D_RIGHT;
+      uint16_t mask = BUTTON_L | BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT |
+                      BUTTON_D_RIGHT;
+      d_pad &= ~mask;
+      d_pressed &= ~mask;
+      d_released &= ~mask;
     }
     else {
       d_x = input_x();
       d_y = input_y();
       d_pad = input_pad();
+      if (gz.frames_queued == 0) {
+        d_pressed = z64_input_direct.pad_pressed;
+        d_released = z64_input_direct.pad_released;
+      }
+      else {
+        d_pressed = input_pressed_raw();
+        d_released = input_released();
+      }
+      if (gz.reset_flag)
+        d_pad |= 0x0080;
     }
     struct gfx_texture *texture = resource_get(RES_ICON_BUTTONS);
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
@@ -291,11 +309,18 @@ static void main_hook(void)
                "%4i %4i", d_x, d_y);
     static const int buttons[] =
     {
-      15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8,
+      15, 14, 12, 3, 2, 1, 0, 13, 5, 4, 11, 10, 9, 8, 7,
     };
     for (int i = 0; i < sizeof(buttons) / sizeof(*buttons); ++i) {
       int b = buttons[i];
-      if (!(d_pad & (1 << b)))
+      int bit = 1 << b;
+      int b_alpha;
+      if (settings->bits.input_pressrel &&
+          ((d_pressed | d_released) & ~d_pad & bit))
+        b_alpha = 0x7F;
+      else if (d_pad & bit)
+        b_alpha = 0xFF;
+      else
         continue;
       int x = (cw - texture->tile_width) / 2 + i * 10;
       int y = -(gfx_font_xheight(font) + texture->tile_height + 1) / 2;
@@ -306,8 +331,26 @@ static void main_hook(void)
         1.f, 1.f,
       };
       gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(input_button_color[b],
-                                                 alpha));
+                                                 b_alpha * alpha / 0xFF));
       gfx_sprite_draw(&sprite);
+      if (settings->bits.input_pressrel && (d_pressed & bit)) {
+        struct gfx_sprite arrow_sprite =
+        {
+          texture, 16, sprite.x - 1, sprite.y - 1, 1.f, 1.f,
+        };
+        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0x00C000,
+                                                   b_alpha * alpha / 0xFF));
+        gfx_sprite_draw(&arrow_sprite);
+      }
+      if (settings->bits.input_pressrel && (d_released & bit)) {
+        struct gfx_sprite arrow_sprite =
+        {
+          texture, 16, sprite.x + 9, sprite.y + 9, -1.f, -1.f,
+        };
+        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0xC00000,
+                                                   b_alpha * alpha / 0xFF));
+        gfx_sprite_draw(&arrow_sprite);
+      }
     }
   }
 

@@ -113,10 +113,10 @@ struct watch_info
 
 struct settings_bits
 {
-  uint32_t ignore_target    : 1;
   uint32_t font_resource    : 4;
   uint32_t drop_shadow      : 1;
   uint32_t input_display    : 1;
+  uint32_t input_pressrel   : 1;
   uint32_t log              : 1;
   uint32_t lag_counter      : 1;
   uint32_t lag_unit         : 1;
@@ -127,6 +127,7 @@ struct settings_bits
   uint32_t hack_oca_sync    : 1;
   uint32_t hack_room_load   : 1;
   uint32_t wiivc_cam        : 1;
+  uint32_t ignore_target    : 1;
   uint32_t break_type       : 1;
   uint32_t warp_age         : 2;
   uint32_t warp_cutscene    : 5;

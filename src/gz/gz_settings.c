@@ -91,6 +91,19 @@ static int input_display_proc(struct menu_item *item,
   return 0;
 }
 
+static int input_pressrel_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.input_pressrel = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.input_pressrel = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.input_pressrel);
+  return 0;
+}
+
 static int log_proc(struct menu_item *item,
                     enum menu_callback_reason reason,
                     void *data)
@@ -293,32 +306,34 @@ struct menu *gz_settings_menu(void)
   menu_add_checkbox(&menu, 16, 5, input_display_proc, NULL);
   menu_add_positioning(&menu, 18, 5,
                        generic_position_proc, &settings->input_display_x);
-  menu_add_static(&menu, 0, 6, "log", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 6, log_proc, NULL);
-  menu_add_positioning(&menu, 18, 6,
-                       log_position_proc, NULL);
-  menu_add_static(&menu, 0, 7, "lag counter", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 7, lag_counter_proc, NULL);
+  menu_add_static(&menu, 0, 6, "button details", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 6, input_pressrel_proc, NULL);
+  menu_add_static(&menu, 0, 7, "log", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 7, log_proc, NULL);
   menu_add_positioning(&menu, 18, 7,
-                       generic_position_proc, &settings->lag_counter_x);
-  menu_add_option(&menu, 20, 7, "frames\0""seconds\0", lag_unit_proc, NULL);
-  menu_add_static(&menu, 0, 8, "timer", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 8, timer_proc, NULL);
+                       log_position_proc, NULL);
+  menu_add_static(&menu, 0, 8, "lag counter", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 8, lag_counter_proc, NULL);
   menu_add_positioning(&menu, 18, 8,
+                       generic_position_proc, &settings->lag_counter_x);
+  menu_add_option(&menu, 20, 8, "frames\0""seconds\0", lag_unit_proc, NULL);
+  menu_add_static(&menu, 0, 9, "timer", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 9, timer_proc, NULL);
+  menu_add_positioning(&menu, 18, 9,
                        generic_position_proc, &settings->timer_x);
-  menu_add_static(&menu, 0, 9, "pause display", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 9, pause_display_proc, NULL);
+  menu_add_static(&menu, 0, 10, "pause display", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 10, pause_display_proc, NULL);
   /* behavior controls */
-  menu_add_static(&menu, 0, 10, "macro input", 0xC0C0C0);
-  menu_add_checkbox(&menu, 16, 10, macro_input_proc, NULL);
-  menu_add_static(&menu, 0, 11, "break type", 0xC0C0C0);
-  menu_add_option(&menu, 16, 11, "normal\0""aggressive\0",
+  menu_add_static(&menu, 0, 11, "macro input", 0xC0C0C0);
+  menu_add_checkbox(&menu, 16, 11, macro_input_proc, NULL);
+  menu_add_static(&menu, 0, 12, "break type", 0xC0C0C0);
+  menu_add_option(&menu, 16, 12, "normal\0""aggressive\0",
                   break_type_proc, NULL);
-  menu_add_submenu(&menu, 0, 12, &commands, "commands");
+  menu_add_submenu(&menu, 0, 13, &commands, "commands");
   /* settings commands */
-  menu_add_button(&menu, 0, 13, "save settings", save_settings_proc, NULL);
-  menu_add_button(&menu, 0, 14, "load settings", load_settings_proc, NULL);
-  menu_add_button(&menu, 0, 15, "restore defaults",
+  menu_add_button(&menu, 0, 14, "save settings", save_settings_proc, NULL);
+  menu_add_button(&menu, 0, 15, "load settings", load_settings_proc, NULL);
+  menu_add_button(&menu, 0, 16, "restore defaults",
                   restore_settings_proc, NULL);
 
   /* populate commands menu */

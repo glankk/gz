@@ -37,6 +37,7 @@ void settings_load_default(void)
   d->bits.font_resource = RES_FONT_PRESSSTART2P;
   d->bits.drop_shadow = 1;
   d->bits.input_display = 1;
+  d->bits.input_pressrel = 0;
   d->bits.log = 1;
   d->bits.lag_counter = 0;
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
@@ -51,6 +52,7 @@ void settings_load_default(void)
 #else
   d->bits.wiivc_cam = 0;
 #endif
+  d->bits.ignore_target = 0;
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
@@ -132,7 +134,6 @@ void settings_load_default(void)
   d->binds[COMMAND_STARTTIMER] = bind_make(0);
   d->binds[COMMAND_STOPTIMER] = bind_make(0);
   d->binds[COMMAND_RESET] = bind_make(0);
-  d->bits.ignore_target = 0;
 }
 
 void settings_save(int profile)
