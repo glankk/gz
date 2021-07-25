@@ -459,36 +459,54 @@ void gfx_rdp_load_tile(const struct gfx_texture *texture, int16_t texture_tile)
 void gfx_sprite_draw(const struct gfx_sprite *sprite)
 {
   struct gfx_texture *texture = sprite->texture;
+  qs102_t ulx;
+  qs102_t uly;
+  qs102_t lrx;
+  qs102_t lry;
+  qs105_t uls;
+  qs105_t ult;
+  qs510_t dsdx = qs510(1.f / sprite->xscale);
+  qs510_t dtdy = qs510(1.f / sprite->yscale);
+  if (dsdx < 0) {
+    ulx = qs102(sprite->x + texture->tile_width * sprite->xscale);
+    lrx = qs102(sprite->x);
+    uls = qs105(texture->tile_width - 1);
+  }
+  else {
+    ulx = qs102(sprite->x);
+    lrx = qs102(sprite->x + texture->tile_width * sprite->xscale);
+    uls = qs105(0);
+  }
+  if (dtdy < 0) {
+    uly = qs102(sprite->y + texture->tile_height * sprite->yscale);
+    lry = qs102(sprite->y);
+    ult = qs105(texture->tile_height - 1);
+  }
+  else {
+    uly = qs102(sprite->y);
+    lry = qs102(sprite->y + texture->tile_height * sprite->yscale);
+    ult = qs105(0);
+  }
   gfx_rdp_load_tile(texture, sprite->texture_tile);
   if (gfx_modes[GFX_MODE_DROPSHADOW]) {
     uint8_t a = gfx_modes[GFX_MODE_COLOR] & 0xFF;
     a = a * a / 0xFF;
     gfx_mode_replace(GFX_MODE_COLOR, GPACK_RGBA8888(0x00, 0x00, 0x00, a));
     gSPScisTextureRectangle(gfx_disp_p++,
-                            qs102(sprite->x + 1) & ~3,
-                            qs102(sprite->y + 1) & ~3,
-                            qs102(sprite->x + texture->tile_width *
-                                  sprite->xscale + 1) & ~3,
-                            qs102(sprite->y + texture->tile_height *
-                                  sprite->yscale + 1) & ~3,
+                            ulx + qs102(1), uly + qs102(1),
+                            lrx + qs102(1), lry + qs102(1),
                             G_TX_RENDERTILE,
-                            qu105(0), qu105(0),
-                            qu510(1.f / sprite->xscale),
-                            qu510(1.f / sprite->yscale));
+                            uls, ult,
+                            dsdx, dtdy);
     gfx_mode_pop(GFX_MODE_COLOR);
   }
   gfx_sync();
   gSPScisTextureRectangle(gfx_disp_p++,
-                          qs102(sprite->x) & ~3,
-                          qs102(sprite->y) & ~3,
-                          qs102(sprite->x + texture->tile_width *
-                                sprite->xscale) & ~3,
-                          qs102(sprite->y + texture->tile_height *
-                                sprite->yscale) & ~3,
+                          ulx, uly,
+                          lrx, lry,
                           G_TX_RENDERTILE,
-                          qu105(0), qu105(0),
-                          qu510(1.f / sprite->xscale),
-                          qu510(1.f / sprite->yscale));
+                          uls, ult,
+                          dsdx, dtdy);
   gfx_synced = 0;
 }
 
