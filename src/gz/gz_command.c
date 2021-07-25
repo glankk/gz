@@ -317,12 +317,12 @@ void command_savestate(void)
     struct state_meta *state = malloc(368 * 1024);
     state->z64_version = Z64_VERSION;
     state->state_version = SETTINGS_STATE_VERSION;
-    state->size = save_state(state);
     state->scene_idx = z64_game.scene_index;
     if (gz.movie_state == MOVIE_IDLE)
       state->movie_frame = -1;
     else
       state->movie_frame = gz.movie_frame;
+    state->size = save_state(state);
     gz.state_buf[gz.state_slot] = realloc(state, state->size);
     gz_log("saved state %i", gz.state_slot);
   }

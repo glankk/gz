@@ -376,7 +376,7 @@ static int do_import_state(const char *path, void *data)
     if (read(f, state, st.st_size) != st.st_size)
       err_str = strerror(errno);
     else if (state->z64_version != Z64_VERSION ||
-             state->state_version != SETTINGS_STATE_VERSION)
+             state->state_version < SETTINGS_STATE_MIN_VER)
     {
       err_str = s_version;
     }
