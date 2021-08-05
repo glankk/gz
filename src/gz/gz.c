@@ -338,8 +338,7 @@ static void main_hook(void)
         {
           texture, 16, sprite.x - 1, sprite.y - 1, 1.f, 1.f,
         };
-        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0x00C000,
-                                                   b_alpha * alpha / 0xFF));
+        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0x00C000, alpha));
         gfx_sprite_draw(&arrow_sprite);
       }
       if (settings->bits.input_pressrel && (d_released & bit)) {
@@ -347,8 +346,7 @@ static void main_hook(void)
         {
           texture, 16, sprite.x + 9, sprite.y + 9, -1.f, -1.f,
         };
-        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0xC00000,
-                                                   b_alpha * alpha / 0xFF));
+        gfx_mode_set(GFX_MODE_COLOR, GPACK_RGB24A8(0xC00000, alpha));
         gfx_sprite_draw(&arrow_sprite);
       }
     }
