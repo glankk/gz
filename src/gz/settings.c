@@ -56,8 +56,6 @@ void settings_load_default(void)
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
-  d->bits.load_to = SETTINGS_LOADTO_ZFILE;
-  d->bits.on_load = SETTINGS_ONLOAD_NOTHING;
   d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->bits.col_view_xlu = 1;
   d->bits.col_view_line = 0;
@@ -107,14 +105,10 @@ void settings_load_default(void)
   d->binds[COMMAND_AGE] = bind_make(0);
   d->binds[COMMAND_SAVESTATE] = bind_make(1, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADSTATE] = bind_make(1, BUTTON_D_RIGHT);
-  d->binds[COMMAND_SAVEMEMFILE] = bind_make(0);
-  d->binds[COMMAND_LOADMEMFILE] = bind_make(0);
   d->binds[COMMAND_SAVEPOS] = bind_make(0);
   d->binds[COMMAND_LOADPOS] = bind_make(0);
   d->binds[COMMAND_PREVSTATE] = bind_make(0);
   d->binds[COMMAND_NEXTSTATE] = bind_make(0);
-  d->binds[COMMAND_PREVFILE] = bind_make(0);
-  d->binds[COMMAND_NEXTFILE] = bind_make(0);
   d->binds[COMMAND_PREVPOS] = bind_make(0);
   d->binds[COMMAND_NEXTPOS] = bind_make(0);
   d->binds[COMMAND_PAUSE] = bind_make(1, BUTTON_D_DOWN);

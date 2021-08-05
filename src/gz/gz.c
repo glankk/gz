@@ -1087,10 +1087,6 @@ static void init(void)
   gz.cam_pos.x = 0.f;
   gz.cam_pos.y = 0.f;
   gz.cam_pos.z = 0.f;
-  gz.memfile = malloc(sizeof(*gz.memfile) * SETTINGS_MEMFILE_MAX);
-  for (int i = 0; i < SETTINGS_MEMFILE_MAX; ++i)
-    gz.memfile_saved[i] = 0;
-  gz.memfile_slot = 0;
   for (int i = 0; i < SETTINGS_STATE_MAX; ++i)
     gz.state_buf[i] = NULL;
   gz.state_slot = 0;
