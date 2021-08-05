@@ -311,7 +311,7 @@ struct menu_item *watchlist_create(struct menu *menu,
 
   data->menu_release = menu_release;
   data->imenu = imenu;
-  vector_init(&data->members, sizeof(struct member_data*));
+  vector_init(&data->members, sizeof(struct member_data *));
   if (!list_icons)
     list_icons = resource_load_grc_texture("list_icons");
   data->add_button = menu_add_button_icon(imenu, 0, 0,
@@ -500,7 +500,7 @@ static void watchfile_menu_init(void)
                          scroll_down_proc, NULL);
     for (int i = 0; i < WATCHFILE_VIEW_ROWS; ++i) {
       struct menu_item *item = menu_item_add(menu, 2, 1 + i, NULL, 0xFFFFFF);
-      item->data = (void*)i;
+      item->data = (void *)i;
       item->enter_proc = entry_enter_proc;
       item->draw_proc = entry_draw_proc;
       item->activate_proc = entry_activate_proc;

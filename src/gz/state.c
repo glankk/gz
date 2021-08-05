@@ -53,14 +53,14 @@ static void save_ovl(void **p, void *addr,
   /* compute segment addresses */
   char *start = addr;
   char *end = start + (vrom_end - vrom_start);
-  uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
+  uint32_t *hdr_off = (void *)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
-  hdr = (void*)(end - *hdr_off);
+  hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
@@ -137,14 +137,14 @@ static void load_ovl(void **p, void **p_addr,
   /* compute segment addresses */
   char *start = addr;
   char *end = start + (vrom_end - vrom_start);
-  uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
+  uint32_t *hdr_off = (void *)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
-  hdr = (void*)(end - *hdr_off);
+  hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
@@ -177,9 +177,9 @@ static void load_ovl(void **p, void **p_addr,
   serial_read(p, bss, hdr->bss_size);
 }
 
-static void reloc_col_hdr(uint32_t seg_addr)
+static void reloc_col_hdr(z64_col_hdr_t *col_hdr)
 {
-  z64_col_hdr_t *col_hdr = zu_zseg_locate(seg_addr);
+  col_hdr = zu_zseg_locate(col_hdr);
   zu_zseg_relocate(&col_hdr->vtx);
   zu_zseg_relocate(&col_hdr->poly);
   zu_zseg_relocate(&col_hdr->type);
@@ -440,11 +440,11 @@ static void grayscale_texture(uint32_t *pixels, uint16_t n_pixels)
   }
 }
 
-static _Bool addr_comp(void *a, void *b)
+static _Bool addr_comp(void *p_a, void *p_b)
 {
-  uint32_t *a_u32 = a;
-  uint32_t *b_u32 = b;
-  return *a_u32 < *b_u32;
+  void **a = p_a;
+  void **b = p_b;
+  return (uintptr_t)*a < (uintptr_t)*b;
 }
 
 uint32_t save_state(struct state_meta *state)
@@ -458,7 +458,7 @@ uint32_t save_state(struct state_meta *state)
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = &z64_afx[0x3530 + i * 0x0160];
-    _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
+    _Bool seq_active = (*(uint8_t *)(seq) & 0x80) || z64_afx_config_busy;
     serial_write(&p, &seq_active, sizeof(seq_active));
     if (seq_active) {
       serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
@@ -474,8 +474,8 @@ uint32_t save_state(struct state_meta *state)
     serial_write(&p, &sc->vp_factors, sizeof(sc->vp_factors));
     uint16_t seq_ch_mute = 0;
     for (int j = 0; j < 16; ++j) {
-      char *ch = *(void**)(seq + 0x0038 + j * 0x0004);
-      _Bool ch_mute = *(uint8_t*)(ch) & 0x10;
+      char *ch = *(void **)(seq + 0x0038 + j * 0x0004);
+      _Bool ch_mute = *(uint8_t *)(ch) & 0x10;
       seq_ch_mute |= ch_mute << j;
     }
     serial_write(&p, &seq_ch_mute, sizeof(seq_ch_mute));
@@ -1117,11 +1117,11 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, z64_song_ptr, 0x0004);
   serial_write(&p, z64_staff_notes, 0x001E);
 
-  //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
-  //serial_write(&p, (void*)0x8012143C, 0x41F4);
-  //serial_write(&p, (void*)0x801DAA00, 0x1D4790);
+  //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
+  //serial_write(&p, (void *)0x8012143C, 0x41F4);
+  //serial_write(&p, (void *)0x801DAA00, 0x1D4790);
 
-  return (char*)p - (char*)state;
+  return (char *)p - (char *)state;
 }
 
 void load_state(const struct state_meta *state)
@@ -1237,7 +1237,7 @@ void load_state(const struct state_meta *state)
   int16_t n_ent;
   int16_t next_ent;
   struct set ovl_nodes;
-  set_init(&ovl_nodes, sizeof(uint32_t), addr_comp);
+  set_init(&ovl_nodes, sizeof(void *), addr_comp);
   /* actor overlays */
   n_ent = sizeof(z64_actor_ovl_tab) / sizeof(*z64_actor_ovl_tab);
   serial_read(&p, &next_ent, sizeof(next_ent));
@@ -1265,7 +1265,7 @@ void load_state(const struct state_meta *state)
       load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
-      ovl->reloc_offset = (uint32_t)ovl->ptr - ovl->vram_start;
+      ovl->reloc_offset = (uintptr_t)ovl->ptr - ovl->vram_start;
       set_insert(&ovl_nodes, &ovl->ptr);
       serial_read(&p, &next_ent, sizeof(next_ent));
     }
@@ -1323,14 +1323,14 @@ void load_state(const struct state_meta *state)
 #endif
     serial_read(&p, &node->free, sizeof(node->free));
     serial_read(&p, &node->size, sizeof(node->size));
-    char *data = node->data;
+    void *data = node->data;
     if (!set_get(&ovl_nodes, &data) && !node->free)
       serial_read(&p, data, node->size);
     if (node == z64_game_arena.first_node)
       node->prev = NULL;
     serial_read(&p, &next_ent, sizeof(next_ent));
     if (next_ent == 0) {
-      node->next = (void*)&node->data[node->size];
+      node->next = (void *)&((char *)node->data)[node->size];
       node->next->prev = node;
     }
     else
@@ -1405,7 +1405,7 @@ void load_state(const struct state_meta *state)
     z64_scene_table_t *scene = &z64_scene_table[z64_game.scene_index];
     uint32_t size = scene->scene_vrom_end - scene->scene_vrom_start;
     zu_getfile(scene->scene_vrom_start, z64_game.scene_file, size);
-    reloc_col_hdr((uint32_t)z64_game.col_ctxt.col_hdr);
+    reloc_col_hdr(z64_game.col_ctxt.col_hdr);
     /* create static collision */
     z64_game.col_ctxt.stc_list_pos = 0;
     z64_CreateStaticCollision(&z64_game.col_ctxt, &z64_game,
@@ -1492,8 +1492,8 @@ void load_state(const struct state_meta *state)
     zu_getfile_idx(z64_icon_item_24_static, z64_game.pause_ctxt.icon_item_24);
     /* gray out restricted items */
     char *p = z64_play_ovl_tab[0].ptr;
-    p += ((uint32_t)&z64_item_highlight_vram - z64_play_ovl_tab[0].vram_start);
-    uint8_t *item_highlight_tab = (void*)p;
+    p += ((uintptr_t)&z64_item_highlight_vram - z64_play_ovl_tab[0].vram_start);
+    uint8_t *item_highlight_tab = (void *)p;
     uint32_t *pixels = z64_game.pause_ctxt.icon_item;
     for (int i = 0; i < 0x56; ++i) {
       if (item_highlight_tab[i] != 0x09 &&
@@ -1531,7 +1531,7 @@ void load_state(const struct state_meta *state)
       int alloc_index = dyn_col->actor->alloc_index;
       z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[alloc_index];
       z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
-      reloc_col_hdr((uint32_t)dyn_col->col_hdr);
+      reloc_col_hdr(dyn_col->col_hdr);
     }
   }
 
@@ -1813,7 +1813,7 @@ void load_state(const struct state_meta *state)
   /* clear unsaved textures */
   if (c_pause_objects && !p_pause_objects) {
     uint16_t (*img)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
-    img = (void*)&z64_zimg;
+    img = (void *)&z64_zimg;
     for (int y = 0; y < Z64_SCREEN_HEIGHT; ++y)
       for (int x = 0; x < Z64_SCREEN_WIDTH; ++x)
         (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
@@ -1886,7 +1886,7 @@ void load_state(const struct state_meta *state)
     struct seq_info *si = &seq_info[i];
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = &z64_afx[0x3530 + i * 0x0160];
-    _Bool c_active = *(uint8_t*)(seq) & 0x80;
+    _Bool c_active = *(uint8_t *)(seq) & 0x80;
     if (si->p_active) {
       memcpy(&sc->stop_cmd_timer, &si->stop_cmd_timer,
              sizeof(si->stop_cmd_timer));
@@ -1975,7 +1975,7 @@ void load_state(const struct state_meta *state)
     z64_ocarina_counter = z64_song_counter - delta;
   }
 
-  //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
-  //serial_read(&p, (void*)0x8012143C, 0x41F4);
-  //serial_read(&p, (void*)0x801DAA00, 0x1D4790);
+  //serial_read(&p, (void *)0x800E2FC0, 0x31E10);
+  //serial_read(&p, (void *)0x8012143C, 0x41F4);
+  //serial_read(&p, (void *)0x801DAA00, 0x1D4790);
 }

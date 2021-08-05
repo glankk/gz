@@ -351,7 +351,7 @@ struct menu *gz_settings_menu(void)
         break;
       if (command_info[n].proc) {
         menu_add_button(page, 0, j, command_info[n].name,
-                        activate_command_proc, (void*)n);
+                        activate_command_proc, (void *)n);
       }
       else
         menu_add_static(page, 0, j, command_info[n].name, 0xC0C0C0);

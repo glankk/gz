@@ -164,7 +164,7 @@ static void main_hook(void)
   if (settings->cheats & (1 << CHEAT_ISG))
     z64_link.sword_state = 1;
   if (settings->cheats & (1 << CHEAT_QUICKTEXT))
-    *(uint8_t*)(&z64_message_state[0x000C]) = 0x01;
+    *(uint8_t *)(&z64_message_state[0x000C]) = 0x01;
   if (settings->cheats & (1 << CHEAT_NOHUD))
       z64_file.hud_flag = 0x001;
 
@@ -661,8 +661,8 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
     for (int i = 0; i < 4; ++i) {
       if (disp_buf == z_disp[i]) {
         gz.disp_hook_size[i] = disp_buf->size;
-        gz.disp_hook_p[i] = (char*)disp_buf->p - (char*)disp_buf->buf;
-        gz.disp_hook_d[i] = (char*)disp_buf->d - (char*)disp_buf->buf;
+        gz.disp_hook_p[i] = (char *)disp_buf->p - (char *)disp_buf->buf;
+        gz.disp_hook_d[i] = (char *)disp_buf->d - (char *)disp_buf->buf;
         break;
       }
     }
@@ -670,7 +670,7 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
   disp_buf->size = size;
   disp_buf->buf = buf;
   disp_buf->p = buf;
-  disp_buf->d = (void*)((char*)buf + size);
+  disp_buf->d = (void *)((char *)buf + size);
 }
 
 static void state_main_hook(void)
@@ -714,12 +714,12 @@ static void state_main_hook(void)
     if (z64_ctxt.state_frames != 0) {
       /* copy gfx buffer from previous frame */
       if (gfx->frame_count_1 & 1) {
-        memcpy((void*)(&z64_disp[z64_disp_size]),
-               (void*)(&z64_disp[0]), z64_disp_size);
+        memcpy((void *)&z64_disp[z64_disp_size],
+               (void *)&z64_disp[0], z64_disp_size);
       }
       else {
-        memcpy((void*)(&z64_disp[0]),
-               (void*)(&z64_disp[z64_disp_size]), z64_disp_size);
+        memcpy((void *)&z64_disp[0],
+               (void *)&z64_disp[z64_disp_size], z64_disp_size);
       }
       /* set pointers */
       zu_load_disp_p(&gz.z_disp_p);
@@ -1013,8 +1013,8 @@ HOOK void camera_hook(void *camera)
 
   gz_update_cam();
 
-  z64_xyzf_t *camera_at = (void*)((char*)camera + 0x0050);
-  z64_xyzf_t *camera_eye = (void*)((char*)camera + 0x005C);
+  z64_xyzf_t *camera_at = (void *)((char *)camera + 0x0050);
+  z64_xyzf_t *camera_eye = (void *)((char *)camera + 0x005C);
 
   *camera_eye = gz.cam_pos;
 

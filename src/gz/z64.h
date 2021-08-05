@@ -267,14 +267,13 @@ typedef struct
   int16_t           fov;                      /* 0x000C */
   int16_t           unk_0xE;                  /* 0x000E */
                                               /* 0x0010 */
-} z64_camera_params_t;
+} z64_cam_params_t;
 
 typedef struct
 {
   uint16_t          mode;                     /* 0x0000 */
   uint16_t          unk_0x2;                  /* 0x0002 */
-  /* segment address of z64_camera_params_t */
-  uint32_t          seg_params;               /* 0x0004 */
+  z64_cam_params_t *params;                   /* 0x0004 */
   char              unk_0x8[0x012C];          /* 0x0008 */
   z64_xyz_t         input_dir;                /* 0x0134 */
   char              unk_0x13A[0x0032];        /* 0x013A */
@@ -1566,14 +1565,13 @@ typedef struct
                                               /* 0x0080 */
 } z64_gbi_lights_t;
 
-typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
-                                    z64_actor_t*);
+typedef void (*z64_light_handler_t)(z64_gbi_lights_t *, z64_lightn_t *,
+                                    z64_actor_t *);
 
 typedef struct
 {
   int8_t            numpoints;
-  /* segment address to z64_xyz_t points array */
-  uint32_t          points;
+  z64_xyz_t        *points;
 } z64_path_t;
 
 /* game context */
@@ -1594,7 +1592,7 @@ typedef struct
   char              unk_0x340[0x016C];        /* 0x00340 */
   int16_t           event_flag;               /* 0x004AC */
   char              unk_0x4AE[0x02E2];        /* 0x004AE */
-  z64_camera_t*     camera_ptrs[4];           /* 0x00790 */
+  z64_camera_t     *camera_ptrs[4];           /* 0x00790 */
   uint16_t          active_camera;            /* 0x007A0 */
   uint16_t          next_camera;              /* 0x007A2 */
   uint8_t           seq_idx;                  /* 0x007A4 */

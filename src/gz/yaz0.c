@@ -66,7 +66,7 @@ static void yaz0_continue(void)
 
 void yaz0_begin(uint32_t prom_start)
 {
-  yaz0 = (void*)MIPS_PHYS_TO_KSEG1(0x10000000 + prom_start);
+  yaz0 = (void *)MIPS_PHYS_TO_KSEG1(0x10000000 + prom_start);
   yaz0_cp = 0;
   yaz0_op = 0;
   yaz0_group_pos = 7;

@@ -787,7 +787,7 @@ static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, int mode, _Bool xlu)
 
 static void release_mem(void *p_ptr)
 {
-  void **p_void = (void**)p_ptr;
+  void **p_void = (void **)p_ptr;
   if (*p_void) {
     free(*p_void);
     *p_void = NULL;
@@ -1153,7 +1153,8 @@ void gz_hit_view(void)
 
 static inline int path_valid(z64_path_t *path)
 {
-  return path->numpoints != 0 && (path->points >> 24) == Z64_SEG_SCENE;
+  uintptr_t points_addr = (uintptr_t)path->points;
+  return path->numpoints != 0 && (points_addr >> 24) == Z64_SEG_SCENE;
 }
 
 void gz_path_view(void)

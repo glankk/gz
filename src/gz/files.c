@@ -559,7 +559,7 @@ static void gf_menu_init(void)
     gf_clear = menu_add_button(menu, 7, 4, "clear", clear_proc, NULL);
     for (int i = 0; i < FILE_VIEW_ROWS; ++i) {
       struct menu_item *item = menu_item_add(menu, 2, 5 + i, NULL, 0xFFFFFF);
-      item->data = (void*)i;
+      item->data = (void *)i;
       item->enter_proc = file_enter_proc;
       item->draw_proc = file_draw_proc;
       item->activate_proc = file_activate_proc;

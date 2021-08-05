@@ -266,7 +266,7 @@ struct gfx_texture *gfx_texldr_load(struct gfx_texldr *texldr,
         free(new_texture);
       return NULL;
     }
-    memcpy(texture_data, (char*)file_start + texdesc->address, texture_size);
+    memcpy(texture_data, (char *)file_start + texdesc->address, texture_size);
   }
   texture->data = texture_data;
   return texture;
@@ -325,7 +325,7 @@ void gfx_texture_free(struct gfx_texture *texture)
 
 void *gfx_texture_data(const struct gfx_texture *texture, int16_t tile)
 {
-  return (char*)texture->data + texture->tile_size * tile;
+  return (char *)texture->data + texture->tile_size * tile;
 }
 
 struct gfx_texture *gfx_texture_copy(const struct gfx_texture *src,

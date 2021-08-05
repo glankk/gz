@@ -690,7 +690,7 @@ struct menu *gz_inventory_menu(void)
                            t_item_24, d->tile, 0xFFFFFF,
                            t_item_24, d->tile, 0x606060,
                            2.f / 3.f, 1,
-                           quest_item_switch_proc, (void*)d->mask);
+                           quest_item_switch_proc, (void *)d->mask);
     item->pxoffset = i % 6 * 18;
     item->pyoffset = i / 6 * 18;
   }
@@ -708,7 +708,7 @@ struct menu *gz_inventory_menu(void)
                            t_note, 0, d->color,
                            t_note, 0, color_off,
                            2.f / 3.f, 1,
-                           quest_item_switch_proc, (void*)d->mask);
+                           quest_item_switch_proc, (void *)d->mask);
     item->pxoffset = i % 6 * 18;
     item->pyoffset = 2 * 18 + i / 6 * 18;
     item->tooltip = d->tooltip;

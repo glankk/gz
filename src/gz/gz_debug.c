@@ -36,8 +36,8 @@ struct actor_spawn_info
 
 struct actor_info
 {
-  struct actor_debug_info* adi;
-  struct actor_spawn_info* asi;
+  struct actor_debug_info  *adi;
+  struct actor_spawn_info  *asi;
 };
 
 static int byte_optionmod_proc(struct menu_item *item,
@@ -84,10 +84,10 @@ static int word_mod_proc(struct menu_item *item,
 
 static _Bool heap_node_validate(z64_arena_node_t *node)
 {
-  uint32_t addr = (uint32_t)node;
-  uint32_t size = node->size + sizeof(z64_arena_node_t);
-  uint32_t prev = (uint32_t)node->prev;
-  uint32_t next = (uint32_t)node->next;
+  uintptr_t addr = (uintptr_t)node;
+  size_t size = node->size + sizeof(z64_arena_node_t);
+  uintptr_t prev = (uintptr_t)node->prev;
+  uintptr_t next = (uintptr_t)node->next;
   return node->magic == 0x7373 &&
          (!next || (next >= 0x80000000 && next < 0x80400000 &&
                     next > addr && next - addr == size)) &&
@@ -105,7 +105,7 @@ static int heap_draw_proc(struct menu_item *item,
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
   /* collect heap data */
-  const uint32_t heap_start = (uint32_t)&z64_link - sizeof(z64_arena_node_t);
+  const uintptr_t heap_start = (uintptr_t)&z64_link - sizeof(z64_arena_node_t);
   size_t max_alloc = 0;
   size_t min_alloc = 0;
   size_t total_alloc = 0;
@@ -114,7 +114,7 @@ static int heap_draw_proc(struct menu_item *item,
   size_t total_avail = 0;
   size_t overhead = 0;
   size_t total = 0;
-  z64_arena_node_t *p = (void*)heap_start;
+  z64_arena_node_t *p = (void *)heap_start;
   z64_arena_node_t *error_node = NULL;
   int node_count_total = 0;
   int node_count_free = 0;
@@ -165,11 +165,11 @@ static int heap_draw_proc(struct menu_item *item,
     t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 1, 9, 1);
   size_t graph_width = t->tile_width * t->tiles_x;
   uint16_t *d = t->data;
-  p = (void*)heap_start;
+  p = (void *)heap_start;
   while (p) {
     if (p == error_node)
       break;
-    size_t b = (uint32_t)p - heap_start;
+    size_t b = (uintptr_t)p - heap_start;
     size_t e = b + p->size + sizeof(z64_arena_node_t);
     b = b * graph_width / total;
     e = e * graph_width / total;
@@ -274,7 +274,7 @@ static void push_object_proc(struct menu_item *item, void *data)
   obj[n].getfile.vrom_addr = 0;
   size_t size = z64_object_table[object_id].vrom_end -
                 z64_object_table[object_id].vrom_start;
-  obj[n + 1].data = (char*)obj[n].data + size;
+  obj[n + 1].data = (char *)obj[n].data + size;
 }
 
 static void pop_object_proc(struct menu_item *item, void *data)

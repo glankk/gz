@@ -91,7 +91,7 @@ static int cell_proc(struct menu_item *item,
   struct mem_domain *d = vector_at(&domains, view_domain_index);
   switch (view_data_size) {
     case 1: {
-      uint8_t *p = (void*)(d->start + d->view_offset + cell_index);
+      uint8_t *p = (void *)(d->start + d->view_offset + cell_index);
       if (reason == MENU_CALLBACK_THINK_INACTIVE) {
         uint8_t v = *p;
         if (menu_intinput_get(item) != v)
@@ -102,7 +102,7 @@ static int cell_proc(struct menu_item *item,
       break;
     }
     case 2: {
-      uint16_t *p = (void*)(d->start + d->view_offset + cell_index);
+      uint16_t *p = (void *)(d->start + d->view_offset + cell_index);
       if (reason == MENU_CALLBACK_THINK_INACTIVE) {
         uint16_t v = *p;
         if (menu_intinput_get(item) != v)
@@ -113,7 +113,7 @@ static int cell_proc(struct menu_item *item,
       break;
     }
     case 4: {
-      uint32_t *p = (void*)(d->start + d->view_offset + cell_index);
+      uint32_t *p = (void *)(d->start + d->view_offset + cell_index);
       if (reason == MENU_CALLBACK_THINK_INACTIVE) {
         uint32_t v = *p;
         if (menu_intinput_get(item) != v)
@@ -133,7 +133,7 @@ static int float_cell_proc(struct menu_item *item,
 {
   int cell_index = (int)data;
   struct mem_domain *d = vector_at(&domains, view_domain_index);
-  float *p = (void*)(d->start + d->view_offset + cell_index);
+  float *p = (void *)(d->start + d->view_offset + cell_index);
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     float v = *p;
     if (is_nan(v) || !isnormal(v) || menu_floatinput_get(item) != v)
@@ -154,12 +154,12 @@ static void make_cells(struct menu *menu)
       if (n % view_data_size == 0) {
         if (view_float) {
           view_cells[n] = menu_add_floatinput(menu, 9 + x / 4 * 14, 3 + y,
-                                              7, 2, float_cell_proc, (void*)n);
+                                              7, 2, float_cell_proc, (void *)n);
         }
         else {
           view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
                                             16, view_data_size * 2,
-                                            cell_proc, (void*)n);
+                                            cell_proc, (void *)n);
         }
       }
       else

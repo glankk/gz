@@ -240,7 +240,7 @@ static void cvt_83(const char *s, char *sfn)
 /* compute the vfat checksum of an 8.3 name */
 static uint8_t compute_lfn_checksum(const char *sfn)
 {
-  uint8_t *p = (void*)sfn;
+  uint8_t *p = (void *)sfn;
   uint8_t checksum = 0;
   for (int i = 0; i < 11; ++i)
     checksum = ((checksum & 1) << 7) + (checksum >> 1) + p[i];

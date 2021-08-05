@@ -361,9 +361,9 @@ struct menu *gz_file_menu(void)
   struct gfx_texture *t_daytime = resource_get(RES_ICON_DAYTIME);
   menu_add_static(&menu, 0, 5, "time of day", 0xC0C0C0);
   menu_add_button_icon(&menu, 17, 5, t_daytime, 0, 0xFFC800,
-                       set_time_proc, (void*)0x4AB0);
+                       set_time_proc, (void *)0x4AB0);
   menu_add_button_icon(&menu, 19, 5, t_daytime, 1, 0xA0A0E0,
-                       set_time_proc, (void*)0xC010);
+                       set_time_proc, (void *)0xC010);
   menu_add_intinput(&menu, 21, 5, 16, 4,
                     halfword_mod_proc, &z64_file.day_time);
 

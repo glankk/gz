@@ -324,7 +324,7 @@ err:
 static uint64_t rdb_get_reg(OSThread *thread, int reg_idx)
 {
   __OSThreadContext *c = &thread->context;
-  uint64_t *f = (void*)c->fp64;
+  uint64_t *f = (void *)c->fp64;
   switch (reg_idx) {
     case 0x01:  return c->at;
     case 0x02:  return c->v0;
@@ -385,7 +385,7 @@ static uint64_t rdb_get_reg(OSThread *thread, int reg_idx)
 static void rdb_set_reg(OSThread *thread, int reg_idx, uint64_t value)
 {
   __OSThreadContext *c = &thread->context;
-  uint64_t *f = (void*)c->fp64;
+  uint64_t *f = (void *)c->fp64;
   switch (reg_idx) {
     case 0x01:  c->at       = value;  break;
     case 0x02:  c->v0       = value;  break;
@@ -448,7 +448,7 @@ static _Bool rdb_set_bkp(struct swbkp *bkp, uint32_t addr)
     return bkp->addr == addr;
   if (!check_addr(addr, 4))
     return 0;
-  uint32_t *p = (void*)addr;
+  uint32_t *p = (void *)addr;
   bkp->active = 1;
   bkp->addr = addr;
   bkp->old_insn = *p;
@@ -464,7 +464,7 @@ static _Bool rdb_clear_bkp(struct swbkp *bkp)
 {
   if (!bkp->active)
     return 1;
-  uint32_t *p = (void*)bkp->addr;
+  uint32_t *p = (void *)bkp->addr;
   bkp->active = 0;
   if (*p == bkp->new_insn) {
     *p = bkp->old_insn;
@@ -536,7 +536,7 @@ static OSThread *rdb_step(OSThread *thread)
   uint32_t pc = thread->context.pc;
 
   /* set breakpoints */
-  if (check_addr(pc, 4) && vr4300_decode_insn(*(uint32_t*)pc, &insn)) {
+  if (check_addr(pc, 4) && vr4300_decode_insn(*(uint32_t *)pc, &insn)) {
     switch (insn.opcode) {
       /* 0 operand branch */
       case VR4300_OP_BC1F:
@@ -628,7 +628,7 @@ static void rdb_stop_reply(OSThread *thread)
       sig = SIGBUS;   break;
     case 13:  /* tr */
       if (check_addr(thread->context.pc, 4) &&
-          *(uint32_t*)thread->context.pc == RDB_INTR_OP)
+          *(uint32_t *)thread->context.pc == RDB_INTR_OP)
       {
         thread->context.pc += 4;
         if (rdb.detach) {
@@ -825,7 +825,7 @@ static void rdb_main(void *arg)
           *p = 0;
           for (int i = 0; i < length; ++i) {
             if (check_addr(addr, 1))
-              p += sprintf(p, "%02" PRIx8, *(uint8_t*)addr++);
+              p += sprintf(p, "%02" PRIx8, *(uint8_t *)addr++);
             else
               break;
           }
@@ -849,7 +849,7 @@ static void rdb_main(void *arg)
           if (check_addr(addr, 1)
               && sscanf(p, "%2" SCNx32 "%n", &value, &n) == 1 && n == 2)
           {
-            *(uint8_t*)addr++ = value;
+            *(uint8_t *)addr++ = value;
             p += n;
           }
           else

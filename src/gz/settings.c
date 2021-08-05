@@ -15,7 +15,7 @@ struct settings_data *settings = &settings_store.data;
 static uint16_t settings_checksum_compute(struct settings *settings)
 {
   uint16_t checksum = 0;
-  uint16_t *p = (void*)&settings->data;
+  uint16_t *p = (void *)&settings->data;
   uint16_t *e = p + sizeof(settings->data) / sizeof(*p);
   while (p < e)
     checksum += *p++;

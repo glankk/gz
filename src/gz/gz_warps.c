@@ -245,13 +245,13 @@ struct menu *gz_warps_menu(void)
                                                 "return");
         for (uint8_t k = 0; k < scene->n_entrances; ++k) {
           menu_add_button(scene_menu, 0, 1 + k, scene->entrance_names[k],
-                          places_proc, (void*)((scene_index << 8) | k));
+                          places_proc, (void *)((scene_index << 8) | k));
         }
         menu_add_submenu(cat_menu, 0, 1 + j, scene_menu, scene->scene_name);
       }
       else {
         menu_add_button(cat_menu, 0, 1 + j, scene->scene_name,
-                        places_proc, (void*)((scene_index << 8) | 0));
+                        places_proc, (void *)((scene_index << 8) | 0));
       }
     }
     menu_add_submenu(&places, 0, 1 + i, cat_menu, cat->category_name);
