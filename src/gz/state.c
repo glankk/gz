@@ -1526,27 +1526,12 @@ void load_state(const struct state_meta *state)
     /* relocate collision headers */
     for (int i = 0; i < 50; i++) {
       z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
-      z64_col_hdr_t *dyn_hdr = dyn_col->col_hdr;
       if (!dyn_col->actor)
         continue;
-      if(((uint32_t)dyn_hdr->vtx >> 28) & 0x0000000F != 0) {
-        /* address is not segmented */
-        continue;
-      }
-      uint8_t seg = ((uint32_t)dyn_hdr->vtx >> 24) & 0x0000000F;
-      int offset = 0;
-      if(seg == 6) {
-        int alloc_index = dyn_col->actor->alloc_index;
-        z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[alloc_index];
-        z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
-        offset = (int)dyn_col->col_hdr - (int)obj->data;
-      } else {
-        offset = (int)dyn_col->col_hdr - z64_stab.seg[seg];
-      }
-      if(offset < 0) {
-        continue;
-      }
-      reloc_col_hdr((seg << 24) | offset);
+      int alloc_index = dyn_col->actor->alloc_index;
+      z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[alloc_index];
+      z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
+      reloc_col_hdr((uint32_t)dyn_col->col_hdr);
     }
   }
 
