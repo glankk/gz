@@ -156,6 +156,19 @@ static int col_view_xlu_proc(struct menu_item *item,
   return 0;
 }
 
+static int col_view_water_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.col_view_water = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.col_view_water = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.col_view_water);
+  return 0;
+}
+
 static int col_view_wfc_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -482,37 +495,39 @@ struct menu *gz_scene_menu(void)
   /* collision view controls */
   menu_add_static(&collision, 0, 1, "show collision", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 1, col_view_proc, NULL);
-  menu_add_static(&collision, 2, 4, "polygon class", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 4, col_view_wfc_proc, NULL);
   menu_add_static(&collision, 2, 2, "mode", 0xC0C0C0);
   menu_add_option(&collision, 16, 2, "decal\0""surface\0",
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 5, "wireframe", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 5, col_view_line_proc, NULL);
-  menu_add_static(&collision, 2, 6, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 6, col_view_shade_proc, NULL);
-  menu_add_static(&collision, 2, 7, "reduced", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 7, col_view_rd_proc, NULL);
-  menu_add_static(&collision, 2, 8, "auto update", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 8, col_view_upd_proc, NULL);
+  menu_add_static(&collision, 2, 4, "waterboxes", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 4, col_view_water_proc, NULL);
+  menu_add_static(&collision, 2, 5, "polygon class", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 5, col_view_wfc_proc, NULL);
+  menu_add_static(&collision, 2, 6, "wireframe", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 6, col_view_line_proc, NULL);
+  menu_add_static(&collision, 2, 7, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 7, col_view_shade_proc, NULL);
+  menu_add_static(&collision, 2, 8, "reduced", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 8, col_view_rd_proc, NULL);
+  menu_add_static(&collision, 2, 9, "auto update", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 9, col_view_upd_proc, NULL);
   /* hitbox view controls */
-  menu_add_static(&collision, 0, 9, "show hitboxes", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 9, hit_view_proc, NULL);
-  menu_add_static(&collision, 2, 10, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 10, hit_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 11, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 11, hit_view_shade_proc, NULL);
+  menu_add_static(&collision, 0, 10, "show hitboxes", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 10, hit_view_proc, NULL);
+  menu_add_static(&collision, 2, 11, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 11, hit_view_xlu_proc, NULL);
+  menu_add_static(&collision, 2, 12, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 12, hit_view_shade_proc, NULL);
   /* path view controls */
-  menu_add_static(&collision, 0, 12, "show paths", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 12, path_view_proc, NULL);
-  menu_add_static(&collision, 2, 13, "points", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 13, path_view_points_proc, NULL);
-  menu_add_static(&collision, 2, 14, "lines", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 14, path_view_lines_proc, NULL);
-  menu_add_static(&collision, 2, 15, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 15, path_view_xlu_proc, NULL);
+  menu_add_static(&collision, 0, 13, "show paths", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 13, path_view_proc, NULL);
+  menu_add_static(&collision, 2, 14, "points", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 14, path_view_points_proc, NULL);
+  menu_add_static(&collision, 2, 15, "lines", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 15, path_view_lines_proc, NULL);
+  menu_add_static(&collision, 2, 16, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 16, path_view_xlu_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");

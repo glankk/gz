@@ -58,6 +58,8 @@ void settings_load_default(void)
   d->bits.warp_cutscene = 0;
   d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->bits.col_view_xlu = 1;
+  d->bits.col_view_water = 1;
+  d->bits.col_view_wfc = 0;
   d->bits.col_view_line = 0;
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;

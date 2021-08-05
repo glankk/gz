@@ -683,20 +683,20 @@ static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
     {
       z64_xyzf_t vtx[] =
       {
-        { w->pos.x,             w->pos.y,         w->pos.z },
-        { w->pos.x + w->width,  w->pos.y,         w->pos.z },
-        { w->pos.x + w->width,  w->pos.y,         w->pos.z + w->depth },
         { w->pos.x,             w->pos.y,         w->pos.z + w->depth },
-        { w->pos.x,             water_max_depth,  w->pos.z },
-        { w->pos.x + w->width,  water_max_depth,  w->pos.z },
-        { w->pos.x + w->width,  water_max_depth,  w->pos.z + w->depth },
+        { w->pos.x + w->width,  w->pos.y,         w->pos.z + w->depth },
+        { w->pos.x + w->width,  w->pos.y,         w->pos.z },
+        { w->pos.x,             w->pos.y,         w->pos.z },
         { w->pos.x,             water_max_depth,  w->pos.z + w->depth },
+        { w->pos.x + w->width,  water_max_depth,  w->pos.z + w->depth },
+        { w->pos.x + w->width,  water_max_depth,  w->pos.z },
+        { w->pos.x,             water_max_depth,  w->pos.z },
       };
       draw_quad(p_gfx_p, p_gfx_d, &vtx[0], &vtx[1], &vtx[2], &vtx[3]);
-      draw_quad(p_gfx_p, p_gfx_d, &vtx[0], &vtx[1], &vtx[5], &vtx[4]);
-      draw_quad(p_gfx_p, p_gfx_d, &vtx[1], &vtx[2], &vtx[6], &vtx[5]);
-      draw_quad(p_gfx_p, p_gfx_d, &vtx[2], &vtx[3], &vtx[7], &vtx[6]);
-      draw_quad(p_gfx_p, p_gfx_d, &vtx[3], &vtx[0], &vtx[4], &vtx[7]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[0], &vtx[3], &vtx[7], &vtx[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[1], &vtx[0], &vtx[4], &vtx[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[2], &vtx[1], &vtx[5], &vtx[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[3], &vtx[2], &vtx[6], &vtx[7]);
     }
   }
 }
@@ -806,9 +806,10 @@ void gz_col_view(void)
   static int  dyn_gfx_idx = 0;
 
   static int col_view_scene;
+  static int col_view_water;
+  static int col_view_wfc;
   static int col_view_line;
   static int col_view_rd;
-  static int col_view_wfc;
 
   poly_writer_t poly_writer;
   line_writer_t line_writer;
@@ -821,9 +822,10 @@ void gz_col_view(void)
   if (enable && gz.col_view_state == COLVIEW_ACTIVE &&
       settings->bits.col_view_upd &&
       (col_view_scene != z64_game.scene_index ||
+       col_view_water != settings->bits.col_view_water ||
+       col_view_wfc != settings->bits.col_view_wfc ||
        col_view_line != settings->bits.col_view_line ||
-       col_view_rd != settings->bits.col_view_rd ||
-       col_view_wfc != settings->bits.col_view_wfc))
+       col_view_rd != settings->bits.col_view_rd))
   {
     gz.col_view_state = COLVIEW_BEGIN_RESTART;
   }
@@ -853,9 +855,10 @@ void gz_col_view(void)
   /* initialize */
   if (enable && init) {
     col_view_scene = z64_game.scene_index;
+    col_view_water = settings->bits.col_view_water;
+    col_view_wfc = settings->bits.col_view_wfc;
     col_view_line = settings->bits.col_view_line;
     col_view_rd = settings->bits.col_view_rd;
-    col_view_wfc = settings->bits.col_view_wfc;
 
     z64_col_hdr_t *col_hdr = z64_game.col_ctxt.col_hdr;
 
@@ -945,45 +948,47 @@ void gz_col_view(void)
 
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
 
-    gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
-    gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
+    if (col_view_water) {
+      gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
 
-    /* which waterbox to draw depends on currently loaded room, so even static
-     * waterboxes may need updating */
-    do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
-                    z64_game.col_ctxt.col_hdr->n_water,
-                    z64_game.col_ctxt.col_hdr->water);
+      /* which waterbox to draw depends on currently loaded room, so even
+       * static waterboxes may need updating */
+      do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
+                       z64_game.col_ctxt.col_hdr->n_water,
+                       z64_game.col_ctxt.col_hdr->water);
 
-    for (int i = 0; i < 50; ++i) {
-      if (z64_game.col_ctxt.dyn_flags[i].active) {
-        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
-        do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
-                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+      for (int i = 0; i < 50; ++i) {
+        if (z64_game.col_ctxt.dyn_flags[i].active) {
+          z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+          do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
+                           dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+        }
       }
-    }
-    /*
-    * There is a special hardcoded check for Zora's Domain in a function related
-    * to handling collision detection with waterboxes that creates a "fake"
-    * waterbox between two hardcoded positions. Unlike every other waterbox in
-    * the game, this one has a depth below which you fall out of the bottom.
-    */
-    if (z64_game.scene_index == 0x58) {
-      z64_xyzf_t vtx[] = {
-        { -348, 877, -1746 },
-        {  205, 877, -1746 },
-        {  205, 877, -967 },
-        { -348, 877, -967 },
-        { -348, 777, -1746 },
-        {  205, 777, -1746 },
-        {  205, 777, -967 },
-        { -348, 777, -967 },
-      };
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[1], &vtx[2], &vtx[3]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[1], &vtx[5], &vtx[4]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[1], &vtx[2], &vtx[6], &vtx[5]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[2], &vtx[3], &vtx[7], &vtx[6]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[3], &vtx[0], &vtx[4], &vtx[7]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[4], &vtx[5], &vtx[6], &vtx[7]);
+      /*
+      * There is a special hardcoded check for Zora's Domain in a function
+      * related to handling collision detection with waterboxes that creates a
+      * "fake" waterbox between two hardcoded positions. Unlike every other
+      * waterbox in the game, this one has a depth below which you fall out of
+      * the bottom.
+      */
+      if (z64_game.scene_index == 0x58) {
+        z64_xyzf_t vtx[] = {
+          { -348, 877, -967 },
+          {  205, 877, -967 },
+          {  205, 877, -1746 },
+          { -348, 877, -1746 },
+          { -348, 777, -967 },
+          {  205, 777, -967 },
+          {  205, 777, -1746 },
+          { -348, 777, -1746 },
+        };
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[1], &vtx[2], &vtx[3]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[3], &vtx[7], &vtx[4]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[1], &vtx[0], &vtx[4], &vtx[5]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[2], &vtx[1], &vtx[5], &vtx[6]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[3], &vtx[2], &vtx[6], &vtx[7]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[7], &vtx[6], &vtx[5], &vtx[4]);
+      }
     }
 
     gSPEndDisplayList(dyn_poly_p++);

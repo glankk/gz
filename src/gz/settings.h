@@ -120,10 +120,11 @@ struct settings_bits
   uint32_t warp_cutscene    : 5;
   uint32_t col_view_mode    : 1;
   uint32_t col_view_xlu     : 1;
+  uint32_t col_view_water   : 1;
+  uint32_t col_view_wfc     : 1;
   uint32_t col_view_line    : 1;
   uint32_t col_view_shade   : 1;
   uint32_t col_view_rd      : 1;
-  uint32_t col_view_wfc     : 1;
   uint32_t col_view_upd     : 1;
   uint32_t hit_view_xlu     : 1;
   uint32_t hit_view_shade   : 1;
