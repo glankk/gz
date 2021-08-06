@@ -337,7 +337,7 @@ void command_colview(void)
   if (gz.col_view_state == COLVIEW_INACTIVE)
     gz.col_view_state = COLVIEW_START;
   else
-    gz.col_view_state = COLVIEW_BEGIN_STOP;
+    gz.col_view_state = COLVIEW_STOP;
 }
 
 void command_hitview(void)
@@ -345,7 +345,7 @@ void command_hitview(void)
   if (gz.hit_view_state == HITVIEW_INACTIVE)
     gz.hit_view_state = HITVIEW_START;
   else
-    gz.hit_view_state = HITVIEW_BEGIN_STOP;
+    gz.hit_view_state = HITVIEW_STOP;
 }
 
 void command_pathview(void)
@@ -353,7 +353,7 @@ void command_pathview(void)
   if (gz.path_view_state == PATHVIEW_INACTIVE)
     gz.path_view_state = PATHVIEW_START;
   else
-    gz.path_view_state = PATHVIEW_BEGIN_STOP;
+    gz.path_view_state = PATHVIEW_STOP;
 }
 
 void command_resetlag(void)

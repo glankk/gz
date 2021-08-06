@@ -26,10 +26,10 @@ enum col_view_state
   COLVIEW_INACTIVE,
   COLVIEW_START,
   COLVIEW_ACTIVE,
-  COLVIEW_BEGIN_STOP,
   COLVIEW_STOP,
-  COLVIEW_BEGIN_RESTART,
+  COLVIEW_STOPPING,
   COLVIEW_RESTART,
+  COLVIEW_RESTARTING,
 };
 
 enum hit_view_state
@@ -37,8 +37,8 @@ enum hit_view_state
   HITVIEW_INACTIVE,
   HITVIEW_START,
   HITVIEW_ACTIVE,
-  HITVIEW_BEGIN_STOP,
   HITVIEW_STOP,
+  HITVIEW_STOPPING,
 };
 
 enum cull_view_state
@@ -46,8 +46,8 @@ enum cull_view_state
   CULLVIEW_INACTIVE,
   CULLVIEW_START,
   CULLVIEW_ACTIVE,
-  CULLVIEW_BEGIN_STOP,
   CULLVIEW_STOP,
+  CULLVIEW_STOPPING,
 };
 
 enum path_view_state
@@ -55,10 +55,10 @@ enum path_view_state
   PATHVIEW_INACTIVE,
   PATHVIEW_START,
   PATHVIEW_ACTIVE,
-  PATHVIEW_BEGIN_STOP,
   PATHVIEW_STOP,
-  PATHVIEW_BEGIN_RESTART,
+  PATHVIEW_STOPPING,
   PATHVIEW_RESTART,
+  PATHVIEW_RESTARTING,
 };
 
 enum cam_mode
@@ -196,10 +196,10 @@ struct gz
   _Bool                 timer_active;
   int64_t               timer_counter_offset;
   int64_t               timer_counter_prev;
-  int                   col_view_state;
-  int                   hit_view_state;
-  int                   cull_view_state;
-  int                   path_view_state;
+  enum col_view_state   col_view_state;
+  enum hit_view_state   hit_view_state;
+  enum cull_view_state  cull_view_state;
+  enum path_view_state  path_view_state;
   _Bool                 noclip_on;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;

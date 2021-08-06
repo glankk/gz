@@ -484,7 +484,7 @@ static void toggle_cullzone_proc(struct menu_item *item, void *data)
   else if (gz.selected_actor.ptr == actor &&
            gz.selected_actor.id == actor->actor_id)
   {
-    gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+    gz.cull_view_state = CULLVIEW_STOP;
   }
   else {
     gz.selected_actor.ptr = actor;

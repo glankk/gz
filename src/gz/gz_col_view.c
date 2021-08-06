@@ -816,7 +816,7 @@ void gz_col_view(void)
 
   _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
   _Bool init = gz.col_view_state == COLVIEW_START ||
-               gz.col_view_state == COLVIEW_RESTART;
+               gz.col_view_state == COLVIEW_RESTARTING;
 
   /* restart if needed */
   if (enable && gz.col_view_state == COLVIEW_ACTIVE &&
@@ -827,28 +827,31 @@ void gz_col_view(void)
        col_view_line != settings->bits.col_view_line ||
        col_view_rd != settings->bits.col_view_rd))
   {
-    gz.col_view_state = COLVIEW_BEGIN_RESTART;
+    gz.col_view_state = COLVIEW_RESTART;
   }
 
   /* update state */
   switch (gz.col_view_state) {
-    case COLVIEW_BEGIN_STOP:
-      gz.col_view_state = COLVIEW_STOP;
-      break;
-
-    case COLVIEW_BEGIN_RESTART:
-      gz.col_view_state = COLVIEW_RESTART;
-      break;
-
     case COLVIEW_STOP:
-      gz.col_view_state = COLVIEW_INACTIVE;
+      gz.col_view_state = COLVIEW_STOPPING;
+      break;
+
     case COLVIEW_RESTART:
+      gz.col_view_state = COLVIEW_RESTARTING;
+      break;
+
+    case COLVIEW_STOPPING:
+      gz.col_view_state = COLVIEW_INACTIVE;
+    case COLVIEW_RESTARTING:
       release_mem(&stc_poly);
       release_mem(&stc_line);
       release_mem(&dyn_poly_buf[0]);
       release_mem(&dyn_poly_buf[1]);
       release_mem(&dyn_line_buf[0]);
       release_mem(&dyn_line_buf[1]);
+      break;
+
+    default:
       break;
   }
 
@@ -1146,9 +1149,9 @@ void gz_hit_view(void)
 
     gSPDisplayList((*p_gfx_p)++, hit_gfx);
   }
-  if (gz.hit_view_state == HITVIEW_BEGIN_STOP)
-    gz.hit_view_state = HITVIEW_STOP;
-  else if (gz.hit_view_state == HITVIEW_STOP) {
+  if (gz.hit_view_state == HITVIEW_STOP)
+    gz.hit_view_state = HITVIEW_STOPPING;
+  else if (gz.hit_view_state == HITVIEW_STOPPING) {
     release_mem(&hit_gfx_buf[0]);
     release_mem(&hit_gfx_buf[1]);
 
@@ -1177,33 +1180,36 @@ void gz_path_view(void)
   _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0 &&
                  z64_game.path_list != NULL;
   _Bool init = gz.path_view_state == PATHVIEW_START ||
-               gz.path_view_state == PATHVIEW_RESTART;
+               gz.path_view_state == PATHVIEW_RESTARTING;
 
   /* restart if needed */
   if (enable && gz.path_view_state == PATHVIEW_ACTIVE &&
       (path_view_points != settings->bits.path_view_points ||
        path_view_lines != settings->bits.path_view_lines))
   {
-    gz.path_view_state = PATHVIEW_BEGIN_RESTART;
+    gz.path_view_state = PATHVIEW_RESTART;
   }
 
   /* update state */
   switch (gz.path_view_state) {
-    case PATHVIEW_BEGIN_STOP:
-      gz.path_view_state = PATHVIEW_STOP;
-      break;
-
-    case PATHVIEW_BEGIN_RESTART:
-      gz.path_view_state = PATHVIEW_RESTART;
-      break;
-
     case PATHVIEW_STOP:
-      gz.path_view_state = PATHVIEW_INACTIVE;
+      gz.path_view_state = PATHVIEW_STOPPING;
+      break;
+
     case PATHVIEW_RESTART:
+      gz.path_view_state = PATHVIEW_RESTARTING;
+      break;
+
+    case PATHVIEW_STOPPING:
+      gz.path_view_state = PATHVIEW_INACTIVE;
+    case PATHVIEW_RESTARTING:
       release_mem(&poly_gfx_buf[0]);
       release_mem(&poly_gfx_buf[1]);
       release_mem(&line_gfx_buf[0]);
       release_mem(&line_gfx_buf[1]);
+      break;
+
+    default:
       break;
   }
 
@@ -1402,7 +1408,7 @@ void gz_cull_view(void)
   if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
     /* If no actor is selected, stop */
     if (!gz.selected_actor.ptr) {
-      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      gz.cull_view_state = CULLVIEW_STOP;
       return;
     }
     /* Now look through actor type list */
@@ -1431,7 +1437,7 @@ void gz_cull_view(void)
 
     /* Check if we found it and if not, turn off cull view */
     if (!actor_found) {
-      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      gz.cull_view_state = CULLVIEW_STOP;
       return;
     }
 
@@ -1484,9 +1490,9 @@ void gz_cull_view(void)
 
     gSPDisplayList((*p_gfx_p)++, cull_gfx);
   }
-  if (gz.cull_view_state == CULLVIEW_BEGIN_STOP)
-    gz.cull_view_state = CULLVIEW_STOP;
-  else if (gz.cull_view_state == CULLVIEW_STOP) {
+  if (gz.cull_view_state == CULLVIEW_STOP)
+    gz.cull_view_state = CULLVIEW_STOPPING;
+  else if (gz.cull_view_state == CULLVIEW_STOPPING) {
     release_mem(&cull_gfx_buf[0]);
     release_mem(&cull_gfx_buf[1]);
 

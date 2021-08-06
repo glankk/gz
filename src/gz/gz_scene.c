@@ -73,13 +73,13 @@ static int col_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     if (gz.col_view_state != COLVIEW_INACTIVE)
-      gz.col_view_state = COLVIEW_BEGIN_STOP;
+      gz.col_view_state = COLVIEW_STOP;
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.col_view_state == COLVIEW_START ||
                   gz.col_view_state == COLVIEW_ACTIVE ||
-                  gz.col_view_state == COLVIEW_BEGIN_RESTART ||
-                  gz.col_view_state == COLVIEW_RESTART;
+                  gz.col_view_state == COLVIEW_RESTART ||
+                  gz.col_view_state == COLVIEW_RESTARTING;
     if (menu_checkbox_get(item) != state)
       menu_checkbox_set(item, state);
   }
@@ -96,7 +96,7 @@ static int hit_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     if (gz.hit_view_state != HITVIEW_INACTIVE)
-      gz.hit_view_state = HITVIEW_BEGIN_STOP;
+      gz.hit_view_state = HITVIEW_STOP;
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.hit_view_state == HITVIEW_START ||
@@ -117,13 +117,13 @@ static int path_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     if (gz.path_view_state != PATHVIEW_INACTIVE)
-      gz.path_view_state = PATHVIEW_BEGIN_STOP;
+      gz.path_view_state = PATHVIEW_STOP;
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.path_view_state == PATHVIEW_START ||
                   gz.path_view_state == PATHVIEW_ACTIVE ||
-                  gz.path_view_state == PATHVIEW_BEGIN_RESTART ||
-                  gz.path_view_state == PATHVIEW_RESTART;
+                  gz.path_view_state == PATHVIEW_RESTART ||
+                  gz.path_view_state == PATHVIEW_RESTARTING;
     if (menu_checkbox_get(item) != state)
       menu_checkbox_set(item, state);
   }
