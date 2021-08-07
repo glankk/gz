@@ -5,13 +5,13 @@
 #include <math.h>
 #include <inttypes.h>
 #include <vector/vector.h>
+#include "gz.h"
 #include "input.h"
 #include "mem.h"
 #include "menu.h"
-#include "watchlist.h"
 #include "resource.h"
 #include "util.h"
-#include "gz.h"
+#include "watchlist.h"
 
 #define MEM_VIEW_ROWS     16
 #define MEM_VIEW_COLS     8
@@ -21,6 +21,7 @@ static int                view_domain_index;
 static int                view_data_size;
 static _Bool              view_float;
 static struct menu_item  *view_address;
+static struct menu_item  *view_type;
 static struct menu_item  *view_domain_name;
 static struct menu_item  *view_pageup;
 static struct menu_item  *view_pagedown;
@@ -232,9 +233,17 @@ static void add_watch_proc(struct menu_item *item, void *data)
   int y = (int)data;
   struct mem_domain *d = vector_at(&domains, view_domain_index);
   uint32_t address = d->start + d->view_offset + y * MEM_VIEW_COLS;
-  watchlist_add_debug_address(gz.menu_watchlist, address);
-  menu_return_top(gz.menu_main);
-  menu_enter(gz.menu_main, gz.menu_watches);
+  enum watch_type type;
+  if (view_data_size == 1)
+    type = WATCH_TYPE_X8;
+  else if (view_data_size == 2)
+    type = WATCH_TYPE_X16;
+  else if (view_float)
+    type = WATCH_TYPE_F32;
+  else
+    type = WATCH_TYPE_X32;
+  if (watchlist_add(gz.menu_watchlist, address, type) >= 0)
+    menu_enter_top(menu_return_top(item->owner), gz.menu_watches);
 }
 
 void mem_menu_create(struct menu *menu)
@@ -265,8 +274,9 @@ void mem_menu_create(struct menu *menu)
   menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
   {
     view_address = menu_add_intinput(menu, 0, 1, 16, 8, address_proc, NULL);
-    menu_add_option(menu, 9, 1, "byte\0""halfword\0""word\0""float\0",
-                    data_type_proc, NULL);
+    view_type = menu_add_option(menu, 9, 1,
+                                "byte\0""halfword\0""word\0""float\0",
+                                data_type_proc, NULL);
     view_data_size = 1;
     view_float = 0;
     menu_add_button(menu, 18, 1, "<", prev_domain_proc, NULL);
@@ -281,7 +291,8 @@ void mem_menu_create(struct menu *menu)
     view_cell_header = menu_add_static(menu, 9, 2, NULL, 0xC0C0C0);
     view_cell_header->text = malloc(32);
     for (int y = 0; y < MEM_VIEW_ROWS; ++y) {
-      view_rows[y] = menu_add_button(menu, 0, 3 + y, NULL, add_watch_proc, (void *)y);
+      view_rows[y] = menu_add_button(menu, 0, 3 + y, NULL, add_watch_proc,
+                                     (void *)y);
       view_rows[y]->text = malloc(9);
     }
     make_cells(menu);
@@ -301,4 +312,48 @@ void mem_goto(uint32_t address)
     }
   }
   update_view();
+}
+
+void mem_open_watch(struct menu *menu, struct menu *menu_mem, uint32_t address,
+                    enum watch_type type)
+{
+  switch (type) {
+    case WATCH_TYPE_U8:
+    case WATCH_TYPE_S8:
+    case WATCH_TYPE_X8:
+      view_data_size = 1;
+      view_float = 0;
+      menu_option_set(view_type, 0);
+      break;
+
+    case WATCH_TYPE_U16:
+    case WATCH_TYPE_S16:
+    case WATCH_TYPE_X16:
+      view_data_size = 2;
+      view_float = 0;
+      menu_option_set(view_type, 1);
+      break;
+
+    case WATCH_TYPE_U32:
+    case WATCH_TYPE_S32:
+    case WATCH_TYPE_X32:
+      view_data_size = 4;
+      view_float = 0;
+      menu_option_set(view_type, 2);
+      break;
+
+    case WATCH_TYPE_F32:
+      view_data_size = 4;
+      view_float = 1;
+      menu_option_set(view_type, 3);
+      break;
+
+    default:
+      break;
+  }
+  make_cells(menu_mem);
+  mem_goto(address);
+  menu_enter_top(menu_return_top(menu), menu_mem);
+  if (menu_mem->selector == NULL)
+    menu_select_top(menu_mem, view_cells[0]);
 }

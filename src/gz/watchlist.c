@@ -4,11 +4,11 @@
 #include <vector/vector.h>
 #include "adex.h"
 #include "files.h"
+#include "gz.h"
+#include "mem.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
-#include "gz.h"
-#include "mem.h"
 
 struct item_data
 {
@@ -131,11 +131,9 @@ static void edit_watch_in_memory_proc(struct menu_item *item, void *data)
 {
   struct member_data *member_data = data;
   struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
-  uint32_t address = 0x80000000;
-  address = menu_watch_get_address(watch);
-  menu_return_top(gz.menu_main);
-  menu_enter_top(gz.menu_main, gz.menu_mem);
-  mem_goto((uint32_t)address);
+  mem_open_watch(item->owner, gz.menu_mem,
+                 menu_watch_get_address(watch),
+                 menu_watch_get_type(watch));
 }
 
 static int position_proc(struct menu_item *item,
@@ -345,6 +343,17 @@ struct menu_item *watchlist_create(struct menu *menu,
   return item;
 }
 
+int watchlist_add(struct menu_item *item, uint32_t address,
+                  enum watch_type type)
+{
+  struct item_data *list = item->data;
+  int pos = list->members.size;
+  if (add_member(list, address, type, pos, 1, 0, 0, 0))
+    return pos;
+  else
+    return -1;
+}
+
 void watchlist_store(struct menu_item *item)
 {
   struct item_data *data = item->data;
@@ -524,13 +533,6 @@ static void watchfile_menu_init(void)
       watchfile_items[i] = item;
     }
   }
-}
-
-void watchlist_add_debug_address(struct menu_item *item, int address)
-{
-  struct item_data *list = item->data;
-  enum watch_type type = WATCH_TYPE_X32;
-  add_member(list, address, type, list->members.size, 1, 0, 0, 0);
 }
 
 static void watchfile_view(struct menu *menu)
