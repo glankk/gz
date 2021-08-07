@@ -86,50 +86,6 @@ static int col_view_proc(struct menu_item *item,
   return 0;
 }
 
-static int hit_view_proc(struct menu_item *item,
-                         enum menu_callback_reason reason,
-                         void *data)
-{
-  if (reason == MENU_CALLBACK_SWITCH_ON) {
-    if (gz.hit_view_state == HITVIEW_INACTIVE)
-      gz.hit_view_state = HITVIEW_START;
-  }
-  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
-    if (gz.hit_view_state != HITVIEW_INACTIVE)
-      gz.hit_view_state = HITVIEW_STOP;
-  }
-  else if (reason == MENU_CALLBACK_THINK) {
-    _Bool state = gz.hit_view_state == HITVIEW_START ||
-                  gz.hit_view_state == HITVIEW_ACTIVE;
-    if (menu_checkbox_get(item) != state)
-      menu_checkbox_set(item, state);
-  }
-  return 0;
-}
-
-static int path_view_proc(struct menu_item *item,
-                         enum menu_callback_reason reason,
-                         void *data)
-{
-  if (reason == MENU_CALLBACK_SWITCH_ON) {
-    if (gz.path_view_state == PATHVIEW_INACTIVE)
-      gz.path_view_state = PATHVIEW_START;
-  }
-  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
-    if (gz.path_view_state != PATHVIEW_INACTIVE)
-      gz.path_view_state = PATHVIEW_STOP;
-  }
-  else if (reason == MENU_CALLBACK_THINK) {
-    _Bool state = gz.path_view_state == PATHVIEW_START ||
-                  gz.path_view_state == PATHVIEW_ACTIVE ||
-                  gz.path_view_state == PATHVIEW_RESTART ||
-                  gz.path_view_state == PATHVIEW_RESTARTING;
-    if (menu_checkbox_get(item) != state)
-      menu_checkbox_set(item, state);
-  }
-  return 0;
-}
-
 static int col_view_mode_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
@@ -234,6 +190,66 @@ static int col_view_upd_proc(struct menu_item *item,
   return 0;
 }
 
+static int hit_view_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    if (gz.hit_view_state == HITVIEW_INACTIVE)
+      gz.hit_view_state = HITVIEW_START;
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    if (gz.hit_view_state != HITVIEW_INACTIVE)
+      gz.hit_view_state = HITVIEW_STOP;
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = gz.hit_view_state == HITVIEW_START ||
+                  gz.hit_view_state == HITVIEW_ACTIVE;
+    if (menu_checkbox_get(item) != state)
+      menu_checkbox_set(item, state);
+  }
+  return 0;
+}
+
+static int hit_view_at_proc(struct menu_item *item,
+                       enum menu_callback_reason reason,
+                       void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hit_view_at = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hit_view_at = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_at);
+  return 0;
+}
+
+static int hit_view_ac_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hit_view_ac = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hit_view_ac = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_ac);
+  return 0;
+}
+
+static int hit_view_oc_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hit_view_oc = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hit_view_oc = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_oc);
+  return 0;
+}
+
 static int hit_view_xlu_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -244,6 +260,42 @@ static int hit_view_xlu_proc(struct menu_item *item,
     settings->bits.hit_view_xlu = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->bits.hit_view_xlu);
+  return 0;
+}
+
+static int hit_view_shade_proc(struct menu_item *item,
+                               enum menu_callback_reason reason,
+                               void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.hit_view_shade = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.hit_view_shade = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.hit_view_shade);
+  return 0;
+}
+
+static int path_view_proc(struct menu_item *item,
+                         enum menu_callback_reason reason,
+                         void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON) {
+    if (gz.path_view_state == PATHVIEW_INACTIVE)
+      gz.path_view_state = PATHVIEW_START;
+  }
+  else if (reason == MENU_CALLBACK_SWITCH_OFF) {
+    if (gz.path_view_state != PATHVIEW_INACTIVE)
+      gz.path_view_state = PATHVIEW_STOP;
+  }
+  else if (reason == MENU_CALLBACK_THINK) {
+    _Bool state = gz.path_view_state == PATHVIEW_START ||
+                  gz.path_view_state == PATHVIEW_ACTIVE ||
+                  gz.path_view_state == PATHVIEW_RESTART ||
+                  gz.path_view_state == PATHVIEW_RESTARTING;
+    if (menu_checkbox_get(item) != state)
+      menu_checkbox_set(item, state);
+  }
   return 0;
 }
 
@@ -283,19 +335,6 @@ static int path_view_lines_proc(struct menu_item *item,
     settings->bits.path_view_lines = 0;
   else if (reason == MENU_CALLBACK_THINK)
     menu_checkbox_set(item, settings->bits.path_view_lines);
-  return 0;
-}
-
-static int hit_view_shade_proc(struct menu_item *item,
-                               enum menu_callback_reason reason,
-                               void *data)
-{
-  if (reason == MENU_CALLBACK_SWITCH_ON)
-    settings->bits.hit_view_shade = 1;
-  else if (reason == MENU_CALLBACK_SWITCH_OFF)
-    settings->bits.hit_view_shade = 0;
-  else if (reason == MENU_CALLBACK_THINK)
-    menu_checkbox_set(item, settings->bits.hit_view_shade);
   return 0;
 }
 
@@ -513,21 +552,27 @@ struct menu *gz_scene_menu(void)
   menu_add_static(&collision, 2, 9, "auto update", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 9, col_view_upd_proc, NULL);
   /* hitbox view controls */
-  menu_add_static(&collision, 0, 10, "show hitboxes", 0xC0C0C0);
+  menu_add_static(&collision, 0, 10, "show colliders", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 10, hit_view_proc, NULL);
-  menu_add_static(&collision, 2, 11, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 11, hit_view_xlu_proc, NULL);
-  menu_add_static(&collision, 2, 12, "shaded", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 12, hit_view_shade_proc, NULL);
+  menu_add_static(&collision, 2, 11, "hit", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 11, hit_view_at_proc, NULL);
+  menu_add_static(&collision, 2, 12, "hurt", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 12, hit_view_ac_proc, NULL);
+  menu_add_static(&collision, 2, 13, "bump", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 13, hit_view_oc_proc, NULL);
+  menu_add_static(&collision, 2, 14, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 14, hit_view_xlu_proc, NULL);
+  menu_add_static(&collision, 2, 15, "shaded", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 15, hit_view_shade_proc, NULL);
   /* path view controls */
-  menu_add_static(&collision, 0, 13, "show paths", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 13, path_view_proc, NULL);
-  menu_add_static(&collision, 2, 14, "points", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 14, path_view_points_proc, NULL);
-  menu_add_static(&collision, 2, 15, "lines", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 15, path_view_lines_proc, NULL);
-  menu_add_static(&collision, 2, 16, "translucent", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 16, path_view_xlu_proc, NULL);
+  menu_add_static(&collision, 0, 16, "show paths", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 16, path_view_proc, NULL);
+  menu_add_static(&collision, 2, 17, "points", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 17, path_view_points_proc, NULL);
+  menu_add_static(&collision, 2, 18, "lines", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 18, path_view_lines_proc, NULL);
+  menu_add_static(&collision, 2, 19, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 19, path_view_xlu_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");

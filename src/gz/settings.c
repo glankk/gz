@@ -64,6 +64,9 @@ void settings_load_default(void)
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;
   d->bits.col_view_upd = 1;
+  d->bits.hit_view_at = 1;
+  d->bits.hit_view_ac = 1;
+  d->bits.hit_view_oc = 1;
   d->bits.hit_view_xlu = 1;
   d->bits.hit_view_shade = 1;
   d->bits.path_view_xlu = 1;
