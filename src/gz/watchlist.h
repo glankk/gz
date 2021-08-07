@@ -9,5 +9,6 @@ void              watchlist_store(struct menu_item *item);
 void              watchlist_fetch(struct menu_item *item);
 void              watchlist_show(struct menu_item *item);
 void              watchlist_hide(struct menu_item *item);
+void watchlist_add_debug_address(struct menu_item *item, int address);
 
 #endif

@@ -8,8 +8,10 @@
 #include "input.h"
 #include "mem.h"
 #include "menu.h"
+#include "watchlist.h"
 #include "resource.h"
 #include "util.h"
+#include "gz.h"
 
 #define MEM_VIEW_ROWS     16
 #define MEM_VIEW_COLS     8
@@ -225,6 +227,16 @@ static void page_down_proc(struct menu_item *item, void *data)
   update_view();
 }
 
+static void add_watch_proc(struct menu_item *item, void *data)
+{
+  int y = (int)data;
+  struct mem_domain *d = vector_at(&domains, view_domain_index);
+  uint32_t address = d->start + d->view_offset + y * MEM_VIEW_COLS;
+  watchlist_add_debug_address(gz.menu_watchlist, address);
+  menu_return_top(gz.menu_main);
+  menu_enter(gz.menu_main, gz.menu_watches);
+}
+
 void mem_menu_create(struct menu *menu)
 {
   /* initialize data */
@@ -269,7 +281,7 @@ void mem_menu_create(struct menu *menu)
     view_cell_header = menu_add_static(menu, 9, 2, NULL, 0xC0C0C0);
     view_cell_header->text = malloc(32);
     for (int y = 0; y < MEM_VIEW_ROWS; ++y) {
-      view_rows[y] = menu_add_static(menu, 0, 3 + y, NULL, 0xC0C0C0);
+      view_rows[y] = menu_add_button(menu, 0, 3 + y, NULL, add_watch_proc, (void *)y);
       view_rows[y]->text = malloc(9);
     }
     make_cells(menu);
