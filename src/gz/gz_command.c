@@ -21,20 +21,17 @@ struct command_info command_info[COMMAND_MAX] =
   {"levitate",          command_levitate,      CMDACT_HOLD},
   {"fall",              command_fall,          CMDACT_HOLD},
   {"turbo",             command_turbo,         CMDACT_HOLD},
+  {"noclip",            command_noclip,        CMDACT_PRESS_ONCE},
   {"file select",       command_fileselect,    CMDACT_PRESS_ONCE},
   {"reload scene",      command_reload,        CMDACT_PRESS_ONCE},
   {"void out",          command_void,          CMDACT_PRESS_ONCE},
   {"toggle age",        command_age,           CMDACT_PRESS_ONCE},
   {"save state",        command_savestate,     CMDACT_PRESS_ONCE},
   {"load state",        command_loadstate,     CMDACT_PRESS_ONCE},
-  {"save memfile",      command_savememfile,   CMDACT_PRESS_ONCE},
-  {"load memfile",      command_loadmemfile,   CMDACT_PRESS_ONCE},
   {"save position",     command_savepos,       CMDACT_HOLD},
   {"load position",     command_loadpos,       CMDACT_HOLD},
   {"previous state",    command_prevstate,     CMDACT_PRESS_ONCE},
   {"next state",        command_nextstate,     CMDACT_PRESS_ONCE},
-  {"previous memfile",  command_prevfile,      CMDACT_PRESS_ONCE},
-  {"next memfile",      command_nextfile,      CMDACT_PRESS_ONCE},
   {"previous position", command_prevpos,       CMDACT_PRESS_ONCE},
   {"next position",     command_nextpos,       CMDACT_PRESS_ONCE},
   {"pause/unpause",     command_pause,         CMDACT_PRESS_ONCE},
@@ -43,6 +40,7 @@ struct command_info command_info[COMMAND_MAX] =
   {"play macro",        command_playmacro,     CMDACT_PRESS_ONCE},
   {"collision view",    command_colview,       CMDACT_PRESS_ONCE},
   {"hitbox view",       command_hitview,       CMDACT_PRESS_ONCE},
+  {"path view",         command_pathview,      CMDACT_PRESS_ONCE},
   {"explore prev room", NULL,                  CMDACT_PRESS},
   {"explore next room", NULL,                  CMDACT_PRESS},
   {"reset lag counter", command_resetlag,      CMDACT_HOLD},
@@ -77,7 +75,6 @@ void gz_show_menu(void)
   gz.menu_active = 1;
   input_reserve(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
                 BUTTON_L);
-  input_reservation_set(1);
 }
 
 void gz_hide_menu(void)
@@ -86,7 +83,6 @@ void gz_hide_menu(void)
   gz.menu_active = 0;
   input_free(BUTTON_D_UP | BUTTON_D_DOWN | BUTTON_D_LEFT | BUTTON_D_RIGHT |
              BUTTON_L);
-  input_reservation_set(0);
 }
 
 void gz_log(const char *fmt, ...)
@@ -132,100 +128,6 @@ void gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y)
   gz.z_input_mask.y = y;
 }
 
-void gz_save_memfile(struct memory_file *file)
-{
-  memcpy(&file->z_file, &z64_file, sizeof(file->z_file));
-  file->entrance_override = gz.entrance_override_next;
-  file->next_entrance = gz.next_entrance;
-  file->scene_index = z64_game.scene_index;
-  uint32_t f;
-  f = z64_game.chest_flags;
-  file->z_file.scene_flags[z64_game.scene_index].chest = f;
-  f = z64_game.swch_flags;
-  file->z_file.scene_flags[z64_game.scene_index].swch = f;
-  f = z64_game.clear_flags;
-  file->z_file.scene_flags[z64_game.scene_index].clear = f;
-  f = z64_game.collect_flags;
-  file->z_file.scene_flags[z64_game.scene_index].collect = f;
-  memcpy(&file->scene_flags, &z64_game.swch_flags,
-         sizeof(file->scene_flags));
-  /* pause screen stuff */
-  {
-    file->start_icon_dd = z64_file.gameinfo->start_icon_dd;
-    file->pause_screen = z64_game.pause_ctxt.screen_idx;
-    file->item_screen_cursor = z64_game.pause_ctxt.item_cursor;
-    file->quest_screen_cursor = z64_game.pause_ctxt.quest_cursor;
-    file->equip_screen_cursor = z64_game.pause_ctxt.equip_cursor;
-    file->map_screen_cursor = z64_game.pause_ctxt.map_cursor;
-    file->item_screen_x = z64_game.pause_ctxt.item_x;
-    file->equipment_screen_x = z64_game.pause_ctxt.equipment_x;
-    file->item_screen_y = z64_game.pause_ctxt.item_y;
-    file->equipment_screen_y = z64_game.pause_ctxt.equipment_y;
-    file->pause_screen_cursor = z64_game.pause_ctxt.cursor_pos;
-    file->quest_screen_item = z64_game.pause_ctxt.quest_item;
-    file->quest_screen_hilite = z64_game.pause_ctxt.quest_hilite;
-    file->quest_screen_song = z64_game.pause_ctxt.quest_song;
-  }
-}
-
-void gz_load_memfile(struct memory_file *file)
-{
-  /* keep some data intact to prevent glitchiness */
-  int32_t entrance_index = z64_file.entrance_index;
-  int32_t link_age = z64_file.link_age;
-  int8_t seq_index = z64_file.seq_index;
-  int8_t night_sfx = z64_file.night_sfx;
-  uint8_t minimap_index = z64_file.minimap_index;
-  z64_gameinfo_t *gameinfo = z64_file.gameinfo;
-  memcpy(&z64_file, &file->z_file, sizeof(file->z_file));
-  z64_game.link_age = z64_file.link_age;
-  z64_file.entrance_index = entrance_index;
-  z64_file.seq_index = seq_index;
-  z64_file.night_sfx = night_sfx;
-  z64_file.minimap_index = minimap_index;
-  z64_file.gameinfo = gameinfo;
-  z64_file.link_age = link_age;
-  gz.entrance_override_next = file->entrance_override;
-  gz.next_entrance = file->next_entrance;
-  if (gz.next_entrance == -1)
-    gz.next_entrance = file->z_file.entrance_index;
-  if (file->scene_index == z64_game.scene_index)
-    memcpy(&z64_game.swch_flags, &file->scene_flags,
-           sizeof(file->scene_flags));
-  else {
-    uint32_t f;
-    f = z64_file.scene_flags[z64_game.scene_index].chest;
-    z64_game.chest_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].swch;
-    z64_game.swch_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].clear;
-    z64_game.clear_flags = f;
-    f = z64_file.scene_flags[z64_game.scene_index].collect;
-    z64_game.collect_flags = f;
-  }
-  /* pause screen stuff */
-  if (z64_game.pause_ctxt.state == 0) {
-    z64_file.gameinfo->start_icon_dd = file->start_icon_dd;
-    z64_game.pause_ctxt.screen_idx = file->pause_screen;
-    z64_game.pause_ctxt.item_cursor = file->item_screen_cursor;
-    z64_game.pause_ctxt.quest_cursor = file->quest_screen_cursor;
-    z64_game.pause_ctxt.equip_cursor = file->equip_screen_cursor;
-    z64_game.pause_ctxt.map_cursor = file->map_screen_cursor;
-    z64_game.pause_ctxt.item_x = file->item_screen_x;
-    z64_game.pause_ctxt.equipment_x = file->equipment_screen_x;
-    z64_game.pause_ctxt.item_y = file->item_screen_y;
-    z64_game.pause_ctxt.equipment_y = file->equipment_screen_y;
-    z64_game.pause_ctxt.cursor_pos = file->pause_screen_cursor;
-    z64_game.pause_ctxt.quest_item = file->quest_screen_item;
-    z64_game.pause_ctxt.quest_hilite = file->quest_screen_hilite;
-    z64_game.pause_ctxt.quest_song = file->quest_screen_song;
-  }
-  for (int i = 0; i < 4; ++i)
-    if (z64_file.button_items[i] != Z64_ITEM_NULL)
-      z64_UpdateItemButton(&z64_game, i);
-  z64_UpdateEquipment(&z64_game, &z64_link);
-}
-
 void command_break(void)
 {
   if (z64_game.event_flag != -1)
@@ -260,6 +162,18 @@ void command_fall(void)
 void command_turbo(void)
 {
   z64_link.linear_vel = 27.f;
+}
+
+void command_noclip(void)
+{
+    if (!gz.noclip_on) {
+      gz_noclip_start();
+      gz_log("noclip on");
+    }
+    else {
+      gz_noclip_stop();
+      gz_log("noclip off");
+    }
 }
 
 void command_fileselect(void)
@@ -305,12 +219,12 @@ void command_savestate(void)
     struct state_meta *state = malloc(368 * 1024);
     state->z64_version = Z64_VERSION;
     state->state_version = SETTINGS_STATE_VERSION;
-    state->size = save_state(state);
     state->scene_idx = z64_game.scene_index;
     if (gz.movie_state == MOVIE_IDLE)
       state->movie_frame = -1;
     else
       state->movie_frame = gz.movie_frame;
+    state->size = save_state(state);
     gz.state_buf[gz.state_slot] = realloc(state, state->size);
     gz_log("saved state %i", gz.state_slot);
   }
@@ -338,23 +252,6 @@ void command_loadstate(void)
   }
   else
     gz_log("state %i is empty", gz.state_slot);
-}
-
-void command_savememfile(void)
-{
-  gz_save_memfile(&gz.memfile[gz.memfile_slot]);
-  gz.memfile_saved[gz.memfile_slot] = 1;
-  gz_log("saved memfile %i", gz.memfile_slot);
-}
-
-void command_loadmemfile(void)
-{
-  if (gz.memfile_saved[gz.memfile_slot]) {
-    gz_load_memfile(&gz.memfile[gz.memfile_slot]);
-    gz_log("loaded memfile %i", gz.memfile_slot);
-  }
-  else
-    gz_log("memfile %i is empty", gz.memfile_slot);
 }
 
 void command_savepos(void)
@@ -387,20 +284,6 @@ void command_nextstate(void)
   gz.state_slot += 1;
   gz.state_slot %= SETTINGS_STATE_MAX;
   gz_log("state %i", gz.state_slot);
-}
-
-void command_prevfile(void)
-{
-  gz.memfile_slot += SETTINGS_MEMFILE_MAX - 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
-  gz_log("memfile %i", gz.memfile_slot);
-}
-
-void command_nextfile(void)
-{
-  gz.memfile_slot += 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
-  gz_log("memfile %i", gz.memfile_slot);
 }
 
 void command_prevpos(void)
@@ -454,7 +337,7 @@ void command_colview(void)
   if (gz.col_view_state == COLVIEW_INACTIVE)
     gz.col_view_state = COLVIEW_START;
   else
-    gz.col_view_state = COLVIEW_BEGIN_STOP;
+    gz.col_view_state = COLVIEW_STOP;
 }
 
 void command_hitview(void)
@@ -462,13 +345,21 @@ void command_hitview(void)
   if (gz.hit_view_state == HITVIEW_INACTIVE)
     gz.hit_view_state = HITVIEW_START;
   else
-    gz.hit_view_state = HITVIEW_BEGIN_STOP;
+    gz.hit_view_state = HITVIEW_STOP;
+}
+
+void command_pathview(void)
+{
+  if (gz.path_view_state == PATHVIEW_INACTIVE)
+    gz.path_view_state = PATHVIEW_START;
+  else
+    gz.path_view_state = PATHVIEW_STOP;
 }
 
 void command_resetlag(void)
 {
   gz.frame_counter = 0;
-  gz.lag_vi_offset = -(int32_t)z64_vi_counter;
+  gz.lag_vi_offset = -(int32_t)__osViIntrCount;
 }
 
 void command_togglewatches(void)

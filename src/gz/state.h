@@ -11,7 +11,7 @@ struct state_meta
   int                   movie_frame;
 };
 
-uint32_t      save_state(void *state);
-void          load_state(void *state);
+uint32_t      save_state(struct state_meta *state);
+void          load_state(const struct state_meta *state);
 
 #endif

@@ -9,7 +9,7 @@
 #include <startup.h>
 #include <mips.h>
 #include <vr4300.h>
-#include "ed.h"
+#include "io.h"
 #include "rdb.h"
 #include "util.h"
 #include "z64.h"
@@ -121,26 +121,22 @@ static _Bool check_addr(uint32_t addr, uint32_t size)
 
 static _Bool rdb_poll(void)
 {
-  return rdb.ipos != rdb.ipkt.size || !(ed_regs.status & ED_STATE_RXF);
+  return fifo_poll();
 }
 
 static void rdb_flush(void)
 {
   if (rdb.opkt.size == 0)
     return;
-  while (ed_regs.status & (ED_STATE_TXE | ED_STATE_DMA_BUSY))
-    ;
   __asm__ volatile ("" :: "m"(rdb.opkt));
-  ed_fifo_write((void*)&rdb.opkt, 1);
+  fifo_write(&rdb.opkt, 1);
   rdb.opkt.size = 0;
 }
 
 static char rdb_getc(void)
 {
   if (rdb.ipos == rdb.ipkt.size) {
-    while (ed_regs.status & (ED_STATE_RXF | ED_STATE_DMA_BUSY))
-      ;
-    ed_fifo_read((void*)&rdb.ipkt, 1);
+    fifo_read(&rdb.ipkt, 1);
     __asm__ volatile ("" : "=m"(rdb.ipkt));
     rdb.ipos = 0;
   }
@@ -328,7 +324,7 @@ err:
 static uint64_t rdb_get_reg(OSThread *thread, int reg_idx)
 {
   __OSThreadContext *c = &thread->context;
-  uint64_t *f = (void*)c->fp64;
+  uint64_t *f = (void *)c->fp64;
   switch (reg_idx) {
     case 0x01:  return c->at;
     case 0x02:  return c->v0;
@@ -389,7 +385,7 @@ static uint64_t rdb_get_reg(OSThread *thread, int reg_idx)
 static void rdb_set_reg(OSThread *thread, int reg_idx, uint64_t value)
 {
   __OSThreadContext *c = &thread->context;
-  uint64_t *f = (void*)c->fp64;
+  uint64_t *f = (void *)c->fp64;
   switch (reg_idx) {
     case 0x01:  c->at       = value;  break;
     case 0x02:  c->v0       = value;  break;
@@ -452,15 +448,15 @@ static _Bool rdb_set_bkp(struct swbkp *bkp, uint32_t addr)
     return bkp->addr == addr;
   if (!check_addr(addr, 4))
     return 0;
-  uint32_t *p = (void*)addr;
+  uint32_t *p = (void *)addr;
   bkp->active = 1;
   bkp->addr = addr;
   bkp->old_insn = *p;
   bkp->new_insn = MIPS_TEQ(MIPS_R0, MIPS_R0, 0);
   *p = bkp->new_insn;
-  __asm__ volatile ("cache   0x19, 0(%[p]);"
-                    "cache   0x10, 0(%[p]);"
-                    :: [p] "r"(p));
+  __asm__ ("cache   0x19, 0(%[p]);"
+           "cache   0x10, 0(%[p]);"
+           :: [p] "r"(p));
   return 1;
 }
 
@@ -468,13 +464,13 @@ static _Bool rdb_clear_bkp(struct swbkp *bkp)
 {
   if (!bkp->active)
     return 1;
-  uint32_t *p = (void*)bkp->addr;
+  uint32_t *p = (void *)bkp->addr;
   bkp->active = 0;
   if (*p == bkp->new_insn) {
     *p = bkp->old_insn;
-    __asm__ volatile ("cache   0x19, 0(%[p]);"
-                      "cache   0x10, 0(%[p]);"
-                      :: [p] "r"(p));
+    __asm__ ("cache   0x19, 0(%[p]);"
+             "cache   0x10, 0(%[p]);"
+             :: [p] "r"(p));
   }
   return 1;
 }
@@ -486,12 +482,12 @@ static void rdb_enable_watch(void)
     watchlo = (rdb.watch_addr & 0x1FFFFFF8) | (rdb.watch_type & 3);
   else
     watchlo = 0;
-  __asm__ volatile ("mtc0    %[watchlo], $18;" :: [watchlo] "r"(watchlo));
+  __asm__ ("mtc0    %[watchlo], $18;" :: [watchlo] "r"(watchlo));
 }
 
 static void rdb_disable_watch(void)
 {
-  __asm__ volatile ("mtc0    $zero, $18;");
+  __asm__ ("mtc0    $zero, $18;");
 }
 
 static int rdb_nthreads(void)
@@ -510,13 +506,13 @@ static OSThread *rdb_thread_by_id(OSId thread_id)
 static void rdb_startall(void)
 {
   for (int i = 0; i < rdb_nthreads(); ++i)
-    z64_osStartThread(rdb_threads[i]);
+    osStartThread(rdb_threads[i]);
 }
 
 static void rdb_stopall(void)
 {
   for (int i = 0; i < rdb_nthreads(); ++i)
-    z64_osStopThread(rdb_threads[i]);
+    osStopThread(rdb_threads[i]);
 }
 
 __attribute__((optimize(0)))
@@ -524,10 +520,10 @@ static OSThread *rdb_continue(void)
 {
   rdb_enable_watch();
   rdb_startall();
-  z64_osRecvMesg(&rdb_fault_mq, NULL, OS_MESG_BLOCK);
+  osRecvMesg(&rdb_fault_mq, NULL, OS_MESG_BLOCK);
   rdb_stopall();
   rdb_disable_watch();
-  return z64_osGetCurrFaultedThread();
+  return osGetCurrFaultedThread();
 }
 
 static OSThread *rdb_step(OSThread *thread)
@@ -540,7 +536,7 @@ static OSThread *rdb_step(OSThread *thread)
   uint32_t pc = thread->context.pc;
 
   /* set breakpoints */
-  if (check_addr(pc, 4) && vr4300_decode_insn(*(uint32_t*)pc, &insn)) {
+  if (check_addr(pc, 4) && vr4300_decode_insn(*(uint32_t *)pc, &insn)) {
     switch (insn.opcode) {
       /* 0 operand branch */
       case VR4300_OP_BC1F:
@@ -596,7 +592,12 @@ static OSThread *rdb_step(OSThread *thread)
     rdb_set_bkp(&step_bkp[0], pc + 4);
 
   /* run */
+  OSThread *cthread = thread;
+  OSPri cpri = cthread->priority;
+  if (cpri < OS_PRIORITY_APPMAX)
+    cthread->priority = OS_PRIORITY_APPMAX;
   thread = rdb_continue();
+  cthread->priority = cpri;
 
   /* clear breakpoints */
   rdb_clear_bkp(&step_bkp[0]);
@@ -627,7 +628,7 @@ static void rdb_stop_reply(OSThread *thread)
       sig = SIGBUS;   break;
     case 13:  /* tr */
       if (check_addr(thread->context.pc, 4) &&
-          *(uint32_t*)thread->context.pc == RDB_INTR_OP)
+          *(uint32_t *)thread->context.pc == RDB_INTR_OP)
       {
         thread->context.pc += 4;
         if (rdb.detach) {
@@ -662,25 +663,24 @@ static void rdb_main(void *arg)
 {
   maybe_init_gp();
   memset(&rdb, 0, sizeof(rdb));
-  ed_open();
 #if !(defined(RDB_DEBUG_FAULT) && RDB_DEBUG_FAULT)
-  z64_osStopThread(&z64_thread_fault);
+  osStopThread(&z64_thread_fault);
 #endif
   rdb_stopall();
   rdb_disable_watch();
 
   static _Bool fault_event_set;
   if (fault_event_set) {
-    while (z64_osRecvMesg(&rdb_fault_mq, NULL, OS_MESG_NOBLOCK) == 0)
+    while (osRecvMesg(&rdb_fault_mq, NULL, OS_MESG_NOBLOCK) == 0)
       ;
   }
   else {
-    z64_osCreateMesgQueue(&rdb_fault_mq, rdb_fault_mesg,
-                          sizeof(rdb_fault_mesg) / sizeof(*rdb_fault_mesg));
-    z64_osSetEventMesg(OS_EVENT_CPU_BREAK, &rdb_fault_mq,
-                       (OSMesg)OS_EVENT_CPU_BREAK);
-    z64_osSetEventMesg(OS_EVENT_FAULT, &rdb_fault_mq,
-                       (OSMesg)OS_EVENT_FAULT);
+    osCreateMesgQueue(&rdb_fault_mq, rdb_fault_mesg,
+                      sizeof(rdb_fault_mesg) / sizeof(*rdb_fault_mesg));
+    osSetEventMesg(OS_EVENT_CPU_BREAK, &rdb_fault_mq,
+                   (OSMesg)OS_EVENT_CPU_BREAK);
+    osSetEventMesg(OS_EVENT_FAULT, &rdb_fault_mq,
+                   (OSMesg)OS_EVENT_FAULT);
     fault_event_set = 1;
   }
 
@@ -825,7 +825,7 @@ static void rdb_main(void *arg)
           *p = 0;
           for (int i = 0; i < length; ++i) {
             if (check_addr(addr, 1))
-              p += sprintf(p, "%02" PRIx8, *(uint8_t*)addr++);
+              p += sprintf(p, "%02" PRIx8, *(uint8_t *)addr++);
             else
               break;
           }
@@ -849,7 +849,7 @@ static void rdb_main(void *arg)
           if (check_addr(addr, 1)
               && sscanf(p, "%2" SCNx32 "%n", &value, &n) == 1 && n == 2)
           {
-            *(uint8_t*)addr++ = value;
+            *(uint8_t *)addr++ = value;
             p += n;
           }
           else
@@ -952,7 +952,7 @@ static void rdb_main(void *arg)
     rdb_clear_bkp(&rdb.swbkp[i]);
   rdb_startall();
 #if !(defined(RDB_DEBUG_FAULT) && RDB_DEBUG_FAULT)
-  z64_osStartThread(&z64_thread_fault);
+  osStartThread(&z64_thread_fault);
 #endif
   rdb_active = 0;
 }
@@ -963,24 +963,24 @@ void rdb_start(void)
   static __attribute__((section(".stack"))) _Alignas(8)
   char rdb_stack[0x1000];
 
-  _Bool ie = set_int(0);
+  int irqf = set_irqf(0);
   if (!rdb_active) {
     rdb_active = 1;
-    z64_osCreateThread(&rdb_thread, 0, rdb_main, NULL,
-                       &rdb_stack[sizeof(rdb_stack)], OS_PRIORITY_RMON);
-    z64_osStartThread(&rdb_thread);
+    osCreateThread(&rdb_thread, 0, rdb_main, NULL,
+                   &rdb_stack[sizeof(rdb_stack)], OS_PRIORITY_RMON);
+    osStartThread(&rdb_thread);
   }
-  set_int(ie);
+  set_irqf(irqf);
 }
 
 void rdb_stop(void)
 {
-  _Bool ie = set_int(0);
+  int irqf = set_irqf(0);
   if (rdb_active) {
     rdb.detach = 1;
     rdb_interrupt();
   }
-  set_int(ie);
+  set_irqf(irqf);
 }
 
 _Bool rdb_check(void)

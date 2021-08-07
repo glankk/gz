@@ -4,7 +4,7 @@ struct zu_scene_info zu_scene_info[] =
 {
   {
     "deku tree",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from forest",
       "from boss",
@@ -12,7 +12,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "dodongo's cavern",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from trail",
       "from boss",
@@ -20,7 +20,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "jabu jabu",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from fountain",
       "from boss",
@@ -28,7 +28,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "forest temple",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from meadow",
       "from boss",
@@ -37,7 +37,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "fire temple",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from crater",
       "from boss",
@@ -45,7 +45,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "water temple",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from lake",
       "from boss",
@@ -53,7 +53,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "spirit temple",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from colossus",
       "from boss",
@@ -64,7 +64,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "shadow temple",
-    4, (const char*[])
+    4, (const char *[])
     {
       "from graveyard",
       "outside boss",
@@ -74,7 +74,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "bottom of the well",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from kakariko",
       "from kakariko (unused)",
@@ -82,7 +82,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "ice cavern",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from fountain",
       "near block puzzle room",
@@ -90,7 +90,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "ganon's tower",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from castle",
       "from boss",
@@ -99,14 +99,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "gerudo training ground",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from fortress",
     },
   },
   {
     "thieves' hideout",
-    13, (const char*[])
+    13, (const char *[])
     {
       "1-1",
       "1-2",
@@ -125,7 +125,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "ganon's castle",
-    8, (const char*[])
+    8, (const char *[])
     {
       "from castle",
       "from tower",
@@ -139,7 +139,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "tower collapse",
-    8, (const char*[])
+    8, (const char *[])
     {
       "boss room 1",
       "boss room 2",
@@ -153,63 +153,63 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "castle collapse",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from tower",
     },
   },
   {
     "treasure box shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from market",
     },
   },
   {
     "gohma",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from deku tree",
     },
   },
   {
     "king dodongo",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from dodongo's cavern",
     },
   },
   {
     "barinade",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from jabu jabu",
     },
   },
   {
     "phantom ganon",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from temple",
     },
   },
   {
     "volvagia",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from temple",
     },
   },
   {
     "morpha",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from temple",
     },
   },
   {
     "twinrova",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from temple",
       "(unused)",
@@ -218,21 +218,21 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "bongo bongo",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from temple",
     },
   },
   {
     "ganondorf",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from tower",
     },
   },
   {
     "tower exterior",
-    8, (const char*[])
+    8, (const char *[])
     {
       "from ganondorf",
       "from boss 1",
@@ -246,7 +246,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market entrance day",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from market",
       "from field",
@@ -255,7 +255,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market entrance night",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from market",
       "from field",
@@ -264,7 +264,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market entrance ruins",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from market",
       "from field",
@@ -273,7 +273,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "back alley day",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from market right",
       "from market left",
@@ -284,7 +284,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "back alley night",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from market right",
       "from market left",
@@ -295,7 +295,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market day",
-    11, (const char*[])
+    11, (const char *[])
     {
       "from entrance",
       "from castle",
@@ -312,7 +312,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market night",
-    11, (const char*[])
+    11, (const char *[])
     {
       "from entrance",
       "from castle",
@@ -329,7 +329,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market ruins",
-    11, (const char*[])
+    11, (const char *[])
     {
       "from entrance",
       "from castle",
@@ -346,7 +346,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "outside temple day",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from market",
       "from temple",
@@ -354,7 +354,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "outside temple night",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from market",
       "from temple",
@@ -362,7 +362,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "outside temple ruins",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from market",
       "from temple",
@@ -370,49 +370,49 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "brothers' house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from forest",
     },
   },
   {
     "twins' house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from forest",
     },
   },
   {
     "mido's house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from forest",
     },
   },
   {
     "saria's house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from forest",
     },
   },
   {
     "carpenter's house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from kakariko",
     },
   },
   {
     "guy's house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from alley",
     },
   },
   {
     "bazaar",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from kakariko",
       "from market",
@@ -420,28 +420,28 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "kokiri shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from forest",
     },
   },
   {
     "goron shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from goron city",
     },
   },
   {
     "zora shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from domain",
     },
   },
   {
     "kakariko potion shop",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from front",
       "from front (unused)",
@@ -450,14 +450,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "market potion shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from market",
     },
   },
   {
     "bombchu shop",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from alley (unused)",
       "from alley"
@@ -465,14 +465,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "happy mask shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from market",
     },
   },
   {
     "link's house",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from bed",
       "from forest"
@@ -480,21 +480,21 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "richard's house",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from alley",
     },
   },
   {
     "stable",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from ranch",
     },
   },
   {
     "impa's house",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from front",
       "from roof"
@@ -502,7 +502,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "lakeside laboratory",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from lake",
       "eyedrops timeout",
@@ -510,21 +510,21 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "carpenter's tent",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from valley",
     },
   },
   {
     "gravekeeper's hut",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from graveyard",
     },
   },
   {
     "fairy upgrades",
-    4, (const char*[])
+    4, (const char *[])
     {
       "from trail",
       "from crater",
@@ -534,14 +534,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "fairy's fountain",
-    1, (const char*[])
+    1, (const char *[])
     {
       "grotto",
     },
   },
   {
     "fairy spells",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from fountain",
       "from castle",
@@ -550,7 +550,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "grottos",
-    14, (const char*[])
+    14, (const char *[])
     {
       "default",
       "skulltula",
@@ -570,21 +570,21 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "redead grave",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from graveyard",
     },
   },
   {
     "shield grave",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from graveyard",
     },
   },
   {
     "royal family's tomb",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from graveyard",
       "after sun's song",
@@ -592,7 +592,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "shooting gallery",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from kakariko",
       "from market",
@@ -600,7 +600,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "temple of time",
-    8, (const char*[])
+    8, (const char *[])
     {
       "from outside",
       "(unused)",
@@ -614,7 +614,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "chamber of the sages",
-    2, (const char*[])
+    2, (const char *[])
     {
       "default",
       "unknown",
@@ -622,7 +622,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "courtyard day",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from castle",
       "from zelda",
@@ -630,7 +630,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "courtyard night",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from castle",
       "from zelda",
@@ -638,14 +638,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "cutscene map",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "windmill",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from graveyard",
       "from kakariko",
@@ -654,14 +654,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "fishing pond",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from lake",
     },
   },
   {
     "zelda",
-    2, (const char*[])
+    2, (const char *[])
     {
       "from courtyard",
       "after triforce",
@@ -669,14 +669,14 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "bombchu bowling alley",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from market",
     },
   },
   {
     "ranch buildings",
-    3, (const char*[])
+    3, (const char *[])
     {
       "talon's house",
       "tower",
@@ -685,35 +685,35 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "lots 'o pots",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from entrance",
     },
   },
   {
     "granny's potion shop",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from kakariko",
     },
   },
   {
     "ganon",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from castle collapse",
     },
   },
   {
     "house of skulltula",
-    1, (const char*[])
+    1, (const char *[])
     {
       "from kakariko",
     },
   },
   {
     "hyrule field",
-    18, (const char*[])
+    18, (const char *[])
     {
       "impa escort",
       "from kakariko",
@@ -737,7 +737,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "kakariko village",
-    16, (const char*[])
+    16, (const char *[])
     {
       "from field",
       "from trail",
@@ -759,7 +759,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "graveyard",
-    9, (const char*[])
+    9, (const char *[])
     {
       "from kakariko",
       "from shadow temple",
@@ -774,7 +774,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "zora's river",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from field land",
       "waterfall",
@@ -785,7 +785,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "kokiri forest",
-    13, (const char*[])
+    13, (const char *[])
     {
       "medallion cutscene",
       "from deku tree",
@@ -804,7 +804,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "sacred forest meadow",
-    4, (const char*[])
+    4, (const char *[])
     {
       "from woods",
       "from temple",
@@ -814,7 +814,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "lake hylia",
-    10, (const char*[])
+    10, (const char *[])
     {
       "from field",
       "from valley",
@@ -830,7 +830,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "zora's domain",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from river",
       "from fountain",
@@ -841,7 +841,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "zora's fountain",
-    6, (const char*[])
+    6, (const char *[])
     {
       "after sapphire",
       "from jabu jabu",
@@ -853,7 +853,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "gerudo valley",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from field",
       "thrown out",
@@ -864,7 +864,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "lost woods",
-    10, (const char*[])
+    10, (const char *[])
     {
       "from forest",
       "from meadow",
@@ -880,7 +880,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "desert colossus",
-    9, (const char*[])
+    9, (const char *[])
     {
       "from wasteland",
       "from temple",
@@ -895,7 +895,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "gerudo's fortress",
-    19, (const char*[])
+    19, (const char *[])
     {
       "from valley",
       "1-1",
@@ -920,7 +920,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "haunted wasteland",
-    3, (const char*[])
+    3, (const char *[])
     {
       "from fortress",
       "from colossus",
@@ -929,7 +929,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "hyrule castle",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from market",
       "from courtyard",
@@ -940,7 +940,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "death mountain trail",
-    6, (const char*[])
+    6, (const char *[])
     {
       "from kakariko",
       "from goron city",
@@ -952,7 +952,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "death mountain crater",
-    6, (const char*[])
+    6, (const char *[])
     {
       "from trail",
       "from goron city",
@@ -964,7 +964,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "goron city",
-    4, (const char*[])
+    4, (const char *[])
     {
       "from trail",
       "from crater",
@@ -974,7 +974,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "lon lon ranch",
-    11, (const char*[])
+    11, (const char *[])
     {
       "from field",
       "after epona's song",
@@ -991,7 +991,7 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "ganon's castle",
-    5, (const char*[])
+    5, (const char *[])
     {
       "from market",
       "from castle",
@@ -1002,70 +1002,70 @@ struct zu_scene_info zu_scene_info[] =
   },
   {
     "collision test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "ganondorf test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "depth test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "stalfos middle room",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "stalfos boss room",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "dark link test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "castle courtyard",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "action test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "item test",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },
   },
   {
     "lost scene",
-    1, (const char*[])
+    1, (const char *[])
     {
       "default",
     },

@@ -149,7 +149,6 @@ static int do_import_macro(const char *path, void *data)
       err_str = s_eof;
       goto f_err;
     }
-    sys_io_mode(SYS_IO_DMA);
     n = gz.movie_input.element_size * n_input;
     if (read(f, gz.movie_input.begin, n) != n) {
       err_str = s_eof;
@@ -221,7 +220,6 @@ static int do_import_macro(const char *path, void *data)
       vector_shrink_to_fit(&gz.movie_room_load);
     }
 f_err:
-    sys_io_mode(SYS_IO_PIO);
     if (errno != 0)
       err_str = strerror(errno);
   }
@@ -375,11 +373,10 @@ static int do_import_state(const char *path, void *data)
       err_str = s_memory;
       goto error;
     }
-    sys_io_mode(SYS_IO_DMA);
     if (read(f, state, st.st_size) != st.st_size)
       err_str = strerror(errno);
     else if (state->z64_version != Z64_VERSION ||
-             state->state_version != SETTINGS_STATE_VERSION)
+             state->state_version < SETTINGS_STATE_MIN_VER)
     {
       err_str = s_version;
     }
@@ -387,7 +384,6 @@ static int do_import_state(const char *path, void *data)
       err_str = s_invalid;
     else
       state = NULL;
-    sys_io_mode(SYS_IO_PIO);
   }
   else
     err_str = strerror(errno);
@@ -445,7 +441,7 @@ static void export_state_proc(struct menu_item *item, void *data)
     char defname[32];
     snprintf(defname, sizeof(defname), "000-%s",
              zu_scene_info[state->scene_idx].scene_name);
-    menu_get_file(gz.menu_main, GETFILE_SAVE, defname, ".gzs",
+    menu_get_file(gz.menu_main, GETFILE_SAVE_PREFIX_INC, defname, ".gzs",
                   do_export_state, NULL);
   }
 }
@@ -659,6 +655,21 @@ static int vcont_button_proc(struct menu_item *item,
   return 0;
 }
 
+static int byte_ztarget_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.ignore_target = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.ignore_target = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.ignore_target)
+      menu_checkbox_set(item, settings->bits.ignore_target);
+  }
+  return 0;
+}
+
 struct menu *gz_macro_menu(void)
 {
   static struct menu menu;
@@ -762,6 +773,8 @@ struct menu *gz_macro_menu(void)
   menu_add_static(&menu_settings, 0, 5, "game settings", 0xC0C0C0);
   menu_add_checkbox(&menu_settings, 2, 6, wiivc_cam_proc, NULL);
   menu_add_static(&menu_settings, 4, 6, "wii vc camera", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 7, byte_ztarget_proc, NULL);
+  menu_add_static(&menu_settings, 4, 7, "ignore state's z-target", 0xC0C0C0);
 
   /* populate virtual pad menu */
   menu_vcont.selector = menu_add_submenu(&menu_vcont, 0, 0, NULL, "return");

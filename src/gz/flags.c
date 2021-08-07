@@ -72,11 +72,11 @@ static void add_event(int record_index, int flag_index, _Bool value)
 static uint32_t get_flag_word(void *data, size_t word_size, int index)
 {
   if (word_size == 1)
-    return ((uint8_t*)data)[index];
+    return ((uint8_t *)data)[index];
   else if (word_size == 2)
-    return ((uint16_t*)data)[index];
+    return ((uint16_t *)data)[index];
   else if (word_size == 4)
-    return ((uint32_t*)data)[index];
+    return ((uint32_t *)data)[index];
   return 0;
 }
 
@@ -290,7 +290,7 @@ void flag_menu_create(struct menu *menu)
         view_cells[n] = menu_add_switch(menu, 4 + x, 3 + y,
                                         t_flag, 1, 0xFFFFFF,
                                         t_flag, 0, 0xFFFFFF,
-                                        0.75f, 1, flag_proc, (void*)n);
+                                        0.75f, 1, flag_proc, (void *)n);
       }
     }
     goto_record(0);

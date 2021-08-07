@@ -15,7 +15,7 @@ struct settings_data *settings = &settings_store.data;
 static uint16_t settings_checksum_compute(struct settings *settings)
 {
   uint16_t checksum = 0;
-  uint16_t *p = (void*)&settings->data;
+  uint16_t *p = (void *)&settings->data;
   uint16_t *e = p + sizeof(settings->data) / sizeof(*p);
   while (p < e)
     checksum += *p++;
@@ -37,6 +37,7 @@ void settings_load_default(void)
   d->bits.font_resource = RES_FONT_PRESSSTART2P;
   d->bits.drop_shadow = 1;
   d->bits.input_display = 1;
+  d->bits.input_pressrel = 0;
   d->bits.log = 1;
   d->bits.lag_counter = 0;
   d->bits.lag_unit = SETTINGS_LAG_FRAMES;
@@ -51,22 +52,26 @@ void settings_load_default(void)
 #else
   d->bits.wiivc_cam = 0;
 #endif
+  d->bits.ignore_target = 0;
   d->bits.break_type = SETTINGS_BREAK_NORMAL;
   d->bits.warp_age = 0;
   d->bits.warp_cutscene = 0;
-  d->bits.load_to = SETTINGS_LOADTO_ZFILE;
-  d->bits.on_load = SETTINGS_ONLOAD_NOTHING;
   d->bits.col_view_mode = SETTINGS_COLVIEW_DECAL;
   d->bits.col_view_xlu = 1;
+  d->bits.col_view_water = 1;
+  d->bits.col_view_wfc = 0;
   d->bits.col_view_line = 0;
   d->bits.col_view_shade = 1;
   d->bits.col_view_rd = 0;
   d->bits.col_view_upd = 1;
+  d->bits.hit_view_at = 1;
+  d->bits.hit_view_ac = 1;
+  d->bits.hit_view_oc = 1;
   d->bits.hit_view_xlu = 1;
   d->bits.hit_view_shade = 1;
-  d->bits.hit_view_at = 0;
-  d->bits.hit_view_ac = 0;
-  d->bits.hit_view_oc = 0;
+  d->bits.path_view_xlu = 1;
+  d->bits.path_view_points = 1;
+  d->bits.path_view_lines = 1;
   d->bits.watches_visible = 1;
   d->menu_x = 20;
   d->menu_y = 64;
@@ -98,20 +103,17 @@ void settings_load_default(void)
   d->binds[COMMAND_LEVITATE] = bind_make(1, BUTTON_L);
   d->binds[COMMAND_FALL] = bind_make(2, BUTTON_Z, BUTTON_L);
   d->binds[COMMAND_TURBO] = bind_make(0);
+  d->binds[COMMAND_NOCLIP] = bind_make(2, BUTTON_L, BUTTON_D_RIGHT);
   d->binds[COMMAND_FILESELECT] = bind_make(2, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_RELOAD] = bind_make(2, BUTTON_A, BUTTON_L);
   d->binds[COMMAND_VOID] = bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_AGE] = bind_make(0);
   d->binds[COMMAND_SAVESTATE] = bind_make(1, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADSTATE] = bind_make(1, BUTTON_D_RIGHT);
-  d->binds[COMMAND_SAVEMEMFILE] = bind_make(0);
-  d->binds[COMMAND_LOADMEMFILE] = bind_make(0);
   d->binds[COMMAND_SAVEPOS] = bind_make(0);
   d->binds[COMMAND_LOADPOS] = bind_make(0);
   d->binds[COMMAND_PREVSTATE] = bind_make(0);
   d->binds[COMMAND_NEXTSTATE] = bind_make(0);
-  d->binds[COMMAND_PREVFILE] = bind_make(0);
-  d->binds[COMMAND_NEXTFILE] = bind_make(0);
   d->binds[COMMAND_PREVPOS] = bind_make(0);
   d->binds[COMMAND_NEXTPOS] = bind_make(0);
   d->binds[COMMAND_PAUSE] = bind_make(1, BUTTON_D_DOWN);
@@ -120,6 +122,7 @@ void settings_load_default(void)
   d->binds[COMMAND_PLAYMACRO] = bind_make(0);
   d->binds[COMMAND_COLVIEW] = bind_make(0);
   d->binds[COMMAND_HITVIEW] = bind_make(0);
+  d->binds[COMMAND_PATHVIEW] = bind_make(0);
   d->binds[COMMAND_PREVROOM] = bind_make(2, BUTTON_R, BUTTON_D_DOWN);
   d->binds[COMMAND_NEXTROOM] = bind_make(2, BUTTON_R, BUTTON_D_UP);
   d->binds[COMMAND_RESETLAG] = bind_make(3, BUTTON_R, BUTTON_B, BUTTON_D_RIGHT);

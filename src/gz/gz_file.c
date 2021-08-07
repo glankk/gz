@@ -78,16 +78,14 @@ static void call_navi_proc(struct menu_item *item, void *data)
   z64_file.navi_timer = 0x025A;
 }
 
-static void memfile_dec_proc(struct menu_item *item, void *data)
+static void load_debug_file_proc(struct menu_item *item, void *data)
 {
-  gz.memfile_slot += SETTINGS_MEMFILE_MAX - 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
-}
-
-static void memfile_inc_proc(struct menu_item *item, void *data)
-{
-  gz.memfile_slot += 1;
-  gz.memfile_slot %= SETTINGS_MEMFILE_MAX;
+  z64_Sram_LoadDebugSave();
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_B);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CL);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CD);
+  z64_UpdateItemButton(&z64_game, Z64_ITEMBTN_CR);
+  z64_UpdateEquipment(&z64_game, &z64_link);
 }
 
 static void set_time_proc(struct menu_item *item, void *data)
@@ -191,143 +189,6 @@ static void clear_reward_flags_proc(struct menu_item *item, void *data)
   zu_clear_event_flag(0xC8);
 }
 
-static int load_file_to_proc(struct menu_item *item,
-                             enum menu_callback_reason reason,
-                             void *data)
-{
-  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (menu_option_get(item) != settings->bits.load_to)
-      menu_option_set(item, settings->bits.load_to);
-  }
-  else if (reason == MENU_CALLBACK_DEACTIVATE)
-    settings->bits.load_to = menu_option_get(item);
-  return 0;
-}
-
-static int on_file_load_proc(struct menu_item *item,
-                             enum menu_callback_reason reason,
-                             void *data)
-{
-  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    if (menu_option_get(item) != settings->bits.on_load)
-      menu_option_set(item, settings->bits.on_load);
-  }
-  else if (reason == MENU_CALLBACK_DEACTIVATE)
-    settings->bits.on_load = menu_option_get(item);
-  return 0;
-}
-
-static int do_save_file(const char *path, void *data)
-{
-  const char *s_memory = "out of memory";
-  const char *err_str = NULL;
-  struct memory_file *file = NULL;
-  int f = creat(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if (f != -1) {
-    file = malloc(sizeof(*file));
-    if (!file)
-      err_str = s_memory;
-    else {
-      gz_save_memfile(file);
-      if (write(f, file, sizeof(*file)) != sizeof(*file))
-        err_str = strerror(errno);
-      else {
-        if (close(f))
-          err_str = strerror(errno);
-        f = -1;
-      }
-    }
-  }
-  else
-    err_str = strerror(errno);
-  if (f != -1)
-    close(f);
-  if (file)
-    free(file);
-  if (err_str) {
-    menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
-    return 1;
-  }
-  else
-    return 0;
-}
-
-static int do_load_file(const char *path, void *data)
-{
-  const char *s_invalid = "invalid or corrupt memfile";
-  const char *s_memory = "out of memory";
-  const char *err_str = NULL;
-  struct memory_file *file = NULL;
-  int f = open(path, O_RDONLY);
-  if (f != -1) {
-    struct stat st;
-    if (fstat(f, &st))
-      err_str = strerror(errno);
-    else if (st.st_size != sizeof(*file))
-      err_str = s_invalid;
-    else {
-      file = malloc(sizeof(*file));
-      if (!file)
-        err_str = s_memory;
-      else {
-        errno = 0;
-        if (read(f, file, sizeof(*file)) != sizeof(*file)) {
-          if (errno == 0)
-            err_str = s_invalid;
-          else
-            err_str = strerror(errno);
-        }
-        else {
-          if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
-              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-          {
-            gz_load_memfile(file);
-          }
-          if (settings->bits.load_to == SETTINGS_LOADTO_MEMFILE ||
-              settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-          {
-            gz.memfile[gz.memfile_slot] = *file;
-            gz.memfile_saved[gz.memfile_slot] = 1;
-          }
-        }
-      }
-    }
-  }
-  else
-    err_str = strerror(errno);
-  if (f != -1)
-    close(f);
-  if (file)
-    free(file);
-  if (err_str) {
-    menu_prompt(gz.menu_main, err_str, "return\0", 0, NULL, NULL);
-    return 1;
-  }
-  else {
-    if (settings->bits.load_to == SETTINGS_LOADTO_ZFILE ||
-        settings->bits.load_to == SETTINGS_LOADTO_BOTH)
-    {
-      if (settings->bits.on_load == SETTINGS_ONLOAD_RELOAD)
-        command_reload();
-      else if (settings->bits.on_load == SETTINGS_ONLOAD_VOID)
-        command_void();
-    }
-    return 0;
-  }
-}
-
-static void save_file_proc(struct menu_item *item, void *data)
-{
-  menu_get_file(gz.menu_main, GETFILE_SAVE, "file", ".ootsave",
-                do_save_file, NULL);
-}
-
-static void load_file_proc(struct menu_item *item, void *data)
-{
-  menu_get_file(gz.menu_main, GETFILE_LOAD, NULL, ".ootsave",
-                do_load_file, NULL);
-}
-
 struct menu *gz_file_menu(void)
 {
   static struct menu menu;
@@ -339,20 +200,15 @@ struct menu *gz_file_menu(void)
   /* create file commands */
   menu_add_button(&menu, 0, 1, "restore skulltulas", restore_gs_proc, NULL);
   menu_add_button(&menu, 0, 2, "call navi", call_navi_proc, NULL);
-
-  /* create memfile controls */
-  menu_add_static(&menu, 0, 3, "memory file", 0xC0C0C0);
-  menu_add_watch(&menu, 19, 3, (uint32_t)&gz.memfile_slot, WATCH_TYPE_U8);
-  menu_add_button(&menu, 17, 3, "-", memfile_dec_proc, NULL);
-  menu_add_button(&menu, 21, 3, "+", memfile_inc_proc, NULL);
+  menu_add_button(&menu, 0, 3, "load debug file", load_debug_file_proc, NULL);
 
   /* create time of day controls */
   struct gfx_texture *t_daytime = resource_get(RES_ICON_DAYTIME);
   menu_add_static(&menu, 0, 4, "time of day", 0xC0C0C0);
   menu_add_button_icon(&menu, 17, 4, t_daytime, 0, 0xFFC800,
-                       set_time_proc, (void*)0x4AB0);
+                       set_time_proc, (void *)0x4AB0);
   menu_add_button_icon(&menu, 19, 4, t_daytime, 1, 0xA0A0E0,
-                       set_time_proc, (void*)0xC010);
+                       set_time_proc, (void *)0xC010);
   menu_add_intinput(&menu, 21, 4, 16, 4,
                     halfword_mod_proc, &z64_file.day_time);
 
@@ -409,16 +265,6 @@ struct menu *gz_file_menu(void)
   menu_add_static(&menu, 0, 13, "z targeting", 0xC0C0C0);
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
-
-  /* create disk file controls */
-  menu_add_static(&menu, 0, 14, "load file to", 0xC0C0C0);
-  menu_add_option(&menu, 17, 14, "zelda file\0""current memfile\0""both\0",
-                  load_file_to_proc, NULL);
-  menu_add_static(&menu, 0, 15, "after loading", 0xC0C0C0);
-  menu_add_option(&menu, 17, 15, "do nothing\0""reload scene\0""void out\0",
-                  on_file_load_proc, NULL);
-  menu_add_button(&menu, 0, 16, "save to disk", save_file_proc, NULL);
-  menu_add_button(&menu, 0, 17, "load from disk", load_file_proc, NULL);
 
   return &menu;
 }

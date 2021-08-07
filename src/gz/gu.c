@@ -186,7 +186,147 @@ void guMtxF2L(const MtxF *mf, Mtx *m)
 {
   for (int i = 0; i < 16; ++i) {
     qs1616_t n = qs1616(mf->f[i]);
-    m->i[i] = (n >> 16) & 0x0000FFFF;
-    m->f[i] = (n >> 0)  & 0x0000FFFF;
+    m->i[i] = n >> 16;
+    m->f[i] = n;
   }
+}
+
+void guMtxL2F(MtxF *mf, const Mtx *m)
+{
+  for (int i = 0; i < 16; ++i) {
+    qs1616_t v = (m->i[i] << 16) | m->f[i];
+    mf->f[i] = v * (1.f / 0x10000);
+  }
+}
+
+float guMtxDetF(const MtxF *mf)
+{
+  return mf->xw * mf->yz * mf->zy * mf->wx -
+         mf->xz * mf->yw * mf->zy * mf->wx -
+         mf->xw * mf->yy * mf->zz * mf->wx +
+         mf->xy * mf->yw * mf->zz * mf->wx +
+         mf->xz * mf->yy * mf->zw * mf->wx -
+         mf->xy * mf->yz * mf->zw * mf->wx -
+         mf->xw * mf->yz * mf->zx * mf->wy +
+         mf->xz * mf->yw * mf->zx * mf->wy +
+         mf->xw * mf->yx * mf->zz * mf->wy -
+         mf->xx * mf->yw * mf->zz * mf->wy -
+         mf->xz * mf->yx * mf->zw * mf->wy +
+         mf->xx * mf->yz * mf->zw * mf->wy +
+         mf->xw * mf->yy * mf->zx * mf->wz -
+         mf->xy * mf->yw * mf->zx * mf->wz -
+         mf->xw * mf->yx * mf->zy * mf->wz +
+         mf->xx * mf->yw * mf->zy * mf->wz +
+         mf->xy * mf->yx * mf->zw * mf->wz -
+         mf->xx * mf->yy * mf->zw * mf->wz -
+         mf->xz * mf->yy * mf->zx * mf->ww +
+         mf->xy * mf->yz * mf->zx * mf->ww +
+         mf->xz * mf->yx * mf->zy * mf->ww -
+         mf->xx * mf->yz * mf->zy * mf->ww -
+         mf->xy * mf->yx * mf->zz * mf->ww +
+         mf->xx * mf->yy * mf->zz * mf->ww;
+}
+
+void guMtxInvertF(const MtxF *mf, MtxF *r)
+{
+  float d = guMtxDetF(mf);
+  *r = (MtxF)guDefMtxF
+  (
+    (mf->yz * mf->zw * mf->wy -
+     mf->yw * mf->zz * mf->wy +
+     mf->yw * mf->zy * mf->wz -
+     mf->yy * mf->zw * mf->wz -
+     mf->yz * mf->zy * mf->ww +
+     mf->yy * mf->zz * mf->ww) / d,
+    (mf->xw * mf->zz * mf->wy -
+     mf->xz * mf->zw * mf->wy -
+     mf->xw * mf->zy * mf->wz +
+     mf->xy * mf->zw * mf->wz +
+     mf->xz * mf->zy * mf->ww -
+     mf->xy * mf->zz * mf->ww) / d,
+    (mf->xz * mf->yw * mf->wy -
+     mf->xw * mf->yz * mf->wy +
+     mf->xw * mf->yy * mf->wz -
+     mf->xy * mf->yw * mf->wz -
+     mf->xz * mf->yy * mf->ww +
+     mf->xy * mf->yz * mf->ww) / d,
+    (mf->xw * mf->yz * mf->zy -
+     mf->xz * mf->yw * mf->zy -
+     mf->xw * mf->yy * mf->zz +
+     mf->xy * mf->yw * mf->zz +
+     mf->xz * mf->yy * mf->zw -
+     mf->xy * mf->yz * mf->zw) / d,
+    (mf->yw * mf->zz * mf->wx -
+     mf->yz * mf->zw * mf->wx -
+     mf->yw * mf->zx * mf->wz +
+     mf->yx * mf->zw * mf->wz +
+     mf->yz * mf->zx * mf->ww -
+     mf->yx * mf->zz * mf->ww) / d,
+    (mf->xz * mf->zw * mf->wx -
+     mf->xw * mf->zz * mf->wx +
+     mf->xw * mf->zx * mf->wz -
+     mf->xx * mf->zw * mf->wz -
+     mf->xz * mf->zx * mf->ww +
+     mf->xx * mf->zz * mf->ww) / d,
+    (mf->xw * mf->yz * mf->wx -
+     mf->xz * mf->yw * mf->wx -
+     mf->xw * mf->yx * mf->wz +
+     mf->xx * mf->yw * mf->wz +
+     mf->xz * mf->yx * mf->ww -
+     mf->xx * mf->yz * mf->ww) / d,
+    (mf->xz * mf->yw * mf->zx -
+     mf->xw * mf->yz * mf->zx +
+     mf->xw * mf->yx * mf->zz -
+     mf->xx * mf->yw * mf->zz -
+     mf->xz * mf->yx * mf->zw +
+     mf->xx * mf->yz * mf->zw) / d,
+    (mf->yy * mf->zw * mf->wx -
+     mf->yw * mf->zy * mf->wx +
+     mf->yw * mf->zx * mf->wy -
+     mf->yx * mf->zw * mf->wy -
+     mf->yy * mf->zx * mf->ww +
+     mf->yx * mf->zy * mf->ww) / d,
+    (mf->xw * mf->zy * mf->wx -
+     mf->xy * mf->zw * mf->wx -
+     mf->xw * mf->zx * mf->wy +
+     mf->xx * mf->zw * mf->wy +
+     mf->xy * mf->zx * mf->ww -
+     mf->xx * mf->zy * mf->ww) / d,
+    (mf->xy * mf->yw * mf->wx -
+     mf->xw * mf->yy * mf->wx +
+     mf->xw * mf->yx * mf->wy -
+     mf->xx * mf->yw * mf->wy -
+     mf->xy * mf->yx * mf->ww +
+     mf->xx * mf->yy * mf->ww) / d,
+    (mf->xw * mf->yy * mf->zx -
+     mf->xy * mf->yw * mf->zx -
+     mf->xw * mf->yx * mf->zy +
+     mf->xx * mf->yw * mf->zy +
+     mf->xy * mf->yx * mf->zw -
+     mf->xx * mf->yy * mf->zw) / d,
+    (mf->yz * mf->zy * mf->wx -
+     mf->yy * mf->zz * mf->wx -
+     mf->yz * mf->zx * mf->wy +
+     mf->yx * mf->zz * mf->wy +
+     mf->yy * mf->zx * mf->wz -
+     mf->yx * mf->zy * mf->wz) / d,
+    (mf->xy * mf->zz * mf->wx -
+     mf->xz * mf->zy * mf->wx +
+     mf->xz * mf->zx * mf->wy -
+     mf->xx * mf->zz * mf->wy -
+     mf->xy * mf->zx * mf->wz +
+     mf->xx * mf->zy * mf->wz) / d,
+    (mf->xz * mf->yy * mf->wx -
+     mf->xy * mf->yz * mf->wx -
+     mf->xz * mf->yx * mf->wy +
+     mf->xx * mf->yz * mf->wy +
+     mf->xy * mf->yx * mf->wz -
+     mf->xx * mf->yy * mf->wz) / d,
+    (mf->xy * mf->yz * mf->zx -
+     mf->xz * mf->yy * mf->zx +
+     mf->xz * mf->yx * mf->zy -
+     mf->xx * mf->yz * mf->zy -
+     mf->xy * mf->yx * mf->zz +
+     mf->xx * mf->yy * mf->zz) / d
+  );
 }

@@ -14,6 +14,7 @@
 #include "ucode.h"
 #include "z64.h"
 
+
 struct actor_debug_info
 {
   struct menu_item     *edit_item;
@@ -31,6 +32,12 @@ struct actor_spawn_info
   uint16_t              rx;
   uint16_t              ry;
   uint16_t              rz;
+};
+
+struct actor_info
+{
+  struct actor_debug_info  *adi;
+  struct actor_spawn_info  *asi;
 };
 
 static int byte_optionmod_proc(struct menu_item *item,
@@ -77,10 +84,10 @@ static int word_mod_proc(struct menu_item *item,
 
 static _Bool heap_node_validate(z64_arena_node_t *node)
 {
-  uint32_t addr = (uint32_t)node;
-  uint32_t size = node->size + sizeof(z64_arena_node_t);
-  uint32_t prev = (uint32_t)node->prev;
-  uint32_t next = (uint32_t)node->next;
+  uintptr_t addr = (uintptr_t)node;
+  size_t size = node->size + sizeof(z64_arena_node_t);
+  uintptr_t prev = (uintptr_t)node->prev;
+  uintptr_t next = (uintptr_t)node->next;
   return node->magic == 0x7373 &&
          (!next || (next >= 0x80000000 && next < 0x80400000 &&
                     next > addr && next - addr == size)) &&
@@ -98,7 +105,7 @@ static int heap_draw_proc(struct menu_item *item,
   uint8_t alpha = draw_params->alpha;
   int ch = menu_get_cell_height(item->owner, 1);
   /* collect heap data */
-  const uint32_t heap_start = (uint32_t)&z64_link - sizeof(z64_arena_node_t);
+  const uintptr_t heap_start = (uintptr_t)&z64_link - sizeof(z64_arena_node_t);
   size_t max_alloc = 0;
   size_t min_alloc = 0;
   size_t total_alloc = 0;
@@ -107,7 +114,7 @@ static int heap_draw_proc(struct menu_item *item,
   size_t total_avail = 0;
   size_t overhead = 0;
   size_t total = 0;
-  z64_arena_node_t *p = (void*)heap_start;
+  z64_arena_node_t *p = (void *)heap_start;
   z64_arena_node_t *error_node = NULL;
   int node_count_total = 0;
   int node_count_free = 0;
@@ -158,11 +165,11 @@ static int heap_draw_proc(struct menu_item *item,
     t = gfx_texture_create(G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 1, 9, 1);
   size_t graph_width = t->tile_width * t->tiles_x;
   uint16_t *d = t->data;
-  p = (void*)heap_start;
+  p = (void *)heap_start;
   while (p) {
     if (p == error_node)
       break;
-    size_t b = (uint32_t)p - heap_start;
+    size_t b = (uintptr_t)p - heap_start;
     size_t e = b + p->size + sizeof(z64_arena_node_t);
     b = b * graph_width / total;
     e = e * graph_width / total;
@@ -267,7 +274,7 @@ static void push_object_proc(struct menu_item *item, void *data)
   obj[n].getfile.vrom_addr = 0;
   size_t size = z64_object_table[object_id].vrom_end -
                 z64_object_table[object_id].vrom_start;
-  obj[n + 1].data = (char*)obj[n].data + size;
+  obj[n + 1].data = (char *)obj[n].data + size;
 }
 
 static void pop_object_proc(struct menu_item *item, void *data)
@@ -429,14 +436,16 @@ static void edit_actor_proc(struct menu_item *item, void *data)
   }
 }
 
-static void delete_actor_proc(struct menu_item *item, void *data)
+static void kill_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_debug_info *adi = data;
   if (adi->index < z64_game.actor_list[adi->type].length) {
     z64_actor_t *actor = z64_game.actor_list[adi->type].first;
     for (int i = 0; i < adi->index; ++i)
       actor = actor->next;
-    z64_DeleteActor(&z64_game, &z64_game.actor_ctxt, actor);
+    actor->draw_proc = NULL;
+    actor->main_proc = NULL;
+    actor->flags &= ~1;
   }
 }
 
@@ -452,12 +461,60 @@ static void goto_actor_proc(struct menu_item *item, void *data)
   }
 }
 
+static void toggle_cullzone_proc(struct menu_item *item, void *data)
+{
+  if (gz.cull_view_state != CULLVIEW_INACTIVE &&
+      gz.cull_view_state != CULLVIEW_ACTIVE)
+    return;
+
+  struct actor_debug_info *adi = data;
+  if (adi->index >= z64_game.actor_list[adi->type].length)
+    return;
+
+  z64_actor_t *actor = z64_game.actor_list[adi->type].first;
+  for (int i = 0; i < adi->index; ++i)
+    actor = actor->next;
+
+  if (gz.cull_view_state == CULLVIEW_INACTIVE) {
+    gz.cull_view_state = CULLVIEW_START;
+    gz.selected_actor.ptr = actor;
+    gz.selected_actor.type = actor->actor_type;
+    gz.selected_actor.id = actor->actor_id;
+  }
+  else if (gz.selected_actor.ptr == actor &&
+           gz.selected_actor.id == actor->actor_id)
+  {
+    gz.cull_view_state = CULLVIEW_STOP;
+  }
+  else {
+    gz.selected_actor.ptr = actor;
+    gz.selected_actor.type = actor->actor_type;
+    gz.selected_actor.id = actor->actor_id;
+  }
+}
+
 static void spawn_actor_proc(struct menu_item *item, void *data)
 {
   struct actor_spawn_info *asi = data;
   z64_SpawnActor(&z64_game.actor_ctxt, &z64_game, asi->actor_no,
                  asi->x, asi->y, asi->z, asi->rx, asi->ry, asi->rz,
                  asi->variable);
+}
+
+static void spawn_actor_attached_b_proc(struct menu_item *item, void *data)
+{
+  struct actor_info *ai = data;
+
+  if (ai->adi->index < z64_game.actor_list[ai->adi->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[ai->adi->type].first;
+    for (int i = 0; i < ai->adi->index; ++i)
+      actor = actor->next;
+    z64_SpawnActorAttachedB(&z64_game.actor_ctxt, actor, &z64_game,
+                            ai->asi->actor_no,
+                            ai->asi->x, ai->asi->y, ai->asi->z,
+                            ai->asi->rx, ai->asi->ry, ai->asi->rz,
+                            ai->asi->variable);
+  }
 }
 
 static void fetch_actor_info_proc(struct menu_item *item, void *data)
@@ -571,8 +628,9 @@ struct menu *gz_debug_menu(void)
   item->text = malloc(9);
   item->text[0] = 0;
   adi.edit_item = item;
-  menu_add_button(&actors, 0, 5, "delete", &delete_actor_proc, &adi);
+  menu_add_button(&actors, 0, 5, "kill", &kill_actor_proc, &adi);
   menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &adi);
+  menu_add_button(&actors, 17, 5, "cull zone", &toggle_cullzone_proc, &adi);
   /* actor spawn controls */
   static struct actor_spawn_info asi;
   menu_add_static(&actors, 0, 7, "actor id", 0xC0C0C0);
@@ -587,8 +645,13 @@ struct menu *gz_debug_menu(void)
   menu_add_intinput(&actors, 10, 10, 10, 5, halfword_mod_proc, &asi.rx);
   menu_add_intinput(&actors, 17, 10, 10, 5, halfword_mod_proc, &asi.ry);
   menu_add_intinput(&actors, 24, 10, 10, 5, halfword_mod_proc, &asi.rz);
-  menu_add_button(&actors, 0, 11, "spawn", spawn_actor_proc, &asi);
-  menu_add_button(&actors, 10, 11,"fetch from link",
+  static struct actor_info ai;
+  ai.adi = &adi;
+  ai.asi = &asi;
+  menu_add_button(&actors, 0, 11, "spawn",spawn_actor_proc , &asi);
+  menu_add_button(&actors, 10, 11, "spawn as child",
+                  spawn_actor_attached_b_proc, &ai);
+  menu_add_button(&actors, 0, 12, "fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */
