@@ -342,10 +342,10 @@ static void set_cam_input_mask(void)
 {
   if (gz.free_cam && !gz.lock_cam) {
       gz_set_input_mask(BUTTON_C_RIGHT | BUTTON_C_LEFT | BUTTON_C_DOWN |
-                        BUTTON_C_UP | BUTTON_Z, 0xFF, 0xFF);
+                        BUTTON_C_UP | BUTTON_Z | BUTTON_L, 0xFF, 0xFF);
   }
   else
-    gz_set_input_mask(0x0000, 0x00, 0x00);
+    gz_set_input_mask(BUTTON_L, 0x00, 0x00);
 }
 
 static int enable_cam_proc(struct menu_item *item,

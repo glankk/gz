@@ -1055,7 +1055,7 @@ static void init(void)
   gz.movie_oca_input_pos = 0;
   gz.movie_oca_sync_pos = 0;
   gz.movie_room_load_pos = 0;
-  gz.z_input_mask.pad = 0;
+  gz.z_input_mask.pad = BUTTON_L;
   gz.z_input_mask.x = 0;
   gz.z_input_mask.y = 0;
   for (int i = 0; i < 4; ++i) {
