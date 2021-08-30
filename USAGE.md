@@ -126,15 +126,17 @@ on scene textures, but will not produce any new surfaces (note however that
 most emulators do not correctly emulate this behavior). The _surface_ setting
 draws collision polygons as their own surfaces, but can produce depth
 flickering on existing scene textures. Collision polygons can be configured to
-be completely opaque, or see-through with the **translucent** option. Enabling
-**wifreframe** will display lines around the edges of each polygon. The
-**reduced** option will reduce potential lag by only rendering collision
-polygons with some special property (i.e. colored polygons). When **auto
-update** is on, the collision view will update automatically when a collision
-view setting is changed, or when the collision changes. If turned off, the
-collision view must be manually disabled and re-enabled in order to update.
+be completely opaque, or see-through with the **translucent** option. Water
+boundaries are displayed by default, but can be disabled with the
+**waterboxes** option. Enabling **wifreframe** will display lines around the
+edges of each polygon. The **reduced** option will reduce potential lag by only
+rendering collision polygons with some special property (i.e. colored
+polygons). When **auto update** is on, the collision view will update
+automatically when a collision view setting is changed, or when the collision
+changes. If turned off, the collision view must be manually disabled and
+re-enabled in order to update.
 
-The **show hitboxes** option shows simple collision bodies and damage sources
+The **show colliders** option shows simple collision bodies and damage sources
 and sinks. The **translucent** and **shaded** options are identical to the
 collision view options with the same names. Hitboxes are also color-coded by
 their type;
@@ -143,8 +145,15 @@ their type;
 -   **Blue:** Hurtboxes; take damage.
 -   **White:** Bumpboxes; pushes and/or get pushed.
 
-It's common for objects to have multiple overlapping hitboxes of different
-types.
+The types of colliders to show can be selected with the **hit**, **hurt**, and
+**bump** options. It's common for objects to have multiple overlapping hitboxes
+of different types.
+
+Enabling **show paths** will display all of the paths that are defined in the
+current scene. These are usually waypoints for NPC's. Each point in the path
+will be displayed when **points** is enabled, and a line will be drawn between
+subsequent points when **lines** is enabled. The path display can be
+translucent or opaque as selected by the **translucent** option.
 
 #### 2.2.2 Free camera
 The free camera function provides full control of the game's camera. When
@@ -198,9 +207,11 @@ are available:
 -   **no minimap:** Keeps the minimap hidden at all times.
 -   **isg:** Permanently activates the *infinite sword glitch*.
 -   **quick text:** Activates fast scrolling for all textboxes.
+-   **no hud:** Hides hearts, magic, buttons, rupees and the minimap overlays.
 
-To undo the effects of the *no music*, *items usable*, and *no minimap* cheats,
-turn the cheat off and enter a new scene, or reload the current scene.
+To undo the effects of the *no music*, *items usable*, *no minimap*, and *no
+hud* cheats, turn the cheat off and enter a new scene, or reload the current
+scene.
 
 ### 2.4 Inventory
 The **equipment and items** menu lets you modify your equipment, C-button
@@ -249,10 +260,9 @@ current file, thus restoring all destroyed gold skulltulas. The gold skulltulas
 in the current scene are not affected until the scene is reloaded. **call
 navi** sets Navi's advice timer to a value which will make her want to
 talk to you. This will not have any effect until you enter an area where Navi
-normally appears. The **memory file** selects the memory file to save to and
-load from when using the memory file commands (see
-[2.9 Settings](#29-settings)).
-The current time of day can be manually adjusted, or automatically
+normally appears. **load debug file** loads the default file that used on the
+title screen and when starting the first file on the debug version file select
+menu. The current time of day can be manually adjusted, or automatically
 fast-forwarded to day or night with the corresponding buttons. **epona freed**,
 **carpenters freed**, **intro cutscenes**, and **rewards obtained** let's you
 set and clear various useful flags in the current file. Pressing the checkmark
@@ -275,22 +285,6 @@ saving from the start menu or the Game Over screen. When the file index is set
 to FFh, as it is by default on the title screen, saving will have no effect.
 There's also a **language** and **z targeting** option, which apply to the
 current file.
-
-Save files can be saved to and and loaded from an SD card with the **save to
-disk** and **load from disk** options. Pressing _load from disk_ will bring up
-the file browser. Pressing the name of a save file will load it and return to
-the file menu. The **load file to** and **after loading** options decide where
-in memory the file will be loaded to (the current zelda file, the currently
-selected memfile slot, or both), and what should happen when the loading is
-completed (reload scene, void out, or nothing). The _after loading_ option will
-have no effect when loading only to the current memfile. The file extension
-used for save files on disk is `.ootsave`, and the default filename is `file`.
-The filename can be changed by pressing the name field. Pressing **clear** will
-set the name field to be empty. When the name field is empty, the default
-filename is `untitled`. When saving, pressing the name of a save file in the
-file browser will copy that name to the name field. Pressing accept will save
-the file to the current folder in the file browser with the specified file
-name. If the file exists, you will be prompted to overwrite it.
 
 ### 2.7 Macro
 This menu provies tools for producing tool-assisted gameplay recordings. Press
@@ -323,7 +317,21 @@ slot 1 to use for rerecording. **quick play movie** will start macro playback
 from the start and load the state in slot 0.
 
 Macros and savestates can be saved to and loaded from an SD card using **export
-macro** / **import macro** and **export state** / **import state**.
+macro** / **import macro** and **export state** / **import state**. Pressing
+any of these buttons will open the file browser. When importing, pressing the
+name of a file in the file browser will load it and return to the macro menu.
+When exporting, the filename can be changed by pressing the name field. The
+default name for savestates is a number followed by the name of the scene where
+the state was saved. The numbering starts at zero and increments if there is
+already a file with that number in the current directory. Pressing **clear**
+will set the name field to be empty. When the name field is empty, the default
+filename is `untitled`. Pressing the name of a file will copy that name to the
+name field. Pressing accept will save the file to the current folder in the
+file browser with the specified file name. If the file exists, you will be
+prompted to overwrite it. New directories can be created by pressing the folder
+icon to the left of the name field, inputting a name for the new directory with
+the on-screen keyboard, and then pressing the name to confirm. To cancel, use
+the return command.
 
 _Note:_ Macros override all controller input by default, but this can be
 changed with the **macro input** setting in the settings menu.
@@ -333,8 +341,8 @@ _Note:_ States can not be used in the file select menu or on the n64 logo.
 _See also:_ [4 Issues with savestates](#4-issues-with-savestates).
 
 #### 2.7.1 Settings
-This menu provides advanced settings for macro recording. gz implements certain
-hacks to keep macros in sync (See
+This menu provides advanced settings for savestates and macro recording. gz
+implements certain hacks to keep macros in sync (See
 [5 About frame advancing and recording](#5-about-frame-advancing-and-recording)).
 All hacks are enabled by default. Disabling the hacks can cause issues and
 desyncs, and should only be done if required. For example, when recording a
@@ -345,7 +353,10 @@ recording that particular section).
 The **wii vc camera** setting enables a camera quirk that is present on the Wii
 VC versions of the game. This setting can be used to sync macros that were made
 on Wii VC when played back on N64, or vice versa. It is enabled by default on
-Wii VC versions of gz.
+Wii VC versions of gz. The **ignore state's z-target** option will keep the
+current z-targetting mode when loading states that have a different setting,
+which is useful for practicing with savestates made by someone with different
+preferences.
 
 #### 2.7.2 Virtual controller
 Press the checkbox next to the controller number to override the game's input
@@ -377,8 +388,9 @@ Pressing the anchor button next to a watch will release the watch from the
 watches menu so that it's always visible, even when the menu is closed. When a
 watch is released, a positioning button will appear which lets you change the
 position of the watch on the screen. Holding Z when positioning the watch will
-move it faster. The **visible** option can be unchecked to hide all watches
-globally.
+move it faster. Pressing the wrench icon next to a watch will open the memory
+editor at the address of that watch. The **visible** option can be unchecked to
+hide all watches globally.
 
 Watches can be imported from text files on an SD card by pressing the folder
 icon. Press a watch file to bring up a list of all watches contained in that
@@ -401,10 +413,12 @@ This menu contains various debug features to use for testing;
 -   **actors:** Browse the currently loaded actors, and spawn new actors.
     Select an actor type and use the arrows to scroll between all the loaded
     actors of that type. The address and id of the selected actor is displayed
-    below, as well as the actor variable in that actor instance. The **delete**
-    option deletes the currently selected actor, and the **go to** option
-    teleports Link to the location of that actor. To spawn a new actor, enter
-    an actor id, variable, the x, y, and z components of the position and
+    below, as well as the actor variable in that actor instance. The **kill**
+    option marks the currently selected actor for deletion, and the **go to**
+    option teleports Link to the location of that actor. Pressing **cull zone**
+    will display the field of view for the selected actor. When the actor is
+    outside of its field of view, it will be culled. To spawn a new actor,
+    enter an actor id, variable, the x, y, and z components of the position and
     rotation to spawn the actor at, and press **spawn**. The **fetch from
     link** option loads Link's current position and rotation into the position
     and rotation fields.
@@ -425,8 +439,10 @@ This menu contains various debug features to use for testing;
     memory domains, and the vertical arrows to scroll up and down between
     addresses. Holding Z while scrolling will scroll faster. You can also enter
     an address manually in the address field. To edit memory, select the
-    desired data type and press a memory cell to modify it.
--   **rdb:** Remote debugging interface through ED64v3 USB FIFO. Press **start
+    desired data type and press a memory cell to modify it. The leftmost column
+    shows the starting address of each row of memory cells. Pressing an address
+    will open the watches menu and create a new watch at that address.
+-   **rdb:** Remote debugging interface through ED64 USB FIFO. Press **start
     rdb** to attach the debugger and halt the program, and **stop rdb** to
     detach the debugger. Press **break** to hit a breakpoint on the graph
     thread.
@@ -462,7 +478,6 @@ of loading profile zero. The following settings are saved:
 -   Command button binds.
 -   Activated cheats.
 -   Warp menu age, cutscene index, and entrance index.
--   Disk file loading settings.
 
 The **commands** menu lets you bind commands to custom button combinations
 and/or activate them manually. Pressing the name of a command will activate
@@ -490,6 +505,8 @@ The following commands are available:
 -   **fall:** Makes Link fall through the floor, as if there was no floor.
     *Default: `Z + L`*
 -   **turbo:** Sets Link's linear velocity to 27. *Default: `unbound`*
+-   **noclip:** Toggles noclip, equivalent to the *`L + D-Right`* command in
+    the debug version. *Default: `unbound`*
 -   **file select:** Returns (or proceeds) to the game's file select menu.
     *Default: `B + L`*
 -   **reload scene:** Reloads the current scene, starting from the last scene
@@ -502,11 +519,6 @@ The following commands are available:
     slot. *Default: `D-Left`*
 -   **load state:** Load the state saved in the currently selected state slot.
     *Default: `D-Right`*
--   **save memfile:** Saves the current state of the game to the memory file in
-    the current memory file slot. Everything that would be saved when saving
-    the game normally is saved to the memory file. *Default: `unbound`*
--   **load memfile:** Loads the state of the current memory file.
-    *Default: `unbound`*
 -   **save position:** Saves Link's current position and orientation to the
     current position slot. *Default: `unbound`*
 -   **load position:** Teleports Link to the position in the current position
@@ -514,9 +526,6 @@ The following commands are available:
 -   **previous state:** Selects the previous savestate slot.
     *Default: `unbound`*
 -   **next state:** Selects the next savestate slot. *Default: `unbound`*
--   **previous memfile:** Selects the previous memory file slot.
-    *Default: `unbound`*
--   **next memfile:** Selects the next memory file slot. *Default: `unbound`*
 -   **previous position:** Selects the previous position slot to be used for
     teleportation. *Default: `unbound`*
 -   **next position:** Selects the next position slot to be used for
@@ -673,5 +682,5 @@ following conditions hold;
     RNG is synced up until this point).
 -   The reseed happens on the same macro frame that it was recorded.
 
-If either of these would fail, the RNG is reseeded as normal with an
-unpredictable value.
+If either of these would fail, a warning is displayed and the RNG is reseeded
+as normal with an unpredictable value.
