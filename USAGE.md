@@ -506,7 +506,7 @@ The following commands are available:
     *Default: `Z + L`*
 -   **turbo:** Sets Link's linear velocity to 27. *Default: `unbound`*
 -   **noclip:** Toggles noclip, equivalent to the *`L + D-Right`* command in
-    the debug version. *Default: `unbound`*
+    the debug version. *Default: `L + D-Right`*
 -   **file select:** Returns (or proceeds) to the game's file select menu.
     *Default: `B + L`*
 -   **reload scene:** Reloads the current scene, starting from the last scene
