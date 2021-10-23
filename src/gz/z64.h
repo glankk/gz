@@ -267,16 +267,17 @@ typedef struct
   int16_t           fov;                      /* 0x000C */
   int16_t           unk_0xE;                  /* 0x000E */
                                               /* 0x0010 */
-} z64_camera_params_t;
+} z64_cam_params_t;
 
 typedef struct
 {
   uint16_t          mode;                     /* 0x0000 */
   uint16_t          unk_0x2;                  /* 0x0002 */
-  /* segment address of z64_camera_params_t */
-  uint32_t          seg_params;               /* 0x0004 */
-                                              /* 0x0008 */
-} z64_camera_t;
+  z64_cam_params_t *params;                   /* 0x0004 */
+  char              unk_0x8[0x012C];          /* 0x0008 */
+  z64_xyz_t         input_dir;                /* 0x0134 */
+  char              unk_0x13A[0x0032];        /* 0x013A */
+} z64_camera_t;                               /* 0x016C */
 
 typedef struct
 {
@@ -957,7 +958,7 @@ struct z64_actor_s
   uint8_t           wall_poly_source;         /* 0x007C */
   uint8_t           floor_poly_source;        /* 0x007D */
   int16_t           wall_rot;                 /* 0x007E */
-  float             floor_height;             /* 0x0080 */ //maybe?
+  float             floor_height;             /* 0x0080 */
   float             water_surface_dist;       /* 0x0084 */
   uint16_t          bgcheck_flags;            /* 0x0088 */
   int16_t           unk_0x8A_rot;             /* 0x008A */
@@ -1302,8 +1303,8 @@ typedef struct
   z64_hit_t        *at_list[50];              /* 0x0004 */
   int32_t           n_ac;                     /* 0x00CC */
   z64_hit_t        *ac_list[60];              /* 0x00D0 */
-  int32_t           n_ot;                     /* 0x01C0 */
-  z64_hit_t        *ot_list[50];              /* 0x01C4 */
+  int32_t           n_oc;                     /* 0x01C0 */
+  z64_hit_t        *oc_list[50];              /* 0x01C4 */
                                               /* 0x028C */
 } z64_hit_ctxt_t;
 
@@ -1585,14 +1586,13 @@ typedef struct
                                               /* 0x0080 */
 } z64_gbi_lights_t;
 
-typedef void (*z64_light_handler_t)(z64_gbi_lights_t*, z64_lightn_t*,
-                                    z64_actor_t*);
+typedef void (*z64_light_handler_t)(z64_gbi_lights_t *, z64_lightn_t *,
+                                    z64_actor_t *);
 
 typedef struct
 {
   int8_t            numpoints;
-  // segment address to z64_xyz_t points array
-  uint32_t          points;
+  z64_xyz_t        *points;
 } z64_path_t;
 
 /* game context */
@@ -1612,7 +1612,10 @@ typedef struct
   uint16_t          camera_flag_1;            /* 0x0033E */
   char              unk_0x340[0x016C];        /* 0x00340 */
   int16_t           event_flag;               /* 0x004AC */
-  char              unk_0x4AE[0x02F6];        /* 0x004AE */
+  char              unk_0x4AE[0x02E2];        /* 0x004AE */
+  z64_camera_t     *camera_ptrs[4];           /* 0x00790 */
+  uint16_t          active_camera;            /* 0x007A0 */
+  uint16_t          next_camera;              /* 0x007A2 */
   uint8_t           seq_idx;                  /* 0x007A4 */
   uint8_t           night_sfx;                /* 0x007A5 */
   char              unk_0x7A6[0x0002];        /* 0x007A6 */
@@ -2223,6 +2226,7 @@ z64_extern  int32_t               z64_part_pos;
 z64_extern  int32_t               z64_part_max;
 z64_extern  z64_part_ovl_t        z64_part_ovl_tab[37];
 z64_extern  z64_actor_ovl_t       z64_actor_ovl_tab[471];
+z64_extern  char                  z_camera_c_data[];
 z64_extern  char                  z64_hud_state[];
 z64_extern  char                  z64_event_state_1[];
 z64_extern  uint32_t              z64_letterbox_time;
@@ -2237,6 +2241,7 @@ z64_extern  z64_scene_table_t     z64_scene_table[];
 z64_extern  uint16_t              z64_day_speed;
 z64_extern  z64_sky_image_t       z64_sky_images[9];
 z64_extern  z64_light_handler_t   z64_light_handlers[];
+z64_extern  char                  z_onepointdemo_c_data[];
 z64_extern  z64_map_mark_ovl_t    z64_map_mark_ovl;
 z64_extern  char                  z64_dins_state_1[];
 z64_extern  char                  z64_dins_state_2[];
@@ -2260,6 +2265,7 @@ z64_extern  uint32_t              z64_ocarina_counter;
 z64_extern  uint8_t               z64_ocarina_song_length;
 z64_extern  char                  z64_scarecrow_song[];
 z64_extern  char                  z64_song_ptr[];
+z64_extern  uint8_t               z64_ocarina_button_state;
 z64_extern  uint8_t               z64_sfx_write_pos;
 z64_extern  uint8_t               z64_sfx_read_pos;
 z64_extern  uint8_t               z64_audio_cmd_write_pos;
@@ -2269,6 +2275,7 @@ z64_extern  uint8_t               z64_afx_config_busy;
 z64_extern  uint32_t              z64_random;
 z64_extern  char                  z64_message_state[];
 z64_extern  char                  z64_staff_notes[];
+z64_extern  int16_t               z64_message_select_state;
 z64_extern  int16_t               z64_gameover_countdown;
 z64_extern  z64_pfx_t             z64_pfx;
 z64_extern  char                  z64_fw_state_1[];
@@ -2314,12 +2321,21 @@ void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
 void      z64_SpawnActor              (void *actor_ctxt, z64_game_t *game,
-                                       int actor_id, float x, float y,
+                                       uint16_t actor_id, float x, float y,
                                        float z, uint16_t rx, uint16_t ry,
                                        uint16_t rz, uint16_t variable);
+z64_actor_t *
+          z64_SpawnActorAttachedB     (void *actor_ctxt, z64_actor_t *actor,
+                                       z64_game_t *game, uint16_t actor_id,
+                                       float x, float y, float z, uint16_t rx,
+                                       uint16_t ry, uint16_t rz,
+                                       uint16_t variable);
 void      z64_CreateStaticCollision   (z64_col_ctxt_t *col_ctxt,
                                        z64_game_t *game,
                                        z64_col_lut_t *col_lut);
+void      z64_Camera_ChangeMode       (z64_camera_t *camera, int16_t mode);
+float     z64_Math_SinS               (int16_t angle);
+float     z64_Math_CosS               (int16_t angle);
 void      z64_LoadMinimap             (z64_game_t *game, int room_idx);
 void      z64_SwitchAgeEquips         (void);
 void      z64_UpdateItemButton        (z64_game_t *game, int button_index);

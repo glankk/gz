@@ -30,8 +30,8 @@ static inline int get_irqf(void)
 
 static inline void dcache_inv(const void *ptr, size_t len)
 {
-  uint32_t p = (uint32_t)ptr & ~0xF;
-  uint32_t e = (uint32_t)ptr + len;
+  uintptr_t p = (uintptr_t)ptr & ~0xF;
+  uintptr_t e = (uintptr_t)ptr + len;
   while (p < e) {
     __asm__ ("cache   0x11, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
@@ -40,8 +40,8 @@ static inline void dcache_inv(const void *ptr, size_t len)
 
 static inline void dcache_wbinv(const void *ptr, size_t len)
 {
-  uint32_t p = (uint32_t)ptr & ~0xF;
-  uint32_t e = (uint32_t)ptr + len;
+  uintptr_t p = (uintptr_t)ptr & ~0xF;
+  uintptr_t e = (uintptr_t)ptr + len;
   while (p < e) {
     __asm__ ("cache   0x15, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;
@@ -50,8 +50,8 @@ static inline void dcache_wbinv(const void *ptr, size_t len)
 
 static inline void dcache_wb(const void *ptr, size_t len)
 {
-  uint32_t p = (uint32_t)ptr & ~0xF;
-  uint32_t e = (uint32_t)ptr + len;
+  uintptr_t p = (uintptr_t)ptr & ~0xF;
+  uintptr_t e = (uintptr_t)ptr + len;
   while (p < e) {
     __asm__ ("cache   0x19, 0x0000(%[p]);" :: [p] "r"(p));
     p += 0x10;

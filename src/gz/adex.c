@@ -423,19 +423,19 @@ enum adex_error adex_eval(struct adex *adex, uint32_t *result)
         case OP_B:
           if (!validate_addr(ops[0], 1))
             goto addr_err;
-          value = (sign ? *(int8_t*)ops[0] : *(uint8_t*)ops[0]);
+          value = (sign ? *(int8_t *)ops[0] : *(uint8_t *)ops[0]);
           break;
         case OP_HZ:
           sign = 0;
         case OP_H:
           if (!validate_addr(ops[0], 2))
             goto addr_err;
-          value = (sign ? *(int16_t*)ops[0] : *(uint16_t*)ops[0]);
+          value = (sign ? *(int16_t *)ops[0] : *(uint16_t *)ops[0]);
           break;
         case OP_W:
           if (!validate_addr(ops[0], 4))
             goto addr_err;
-          value = *(uint32_t*)ops[0];
+          value = *(uint32_t *)ops[0];
           break;
         /* arithmetic operators */
         case OP_ADD: value = ops[0] + ops[1]; break;

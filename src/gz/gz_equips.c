@@ -79,7 +79,7 @@ struct menu *gz_equips_menu(void)
                            t_icon_gray, Z64_ITEM_KOKIRI_SWORD + i, 0xFFFFFF,
                            .5f, 1,
                            equip_switch_proc,
-                           (void*)((i / 3) | ((1 + i % 3) << 4)));
+                           (void *)((i / 3) | ((1 + i % 3) << 4)));
     item->pxoffset = i % 3 * 18;
     item->pyoffset = i / 3 * 18;
   }
@@ -90,28 +90,28 @@ struct menu *gz_equips_menu(void)
                             &z64_file.button_items[Z64_ITEMBTN_B],
                             NULL, t_ab, 0, NULL, 0,
                             input_button_color[14], .5625f, 0.f, 0.f,
-                            button_item_proc, (void*)Z64_ITEMBTN_B);
+                            button_item_proc, (void *)Z64_ITEMBTN_B);
   item->pxoffset = 0;
   item->pyoffset = 74;
   item = item_option_create(&menu, 0, 2, 91, NULL,
                             &z64_file.button_items[Z64_ITEMBTN_CL],
                             NULL, t_ab, 0, t_ab, 2,
                             input_button_color[1], .5f, 0.f, 0.f,
-                            button_item_proc, (void*)Z64_ITEMBTN_CL);
+                            button_item_proc, (void *)Z64_ITEMBTN_CL);
   item->pxoffset = 20;
   item->pyoffset = 74;
   item = item_option_create(&menu, 0, 2, 91, NULL,
                             &z64_file.button_items[Z64_ITEMBTN_CD],
                             NULL, t_ab, 0, t_ab, 3,
                             input_button_color[2], .5f, 0.f, 0.f,
-                            button_item_proc, (void*)Z64_ITEMBTN_CD);
+                            button_item_proc, (void *)Z64_ITEMBTN_CD);
   item->pxoffset = 34;
   item->pyoffset = 86;
   item = item_option_create(&menu, 0, 2, 91, NULL,
                             &z64_file.button_items[Z64_ITEMBTN_CR],
                             NULL, t_ab, 0, t_ab, 4,
                             input_button_color[0], .5, 0.f, 0.f,
-                            button_item_proc, (void*)Z64_ITEMBTN_CR);
+                            button_item_proc, (void *)Z64_ITEMBTN_CR);
   item->pxoffset = 48;
   item->pyoffset = 74;
 

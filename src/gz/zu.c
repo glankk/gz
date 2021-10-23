@@ -11,33 +11,34 @@ static const size_t poly_opa_length = 0x17E0;
 static const size_t poly_xlu_length = 0x0800;
 static const size_t overlay_length  = 0x0400;
 
-void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr)
+void *zu_seg_locate(const z64_stab_t *stab, void *ptr)
 {
-  uint8_t seg = (seg_addr >> 24) & 0x0000000F;
-  uint32_t off = (seg_addr >> 0) & 0x00FFFFFF;
+  uintptr_t addr = (uintptr_t)ptr;
+  uint8_t seg = (addr >> 24) & 0x0000000F;
+  uint32_t off = (addr >> 0) & 0x00FFFFFF;
   uint32_t phys = stab->seg[seg] + off;
   if (!phys)
     return NULL;
-  return (void*)MIPS_PHYS_TO_KSEG0(phys);
+  return (void *)MIPS_PHYS_TO_KSEG0(phys);
 }
 
-void *zu_zseg_locate(uint32_t seg_addr)
+void *zu_zseg_locate(void *ptr)
 {
-  return zu_seg_locate(&z64_stab, seg_addr);
+  return zu_seg_locate(&z64_stab, ptr);
 }
 
-void *zu_seg_relocate(void *p_seg_addr, const z64_stab_t *stab)
+void *zu_seg_relocate(void *p_ptr, const z64_stab_t *stab)
 {
-  uint32_t *p_seg_addr_u32 = p_seg_addr;
-  uint32_t seg_addr = *p_seg_addr_u32;
-  uint8_t seg = (seg_addr >> 24) & 0x0000000F;
-  uint32_t off = (seg_addr >> 0) & 0x00FFFFFF;
-  return (void*)(*p_seg_addr_u32 = MIPS_PHYS_TO_KSEG0(stab->seg[seg] + off));
+  uintptr_t *p_addr = p_ptr;
+  uintptr_t addr = *p_addr;
+  uint8_t seg = (addr >> 24) & 0x0000000F;
+  uint32_t off = (addr >> 0) & 0x00FFFFFF;
+  return (void *)(*p_addr = MIPS_PHYS_TO_KSEG0(stab->seg[seg] + off));
 }
 
-void *zu_zseg_relocate(void *p_seg_addr)
+void *zu_zseg_relocate(void *p_ptr)
 {
-  return zu_seg_relocate(p_seg_addr, &z64_stab);
+  return zu_seg_relocate(p_ptr, &z64_stab);
 }
 
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size)
@@ -90,7 +91,7 @@ void *zu_sr_header(void *sr, int header_index, const z64_stab_t *stab)
           break;
         }
         case 0x18: {
-          uint32_t *ah_list = zu_seg_locate(stab, c_lo);
+          void **ah_list = zu_seg_locate(stab, (void *)c_lo);
           for (int i = 0; i < header_index; ++i, ++ah_list)
             if (*ah_list != 0)
               header = zu_seg_locate(stab, *ah_list);
@@ -122,11 +123,9 @@ void zu_scene_rooms(const void *scene, struct zu_file *ftab, int ftab_size,
         int room_list_size = (c_hi >> 16) & 0x000000FF;
         if (n_rooms)
           *n_rooms = room_list_size;
-        uint32_t *room_list = zu_seg_locate(stab, c_lo);
-        for (int i = 0; i < room_list_size && i < ftab_size; ++i) {
-          ftab[i].vrom_start = *room_list++;
-          ftab[i].vrom_end = *room_list++;
-        }
+        struct zu_file *room_list = zu_seg_locate(stab, (struct zu_file *)c_lo);
+        for (int i = 0; i < room_list_size && i < ftab_size; ++i)
+          ftab[i] = room_list[i];
         eof = 1;
         break;
       }
@@ -155,25 +154,25 @@ void zu_room_mesh(const void *room, struct zu_mesh *mesh,
         {
           uint8_t   type;
           uint8_t   n_entries;
-          uint32_t  start;
-          uint32_t  end;
-        } *mesh_header = zu_seg_locate(stab, c_lo);
-        uint32_t *dl = zu_seg_locate(stab, mesh_header->start);
+          Gfx     **start;
+          Gfx     **end;
+        } *mesh_header = zu_seg_locate(stab, (void *)c_lo);
+        Gfx **dl = zu_seg_locate(stab, mesh_header->start);
         for (int i = 0; i < mesh_header->n_entries; ++i) {
           if (mesh_header->type == 0x02) {
             dl += 2;
-            uint32_t near_dl = *dl++;
+            Gfx *near_dl = *dl++;
             if (near_dl)
               vector_push_back(&entries[ZU_MESH_NEAR], 1, &near_dl);
-            uint32_t far_dl = *dl++;
+            Gfx *far_dl = *dl++;
             if (far_dl)
               vector_push_back(&entries[ZU_MESH_FAR], 1, &far_dl);
           }
           else {
-            uint32_t opa_dl = *dl++;
+            Gfx *opa_dl = *dl++;
             if (opa_dl)
               vector_push_back(&entries[ZU_MESH_OPA], 1, &opa_dl);
-            uint32_t xlu_dl = *dl++;
+            Gfx *xlu_dl = *dl++;
             if (xlu_dl)
               vector_push_back(&entries[ZU_MESH_XLU], 1, &xlu_dl);
           }
@@ -198,7 +197,7 @@ void zu_mesh_destroy(struct zu_mesh *mesh)
 
 void zu_vlist_init(struct zu_vlist *vlist)
 {
-  vector_init(&vlist->v, sizeof(Vtx*));
+  vector_init(&vlist->v, sizeof(Vtx *));
 }
 
 void zu_vlist_add_dl(struct zu_vlist *vlist,
@@ -226,7 +225,7 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
       }
       case G_VTX: {
         uint8_t vn = (dl->hi >> 12) & 0x000000FF;
-        Vtx *v = zu_seg_locate(&t_stab, dl->lo);
+        Vtx *v = zu_seg_locate(&t_stab, (Vtx *)dl->lo);
         while (vn--) {
           _Bool found = 0;
           for (size_t i = 0; i < vlist->v.size; ++i) {
@@ -243,7 +242,7 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
         break;
       }
       case G_BRANCH_Z: {
-        zu_vlist_add_dl(vlist, NULL, zu_seg_locate(&t_stab, rdphalf_1));
+        zu_vlist_add_dl(vlist, NULL, zu_seg_locate(&t_stab, (Gfx *)rdphalf_1));
         break;
       }
       case G_RDPHALF_1: {
@@ -251,7 +250,7 @@ void zu_vlist_add_dl(struct zu_vlist *vlist,
         break;
       }
       case G_DL: {
-        zu_vlist_add_dl(vlist, NULL, zu_seg_locate(&t_stab, dl->lo));
+        zu_vlist_add_dl(vlist, NULL, zu_seg_locate(&t_stab, (Gfx *)dl->lo));
         break;
       }
       case G_ENDDL: {
@@ -342,9 +341,9 @@ void zu_reset(void)
     MIPS_LW(MIPS_T0, 0x0024, MIPS_T5),
     MIPS_LUI(MIPS_T3, 0xB000),
   };
-  memcpy((void*)0xA4001000, imem, sizeof(imem));
+  memcpy((void *)0xA4001000, imem, sizeof(imem));
   /* copy cic boot code to rsp dmem */
-  memcpy((void*)0xA4000040, (void*)0xB0000040, 0x0FC0);
+  memcpy((void *)0xA4000040, (void *)0xB0000040, 0x0FC0);
   /* simulate boot from cic boot code */
   __asm__ (".set    push;"
            ".set    noat;"
@@ -841,10 +840,10 @@ void zu_reloc_gfx(int src_gfx_idx, int src_cimg_idx)
     &gfx->poly_xlu,
     &gfx->overlay,
   };
-  uint32_t src_gfx = (uint32_t)&z64_disp[src_gfx_idx * z64_disp_size];
-  uint32_t dst_gfx = (uint32_t)&z64_disp[(gfx->frame_count_1 & 1) * z64_disp_size];
-  uint32_t src_cimg = (uint32_t)&z64_cimg[src_cimg_idx * z64_cimg_size];
-  uint32_t dst_cimg = (uint32_t)&z64_cimg[(gfx->frame_count_2 & 1) * z64_cimg_size];
+  uintptr_t src_gfx = (uintptr_t)&z64_disp[src_gfx_idx * z64_disp_size];
+  uintptr_t dst_gfx = (uintptr_t)&z64_disp[(gfx->frame_count_1 & 1) * z64_disp_size];
+  uintptr_t src_cimg = (uintptr_t)&z64_cimg[src_cimg_idx * z64_cimg_size];
+  uintptr_t dst_cimg = (uintptr_t)&z64_cimg[(gfx->frame_count_2 & 1) * z64_cimg_size];
   for (int i = 0; i < sizeof(z_disp) / sizeof(*z_disp); ++i) {
     z64_disp_buf_t *disp = z_disp[i];
     for (Gfx *p = disp->buf; p != disp->p; ++p) {

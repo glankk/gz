@@ -53,14 +53,14 @@ static void save_ovl(void **p, void *addr,
   /* compute segment addresses */
   char *start = addr;
   char *end = start + (vrom_end - vrom_start);
-  uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
+  uint32_t *hdr_off = (void *)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
-  hdr = (void*)(end - *hdr_off);
+  hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
@@ -137,14 +137,14 @@ static void load_ovl(void **p, void **p_addr,
   /* compute segment addresses */
   char *start = addr;
   char *end = start + (vrom_end - vrom_start);
-  uint32_t *hdr_off = (void*)(end - sizeof(*hdr_off));
+  uint32_t *hdr_off = (void *)(end - sizeof(*hdr_off));
   if (*hdr_off == 0)
     return;
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
     Z64_VERSION == Z64_OOT12
-  hdr = (void*)(end - *hdr_off);
+  hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
@@ -177,9 +177,9 @@ static void load_ovl(void **p, void **p_addr,
   serial_read(p, bss, hdr->bss_size);
 }
 
-static void reloc_col_hdr(uint32_t seg_addr)
+static void reloc_col_hdr(z64_col_hdr_t *col_hdr)
 {
-  z64_col_hdr_t *col_hdr = zu_zseg_locate(seg_addr);
+  col_hdr = zu_zseg_locate(col_hdr);
   zu_zseg_relocate(&col_hdr->vtx);
   zu_zseg_relocate(&col_hdr->poly);
   zu_zseg_relocate(&col_hdr->type);
@@ -440,25 +440,25 @@ static void grayscale_texture(uint32_t *pixels, uint16_t n_pixels)
   }
 }
 
-static _Bool addr_comp(void *a, void *b)
+static _Bool addr_comp(void *p_a, void *p_b)
 {
-  uint32_t *a_u32 = a;
-  uint32_t *b_u32 = b;
-  return *a_u32 < *b_u32;
+  void **a = p_a;
+  void **b = p_b;
+  return (uintptr_t)*a < (uintptr_t)*b;
 }
 
-uint32_t save_state(void *state)
+uint32_t save_state(struct state_meta *state)
 {
   void *p = state;
 
   /* allocate metadata */
-  serial_skip(&p, sizeof(struct state_meta));
+  serial_skip(&p, sizeof(*state));
 
   /* save sequencer info */
   for (int i = 0; i < 4; ++i) {
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = &z64_afx[0x3530 + i * 0x0160];
-    _Bool seq_active = (*(uint8_t*)(seq) & 0x80) || z64_afx_config_busy;
+    _Bool seq_active = (*(uint8_t *)(seq) & 0x80) || z64_afx_config_busy;
     serial_write(&p, &seq_active, sizeof(seq_active));
     if (seq_active) {
       serial_write(&p, &sc->stop_cmd_timer, sizeof(sc->stop_cmd_timer));
@@ -474,8 +474,8 @@ uint32_t save_state(void *state)
     serial_write(&p, &sc->vp_factors, sizeof(sc->vp_factors));
     uint16_t seq_ch_mute = 0;
     for (int j = 0; j < 16; ++j) {
-      char *ch = *(void**)(seq + 0x0038 + j * 0x0004);
-      _Bool ch_mute = *(uint8_t*)(ch) & 0x10;
+      char *ch = *(void **)(seq + 0x0038 + j * 0x0004);
+      _Bool ch_mute = *(uint8_t *)(ch) & 0x10;
       seq_ch_mute |= ch_mute << j;
     }
     serial_write(&p, &seq_ch_mute, sizeof(seq_ch_mute));
@@ -599,7 +599,7 @@ uint32_t save_state(void *state)
   }
   serial_write(&p, &eot, sizeof(eot));
   /* save camera shake effects */
-  serial_write(&p, &z64_n_camera_shake, 0x0002);
+  serial_write(&p, &z64_n_camera_shake, sizeof(z64_n_camera_shake));
   serial_write(&p, z64_camera_shake, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
@@ -659,15 +659,376 @@ uint32_t save_state(void *state)
   /* sound state */
   serial_write(&p, z64_sound_state, 0x004C);
 
-  /* event state */
-  serial_write(&p, z64_event_state_1, 0x0008);
-  serial_write(&p, z64_event_state_2, 0x0004);
-  /* event camera parameters */
-  for (int i = 0; i < 24; ++i)
-    serial_write(&p, &z64_event_camera[0x28 * i + 0x10], 0x0018);
+  /*
+   *  Variables from z_camera.c(.data) (zeldaret/oot.git@e632b9a)
+   *  Overhead limit is 8 bytes per record
+   *    sInitRegs
+   *    sNextUID
+   *    sCameraInterfaceFlags
+   *    sCameraInterfaceAlpha
+   *    sCameraShrinkWindowVal
+   *    D_8011D3AC
+   *    sDemo5PrevAction12Frame
+   *    sDemo5PrevSfxFrame
+   *    D_8011D3F0
+   *    D_8011D6AC[1].atTargetInit.z
+   *    D_8011D6AC[1].eyeTargetInit.x
+   *    D_8011D6AC[1].timerInit
+   *    D_8011D724[1].eyeTargetInit.x
+   *    D_8011D724[1].timerInit
+   *    D_8011D79C[0].actionFlags
+   *    D_8011D79C[0].atTargetInit.x
+   *    D_8011D79C[0].atTargetInit.y
+   *    D_8011D79C[0].atTargetInit.z
+   *    D_8011D79C[0].eyeTargetInit.x
+   *    D_8011D79C[0].eyeTargetInit.y
+   *    D_8011D79C[0].eyeTargetInit.z
+   *    D_8011D79C[1].timerInit
+   *    D_8011D83C[0].timerInit
+   *    D_8011D88C[0].timerInit
+   *    D_8011D8DC[0].atTargetInit.x
+   *    D_8011D8DC[0].atTargetInit.z
+   *    D_8011D8DC[0].eyeTargetInit.x
+   *    D_8011D8DC[0].eyeTargetInit.z
+   *    D_8011D8DC[0].rollTargetInit
+   *    D_8011D8DC[0].timerInit
+   *    D_8011D8DC[1].timerInit
+   *    D_8011D954[0].atTargetInit.y
+   *    D_8011D954[0].eyeTargetInit.y
+   *    D_8011D954[0].rollTargetInit
+   *    D_8011D954[0].timerInit
+   *    D_8011D954[1].actionFlags
+   *    D_8011D954[1].atTargetInit.y
+   *    D_8011D954[1].rollTargetInit
+   *    D_8011D954[2].actionFlags
+   *    D_8011D954[2].timerInit
+   *    D_8011D9F4[0].atTargetInit.z
+   *    D_8011D9F4[0].eyeTargetInit.x
+   *    D_8011D9F4[0].eyeTargetInit.z
+   *    D_8011D9F4[0].rollTargetInit
+   *    D_8011D9F4[0].timerInit
+   *    D_8011D9F4[1].actionFlags
+   *    D_8011D9F4[1].rollTargetInit
+   *    D_8011D9F4[1].timerInit
+   *    D_8011DB08
+   *    D_8011DB0C
+   *    sOOBTimer
+   *    D_8015CE50
+   *    D_8015CE54
+   *    D_8015CE58.pos.x
+   *    D_8015CE58.pos.y
+   *    D_8015CE58.pos.z
+   *
+   *    Offsets from the z_camera.c(.data) section start are different from
+   *    mq-e-debug because the following are missing from release versions
+   *      sOREGInit             0x0000 - 0x006C (- 0x006C)
+   *      sOREGInitCnt          0x006C - 0x0070 (- 0x0070)
+   *      sCameraSettingNames   0x00AC - 0x03C4 (- 0x0388)
+   *      sCameraModeNames      0x03C4 - 0x04C0 (- 0x0484)
+   *      sDbgModeIdx           0x34B8 - 0x34BC (- 0x0488)
+   *      sCameraFunctionNames  0x3518 - 0x3778 (- 0x06E8)
+   *      D_8011DAFC            0x3C1C - 0x3C28 (- 0x06F4)
+   *
+   *    .bss variables are covered by z64_camera_state
+   */
+  serial_write(&p, &z_camera_c_data[0x302C], 0x001C); /* 6b overhead */
+  serial_write(&p, &z_camera_c_data[0x3088], 0x0008);
+  serial_write(&p, &z_camera_c_data[0x30E0], 0x0004);
+  serial_write(&p, &z_camera_c_data[0x3124], 0x0008);
+  serial_write(&p, &z_camera_c_data[0x3110], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x31A0], 0x0004);
+  serial_write(&p, &z_camera_c_data[0x3188], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x31D4], 0x0001);
+  serial_write(&p, &z_camera_c_data[0x31E4], 0x001E); /* 4b overhead */
+  serial_write(&p, &z_camera_c_data[0x3278], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x32C8], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3324], 0x0018); /* 8b overhead */
+  serial_write(&p, &z_camera_c_data[0x331A], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3318], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3340], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x33A0], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_camera_c_data[0x3392], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3390], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x33B4], 0x0001);
+  serial_write(&p, &z_camera_c_data[0x33C8], 0x0004);
+  serial_write(&p, &z_camera_c_data[0x33BA], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x33DC], 0x0006); /* 3b overhead */
+  serial_write(&p, &z_camera_c_data[0x3444], 0x0010); /* 4b overhead */
+  serial_write(&p, &z_camera_c_data[0x3432], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3430], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3454], 0x0008); /* 5b overhead */
+  serial_write(&p, &z_camera_c_data[0x3458], 0x0002);
+  serial_write(&p, &z_camera_c_data[0x3534], 0x000C); /* 4b overhead */
 
-  /* oob timer */
-  serial_write(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+  /*
+   *  Variables from z_onepointdemo.c(.data) (zeldaret/oot.git@e632b9a)
+   *  Overhead limit is 8 bytes per record
+   *    sPrevFrameCs1100
+   *    D_8012013C[10].pos
+   *    D_8012013C[11].pos
+   *    D_8012021C[10].pos
+   *    D_8012021C[11].pos
+   *    D_801204D4[12].pos
+   *    D_801205B4[12].pos
+   *    D_801208EC[0].fovTargetInit
+   *    D_801208EC[0].atTargetInit
+   *    D_801208EC[0].eyeTargetInit
+   *    D_801208EC[1].timerInit
+   *    D_801208EC[1].fovTargetInit
+   *    D_801208EC[1].lerpStepScale
+   *    D_801208EC[1].atTargetInit
+   *    D_801208EC[1].eyeTargetInit
+   *    D_80120964[0].fovTargetInit
+   *    D_80120964[0].atTargetInit
+   *    D_80120964[0].eyeTargetInit
+   *    D_80120964[1].timerInit
+   *    D_80120964[1].eyeTargetInit.y
+   *    D_801209B4[0].fovTargetInit
+   *    D_801209B4[0].atTargetInit
+   *    D_801209B4[0].eyeTargetInit
+   *    D_801209B4[1].atTargetInit.y
+   *    D_801209B4[1].eyeTargetInit
+   *    D_80120ACC[0].atTargetInit.x
+   *    D_80120ACC[0].eyeTargetInit.x
+   *    D_80120B94[0].atTargetInit.x
+   *    D_80120B94[0].atTargetInit.z
+   *    D_80120B94[0].eyeTargetInit.x
+   *    D_80120B94[0].eyeTargetInit.y
+   *    D_80120B94[0].eyeTargetInit.z
+   *    D_80120B94[1].atTargetInit.x
+   *    D_80120B94[1].atTargetInit.z
+   *    D_80120B94[1].eyeTargetInit.x
+   *    D_80120B94[1].eyeTargetInit.y
+   *    D_80120B94[1].eyeTargetInit.z
+   *    D_80120B94[2].atTargetInit.x
+   *    D_80120B94[2].atTargetInit.z
+   *    D_80120B94[2].eyeTargetInit.x
+   *    D_80120B94[2].eyeTargetInit.y
+   *    D_80120B94[2].eyeTargetInit.z
+   *    D_80120B94[3].atTargetInit.x
+   *    D_80120B94[3].atTargetInit.z
+   *    D_80120B94[3].eyeTargetInit.x
+   *    D_80120B94[3].eyeTargetInit.y
+   *    D_80120B94[3].eyeTargetInit.z
+   *    D_80120B94[4].atTargetInit.x
+   *    D_80120B94[4].atTargetInit.z
+   *    D_80120B94[4].eyeTargetInit.x
+   *    D_80120B94[4].eyeTargetInit.y
+   *    D_80120B94[4].eyeTargetInit.z
+   *    D_80120B94[5].atTargetInit.x
+   *    D_80120B94[5].atTargetInit.z
+   *    D_80120B94[5].eyeTargetInit.x
+   *    D_80120B94[5].eyeTargetInit.y
+   *    D_80120B94[5].eyeTargetInit.z
+   *    D_80120B94[6].atTargetInit.x
+   *    D_80120B94[6].atTargetInit.z
+   *    D_80120B94[6].eyeTargetInit.x
+   *    D_80120B94[6].eyeTargetInit.y
+   *    D_80120B94[6].eyeTargetInit.z
+   *    D_80120B94[7].atTargetInit.x
+   *    D_80120B94[7].atTargetInit.z
+   *    D_80120B94[7].eyeTargetInit.x
+   *    D_80120B94[7].eyeTargetInit.y
+   *    D_80120B94[7].eyeTargetInit.z
+   *    D_80120B94[8].atTargetInit.x
+   *    D_80120B94[8].atTargetInit.z
+   *    D_80120B94[8].eyeTargetInit.x
+   *    D_80120B94[8].eyeTargetInit.y
+   *    D_80120B94[8].eyeTargetInit.z
+   *    D_80120B94[9].atTargetInit.x
+   *    D_80120B94[9].atTargetInit.z
+   *    D_80120B94[9].eyeTargetInit.x
+   *    D_80120B94[9].eyeTargetInit.y
+   *    D_80120B94[9].eyeTargetInit.z
+   *    D_80120B94[10].atTargetInit.x
+   *    D_80120B94[10].atTargetInit.z
+   *    D_80120B94[10].eyeTargetInit.x
+   *    D_80120B94[10].eyeTargetInit.y
+   *    D_80120B94[10].eyeTargetInit.z
+   *    D_80120D4C[0].atTargetInit.x
+   *    D_80120D4C[0].atTargetInit.z
+   *    D_80120D4C[0].eyeTargetInit.x
+   *    D_80120D4C[0].eyeTargetInit.y
+   *    D_80120D4C[0].eyeTargetInit.z
+   *    D_80120D4C[1].atTargetInit.x
+   *    D_80120D4C[1].atTargetInit.z
+   *    D_80120D4C[1].eyeTargetInit.x
+   *    D_80120D4C[1].eyeTargetInit.y
+   *    D_80120D4C[1].eyeTargetInit.z
+   *    D_80120D4C[2].atTargetInit.x
+   *    D_80120D4C[2].atTargetInit.z
+   *    D_80120D4C[2].eyeTargetInit.x
+   *    D_80120D4C[2].eyeTargetInit.y
+   *    D_80120D4C[2].eyeTargetInit.z
+   *    D_80120D4C[3].atTargetInit.x
+   *    D_80120D4C[3].atTargetInit.z
+   *    D_80120D4C[3].eyeTargetInit.x
+   *    D_80120D4C[3].eyeTargetInit.y
+   *    D_80120D4C[3].eyeTargetInit.z
+   *    D_80120D4C[4].atTargetInit.x
+   *    D_80120D4C[4].atTargetInit.z
+   *    D_80120D4C[4].eyeTargetInit.x
+   *    D_80120D4C[4].eyeTargetInit.y
+   *    D_80120D4C[4].eyeTargetInit.z
+   *    D_80120D4C[5].atTargetInit.x
+   *    D_80120D4C[5].atTargetInit.z
+   *    D_80120D4C[5].eyeTargetInit.x
+   *    D_80120D4C[5].eyeTargetInit.y
+   *    D_80120D4C[5].eyeTargetInit.z
+   *    D_80120D4C[6].atTargetInit.x
+   *    D_80120D4C[6].atTargetInit.z
+   *    D_80120D4C[6].eyeTargetInit.x
+   *    D_80120D4C[6].eyeTargetInit.y
+   *    D_80120D4C[6].eyeTargetInit.z
+   *    D_80120FA4[0].eyeTargetInit.x
+   *    D_80120FA4[2].eyeTargetInit.x
+   *    D_80121184[0].fovTargetInit
+   *    D_80121184[0].atTargetInit.x
+   *    D_80121184[0].atTargetInit.y
+   *    D_80121184[0].atTargetInit.z
+   *    D_80121184[0].eyeTargetInit
+   *    D_801211D4[0].atTargetInit.x
+   *    D_801211D4[0].atTargetInit.y
+   *    D_801211D4[0].atTargetInit.z
+   *    D_801211D4[0].eyeTargetInit.x
+   *    D_801211D4[0].eyeTargetInit.y
+   *    D_801211D4[0].eyeTargetInit.z
+   *    D_8012133C[0].eyeTargetInit
+   *    D_801213B4[0].eyeTargetInit.y
+   *    D_801213B4[2].atTargetInit.y
+   *    D_801213B4[3].eyeTargetInit.x
+   *    D_8012151C[0].timerInit
+   *    D_8012156C[0].atTargetInit.x
+   *    D_8012156C[0].eyeTargetInit.x
+   *    D_8012156C[1].timerInit
+   *    D_8012156C[1].atTargetInit.x
+   *    D_8012156C[1].eyeTargetInit.x
+   *    D_801215BC[0].timerInit
+   *    D_80121C24[0].fovTargetInit
+   *    D_80121C24[0].atTargetInit
+   *    D_80121C24[0].eyeTargetInit
+   *    D_80121D3C[2].timerInit
+   *    D_80121F1C[0].fovTargetInit
+   *    D_80121F1C[0].atTargetInit
+   *    D_80121F1C[0].eyeTargetInit
+   *    D_80121FBC[0].fovTargetInit
+   *    D_80121FBC[0].atTargetInit
+   *    D_80121FBC[0].eyeTargetInit
+   *    D_801220D4[0].fovTargetInit
+   *    D_801220D4[0].atTargetInit
+   *    D_801220D4[0].eyeTargetInit
+   *    D_801220D4[1].rollTargetInit
+   *    D_801220D4[1].atTargetInit.x
+   *    D_801220D4[1].atTargetInit.y
+   *    D_801220D4[1].eyeTargetInit.x
+   *    D_801220D4[1].eyeTargetInit.y
+   *    D_801220D4[2].rollTargetInit
+   *    D_80122714[1].timerInit
+   *    D_80122CB4[1].timerInit
+   *    D_80122D04[1].timerInit
+   *    D_80122E44[0][0].atTargetInit.y
+   *    D_80122E44[0][5].atTargetInit
+   *    D_80122E44[1][0].atTargetInit.y
+   *    D_80122E44[1][5].atTargetInit
+   *    D_8012313C[0].rollTargetInit
+   *    D_8012313C[0].atTargetInit.y
+   *    D_8012313C[0].eyeTargetInit.y
+   *    D_8012313C[1].atTargetInit.y
+   *    D_801231B4[0].eyeTargetInit.z
+   *    D_801231B4[2].atTargetInit.z
+   *    D_801231B4[3].timerInit
+   *    D_801231B4[3].fovTargetInit
+   *    D_801231B4[3].atTargetInit
+   *    D_801231B4[3].eyeTargetInit
+   *    D_80123254[0].fovTargetInit
+   *    D_80123254[0].atTargetInit
+   *    D_80123254[0].eyeTargetInit
+   *    D_80123254[1].timerInit
+   *    D_801232A4[0].fovTargetInit
+   *    D_801232A4[0].atTargetInit
+   *    D_801232A4[0].eyeTargetInit
+   *    D_80123894[0].fovTargetInit
+   *    D_80123894[0].atTargetInit
+   *    D_80123894[0].eyeTargetInit
+   *    D_80123894[1].atTargetInit.y
+   *    D_80123894[1].eyeTargetInit.y
+   *    D_8012390C[0].fovTargetInit
+   *    D_8012390C[0].atTargetInit
+   *    D_8012390C[0].eyeTargetInit
+   *    D_8012395C[0].fovTargetInit
+   *    D_8012395C[0].atTargetInit
+   *    D_8012395C[0].eyeTargetInit
+   *    D_801239D4[1].timerInit
+   */
+  serial_write(&p, &z_onepointdemo_c_data[0x0008], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x00B4], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x00C4], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x0194], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x01A4], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x046C], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x054C], 0x0006);
+  serial_write(&p, &z_onepointdemo_c_data[0x07C4], 0x0048); /* 10b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x083C], 0x0026); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x087C], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x088C], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x08C0], 0x0014); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x09AC], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0A74], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0A9C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0AC4], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0AEC], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0B14], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0B3C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0B64], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0B8C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0BB4], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0BDC], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0C04], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0C2C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0C54], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0C7C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0CA4], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0CCC], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0CF4], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0D1C], 0x0018); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x0E90], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x0EE0], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x105C], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x10B4], 0x0018);
+  serial_write(&p, &z_onepointdemo_c_data[0x1228], 0x000C);
+  serial_write(&p, &z_onepointdemo_c_data[0x12A4], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x12E8], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x1318], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x13F0], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x144C], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1468], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x1474], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1490], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x1AFC], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1C60], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x1DF4], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1E94], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1FAC], 0x0044); /* 22b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x1FFA], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x2610], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x2BB0], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x2C00], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x2D28], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x2DEC], 0x000C);
+  serial_write(&p, &z_onepointdemo_c_data[0x2E40], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x2F04], 0x000C);
+  serial_write(&p, &z_onepointdemo_c_data[0x3012], 0x0002);
+  serial_write(&p, &z_onepointdemo_c_data[0x3020], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x3048], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x30A8], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x30EC], 0x0004);
+  serial_write(&p, &z_onepointdemo_c_data[0x3100], 0x0052); /* 22b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x317C], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x376C], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x37A0], 0x0010); /* 8b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x37E4], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x3834], 0x0020); /* 4b overhead */
+  serial_write(&p, &z_onepointdemo_c_data[0x38D0], 0x0002);
 
   /* countdown to gameover screen */
   serial_write(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
@@ -676,11 +1037,6 @@ uint32_t save_state(void *state)
   serial_write(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
-  serial_write(&p, z64_dins_state_1, 0x0004);
-  serial_write(&p, &z64_dins_state_2[0x0006], 0x0002);
-  serial_write(&p, &z64_dins_state_2[0x0014], 0x0004);
-  serial_write(&p, &z64_dins_state_2[0x0020], 0x0004);
-  serial_write(&p, &z64_dins_state_2[0x003C], 0x0004);
   serial_write(&p, z64_fw_state_1, 0x0004);
   serial_write(&p, z64_fw_state_2, 0x0004);
 
@@ -694,6 +1050,9 @@ uint32_t save_state(void *state)
 
   /* message state */
   serial_write(&p, z64_message_state, 0x0028);
+  if (state->state_version >= 0x0004)
+    serial_write(&p, &z64_message_select_state,
+                 sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
   /* save display lists */
@@ -720,10 +1079,8 @@ uint32_t save_state(void *state)
       serial_write(&p, disp_buf->d, (e - disp_buf->d) * s);
     }
     /* save counters */
-    serial_write(&p, &gfx->frame_count_1,
-                 sizeof(gfx->frame_count_1));
-    serial_write(&p, &gfx->frame_count_2,
-                 sizeof(gfx->frame_count_2));
+    serial_write(&p, &gfx->frame_count_1, sizeof(gfx->frame_count_1));
+    serial_write(&p, &gfx->frame_count_2, sizeof(gfx->frame_count_2));
   }
   else
     serial_write(&p, &eot, sizeof(eot));
@@ -748,6 +1105,9 @@ uint32_t save_state(void *state)
 
   /* save ocarina state */
   serial_write(&p, z64_ocarina_state, 0x0060);
+  if (state->state_version >= 0x0004)
+    serial_write(&p, &z64_ocarina_button_state,
+                 sizeof(z64_ocarina_button_state));
   /* ocarina minigame parameters */
   serial_write(&p, &z64_ocarina_state[0x0068], 0x0001);
   serial_write(&p, &z64_ocarina_state[0x006C], 0x0001);
@@ -757,19 +1117,19 @@ uint32_t save_state(void *state)
   serial_write(&p, z64_song_ptr, 0x0004);
   serial_write(&p, z64_staff_notes, 0x001E);
 
-  //serial_write(&p, (void*)0x800E2FC0, 0x31E10);
-  //serial_write(&p, (void*)0x8012143C, 0x41F4);
-  //serial_write(&p, (void*)0x801DAA00, 0x1D4790);
+  //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
+  //serial_write(&p, (void *)0x8012143C, 0x41F4);
+  //serial_write(&p, (void *)0x801DAA00, 0x1D4790);
 
-  return (char*)p - (char*)state;
+  return (char *)p - (char *)state;
 }
 
-void load_state(void *state)
+void load_state(const struct state_meta *state)
 {
-  void *p = state;
+  void *p = (void *)state;
 
   /* skip metadata */
-  serial_skip(&p, sizeof(struct state_meta));
+  serial_skip(&p, sizeof(*state));
 
   /* cancel queued sound effects */
   z64_sfx_read_pos = z64_sfx_write_pos;
@@ -864,13 +1224,20 @@ void load_state(void *state)
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
-  serial_read(&p, &z64_file, sizeof(z64_file));
+  if (settings->bits.ignore_target == 1) {
+    uint8_t last_target = z64_file.z_targeting;
+    serial_read(&p, &z64_file, sizeof(z64_file));
+    z64_file.z_targeting = last_target;
+  }
+  else
+    serial_read(&p, &z64_file, sizeof(z64_file));
+
   serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */
   int16_t n_ent;
   int16_t next_ent;
   struct set ovl_nodes;
-  set_init(&ovl_nodes, sizeof(uint32_t), addr_comp);
+  set_init(&ovl_nodes, sizeof(void *), addr_comp);
   /* actor overlays */
   n_ent = sizeof(z64_actor_ovl_tab) / sizeof(*z64_actor_ovl_tab);
   serial_read(&p, &next_ent, sizeof(next_ent));
@@ -898,7 +1265,7 @@ void load_state(void *state)
       load_ovl(&p, &ovl->ptr,
                ovl->vrom_start, ovl->vrom_end,
                ovl->vram_start, ovl->vram_end);
-      ovl->reloc_offset = (uint32_t)ovl->ptr - ovl->vram_start;
+      ovl->reloc_offset = (uintptr_t)ovl->ptr - ovl->vram_start;
       set_insert(&ovl_nodes, &ovl->ptr);
       serial_read(&p, &next_ent, sizeof(next_ent));
     }
@@ -956,14 +1323,14 @@ void load_state(void *state)
 #endif
     serial_read(&p, &node->free, sizeof(node->free));
     serial_read(&p, &node->size, sizeof(node->size));
-    char *data = node->data;
+    void *data = node->data;
     if (!set_get(&ovl_nodes, &data) && !node->free)
       serial_read(&p, data, node->size);
     if (node == z64_game_arena.first_node)
       node->prev = NULL;
     serial_read(&p, &next_ent, sizeof(next_ent));
     if (next_ent == 0) {
-      node->next = (void*)&node->data[node->size];
+      node->next = (void *)&((char *)node->data)[node->size];
       node->next->prev = node;
     }
     else
@@ -1030,7 +1397,7 @@ void load_state(void *state)
       spark->active = 0;
   }
   /* load camera shake effects */
-  serial_read(&p, &z64_n_camera_shake, 0x0002);
+  serial_read(&p, &z64_n_camera_shake, sizeof(z64_n_camera_shake));
   serial_read(&p, z64_camera_shake, 0x0090);
 
   /* load scene */
@@ -1038,7 +1405,7 @@ void load_state(void *state)
     z64_scene_table_t *scene = &z64_scene_table[z64_game.scene_index];
     uint32_t size = scene->scene_vrom_end - scene->scene_vrom_start;
     zu_getfile(scene->scene_vrom_start, z64_game.scene_file, size);
-    reloc_col_hdr((uint32_t)z64_game.col_ctxt.col_hdr);
+    reloc_col_hdr(z64_game.col_ctxt.col_hdr);
     /* create static collision */
     z64_game.col_ctxt.stc_list_pos = 0;
     z64_CreateStaticCollision(&z64_game.col_ctxt, &z64_game,
@@ -1125,8 +1492,8 @@ void load_state(void *state)
     zu_getfile_idx(z64_icon_item_24_static, z64_game.pause_ctxt.icon_item_24);
     /* gray out restricted items */
     char *p = z64_play_ovl_tab[0].ptr;
-    p += ((uint32_t)&z64_item_highlight_vram - z64_play_ovl_tab[0].vram_start);
-    uint8_t *item_highlight_tab = (void*)p;
+    p += ((uintptr_t)&z64_item_highlight_vram - z64_play_ovl_tab[0].vram_start);
+    uint8_t *item_highlight_tab = (void *)p;
     uint32_t *pixels = z64_game.pause_ctxt.icon_item;
     for (int i = 0; i < 0x56; ++i) {
       if (item_highlight_tab[i] != 0x09 &&
@@ -1155,20 +1522,16 @@ void load_state(void *state)
         uint32_t end = z64_object_table[c_id].vrom_end;
         zu_getfile(start, c_ptr, end - start);
       }
-
     }
-
-    for (int i = 0; i < sizeof(z64_game.col_ctxt.dyn_col) / sizeof(*z64_game.col_ctxt.dyn_col); i++) {
+    /* relocate collision headers */
+    for (int i = 0; i < 50; i++) {
       z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
-      if(!dyn_col->actor) {
+      if (!dyn_col->actor)
         continue;
-      }
-
-      z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[dyn_col->actor->alloc_index];
+      int alloc_index = dyn_col->actor->alloc_index;
+      z64_mem_obj_t *obj = &z64_game.obj_ctxt.objects[alloc_index];
       z64_stab.seg[Z64_SEG_OBJ] = MIPS_KSEG0_TO_PHYS(obj->data);
-
-      uint32_t offset = (uint32_t)dyn_col->col_hdr - (uint32_t)obj->data;
-      reloc_col_hdr(0x06000000 | offset);
+      reloc_col_hdr(dyn_col->col_hdr);
     }
   }
 
@@ -1235,15 +1598,116 @@ void load_state(void *state)
   /* sound state */
   serial_read(&p, z64_sound_state, 0x004C);
 
-  /* event state */
-  serial_read(&p, z64_event_state_1, 0x0008);
-  serial_read(&p, z64_event_state_2, 0x0004);
-  /* event camera parameters */
-  for (int i = 0; i < 24; ++i)
-    serial_read(&p, &z64_event_camera[0x28 * i + 0x10], 0x0018);
-
-  /* oob timer */
-  serial_read(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+  if (state->state_version >= 0x0004) {
+    /* see save_state() for comments */
+    serial_read(&p, &z_camera_c_data[0x302C], 0x001C);
+    serial_read(&p, &z_camera_c_data[0x3088], 0x0008);
+    serial_read(&p, &z_camera_c_data[0x30E0], 0x0004);
+    serial_read(&p, &z_camera_c_data[0x3124], 0x0008);
+    serial_read(&p, &z_camera_c_data[0x3110], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x31A0], 0x0004);
+    serial_read(&p, &z_camera_c_data[0x3188], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x31D4], 0x0001);
+    serial_read(&p, &z_camera_c_data[0x31E4], 0x001E);
+    serial_read(&p, &z_camera_c_data[0x3278], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x32C8], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3324], 0x0018);
+    serial_read(&p, &z_camera_c_data[0x331A], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3318], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3340], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x33A0], 0x0010);
+    serial_read(&p, &z_camera_c_data[0x3392], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3390], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x33B4], 0x0001);
+    serial_read(&p, &z_camera_c_data[0x33C8], 0x0004);
+    serial_read(&p, &z_camera_c_data[0x33BA], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x33DC], 0x0006);
+    serial_read(&p, &z_camera_c_data[0x3444], 0x0010);
+    serial_read(&p, &z_camera_c_data[0x3432], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3430], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3454], 0x0008);
+    serial_read(&p, &z_camera_c_data[0x3458], 0x0002);
+    serial_read(&p, &z_camera_c_data[0x3534], 0x000C);
+    serial_read(&p, &z_onepointdemo_c_data[0x0008], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x00B4], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x00C4], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x0194], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x01A4], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x046C], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x054C], 0x0006);
+    serial_read(&p, &z_onepointdemo_c_data[0x07C4], 0x0048);
+    serial_read(&p, &z_onepointdemo_c_data[0x083C], 0x0026);
+    serial_read(&p, &z_onepointdemo_c_data[0x087C], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x088C], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x08C0], 0x0014);
+    serial_read(&p, &z_onepointdemo_c_data[0x09AC], 0x0010);
+    serial_read(&p, &z_onepointdemo_c_data[0x0A74], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0A9C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0AC4], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0AEC], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0B14], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0B3C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0B64], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0B8C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0BB4], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0BDC], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0C04], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0C2C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0C54], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0C7C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0CA4], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0CCC], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0CF4], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0D1C], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x0E90], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x0EE0], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x105C], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x10B4], 0x0018);
+    serial_read(&p, &z_onepointdemo_c_data[0x1228], 0x000C);
+    serial_read(&p, &z_onepointdemo_c_data[0x12A4], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x12E8], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x1318], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x13F0], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x144C], 0x0010);
+    serial_read(&p, &z_onepointdemo_c_data[0x1468], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x1474], 0x0010);
+    serial_read(&p, &z_onepointdemo_c_data[0x1490], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x1AFC], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x1C60], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x1DF4], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x1E94], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x1FAC], 0x0044);
+    serial_read(&p, &z_onepointdemo_c_data[0x1FFA], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x2610], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x2BB0], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x2C00], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x2D28], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x2DEC], 0x000C);
+    serial_read(&p, &z_onepointdemo_c_data[0x2E40], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x2F04], 0x000C);
+    serial_read(&p, &z_onepointdemo_c_data[0x3012], 0x0002);
+    serial_read(&p, &z_onepointdemo_c_data[0x3020], 0x0010);
+    serial_read(&p, &z_onepointdemo_c_data[0x3048], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x30A8], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x30EC], 0x0004);
+    serial_read(&p, &z_onepointdemo_c_data[0x3100], 0x0052);
+    serial_read(&p, &z_onepointdemo_c_data[0x317C], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x376C], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x37A0], 0x0010);
+    serial_read(&p, &z_onepointdemo_c_data[0x37E4], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x3834], 0x0020);
+    serial_read(&p, &z_onepointdemo_c_data[0x38D0], 0x0002);
+  }
+  else {
+    /* event state */
+    serial_read(&p, z64_event_state_1, 0x0008);
+    serial_read(&p, z64_event_state_2, 0x0004);
+    /* event camera parameters */
+    for (int i = 0; i < 24; ++i)
+      serial_read(&p, &z64_event_camera[0x28 * i + 0x10], 0x0018);
+    /* oob timer */
+    serial_read(&p, &z64_oob_timer, sizeof(z64_oob_timer));
+  }
 
   /* countdown to gameover screen */
   serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
@@ -1252,11 +1716,14 @@ void load_state(void *state)
   serial_read(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
-  serial_read(&p, z64_dins_state_1, 0x0004);
-  serial_read(&p, &z64_dins_state_2[0x0006], 0x0002);
-  serial_read(&p, &z64_dins_state_2[0x0014], 0x0004);
-  serial_read(&p, &z64_dins_state_2[0x0020], 0x0004);
-  serial_read(&p, &z64_dins_state_2[0x003C], 0x0004);
+  if (state->state_version < 0x0004) {
+    /* covered by z_onepointdemo_c_data in state version 4+ */
+    serial_read(&p, z64_dins_state_1, 0x0004);
+    serial_read(&p, &z64_dins_state_2[0x0006], 0x0002);
+    serial_read(&p, &z64_dins_state_2[0x0014], 0x0004);
+    serial_read(&p, &z64_dins_state_2[0x0020], 0x0004);
+    serial_read(&p, &z64_dins_state_2[0x003C], 0x0004);
+  }
   serial_read(&p, z64_fw_state_1, 0x0004);
   serial_read(&p, z64_fw_state_2, 0x0004);
 
@@ -1270,6 +1737,9 @@ void load_state(void *state)
 
   /* message state */
   serial_read(&p, z64_message_state, 0x0028);
+  if (state->state_version >= 0x0004)
+    serial_read(&p, &z64_message_select_state,
+                sizeof(z64_message_select_state));
 
   /* load textures */
   zu_getfile_idx(z64_parameter_static, z64_game.if_ctxt.parameter);
@@ -1343,7 +1813,7 @@ void load_state(void *state)
   /* clear unsaved textures */
   if (c_pause_objects && !p_pause_objects) {
     uint16_t (*img)[Z64_SCREEN_HEIGHT][Z64_SCREEN_WIDTH];
-    img = (void*)&z64_zimg;
+    img = (void *)&z64_zimg;
     for (int y = 0; y < Z64_SCREEN_HEIGHT; ++y)
       for (int x = 0; x < Z64_SCREEN_WIDTH; ++x)
         (*img)[y][x] = GPACK_RGBA5551(0x00, 0x00, 0x00, 0x00);
@@ -1416,7 +1886,7 @@ void load_state(void *state)
     struct seq_info *si = &seq_info[i];
     z64_seq_ctl_t *sc = &z64_seq_ctl[i];
     char *seq = &z64_afx[0x3530 + i * 0x0160];
-    _Bool c_active = *(uint8_t*)(seq) & 0x80;
+    _Bool c_active = *(uint8_t *)(seq) & 0x80;
     if (si->p_active) {
       memcpy(&sc->stop_cmd_timer, &si->stop_cmd_timer,
              sizeof(si->stop_cmd_timer));
@@ -1487,6 +1957,9 @@ void load_state(void *state)
 
   /* load ocarina state */
   serial_read(&p, z64_ocarina_state, 0x0060);
+  if (state->state_version >= 0x0004)
+    serial_read(&p, &z64_ocarina_button_state,
+                sizeof(z64_ocarina_button_state));
   /* ocarina minigame parameters */
   serial_read(&p, &z64_ocarina_state[0x0068], 0x0001);
   serial_read(&p, &z64_ocarina_state[0x006C], 0x0001);
@@ -1502,7 +1975,7 @@ void load_state(void *state)
     z64_ocarina_counter = z64_song_counter - delta;
   }
 
-  //serial_read(&p, (void*)0x800E2FC0, 0x31E10);
-  //serial_read(&p, (void*)0x8012143C, 0x41F4);
-  //serial_read(&p, (void*)0x801DAA00, 0x1D4790);
+  //serial_read(&p, (void *)0x800E2FC0, 0x31E10);
+  //serial_read(&p, (void *)0x8012143C, 0x41F4);
+  //serial_read(&p, (void *)0x801DAA00, 0x1D4790);
 }

@@ -41,8 +41,6 @@ asmgsc  "$sym_z64_ocarina_sync_hook"     "jal $sym_ocarina_sync_hook; nop; b 0x0
 asmgsc  "$sym_z64_afx_rand_call"         "jal $sym_afx_rand_hook;"
 asmgsc  "$sym_z64_room_load_sync_hook"   "jal $sym_room_load_sync_hook;"
 asmgsc  "$sym_z64_camera_hook"           "jal $sym_camera_hook;"
-asmgsc  "$sym_z64_minimap_disable_1"     ".hword 0x5000;" # beql $zero, $zero
-asmgsc  "$sym_z64_minimap_disable_2"     ".hword 0x5000;" # beql $zero, $zero
 asmgsc  "$sym_z64_guPerspectiveF_hook"   "jal $sym_guPerspectiveF_hook; sw \$a2, 0x0038(\$sp);"
 asmgsc  "$sym_z64_guPerspective_camo"    "nop; nop;"
 asmgsc  "$sym_z64_disp_swap_1"           "jal $sym_disp_hook;"

@@ -534,7 +534,7 @@ DIR *opendir(const char *dirname)
   if (!ddesc)
     goto error;
   ddesc->pos = 0;
-  return (void*)ddesc;
+  return (void *)ddesc;
 error:
   if (fp)
     fat_free(fp);
@@ -543,14 +543,14 @@ error:
 
 int closedir(DIR *dirp)
 {
-  struct dir_desc *ddesc = (void*)dirp;
+  struct dir_desc *ddesc = (void *)dirp;
   delete_desc(ddesc->desc.fildes);
   return 0;
 }
 
 struct dirent *readdir(DIR *dirp)
 {
-  struct dir_desc *ddesc = (void*)dirp;
+  struct dir_desc *ddesc = (void *)dirp;
   struct fat_entry entry;
   do {
     if (fat_dir(&ddesc->desc.file, &entry))
@@ -571,7 +571,7 @@ struct dirent *readdir(DIR *dirp)
 void seekdir(DIR *dirp, long loc)
 {
   rewinddir(dirp);
-  struct dir_desc *ddesc = (void*)dirp;
+  struct dir_desc *ddesc = (void *)dirp;
   for (long i = 0; i < loc; ++i) {
     struct fat_entry entry;
     do {
@@ -584,13 +584,13 @@ void seekdir(DIR *dirp, long loc)
 
 long telldir(DIR *dirp)
 {
-  struct dir_desc *ddesc = (void*)dirp;
+  struct dir_desc *ddesc = (void *)dirp;
   return ddesc->pos;
 }
 
 void rewinddir(DIR *dirp)
 {
-  struct dir_desc *ddesc = (void*)dirp;
+  struct dir_desc *ddesc = (void *)dirp;
   fat_rewind(&ddesc->desc.file);
   ddesc->pos = 0;
 }

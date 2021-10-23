@@ -527,7 +527,8 @@ static void line_writer_add(line_writer_t *writer, Vtx *v, int n_vtx)
 static void do_poly_list(poly_writer_t *poly_writer,
                          line_writer_t *line_writer, struct vector *line_set,
                          z64_xyz_t *vtx_list, z64_col_poly_t *poly_list,
-                         z64_col_type_t *type_list, int n_poly, _Bool rd)
+                         z64_col_type_t *type_list, int n_poly, _Bool rd,
+                         _Bool wfc)
 {
   for (int i = 0; i < n_poly; ++i) {
     z64_col_poly_t *poly = &poly_list[i];
@@ -540,22 +541,34 @@ static void do_poly_list(poly_writer_t *poly_writer,
     if (poly_writer) {
       uint32_t color;
       _Bool skip = 0;
-      if (type->flags_2.hookshot)
-        color = 0x8080FFFF;
-      else if (type->flags_1.interaction > 0x01)
-        color = 0xC000C0FF;
-      else if (type->flags_1.special == 0x0C)
-        color = 0xFF0000FF;
-      else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
-        color = 0x00FF00FF;
-      else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
-        color = 0xC0FFC0FF;
-      else if (type->flags_2.terrain == 0x01)
-        color = 0xFFFF80FF;
-      else if (rd)
-        skip = 1;
-      else
-        color = 0xFFFFFFFF;
+      if (wfc) {
+#define COLPOLY_SNORMAL(x) ((int16_t)((x) * 32767.0f))
+        int16_t normal_y = poly->norm.y;
+        if (normal_y < COLPOLY_SNORMAL(-0.8f))
+          color = 0xFF0000FF;
+        else if (normal_y > COLPOLY_SNORMAL(0.5f))
+          color = 0x0000FFFF;
+        else
+          color = 0x00FF00FF;
+#undef COLPOLY_SNORMAL
+      } else {
+        if (type->flags_2.hookshot)
+          color = 0x8080FFFF;
+        else if (type->flags_1.interaction > 0x01)
+          color = 0xC000C0FF;
+        else if (type->flags_1.special == 0x0C)
+          color = 0xFF0000FF;
+        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+          color = 0x00FF00FF;
+        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+          color = 0xC0FFC0FF;
+        else if (type->flags_2.terrain == 0x01)
+          color = 0xFFFF80FF;
+        else if (rd)
+          skip = 1;
+        else
+          color = 0xFFFFFFFF;
+      }
       if (!skip) {
         Vtx v[3] =
         {
@@ -620,7 +633,7 @@ static void do_poly_list(poly_writer_t *poly_writer,
 static void do_dyn_list(poly_writer_t *poly_writer,
                         line_writer_t *line_writer,
                         z64_col_hdr_t *col_hdr,
-                        uint16_t list_idx, _Bool rd)
+                        uint16_t list_idx, _Bool rd, _Bool wfc)
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
@@ -629,7 +642,7 @@ static void do_dyn_list(poly_writer_t *poly_writer,
 
     do_poly_list(poly_writer, line_writer, NULL,
                  col_ctxt->dyn_vtx, &col_ctxt->dyn_poly[list->poly_idx],
-                 col_hdr->type, 1, rd);
+                 col_hdr->type, 1, rd, wfc);
 
     list_idx = list->list_next;
   }
@@ -637,7 +650,7 @@ static void do_dyn_list(poly_writer_t *poly_writer,
 
 static void do_dyn_col(poly_writer_t *poly_writer,
                        line_writer_t *line_writer,
-                       _Bool rd)
+                       _Bool rd, _Bool wfc)
 {
   z64_col_ctxt_t *col_ctxt = &z64_game.col_ctxt;
 
@@ -646,11 +659,11 @@ static void do_dyn_col(poly_writer_t *poly_writer,
       z64_dyn_col_t *dyn_col = &col_ctxt->dyn_col[i];
 
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->ceil_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->ceil_list_idx, rd, wfc);
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->wall_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->wall_list_idx, rd, wfc);
       do_dyn_list(poly_writer, line_writer,
-                  dyn_col->col_hdr, dyn_col->floor_list_idx, rd);
+                  dyn_col->col_hdr, dyn_col->floor_list_idx, rd, wfc);
     }
 }
 
@@ -659,27 +672,31 @@ static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
 {
   const float water_max_depth = -4000.0f;
 
-  if (waterbox_list == 0 || n_waterboxes == 0)
+  if (waterbox_list == NULL)
     return;
 
-  for (z64_col_water_t *cur_water = waterbox_list; cur_water < waterbox_list + n_waterboxes; ++cur_water) {
-    if (cur_water->flags.group == z64_game.room_ctxt.rooms[0].index || cur_water->flags.group == 0x3F || 
-        cur_water->flags.group == z64_game.room_ctxt.rooms[1].index) {
-      z64_xyzf_t points[] = {
-        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, cur_water->pos.y, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, water_max_depth, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z },
-        { cur_water->pos.x + cur_water->width, water_max_depth, cur_water->pos.z + cur_water->depth },
-        { cur_water->pos.x, water_max_depth, cur_water->pos.z + cur_water->depth },
+  for (int i = 0; i < n_waterboxes; ++i) {
+    z64_col_water_t *w = &waterbox_list[i];
+    if (w->flags.group == z64_game.room_ctxt.rooms[0].index ||
+        w->flags.group == z64_game.room_ctxt.rooms[1].index ||
+        w->flags.group == 0x3F)
+    {
+      z64_xyzf_t vtx[] =
+      {
+        { w->pos.x,             w->pos.y,         w->pos.z + w->depth },
+        { w->pos.x + w->width,  w->pos.y,         w->pos.z + w->depth },
+        { w->pos.x + w->width,  w->pos.y,         w->pos.z },
+        { w->pos.x,             w->pos.y,         w->pos.z },
+        { w->pos.x,             water_max_depth,  w->pos.z + w->depth },
+        { w->pos.x + w->width,  water_max_depth,  w->pos.z + w->depth },
+        { w->pos.x + w->width,  water_max_depth,  w->pos.z },
+        { w->pos.x,             water_max_depth,  w->pos.z },
       };
-      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[2], &points[3]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[1], &points[2], &points[6], &points[5]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[7], &points[6]);
-      draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[0], &points[4], &points[7]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[0], &vtx[1], &vtx[2], &vtx[3]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[0], &vtx[3], &vtx[7], &vtx[4]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[1], &vtx[0], &vtx[4], &vtx[5]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[2], &vtx[1], &vtx[5], &vtx[6]);
+      draw_quad(p_gfx_p, p_gfx_d, &vtx[3], &vtx[2], &vtx[6], &vtx[7]);
     }
   }
 }
@@ -701,7 +718,7 @@ static void init_poly_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d,
     alpha = 0x80;
   }
   else {
-    rm = Z_CMP | Z_UPD | IM_RD | CVG_DST_CLAMP | FORCE_BL;
+    rm = Z_CMP | Z_UPD | CVG_DST_CLAMP | FORCE_BL;
     blc1 = GBL_c1(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
     blc2 = GBL_c2(G_BL_CLR_IN, G_BL_0, G_BL_CLR_IN, G_BL_1);
     alpha = 0xFF;
@@ -770,7 +787,7 @@ static void init_line_gfx(Gfx **p_gfx_p, Gfx **p_gfx_d, int mode, _Bool xlu)
 
 static void release_mem(void *p_ptr)
 {
-  void **p_void = (void**)p_ptr;
+  void **p_void = (void **)p_ptr;
   if (*p_void) {
     free(*p_void);
     *p_void = NULL;
@@ -789,6 +806,8 @@ void gz_col_view(void)
   static int  dyn_gfx_idx = 0;
 
   static int col_view_scene;
+  static int col_view_water;
+  static int col_view_wfc;
   static int col_view_line;
   static int col_view_rd;
 
@@ -797,31 +816,33 @@ void gz_col_view(void)
 
   _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
   _Bool init = gz.col_view_state == COLVIEW_START ||
-               gz.col_view_state == COLVIEW_RESTART;
+               gz.col_view_state == COLVIEW_RESTARTING;
 
   /* restart if needed */
   if (enable && gz.col_view_state == COLVIEW_ACTIVE &&
       settings->bits.col_view_upd &&
       (col_view_scene != z64_game.scene_index ||
+       col_view_water != settings->bits.col_view_water ||
+       col_view_wfc != settings->bits.col_view_wfc ||
        col_view_line != settings->bits.col_view_line ||
        col_view_rd != settings->bits.col_view_rd))
   {
-    gz.col_view_state = COLVIEW_BEGIN_RESTART;
+    gz.col_view_state = COLVIEW_RESTART;
   }
 
   /* update state */
   switch (gz.col_view_state) {
-    case COLVIEW_BEGIN_STOP:
-      gz.col_view_state = COLVIEW_STOP;
-      break;
-
-    case COLVIEW_BEGIN_RESTART:
-      gz.col_view_state = COLVIEW_RESTART;
-      break;
-
     case COLVIEW_STOP:
-      gz.col_view_state = COLVIEW_INACTIVE;
+      gz.col_view_state = COLVIEW_STOPPING;
+      break;
+
     case COLVIEW_RESTART:
+      gz.col_view_state = COLVIEW_RESTARTING;
+      break;
+
+    case COLVIEW_STOPPING:
+      gz.col_view_state = COLVIEW_INACTIVE;
+    case COLVIEW_RESTARTING:
       release_mem(&stc_poly);
       release_mem(&stc_line);
       release_mem(&dyn_poly_buf[0]);
@@ -829,11 +850,16 @@ void gz_col_view(void)
       release_mem(&dyn_line_buf[0]);
       release_mem(&dyn_line_buf[1]);
       break;
+
+    default:
+      break;
   }
 
   /* initialize */
   if (enable && init) {
     col_view_scene = z64_game.scene_index;
+    col_view_water = settings->bits.col_view_water;
+    col_view_wfc = settings->bits.col_view_wfc;
     col_view_line = settings->bits.col_view_line;
     col_view_rd = settings->bits.col_view_rd;
 
@@ -875,7 +901,8 @@ void gz_col_view(void)
     /* generate static display lists */
     do_poly_list(p_poly_writer, p_line_writer, &line_set,
                  col_hdr->vtx, col_hdr->poly, col_hdr->type, col_hdr->n_poly,
-                 col_view_rd);
+                 col_view_rd, col_view_wfc);
+
     poly_writer_finish(p_poly_writer, &stc_poly_p, &stc_poly_d);
 
     gSPEndDisplayList(stc_poly_p++);
@@ -920,46 +947,51 @@ void gz_col_view(void)
       line_writer_init(p_line_writer, dyn_line_p, dyn_line_d);
     }
 
-    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd);
+    do_dyn_col(p_poly_writer, p_line_writer, col_view_rd, col_view_wfc);
+
     poly_writer_finish(p_poly_writer, &dyn_poly_p, &dyn_poly_d);
 
-    gSPClearGeometryMode(dyn_poly_p++, G_CULL_BACK);
-    gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
+    if (col_view_water) {
+      gDPSetPrimColor(dyn_poly_p++, 0, 0, 0x57, 0xAC, 0xF3, 0xFF);
 
-    // which waterbox to draw depends on currently loaded room, so even
-    // static waterboxes may need updating
-    do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
-                    z64_game.col_ctxt.col_hdr->n_water, z64_game.col_ctxt.col_hdr->water);
+      /* which waterbox to draw depends on currently loaded room, so even
+       * static waterboxes may need updating */
+      do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
+                       z64_game.col_ctxt.col_hdr->n_water,
+                       z64_game.col_ctxt.col_hdr->water);
 
-    for (int i = 0; i < 50; ++i) {
-      if (z64_game.col_ctxt.dyn_flags[i].active) {
-        z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
-        do_waterbox_list(&dyn_poly_p, &dyn_poly_d, 
-                        dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+      for (int i = 0; i < 50; ++i) {
+        if (z64_game.col_ctxt.dyn_flags[i].active) {
+          z64_dyn_col_t *dyn_col = &z64_game.col_ctxt.dyn_col[i];
+          do_waterbox_list(&dyn_poly_p, &dyn_poly_d,
+                           dyn_col->col_hdr->n_water, dyn_col->col_hdr->water);
+        }
       }
-    }
-    /*
-    * There is a special hardcoded check for Zora's Domain in a function related to handling collision
-    * detection with waterboxes that creates a "fake" waterbox between two hardcoded positions. Unlike
-    * every other waterbox in the game, this one has a depth below which you fall out of the bottom.
-    */
-    if (z64_game.scene_index == 0x58) {
-      z64_xyzf_t points[] = {
-        { -348.0, 877.0, -1746.0 },
-        { 205.0, 877.0, -1746.0 },
-        { 205.0, 877.0, -967.0 },
-        { -348.0, 877.0, -967.0 },
-        { -348.0, 777.0, -1746.0 },
-        { 205.0, 777.0, -1746.0 },
-        { 205.0, 777.0, -967.0 },
-        { -348.0, 777.0, -967.0 },
-      };
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[2], &points[3]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[0], &points[1], &points[5], &points[4]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[1], &points[2], &points[6], &points[5]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[2], &points[3], &points[7], &points[6]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[3], &points[0], &points[4], &points[7]);
-      draw_quad(&dyn_poly_p, &dyn_poly_d, &points[4], &points[5], &points[6], &points[7]);
+      /*
+      * There is a special hardcoded check for Zora's Domain in a function
+      * related to handling collision detection with waterboxes that creates a
+      * "fake" waterbox between two hardcoded positions. Unlike every other
+      * waterbox in the game, this one has a depth below which you fall out of
+      * the bottom.
+      */
+      if (z64_game.scene_index == 0x58) {
+        z64_xyzf_t vtx[] = {
+          { -348, 877, -967 },
+          {  205, 877, -967 },
+          {  205, 877, -1746 },
+          { -348, 877, -1746 },
+          { -348, 777, -967 },
+          {  205, 777, -967 },
+          {  205, 777, -1746 },
+          { -348, 777, -1746 },
+        };
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[1], &vtx[2], &vtx[3]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[0], &vtx[3], &vtx[7], &vtx[4]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[1], &vtx[0], &vtx[4], &vtx[5]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[2], &vtx[1], &vtx[5], &vtx[6]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[3], &vtx[2], &vtx[6], &vtx[7]);
+        draw_quad(&dyn_poly_p, &dyn_poly_d, &vtx[7], &vtx[6], &vtx[5], &vtx[4]);
+      }
     }
 
     gSPEndDisplayList(dyn_poly_p++);
@@ -1106,20 +1138,27 @@ void gz_hit_view(void)
     init_poly_gfx(&hit_gfx_p, &hit_gfx_d, SETTINGS_COLVIEW_SURFACE,
                                           settings->bits.hit_view_xlu,
                                           settings->bits.hit_view_shade);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_ot, z64_game.hit_ctxt.ot_list, 0xFFFFFF);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list, 0x0000FF);
-    do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                   z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
+
+    if (settings->bits.hit_view_oc)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_oc, z64_game.hit_ctxt.oc_list, 0xFFFFFF);
+
+    if (settings->bits.hit_view_ac)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list, 0x0000FF);
+
+    if (settings->bits.hit_view_at)
+      do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
+                     z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
+
     gSPEndDisplayList(hit_gfx_p++);
     dcache_wb(hit_gfx, sizeof(*hit_gfx) * hit_gfx_cap);
 
     gSPDisplayList((*p_gfx_p)++, hit_gfx);
   }
-  if (gz.hit_view_state == HITVIEW_BEGIN_STOP)
-    gz.hit_view_state = HITVIEW_STOP;
-  else if (gz.hit_view_state == HITVIEW_STOP) {
+  if (gz.hit_view_state == HITVIEW_STOP)
+    gz.hit_view_state = HITVIEW_STOPPING;
+  else if (gz.hit_view_state == HITVIEW_STOPPING) {
     release_mem(&hit_gfx_buf[0]);
     release_mem(&hit_gfx_buf[1]);
 
@@ -1129,7 +1168,8 @@ void gz_hit_view(void)
 
 static inline int path_valid(z64_path_t *path)
 {
-  return path->numpoints != 0 && (path->points >> 24) == Z64_SEG_SCENE;
+  uintptr_t points_addr = (uintptr_t)path->points;
+  return path->numpoints != 0 && (points_addr >> 24) == Z64_SEG_SCENE;
 }
 
 void gz_path_view(void)
@@ -1147,33 +1187,36 @@ void gz_path_view(void)
   _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0 &&
                  z64_game.path_list != NULL;
   _Bool init = gz.path_view_state == PATHVIEW_START ||
-               gz.path_view_state == PATHVIEW_RESTART;
+               gz.path_view_state == PATHVIEW_RESTARTING;
 
   /* restart if needed */
   if (enable && gz.path_view_state == PATHVIEW_ACTIVE &&
       (path_view_points != settings->bits.path_view_points ||
        path_view_lines != settings->bits.path_view_lines))
   {
-    gz.path_view_state = PATHVIEW_BEGIN_RESTART;
+    gz.path_view_state = PATHVIEW_RESTART;
   }
 
   /* update state */
   switch (gz.path_view_state) {
-    case PATHVIEW_BEGIN_STOP:
-      gz.path_view_state = PATHVIEW_STOP;
-      break;
-
-    case PATHVIEW_BEGIN_RESTART:
-      gz.path_view_state = PATHVIEW_RESTART;
-      break;
-
     case PATHVIEW_STOP:
-      gz.path_view_state = PATHVIEW_INACTIVE;
+      gz.path_view_state = PATHVIEW_STOPPING;
+      break;
+
     case PATHVIEW_RESTART:
+      gz.path_view_state = PATHVIEW_RESTARTING;
+      break;
+
+    case PATHVIEW_STOPPING:
+      gz.path_view_state = PATHVIEW_INACTIVE;
+    case PATHVIEW_RESTARTING:
       release_mem(&poly_gfx_buf[0]);
       release_mem(&poly_gfx_buf[1]);
       release_mem(&line_gfx_buf[0]);
       release_mem(&line_gfx_buf[1]);
+      break;
+
+    default:
       break;
   }
 
@@ -1372,7 +1415,7 @@ void gz_cull_view(void)
   if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
     /* If no actor is selected, stop */
     if (!gz.selected_actor.ptr) {
-      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      gz.cull_view_state = CULLVIEW_STOP;
       return;
     }
     /* Now look through actor type list */
@@ -1401,7 +1444,7 @@ void gz_cull_view(void)
 
     /* Check if we found it and if not, turn off cull view */
     if (!actor_found) {
-      gz.cull_view_state = CULLVIEW_BEGIN_STOP;
+      gz.cull_view_state = CULLVIEW_STOP;
       return;
     }
 
@@ -1454,9 +1497,9 @@ void gz_cull_view(void)
 
     gSPDisplayList((*p_gfx_p)++, cull_gfx);
   }
-  if (gz.cull_view_state == CULLVIEW_BEGIN_STOP)
-    gz.cull_view_state = CULLVIEW_STOP;
-  else if (gz.cull_view_state == CULLVIEW_STOP) {
+  if (gz.cull_view_state == CULLVIEW_STOP)
+    gz.cull_view_state = CULLVIEW_STOPPING;
+  else if (gz.cull_view_state == CULLVIEW_STOPPING) {
     release_mem(&cull_gfx_buf[0]);
     release_mem(&cull_gfx_buf[1]);
 

@@ -8,12 +8,12 @@
 #define SETTINGS_MAXSIZE            (0x8000-(SETTINGS_ADDRESS))
 #define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION            0x0003
-#define SETTINGS_STATE_VERSION      0x0003
+#define SETTINGS_VERSION            0x0004
+#define SETTINGS_STATE_VERSION      0x0004
+#define SETTINGS_STATE_MIN_VER      0x0003
 
 #define SETTINGS_WATCHES_MAX        18
 #define SETTINGS_TELEPORT_MAX       9
-#define SETTINGS_MEMFILE_MAX        10
 #define SETTINGS_STATE_MAX          3
 #define SETTINGS_BIND_MAX           COMMAND_MAX
 #define SETTINGS_LOG_MAX            4
@@ -23,14 +23,6 @@
 
 #define SETTINGS_BREAK_NORMAL       0
 #define SETTINGS_BREAK_AGGRESSIVE   1
-
-#define SETTINGS_LOADTO_ZFILE       0
-#define SETTINGS_LOADTO_MEMFILE     1
-#define SETTINGS_LOADTO_BOTH        2
-
-#define SETTINGS_ONLOAD_NOTHING     0
-#define SETTINGS_ONLOAD_RELOAD      1
-#define SETTINGS_ONLOAD_VOID        2
 
 #define SETTINGS_COLVIEW_DECAL      0
 #define SETTINGS_COLVIEW_SURFACE    1
@@ -67,20 +59,17 @@ enum commands
   COMMAND_LEVITATE,
   COMMAND_FALL,
   COMMAND_TURBO,
+  COMMAND_NOCLIP,
   COMMAND_FILESELECT,
   COMMAND_RELOAD,
   COMMAND_VOID,
   COMMAND_AGE,
   COMMAND_SAVESTATE,
   COMMAND_LOADSTATE,
-  COMMAND_SAVEMEMFILE,
-  COMMAND_LOADMEMFILE,
   COMMAND_SAVEPOS,
   COMMAND_LOADPOS,
   COMMAND_PREVSTATE,
   COMMAND_NEXTSTATE,
-  COMMAND_PREVFILE,
-  COMMAND_NEXTFILE,
   COMMAND_PREVPOS,
   COMMAND_NEXTPOS,
   COMMAND_PAUSE,
@@ -114,6 +103,7 @@ struct settings_bits
   uint32_t font_resource    : 4;
   uint32_t drop_shadow      : 1;
   uint32_t input_display    : 1;
+  uint32_t input_pressrel   : 1;
   uint32_t log              : 1;
   uint32_t lag_counter      : 1;
   uint32_t lag_unit         : 1;
@@ -124,17 +114,21 @@ struct settings_bits
   uint32_t hack_oca_sync    : 1;
   uint32_t hack_room_load   : 1;
   uint32_t wiivc_cam        : 1;
+  uint32_t ignore_target    : 1;
   uint32_t break_type       : 1;
   uint32_t warp_age         : 2;
   uint32_t warp_cutscene    : 5;
-  uint32_t load_to          : 2;
-  uint32_t on_load          : 2;
   uint32_t col_view_mode    : 1;
   uint32_t col_view_xlu     : 1;
+  uint32_t col_view_water   : 1;
+  uint32_t col_view_wfc     : 1;
   uint32_t col_view_line    : 1;
   uint32_t col_view_shade   : 1;
   uint32_t col_view_rd      : 1;
   uint32_t col_view_upd     : 1;
+  uint32_t hit_view_at      : 1;
+  uint32_t hit_view_ac      : 1;
+  uint32_t hit_view_oc      : 1;
   uint32_t hit_view_xlu     : 1;
   uint32_t hit_view_shade   : 1;
   uint32_t path_view_xlu    : 1;

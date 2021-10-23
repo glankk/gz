@@ -22,6 +22,7 @@ static struct menu          gf_menu;
 static struct vector        gf_dir_state;
 static struct set           gf_dir_entries;
 static _Bool                gf_untitled;
+static _Bool                gf_dirty_name;
 /* menus */
 static struct menu_item    *gf_reset;
 static struct menu_item    *gf_location;
@@ -122,7 +123,7 @@ static void update_view(_Bool enable, _Bool select)
 {
   if (enable) {
     int y = 3;
-    if (gf_mode == GETFILE_SAVE) {
+    if (gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) {
       menu_item_enable(gf_name);
       menu_item_enable(gf_mkdir);
       menu_item_enable(gf_accept);
@@ -177,14 +178,52 @@ static void update_view(_Bool enable, _Bool select)
   }
 }
 
-static void set_name(const char *name)
+static int get_next_prefix_number()
 {
+  DIR *dir = opendir(".");
+  if (!dir)
+    return 0;
+
+  int max_num_found = -1;
+  int sl = strlen(gf_suffix);
+
+  /* enumerate entries */
+  struct dirent *dirent;
+  while ((dirent = readdir(dir))) {
+    if (!(dirent->mode & S_IRUSR))
+      continue;
+    int nl = strlen(dirent->d_name);
+    if (nl < sl || !stricmp(&dirent->d_name[nl - sl], gf_suffix))
+      continue;
+
+    int cur_num;
+    int ret = sscanf(dirent->d_name, "%d", &cur_num);
+    if (ret == EOF || ret < 1)
+      continue;
+    if (cur_num > max_num_found)
+      max_num_found = cur_num;
+  }
+
+  closedir(dir);
+  return max_num_found + 1;
+}
+
+static void set_name(const char *name, _Bool dirty)
+{
+  gf_dirty_name |= dirty;
   if (!name || strlen(name) == 0) {
     strcpy(gf_name->text, "untitled");
     gf_untitled = 1;
   }
   else {
-    strncpy(gf_name->text, name, 31);
+    if (gf_dirty_name || gf_mode != GETFILE_SAVE_PREFIX_INC)
+      strncpy(gf_name->text, name, 31);
+    else {
+      int ignore, prefix_length;
+      sscanf(name, "%d%n", &ignore, &prefix_length);
+      int prefix = get_next_prefix_number();
+      snprintf(gf_name->text, 32, "%03d%s", prefix, name + prefix_length);
+    }
     gf_name->text[31] = 0;
     gf_untitled = 0;
   }
@@ -212,7 +251,9 @@ static void return_path(const char *name)
       path[dl] = '/';
       strcpy(&path[dl + 1], name);
       strcpy(&path[dl + 1 + nl], gf_suffix);
-      if (gf_mode == GETFILE_SAVE && stat(path, NULL) == 0) {
+      if ((gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) &&
+          stat(path, NULL) == 0)
+      {
         char prompt[48];
         sprintf(prompt, "'%.31s' exists", name);
         menu_prompt(&gf_menu, prompt, "overwrite\0""cancel\0", 1,
@@ -290,6 +331,11 @@ static int file_activate_proc(struct menu_item *item)
       ds->scroll = 0;
       ds->index = 0;
     }
+
+    /* Update the prefix */
+    if (gf_mode == GETFILE_SAVE_PREFIX_INC)
+      set_name(gf_name->text, 0);
+
     update_view(update_list(), 1);
   }
   else {
@@ -299,8 +345,8 @@ static int file_activate_proc(struct menu_item *item)
     char *name = malloc(l + 1);
     memcpy(name, entry->name, l);
     name[l] = 0;
-    if (gf_mode == GETFILE_SAVE) {
-      set_name(name);
+    if (gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) {
+      set_name(name, 1);
       menu_select(&gf_menu, gf_accept);
     }
     else
@@ -413,7 +459,7 @@ static _Bool dir_entry_comp(void *a, void *b)
 
 static int osk_callback_proc(const char *str, void *data)
 {
-  set_name(str);
+  set_name(str, strcmp(str, gf_name->text) != 0);
   gf_menu.selector = gf_accept;
   return 0;
 }
@@ -432,7 +478,7 @@ static void accept_proc(struct menu_item *item, void *data)
 
 static void clear_proc(struct menu_item *item, void *data)
 {
-  set_name(NULL);
+  set_name(NULL, 1);
 }
 
 static void reset_proc(struct menu_item *item, void *data)
@@ -513,7 +559,7 @@ static void gf_menu_init(void)
     gf_clear = menu_add_button(menu, 7, 4, "clear", clear_proc, NULL);
     for (int i = 0; i < FILE_VIEW_ROWS; ++i) {
       struct menu_item *item = menu_item_add(menu, 2, 5 + i, NULL, 0xFFFFFF);
-      item->data = (void*)i;
+      item->data = (void *)i;
       item->enter_proc = file_enter_proc;
       item->draw_proc = file_draw_proc;
       item->activate_proc = file_activate_proc;
@@ -536,6 +582,7 @@ void menu_get_file(struct menu *menu, enum get_file_mode mode,
                    get_file_callback_t callback_proc, void *callback_data)
 {
   gf_mode = mode;
+  gf_dirty_name = 0;
   if (gf_suffix)
     free(gf_suffix);
   gf_suffix = malloc(strlen(suffix) + 1);
@@ -544,6 +591,6 @@ void menu_get_file(struct menu *menu, enum get_file_mode mode,
   gf_callback_proc = callback_proc;
   gf_callback_data = callback_data;
   gf_menu_init();
-  set_name(defname);
+  set_name(defname, 0);
   menu_enter(menu, &gf_menu);
 }

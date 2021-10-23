@@ -26,10 +26,10 @@ enum col_view_state
   COLVIEW_INACTIVE,
   COLVIEW_START,
   COLVIEW_ACTIVE,
-  COLVIEW_BEGIN_STOP,
   COLVIEW_STOP,
-  COLVIEW_BEGIN_RESTART,
+  COLVIEW_STOPPING,
   COLVIEW_RESTART,
+  COLVIEW_RESTARTING,
 };
 
 enum hit_view_state
@@ -37,8 +37,8 @@ enum hit_view_state
   HITVIEW_INACTIVE,
   HITVIEW_START,
   HITVIEW_ACTIVE,
-  HITVIEW_BEGIN_STOP,
   HITVIEW_STOP,
+  HITVIEW_STOPPING,
 };
 
 enum cull_view_state
@@ -46,8 +46,8 @@ enum cull_view_state
   CULLVIEW_INACTIVE,
   CULLVIEW_START,
   CULLVIEW_ACTIVE,
-  CULLVIEW_BEGIN_STOP,
   CULLVIEW_STOP,
+  CULLVIEW_STOPPING,
 };
 
 enum holl_view_state
@@ -64,10 +64,10 @@ enum path_view_state
   PATHVIEW_INACTIVE,
   PATHVIEW_START,
   PATHVIEW_ACTIVE,
-  PATHVIEW_BEGIN_STOP,
   PATHVIEW_STOP,
-  PATHVIEW_BEGIN_RESTART,
+  PATHVIEW_STOPPING,
   PATHVIEW_RESTART,
+  PATHVIEW_RESTARTING,
 };
 
 enum cam_mode
@@ -166,6 +166,7 @@ struct gz
   struct menu          *menu_global;
   struct menu          *menu_main;
   struct menu          *menu_explorer;
+  struct menu          *menu_watches;
   struct menu          *menu_mem;
   struct menu_item     *menu_watchlist;
   _Bool                 menu_active;
@@ -205,11 +206,12 @@ struct gz
   _Bool                 timer_active;
   int64_t               timer_counter_offset;
   int64_t               timer_counter_prev;
-  int                   col_view_state;
-  int                   hit_view_state;
-  int                   cull_view_state;
-  int                   path_view_state;
-  int                   holl_view_state;
+  enum col_view_state   col_view_state;
+  enum hit_view_state   hit_view_state;
+  enum cull_view_state  cull_view_state;
+  enum path_view_state  path_view_state;
+  enum holl_view_state  holl_view_state;
+  _Bool                 noclip_on;
   _Bool                 hide_rooms;
   _Bool                 hide_actors;
   _Bool                 free_cam;
@@ -221,9 +223,6 @@ struct gz
   float                 cam_pitch;
   float                 cam_yaw;
   z64_xyzf_t            cam_pos;
-  struct memory_file   *memfile;
-  _Bool                 memfile_saved[SETTINGS_MEMFILE_MAX];
-  uint8_t               memfile_slot;
   void                 *state_buf[SETTINGS_STATE_MAX];
   uint8_t               state_slot;
   _Bool                 reset_flag;
@@ -235,8 +234,6 @@ void          gz_apply_settings();
 void          gz_show_menu(void);
 void          gz_hide_menu(void);
 void          gz_log(const char *fmt, ...);
-void          gz_save_memfile(struct memory_file *memfile);
-void          gz_load_memfile(struct memory_file *memfile);
 void          gz_warp(int16_t entrance_index,
                       uint16_t cutscene_index, int age);
 void          gz_set_input_mask(uint16_t pad, uint8_t x, uint8_t y);
@@ -245,20 +242,17 @@ void          command_break(void);
 void          command_levitate(void);
 void          command_fall(void);
 void          command_turbo(void);
+void          command_noclip(void);
 void          command_fileselect(void);
 void          command_reload(void);
 void          command_void(void);
 void          command_age(void);
 void          command_savestate(void);
 void          command_loadstate(void);
-void          command_savememfile(void);
-void          command_loadmemfile(void);
 void          command_savepos(void);
 void          command_loadpos(void);
 void          command_prevstate(void);
 void          command_nextstate(void);
-void          command_prevfile(void);
-void          command_nextfile(void);
 void          command_prevpos(void);
 void          command_nextpos(void);
 void          command_pause(void);
@@ -292,6 +286,9 @@ void          gz_holl_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);
+
+void          gz_noclip_start(void);
+void          gz_noclip_stop(void);
 
 struct menu  *gz_warps_menu(void);
 struct menu  *gz_scene_menu(void);

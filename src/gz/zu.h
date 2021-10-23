@@ -30,7 +30,7 @@ struct zu_file
 struct zu_mesh_entry
 {
   int       size;
-  uint32_t *dlists;
+  Gfx     **dlists;
 };
 
 struct zu_mesh
@@ -95,10 +95,10 @@ struct zu_disp_p
   uint32_t        overlay_d;
 };
 
-void *zu_seg_locate(const z64_stab_t *stab, uint32_t seg_addr);
-void *zu_zseg_locate(uint32_t seg_addr);
-void *zu_seg_relocate(void *p_seg_addr, const z64_stab_t *stab);
-void *zu_zseg_relocate(void *p_seg_addr);
+void *zu_seg_locate(const z64_stab_t *stab, void *ptr);
+void *zu_zseg_locate(void *ptr);
+void *zu_seg_relocate(void *p_ptr, const z64_stab_t *stab);
+void *zu_zseg_relocate(void *p_ptr);
 
 void zu_getfile(uint32_t vrom_addr, void *dram_addr, size_t size);
 void zu_getfile_idx(int file_idx, void *dram_addr);

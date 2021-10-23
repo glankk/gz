@@ -1,7 +1,7 @@
 #ifndef HB_H
 #include <stdint.h>
 
-#define hb_regs               (*(volatile hb_regs_t*)0xA8050000)
+#define hb_regs               (*(volatile hb_regs_t *)0xA8050000)
 
 #define HB_STATUS_RESET       (0b1    << 9)
 #define HB_STATUS_ERROR       (0b1111 << 5)
