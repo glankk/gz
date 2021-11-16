@@ -19,6 +19,4 @@ z64_xyzf_t *vec3f_rej     (z64_xyzf_t *r, z64_xyzf_t *a, z64_xyzf_t *b);
 float       angle_dif     (float a, float b);
 z64_xyzf_t *vec3f_xfmw    (z64_xyzf_t *r, z64_xyzf_t *a, float w, MtxF *b);
 
-z64_xyzf_t vec3f_actor_to_world(z64_actor_t *actor, z64_xyzf_t *relative_pos);
-
 #endif

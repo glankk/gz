@@ -107,6 +107,19 @@ static int holl_view_proc(struct menu_item *item,
   return 0;
 }
 
+static int holl_view_xlu_proc(struct menu_item *item,
+                             enum menu_callback_reason reason,
+                             void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.holl_view_xlu = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.holl_view_xlu = 0;
+  else if (reason == MENU_CALLBACK_THINK)
+    menu_checkbox_set(item, settings->bits.holl_view_xlu);
+  return 0;
+}
+
 static int col_view_mode_proc(struct menu_item *item,
                               enum menu_callback_reason reason,
                               void *data)
@@ -595,8 +608,10 @@ struct menu *gz_scene_menu(void)
   menu_add_static(&collision, 2, 19, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 19, path_view_xlu_proc, NULL);
   /* holl view controls */
-  menu_add_static(&collision, 0, 15, "show load plane bounds", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 15, holl_view_proc, NULL);
+  menu_add_static(&collision, 0, 20, "show load planes", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 20, holl_view_proc, NULL);
+  menu_add_static(&collision, 2, 21, "translucent", 0xC0C0C0);
+  menu_add_checkbox(&collision, 16, 21, holl_view_xlu_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");
