@@ -33,25 +33,25 @@ static int draw_proc(struct menu_item *item,
   address -= address % watch_type_size[data->type];
   switch (data->type) {
   case WATCH_TYPE_U8:
-    snprintf(item->text, 17, "%"   PRIu8,  *(uint8_t*) address); break;
+    snprintf(item->text, 17, "%"   PRIu8,  *(uint8_t *) address); break;
   case WATCH_TYPE_S8:
-    snprintf(item->text, 17, "%"   PRIi8,  *(int8_t*)  address); break;
+    snprintf(item->text, 17, "%"   PRIi8,  *(int8_t *)  address); break;
   case WATCH_TYPE_X8:
-    snprintf(item->text, 17, "0x%" PRIx8,  *(uint8_t*) address); break;
+    snprintf(item->text, 17, "0x%" PRIx8,  *(uint8_t *) address); break;
   case WATCH_TYPE_U16:
-    snprintf(item->text, 17, "%"   PRIu16, *(uint16_t*)address); break;
+    snprintf(item->text, 17, "%"   PRIu16, *(uint16_t *)address); break;
   case WATCH_TYPE_S16:
-    snprintf(item->text, 17, "%"   PRIi16, *(int16_t*) address); break;
+    snprintf(item->text, 17, "%"   PRIi16, *(int16_t *) address); break;
   case WATCH_TYPE_X16:
-    snprintf(item->text, 17, "0x%" PRIx16, *(uint16_t*)address); break;
+    snprintf(item->text, 17, "0x%" PRIx16, *(uint16_t *)address); break;
   case WATCH_TYPE_U32:
-    snprintf(item->text, 17, "%"   PRIu32, *(uint32_t*)address); break;
+    snprintf(item->text, 17, "%"   PRIu32, *(uint32_t *)address); break;
   case WATCH_TYPE_S32:
-    snprintf(item->text, 17, "%"   PRIi32, *(int32_t*) address); break;
+    snprintf(item->text, 17, "%"   PRIi32, *(int32_t *) address); break;
   case WATCH_TYPE_X32:
-    snprintf(item->text, 17, "0x%" PRIx32, *(uint32_t*)address); break;
+    snprintf(item->text, 17, "0x%" PRIx32, *(uint32_t *)address); break;
   case WATCH_TYPE_F32: {
-    float v = *(float*)address;
+    float v = *(float *)address;
     if (is_nan(v))
       strcpy(item->text, "nan");
     else if (v == INFINITY)

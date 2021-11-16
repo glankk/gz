@@ -4,6 +4,8 @@
 #include <vector/vector.h>
 #include "adex.h"
 #include "files.h"
+#include "gz.h"
+#include "mem.h"
 #include "menu.h"
 #include "resource.h"
 #include "settings.h"
@@ -34,6 +36,7 @@ struct member_data
 };
 
 static struct gfx_texture *list_icons = NULL;
+static struct gfx_texture *wrench = NULL;
 
 static struct member_data *get_member(struct item_data *data, int index)
 {
@@ -124,6 +127,15 @@ static int anchor_button_activate_proc(struct menu_item *item)
   return 1;
 }
 
+static void edit_watch_in_memory_proc(struct menu_item *item, void *data)
+{
+  struct member_data *member_data = data;
+  struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
+  mem_open_watch(item->owner, gz.menu_mem,
+                 menu_watch_get_address(watch),
+                 menu_watch_get_type(watch));
+}
+
 static int position_proc(struct menu_item *item,
                          enum menu_callback_reason reason,
                          void *data)
@@ -173,14 +185,14 @@ static int add_member(struct item_data *data,
   member_data->data = data;
   member_data->index = position;
   member_data->member = menu_add_imenu(data->imenu, 0, position, &imenu);
-  member_data->anchor_button = menu_item_add(imenu, 2, 0, NULL, 0xFFFFFF);
+  member_data->anchor_button = menu_item_add(imenu, 4, 0, NULL, 0xFFFFFF);
   member_data->anchor_button->enter_proc = anchor_button_enter_proc;
   member_data->anchor_button->draw_proc = anchor_button_draw_proc;
   member_data->anchor_button->activate_proc = anchor_button_activate_proc;
   member_data->anchor_button->data = member_data;
-  member_data->positioning = menu_add_positioning(imenu, 4, 0,
+  member_data->positioning = menu_add_positioning(imenu, 6, 0,
                                                   position_proc, member_data);
-  member_data->userwatch = menu_add_userwatch(imenu, 6, 0, address, type);
+  member_data->userwatch = menu_add_userwatch(imenu, 8, 0, address, type);
   member_data->anchored = 1;
   member_data->anchor_anim_state = 0;
   member_data->x = x;
@@ -188,6 +200,8 @@ static int add_member(struct item_data *data,
   member_data->position_set = 1;
   menu_add_button_icon(imenu, 0, 0, list_icons, 1, 0xFF0000,
                        remove_button_proc, member_data);
+  menu_add_button_icon(imenu, 2, 0, wrench, 0, 0xFFFFFF,
+                       edit_watch_in_memory_proc, member_data);
 
   if (!settings->bits.watches_visible) {
     struct menu_item *watch = menu_userwatch_watch(member_data->userwatch);
@@ -311,13 +325,14 @@ struct menu_item *watchlist_create(struct menu *menu,
 
   data->menu_release = menu_release;
   data->imenu = imenu;
-  vector_init(&data->members, sizeof(struct member_data*));
+  vector_init(&data->members, sizeof(struct member_data *));
   if (!list_icons)
     list_icons = resource_load_grc_texture("list_icons");
+  if (!wrench)
+    wrench = resource_load_grc_texture("wrench");
   data->add_button = menu_add_button_icon(imenu, 0, 0,
                                           list_icons, 0, 0x00FF00,
                                           add_button_proc, data);
-
 
   struct gfx_texture *file_icons = resource_get(RES_ICON_FILE);
   data->import_button = menu_add_button_icon(imenu, 2, 0,
@@ -326,6 +341,17 @@ struct menu_item *watchlist_create(struct menu *menu,
   item->data = data;
   item->destroy_proc = destroy_proc;
   return item;
+}
+
+int watchlist_add(struct menu_item *item, uint32_t address,
+                  enum watch_type type)
+{
+  struct item_data *list = item->data;
+  int pos = list->members.size;
+  if (add_member(list, address, type, pos, 1, 0, 0, 0))
+    return pos;
+  else
+    return -1;
 }
 
 void watchlist_store(struct menu_item *item)
@@ -500,7 +526,7 @@ static void watchfile_menu_init(void)
                          scroll_down_proc, NULL);
     for (int i = 0; i < WATCHFILE_VIEW_ROWS; ++i) {
       struct menu_item *item = menu_item_add(menu, 2, 1 + i, NULL, 0xFFFFFF);
-      item->data = (void*)i;
+      item->data = (void *)i;
       item->enter_proc = entry_enter_proc;
       item->draw_proc = entry_draw_proc;
       item->activate_proc = entry_activate_proc;

@@ -1,7 +1,7 @@
 #ifndef HB_H
 #include <stdint.h>
 
-#define hb_regs               (*(volatile hb_regs_t*)0xA8050000)
+#define hb_regs               (*(volatile hb_regs_t *)0xA8050000)
 
 #define HB_STATUS_RESET       (0b1    << 9)
 #define HB_STATUS_ERROR       (0b1111 << 5)
@@ -35,13 +35,5 @@ typedef struct
   uint32_t timebase_lo;       /* 0x0028 */
                               /* 0x002C */
 } hb_regs_t;
-
-int hb_check(void);
-int hb_sd_init(void);
-int hb_sd_read(uint32_t lba, uint32_t n_blocks, void *dst);
-int hb_sd_write(uint32_t lba, uint32_t n_blocks, void *src);
-int hb_reset(uint32_t dram_save_addr, uint32_t dram_save_len);
-int hb_get_timebase(uint32_t *hi, uint32_t *lo);
-int hb_get_timebase64(uint64_t *tb);
 
 #endif

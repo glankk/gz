@@ -97,7 +97,7 @@ struct menu_item *menu_add_option(struct menu *menu, int x, int y,
                                   void *callback_data)
 {
   struct item_data *data = malloc(sizeof(*data));
-  vector_init(&data->options, sizeof(char*));
+  vector_init(&data->options, sizeof(char *));
   for (const char *option = options; *option;) {
     size_t option_length = strlen(option);
     char *new_option = malloc(option_length + 1);

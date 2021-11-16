@@ -59,7 +59,7 @@ void menu_prompt(struct menu *menu, const char *prompt,
   const char *option = options;
   for (int i = 0; *option; ++i) {
     item = menu_item_add(&prompt_menu, option - options, 1, NULL, 0xFFFFFF);
-    item->data = (void*)i;
+    item->data = (void *)i;
     size_t option_length = strlen(option);
     char *new_option = malloc(option_length + 1);
     strcpy(new_option, option);
