@@ -184,6 +184,8 @@ struct gz
   int                   movie_oca_input_pos;
   int                   movie_oca_sync_pos;
   int                   movie_room_load_pos;
+  int                   movie_last_recorded_frame;
+  int                   movie_rerecords;
   _Bool                 oca_input_flag;
   _Bool                 oca_sync_flag;
   _Bool                 room_load_flag;

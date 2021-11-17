@@ -605,12 +605,22 @@ HOOK void input_hook(void)
         }
     }
     if (gz.movie_state == MOVIE_RECORDING) {
+      /* clear rerecords for empty movies */
+      if (gz.movie_frame == 0 && gz.movie_input.size == 0) {
+        gz.movie_last_recorded_frame = -1;
+        gz.movie_rerecords = 0;
+      }
       if (gz.movie_frame >= gz.movie_input.size) {
         if (gz.movie_input.size == gz.movie_input.capacity)
           vector_reserve(&gz.movie_input, 128);
         vector_push_back(&gz.movie_input, 1, NULL);
       }
-      z_to_movie(gz.movie_frame++, &zi[0], gz.reset_flag);
+      /* if the last recorded frame is not the previous frame,
+         increment the rerecord count */
+      if (gz.movie_last_recorded_frame >= gz.movie_frame)
+        ++gz.movie_rerecords;
+      gz.movie_last_recorded_frame = gz.movie_frame++;
+      z_to_movie(gz.movie_last_recorded_frame, &zi[0], gz.reset_flag);
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       if (gz.movie_frame >= gz.movie_input.size) {
