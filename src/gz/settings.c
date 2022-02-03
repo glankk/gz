@@ -72,6 +72,8 @@ void settings_load_default(void)
   d->bits.path_view_xlu = 1;
   d->bits.path_view_points = 1;
   d->bits.path_view_lines = 1;
+  d->bits.holl_view_xlu = 1;
+  d->bits.holl_view_all = 0;
   d->bits.watches_visible = 1;
   d->menu_x = 20;
   d->menu_y = 64;

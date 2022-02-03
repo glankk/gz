@@ -1034,16 +1034,6 @@ typedef struct
 
 typedef struct
 {
-  z64_actor_t       common;                   /* 0x0000 */
-  int16_t           plane_alpha;              /* 0x014C */
-  uint8_t           side;                     /* 0x014E */
-  uint8_t           unk_14F;                  /* 0x014F */
-  void             *action_func;              /* 0x0150 */
-                                              /* 0x0154 */
-} z64_en_holl_t;
-
-typedef struct
-{
   z64_controller_t  raw;                      /* 0x0000 */
   /* 0x0000: ok */
   /* 0x0800: device not present */

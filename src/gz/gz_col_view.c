@@ -1514,7 +1514,7 @@ void gz_cull_view(void)
  *    00  Two-Way Vertical Fading
  *    01  One-Way Horizontal Fading
  *    02  Two-Way Horizontal No Fade
- *    03  Switch-Flag Vertical Fading
+ *    03  Switch Flag Vertical Fading
  *    04  Two-Way Vertical No Fade
  *    05  Two-Way Horizontal Fading
  *    06  Two-Way Vertical No Fade Wider
@@ -1533,10 +1533,11 @@ enum en_holl_type
 
 enum en_holl_draw_type
 {
-  HOLL_DRAW_TYPE_NONE,
-  HOLL_DRAW_TYPE_CUBOID_2,
-  HOLL_DRAW_TYPE_CUBOID_4,
-  HOLL_DRAW_TYPE_CYL
+  HOLL_DRAW_TYPE_NONE,     /* nothing     */
+  HOLL_DRAW_TYPE_CUBOID_2, /* 2 cuboids   */
+  HOLL_DRAW_TYPE_CUBOID_4, /* 4 cuboids   */
+  HOLL_DRAW_TYPE_CYL_2,    /* 2 cylinders */
+  HOLL_DRAW_TYPE_CYL_1     /* 1 cylinder  */
 };
 
 void gz_holl_view(void)
@@ -1568,19 +1569,24 @@ void gz_holl_view(void)
     init_poly_gfx(&holl_gfx_p, &holl_gfx_d, SETTINGS_COLVIEW_SURFACE,
                   settings->bits.holl_view_xlu, 1);
 
+    _Bool show_all = settings->bits.holl_view_all; /* Show all regions, even inactive ones */
+
     for (z64_actor_t *actor = z64_game.actor_list[Z64_ACTORTYPE_DOOR].first; actor != NULL; actor = actor->next)
     {
       if (actor->actor_id != Z64_ACTOR_EN_HOLL)
         continue;
 
-      z64_en_holl_t *holl = (z64_en_holl_t *)actor;
-
-      enum en_holl_draw_type draw_type = HOLL_DRAW_TYPE_NONE;
       z64_xyzf_t p_min = { 0 }, p_max = { 0 };
       z64_xyzf_t p2_min = { 0 }, p2_max = { 0 };
       float cyl_radius, cyl_offset, cyl_height;
 
-      /* Transformation to world coordinates centered on and facing the yaw of the actor */
+      enum en_holl_draw_type draw_type = HOLL_DRAW_TYPE_NONE;
+      enum en_holl_type holl_type = (actor->variable >> 6) & 7;
+
+      z64_tnsn_actor_t *tnsn_entry = &z64_game.room_ctxt.tnsn_list[(actor->variable >> 10) & 0x3F];
+      int side = tnsn_entry->room_idx_1 == z64_game.room_ctxt.rooms[0].index;
+
+      /* transformation to world coordinates centered on and facing the same direction as the actor */
       Mtx *p_m;
       {
         MtxF mf;
@@ -1593,7 +1599,8 @@ void gz_holl_view(void)
       }
       gSPMatrix(holl_gfx_p++, p_m, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
 
-      switch ((holl->common.variable >> 6) & 7)
+      /* determine the geometry */
+      switch (holl_type)
       {
 #define HOLL_MIN_Y -50.0f
 #define HOLL_MAX_Y 200.0f
@@ -1617,39 +1624,39 @@ void gz_holl_view(void)
           cyl_radius = 500.0f;
           cyl_offset = 0.0f;
           cyl_height = 95.0f - cyl_offset;
-          draw_type = HOLL_DRAW_TYPE_CYL;
+          draw_type = HOLL_DRAW_TYPE_CYL_1;
           break;
         case HOLL_TWO_WAY_HORIZONTAL_NO_FADE:
           cyl_radius = 120.0f;
           cyl_offset = 50.0f;
           cyl_height = 200.0f - cyl_offset;
-          draw_type = HOLL_DRAW_TYPE_CYL;
+          draw_type = HOLL_DRAW_TYPE_CYL_2;
           break;
         case HOLL_SWITCH_FLAG_VERTICAL_FADING:
           {
             _Bool flag_set;
 
-            if ((holl->common.variable & 0x3F) < 0x20)
-              flag_set = z64_game.swch_flags & (1 << (holl->common.variable & 0x3F));
+            if ((actor->variable & 0x3F) < 0x20)
+              flag_set = z64_game.swch_flags & (1 << (actor->variable & 0x3F));
             else
-              flag_set = z64_game.temp_swch_flags & (1 << ((holl->common.variable & 0x3F) - 0x20));
+              flag_set = z64_game.temp_swch_flags & (1 << ((actor->variable & 0x3F) - 0x20));
             if (!flag_set)
-              break; /* draw nothing */
+              break; /* draw nothing if the relevant switch flag is not set */
           }
-          p_min = (z64_xyzf_t){ -2.0f*HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  0.0f };
-          p_max = (z64_xyzf_t){  2.0f*HOLL_HALFWIDTH_X , HOLL_MAX_Y , 50.0f };
+          p_min = (z64_xyzf_t){ -2.0f * HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  0.0f };
+          p_max = (z64_xyzf_t){  2.0f * HOLL_HALFWIDTH_X , HOLL_MAX_Y , 50.0f };
           draw_type = HOLL_DRAW_TYPE_CUBOID_2;
           break;
         case HOLL_TWO_WAY_VERTICAL_NO_FADE:
-          p_min = (z64_xyzf_t){ -2.0f*HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  50.0f };
-          p_max = (z64_xyzf_t){  2.0f*HOLL_HALFWIDTH_X , HOLL_MAX_Y , 100.0f };
+          p_min = (z64_xyzf_t){ -2.0f * HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  50.0f };
+          p_max = (z64_xyzf_t){  2.0f * HOLL_HALFWIDTH_X , HOLL_MAX_Y , 100.0f };
           draw_type = HOLL_DRAW_TYPE_CUBOID_2;
           break;
         case HOLL_TWO_WAY_HORIZONTAL_FADING:
           cyl_radius = 120.0f;
           cyl_offset = 50.0f;
           cyl_height = 200.0f - cyl_offset;
-          draw_type = HOLL_DRAW_TYPE_CYL;
+          draw_type = HOLL_DRAW_TYPE_CYL_2;
           break;
         case HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE:
           p_min = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  50.0f };
@@ -1658,45 +1665,108 @@ void gz_holl_view(void)
           break;
       }
 
-      /* swap color based on side variable */
-      if (holl->side != 0)
-      {
-          p2_max.z = -p2_max.z;
-          p2_min.z = -p2_min.z;
-          p_min.z = -p_min.z;
-          p_max.z = -p_max.z;
-      }
-      // TODO swap colors based on which regions are "active", and maybe don't draw inactive regions at all?
-
+      /* draw it */
       switch (draw_type)
       {
         case HOLL_DRAW_TYPE_NONE:
           break;
         case HOLL_DRAW_TYPE_CUBOID_4:
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
-          draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
-          p2_min.z = -p2_min.z;
-          p2_max.z = -p2_max.z;
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
-          draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
-          /* intentional fallthrough */
-        case HOLL_DRAW_TYPE_CUBOID_2:
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
-          draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
-          p_min.z = -p_min.z;
-          p_max.z = -p_max.z;
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
-          draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+          if (side == 1)
+          {
+            p2_max.z = -p2_max.z;
+            p2_min.z = -p2_min.z;
+            p_min.z = -p_min.z;
+            p_max.z = -p_max.z;
+          }
+
+          _Bool both_rooms_loaded = (z64_game.room_ctxt.rooms[0].file != NULL && z64_game.room_ctxt.rooms[1].file != NULL);
+
+          if (both_rooms_loaded)
+          {
+            if (show_all)
+            {
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+              p2_min.z = -p2_min.z;
+              p2_max.z = -p2_max.z;
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+            }
+
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
+            draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+            p_min.z = -p_min.z;
+            p_max.z = -p_max.z;
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+          }
+          else
+          {
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+            p2_min.z = -p2_min.z;
+            p2_max.z = -p2_max.z;
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
+            draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+
+            if (show_all)
+            {
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+              p_min.z = -p_min.z;
+              p_max.z = -p_max.z;
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+            }
+          }
           break;
-        case HOLL_DRAW_TYPE_CYL:
+        case HOLL_DRAW_TYPE_CUBOID_2:
+          if (side == 0)
+          {
+            p_min.z = -p_min.z;
+            p_max.z = -p_max.z;
+          }
           gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
-          draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                  holl->common.pos_2.x, holl->common.pos_2.y - cyl_offset - cyl_height, holl->common.pos_2.z,
-                  cyl_radius, cyl_height);
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
-          draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                  holl->common.pos_2.x, holl->common.pos_2.y + cyl_offset, holl->common.pos_2.z,
-                  cyl_radius, cyl_height);
+          draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+
+          if (show_all)
+          {
+            p_min.z = -p_min.z;
+            p_max.z = -p_max.z;
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
+            draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+          }
+          break;
+        case HOLL_DRAW_TYPE_CYL_2:
+          {
+            float offset = (side == 1) ? -(cyl_offset + cyl_height) : cyl_offset;
+
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            draw_cyl(&holl_gfx_p, &holl_gfx_d,
+                    actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+                    cyl_radius, cyl_height);
+
+            if (show_all)
+            {
+              offset = (side == 0) ? -(cyl_offset + cyl_height) : cyl_offset;
+
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
+              draw_cyl(&holl_gfx_p, &holl_gfx_d,
+                      actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+                      cyl_radius, cyl_height); 
+            }
+          }
+          break;
+        case HOLL_DRAW_TYPE_CYL_1:
+          {
+            if (side == 0)
+              break;
+
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            draw_cyl(&holl_gfx_p, &holl_gfx_d,
+                    actor->pos_2.x, actor->pos_2.y + cyl_offset, actor->pos_2.z,
+                    cyl_radius, cyl_height);
+          }
           break;
       }
       gSPPopMatrix(holl_gfx_p++);
@@ -1706,6 +1776,7 @@ void gz_holl_view(void)
 
     gSPDisplayList((*p_gfx_p)++, holl_gfx);
   }
+
   if (gz.holl_view_state == HOLLVIEW_BEGIN_STOP)
     gz.holl_view_state = HOLLVIEW_STOP;
   else if (gz.holl_view_state == HOLLVIEW_STOP) {
