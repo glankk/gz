@@ -176,13 +176,16 @@ $(OBJ-VC)             : ALL_CXXFLAGS         += -n64-wiivc
 $(ELF-VC)             : ALL_LDFLAGS          += -n64-wiivc
 else
 $(OBJ-VC)             : ALL_CPPFLAGS         += -DWIIVC
+$(OBJ-VC)             : ALL_CFLAGS           += -fno-reorder-blocks -fno-optimize-sibling-calls
+$(OBJ-VC)             : ALL_CXXFLAGS         += -fno-reorder-blocks -fno-optimize-sibling-calls
+$(ELF-VC)             : ALL_LDFLAGS          += -fno-reorder-blocks -fno-optimize-sibling-calls
 endif
 
 $(OBJ-N64)            : CFLAGS               ?= -O2 -g -flto -ffat-lto-objects
 $(OBJ-N64)            : CXXFLAGS             ?= -O2 -g -flto -ffat-lto-objects
-$(ELF-N64)            : LDFLAGS              ?= -O2 -flto
-$(OBJ-VC)             : CFLAGS               ?= -O1 -g -fno-reorder-blocks
-$(OBJ-VC)             : CXXFLAGS             ?= -O1 -g -fno-reorder-blocks
-$(ELF-VC)             : LDFLAGS              ?=
+$(ELF-N64)            : LDFLAGS              ?= -O2 -g -flto
+$(OBJ-VC)             : CFLAGS               ?= -Os -g -flto -ffat-lto-objects
+$(OBJ-VC)             : CXXFLAGS             ?= -Os -g -flto -ffat-lto-objects
+$(ELF-VC)             : LDFLAGS              ?= -Os -g -flto
 
 $(eval $(call bin_template,ldr,ldr,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(HOOKDIR)/ldr,$(LDR_ADDRESS)))
