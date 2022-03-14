@@ -344,8 +344,8 @@ static uint64_t rdb_get_reg(OSThread *thread, int reg_idx)
     case 0x10:  return c->s0;
     case 0x11:  return c->s1;
     case 0x12:  return c->s2;
-    case 0x13:  return c->s4;
-    case 0x14:  return c->s5;
+    case 0x13:  return c->s3;
+    case 0x14:  return c->s4;
     case 0x15:  return c->s5;
     case 0x16:  return c->s6;
     case 0x17:  return c->s7;
@@ -405,8 +405,8 @@ static void rdb_set_reg(OSThread *thread, int reg_idx, uint64_t value)
     case 0x10:  c->s0       = value;  break;
     case 0x11:  c->s1       = value;  break;
     case 0x12:  c->s2       = value;  break;
-    case 0x13:  c->s4       = value;  break;
-    case 0x14:  c->s5       = value;  break;
+    case 0x13:  c->s3       = value;  break;
+    case 0x14:  c->s4       = value;  break;
     case 0x15:  c->s5       = value;  break;
     case 0x16:  c->s6       = value;  break;
     case 0x17:  c->s7       = value;  break;
