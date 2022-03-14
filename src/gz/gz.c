@@ -988,9 +988,10 @@ HOOK void guPerspectiveF_hook(MtxF *mf)
   maybe_init_gp();
   if (gz.ready && settings->bits.wiivc_cam) {
     /* overwrite the scale argument in guPerspectiveF */
+    /* this assumes that mf is at 0($sp) on entry, which should be true */
     __asm__ ("la      $t0, 0x3F800000;"
-             "sw      $t0, 0x0048($sp);"
-             ::: "t0");
+             "sw      $t0, 0x0048 + %0;"
+             :: "R"(mf) : "t0");
   }
   mf->xx = 1.f;
   mf->xy = 0.f;
