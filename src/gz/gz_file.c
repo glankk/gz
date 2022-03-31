@@ -169,7 +169,7 @@ static void clear_intro_flags_proc(struct menu_item *item, void *data)
 
 static void set_reward_flags_proc(struct menu_item *item, void *data)
 {
-  zu_set_event_flag(0x19);
+  zu_set_event_flag(0x07);
   zu_set_event_flag(0x25);
   zu_set_event_flag(0x37);
   zu_set_event_flag(0x48);
@@ -180,7 +180,7 @@ static void set_reward_flags_proc(struct menu_item *item, void *data)
 
 static void clear_reward_flags_proc(struct menu_item *item, void *data)
 {
-  zu_clear_event_flag(0x19);
+  zu_clear_event_flag(0x07);
   zu_clear_event_flag(0x25);
   zu_clear_event_flag(0x37);
   zu_clear_event_flag(0x48);
