@@ -241,7 +241,7 @@ void flag_menu_create(struct menu *menu)
   /* initialize data */
   vector_init(&records, sizeof(struct flag_record));
   vector_init(&events, sizeof(struct flag_event));
-  add_record(1, 56, z64_file.gs_flags, "gs");
+  add_record(4, 6, z64_file.gs_flags, "gs");
   add_record(2, 14, z64_file.event_chk_inf, "event_chk_inf");
   add_record(2, 4, z64_file.item_get_inf, "item_get_inf");
   add_record(2, 30, z64_file.inf_table, "inf_table");
