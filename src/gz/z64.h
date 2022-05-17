@@ -741,7 +741,9 @@ typedef struct
   uint32_t          fw_room_index;            /* 0x0E7C */
   int32_t           fw_set;                   /* 0x0E80 */
   char              unk_0xE84[0x0018];        /* 0x0E84 */
-  uint8_t           gs_flags[56];             /* 0x0E9C */
+  uint32_t          gs_flags[6];              /* 0x0E9C */
+  char              unk_EBC[0x0004];          /* 0x0EB4 */
+  int32_t           high_scores[7];           /* 0x0EB8 */
   uint16_t          event_chk_inf[14];        /* 0x0ED4 */
   uint16_t          item_get_inf[4];          /* 0x0EF0 */
   uint16_t          inf_table[30];            /* 0x0EF8 */
