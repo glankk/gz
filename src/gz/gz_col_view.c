@@ -107,24 +107,78 @@ static void draw_quad(Gfx **p_gfx_p, Gfx **p_gfx_d,
 static void draw_cuboid(Gfx **p_gfx_p, Gfx **p_gfx_d,
                         z64_xyzf_t *v_min, z64_xyzf_t *v_max)
 {
-  z64_xyzf_t points[8] =
-  {
-    { v_min->x, v_min->y, v_min->z },
-    { v_max->x, v_min->y, v_min->z },
-    { v_min->x, v_max->y, v_min->z },
-    { v_max->x, v_max->y, v_min->z },
-    { v_min->x, v_min->y, v_max->z },
-    { v_max->x, v_min->y, v_max->z },
-    { v_min->x, v_max->y, v_max->z },
-    { v_max->x, v_max->y, v_max->z },
-  };
+  static Gfx *p_cube_gfx = NULL;
 
-  draw_quad(p_gfx_p, p_gfx_d, &points[6], &points[7], &points[3], &points[2]);
-  draw_quad(p_gfx_p, p_gfx_d, &points[6], &points[2], &points[0], &points[4]);
-  draw_quad(p_gfx_p, p_gfx_d, &points[7], &points[6], &points[4], &points[5]);
-  draw_quad(p_gfx_p, p_gfx_d, &points[3], &points[7], &points[5], &points[1]);
-  draw_quad(p_gfx_p, p_gfx_d, &points[2], &points[3], &points[1], &points[0]);
-  draw_quad(p_gfx_p, p_gfx_d, &points[0], &points[1], &points[5], &points[4]);
+  if (!p_cube_gfx) {
+    static Vtx cube_vtx[24] =
+    {
+      gdSPDefVtxN(-128, -128, -128, 0, 0, -127,    0,    0, 0xFF),
+      gdSPDefVtxN(-128,  128, -128, 0, 0, -127,    0,    0, 0xFF),
+      gdSPDefVtxN(-128,  128,  128, 0, 0, -127,    0,    0, 0xFF),
+      gdSPDefVtxN(-128, -128,  128, 0, 0, -127,    0,    0, 0xFF),
+
+      gdSPDefVtxN( 128,  128, -128, 0, 0,  127,    0,    0, 0xFF),
+      gdSPDefVtxN( 128, -128, -128, 0, 0,  127,    0,    0, 0xFF),
+      gdSPDefVtxN( 128, -128,  128, 0, 0,  127,    0,    0, 0xFF),
+      gdSPDefVtxN( 128,  128,  128, 0, 0,  127,    0,    0, 0xFF),
+
+      gdSPDefVtxN(-128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
+      gdSPDefVtxN(-128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
+      gdSPDefVtxN( 128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
+      gdSPDefVtxN( 128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
+
+      gdSPDefVtxN( 128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
+      gdSPDefVtxN( 128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
+      gdSPDefVtxN(-128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
+      gdSPDefVtxN(-128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
+
+      gdSPDefVtxN(-128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
+      gdSPDefVtxN( 128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
+      gdSPDefVtxN( 128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
+      gdSPDefVtxN(-128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
+
+      gdSPDefVtxN( 128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
+      gdSPDefVtxN(-128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
+      gdSPDefVtxN(-128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
+      gdSPDefVtxN( 128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
+    };
+
+    static Gfx cube_gfx[] =
+    {
+      gsSPVertex(cube_vtx, 24, 0),
+      gsSP2Triangles( 0,  1,  2, 0,  0,  2,  3, 0),
+      gsSP2Triangles( 4,  5,  6, 0,  4,  6,  7, 0),
+      gsSP2Triangles( 8,  9, 10, 0,  8, 10, 11, 0),
+      gsSP2Triangles(12, 13, 14, 0, 12, 14, 15, 0),
+      gsSP2Triangles(16, 17, 18, 0, 16, 18, 19, 0),
+      gsSP2Triangles(20, 21, 22, 0, 20, 22, 23, 0),
+      gsSPEndDisplayList(),
+    };
+
+    p_cube_gfx = cube_gfx;
+  }
+
+  float x = (v_max->x + v_min->x) / 2;
+  float y = (v_max->y + v_min->y) / 2;
+  float z = (v_max->z + v_min->z) / 2;
+  float w = (v_max->x - v_min->x) / 256;
+  float h = (v_max->y - v_min->y) / 256;
+  float d = (v_max->z - v_min->z) / 256;
+
+  Mtx m;
+  {
+    MtxF mf;
+    guTranslateF(&mf, x, y, z);
+    MtxF ms;
+    guScaleF(&ms, w, h, d);
+    guMtxCatF(&ms, &mf, &mf);
+    guMtxF2L(&mf, &m);
+  }
+
+  gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
+            G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
+  gSPDisplayList((*p_gfx_p)++, p_cube_gfx);
+  gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
 }
 
 static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
@@ -197,7 +251,7 @@ static void draw_cyl(Gfx **p_gfx_p, Gfx **p_gfx_d,
   }
 
   gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
-            G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
+            G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
   gSPDisplayList((*p_gfx_p)++, p_cyl_gfx);
   gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
 }
@@ -397,7 +451,7 @@ static void draw_ico_sphere(Gfx **p_gfx_p, Gfx **p_gfx_d,
   }
 
   gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
-            G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
+            G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
   gSPDisplayList((*p_gfx_p)++, p_sph_gfx);
   gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
 }
@@ -564,6 +618,22 @@ static void do_poly_list(poly_writer_t *poly_writer,
     if (poly_writer) {
       uint32_t color;
       _Bool skip = 0;
+      if (type->flags_2.hookshot)
+        color = 0x8080FFFF;
+      else if (type->flags_1.interaction > 0x01)
+        color = 0xC000C0FF;
+      else if (type->flags_1.special == 0x0C)
+        color = 0xFF0000FF;
+      else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
+        color = 0x00FF00FF;
+      else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
+        color = 0xC0FFC0FF;
+      else if (type->flags_2.terrain == 0x01)
+        color = 0xFFFF80FF;
+      else if (rd)
+        skip = 1;
+      else
+        color = 0xFFFFFFFF;
       if (wfc) {
 #define COLPOLY_SNORMAL(x) ((int16_t)((x) * 32767.0f))
         int16_t normal_y = poly->norm.y;
@@ -574,23 +644,6 @@ static void do_poly_list(poly_writer_t *poly_writer,
         else
           color = 0x00FF00FF;
 #undef COLPOLY_SNORMAL
-      } else {
-        if (type->flags_2.hookshot)
-          color = 0x8080FFFF;
-        else if (type->flags_1.interaction > 0x01)
-          color = 0xC000C0FF;
-        else if (type->flags_1.special == 0x0C)
-          color = 0xFF0000FF;
-        else if (type->flags_1.exit != 0x00 || type->flags_1.special == 0x05)
-          color = 0x00FF00FF;
-        else if (type->flags_1.behavior != 0 || type->flags_2.wall_damage)
-          color = 0xC0FFC0FF;
-        else if (type->flags_2.terrain == 0x01)
-          color = 0xFFFF80FF;
-        else if (rd)
-          skip = 1;
-        else
-          color = 0xFFFFFFFF;
       }
       if (!skip) {
         Vtx v[3] =
@@ -704,8 +757,14 @@ static void do_waterbox_list(Gfx **p_gfx_p, Gfx **p_gfx_d,
         w->flags.group == z64_game.room_ctxt.rooms[1].index ||
         w->flags.group == 0x3F)
     {
-      z64_xyzf_t min_pos = (z64_xyzf_t){ w->pos.x,            water_max_depth, w->pos.z            };
-      z64_xyzf_t max_pos = (z64_xyzf_t){ w->pos.x + w->width, w->pos.y,        w->pos.z + w->depth };
+      z64_xyzf_t min_pos = (z64_xyzf_t)
+      {
+        w->pos.x, water_max_depth, w->pos.z
+      };
+      z64_xyzf_t max_pos = (z64_xyzf_t)
+      {
+        w->pos.x + w->width, w->pos.y, w->pos.z + w->depth
+      };
 
       draw_cuboid(p_gfx_p, p_gfx_d, &min_pos, &max_pos);
     }
@@ -986,8 +1045,8 @@ void gz_col_view(void)
       * the bottom.
       */
       if (z64_game.scene_index == 0x58) {
-        z64_xyzf_t min_pos = (z64_xyzf_t){ -348.0f, 777.0f, -1746.0f };
-        z64_xyzf_t max_pos = (z64_xyzf_t){  205.0f, 877.0f, -967.0f  };
+        z64_xyzf_t min_pos = (z64_xyzf_t){-348.0f, 777.0f, -1746.0f};
+        z64_xyzf_t max_pos = (z64_xyzf_t){ 205.0f, 877.0f,  -967.0f};
 
         draw_cuboid(&dyn_poly_p, &dyn_poly_d, &min_pos, &max_pos);
       }
@@ -1140,15 +1199,18 @@ void gz_hit_view(void)
 
     if (settings->bits.hit_view_oc)
       do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                     z64_game.hit_ctxt.n_oc, z64_game.hit_ctxt.oc_list, 0xFFFFFF);
+                     z64_game.hit_ctxt.n_oc, z64_game.hit_ctxt.oc_list,
+                     0xFFFFFF);
 
     if (settings->bits.hit_view_ac)
       do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                     z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list, 0x0000FF);
+                     z64_game.hit_ctxt.n_ac, z64_game.hit_ctxt.ac_list,
+                     0x0000FF);
 
     if (settings->bits.hit_view_at)
       do_hitbox_list(&hit_gfx_p, &hit_gfx_d,
-                     z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list, 0xFF0000);
+                     z64_game.hit_ctxt.n_at, z64_game.hit_ctxt.at_list,
+                     0xFF0000);
 
     gSPEndDisplayList(hit_gfx_p++);
     dcache_wb(hit_gfx, sizeof(*hit_gfx) * hit_gfx_cap);
@@ -1522,22 +1584,22 @@ void gz_cull_view(void)
  */
 enum en_holl_type
 {
-  /* 0 */ HOLL_TWO_WAY_VERTICAL_FADING,
-  /* 1 */ HOLL_ONE_WAY_HORIZONTAL_FADING,
-  /* 2 */ HOLL_TWO_WAY_HORIZONTAL_NO_FADE,
-  /* 3 */ HOLL_SWITCH_FLAG_VERTICAL_FADING,
-  /* 4 */ HOLL_TWO_WAY_VERTICAL_NO_FADE,
-  /* 5 */ HOLL_TWO_WAY_HORIZONTAL_FADING,
-  /* 6 */ HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE
+  HOLL_TWO_WAY_VERTICAL_FADING,       /* 0 */
+  HOLL_ONE_WAY_HORIZONTAL_FADING,     /* 1 */
+  HOLL_TWO_WAY_HORIZONTAL_NO_FADE,    /* 2 */
+  HOLL_SWITCH_FLAG_VERTICAL_FADING,   /* 3 */
+  HOLL_TWO_WAY_VERTICAL_NO_FADE,      /* 4 */
+  HOLL_TWO_WAY_HORIZONTAL_FADING,     /* 5 */
+  HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE  /* 6 */
 };
 
 enum en_holl_draw_type
 {
-  HOLL_DRAW_TYPE_NONE,     /* nothing     */
-  HOLL_DRAW_TYPE_CUBOID_2, /* 2 cuboids   */
-  HOLL_DRAW_TYPE_CUBOID_4, /* 4 cuboids   */
-  HOLL_DRAW_TYPE_CYL_2,    /* 2 cylinders */
-  HOLL_DRAW_TYPE_CYL_1     /* 1 cylinder  */
+  HOLL_DRAW_TYPE_NONE,      /* nothing     */
+  HOLL_DRAW_TYPE_CUBOID_2,  /* 2 cuboids   */
+  HOLL_DRAW_TYPE_CUBOID_4,  /* 4 cuboids   */
+  HOLL_DRAW_TYPE_CYL_2,     /* 2 cylinders */
+  HOLL_DRAW_TYPE_CYL_1      /* 1 cylinder  */
 };
 
 void gz_holl_view(void)
@@ -1569,9 +1631,12 @@ void gz_holl_view(void)
     init_poly_gfx(&holl_gfx_p, &holl_gfx_d, SETTINGS_COLVIEW_SURFACE,
                   settings->bits.holl_view_xlu, 1);
 
-    _Bool show_all = settings->bits.holl_view_all; /* Show all regions, even inactive ones */
+    /* Show all regions, even inactive ones */
+    _Bool show_all = settings->bits.holl_view_all;
 
-    for (z64_actor_t *actor = z64_game.actor_list[Z64_ACTORTYPE_DOOR].first; actor != NULL; actor = actor->next)
+    for (z64_actor_t *actor = z64_game.actor_list[Z64_ACTORTYPE_DOOR].first;
+         actor != NULL;
+         actor = actor->next)
     {
       if (actor->actor_id != Z64_ACTOR_EN_HOLL)
         continue;
@@ -1583,10 +1648,16 @@ void gz_holl_view(void)
       enum en_holl_draw_type draw_type = HOLL_DRAW_TYPE_NONE;
       enum en_holl_type holl_type = (actor->variable >> 6) & 7;
 
-      z64_tnsn_actor_t *tnsn_entry = &z64_game.room_ctxt.tnsn_list[(actor->variable >> 10) & 0x3F];
-      int side = tnsn_entry->room_idx_1 == z64_game.room_ctxt.rooms[0].index;
+      int tnsn = (actor->variable >> 10) & 0x3F;
+      z64_tnsn_actor_t *tnsn_entry = &z64_game.room_ctxt.tnsn_list[tnsn];
+      int side;
+      if (tnsn_entry->room_idx_1 == z64_game.room_ctxt.rooms[0].index)
+        side = 1;
+      else
+        side = 0;
 
-      /* transformation to world coordinates centered on and facing the same direction as the actor */
+      /* transformation to world coordinates centered on and facing the same
+       * direction as the actor */
       Mtx *p_m;
       {
         MtxF mf;
@@ -1600,18 +1671,17 @@ void gz_holl_view(void)
       gSPMatrix(holl_gfx_p++, p_m, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_PUSH);
 
       /* determine the geometry */
-      switch (holl_type)
-      {
+      switch (holl_type) {
 #define HOLL_MIN_Y -50.0f
 #define HOLL_MAX_Y 200.0f
 #define HOLL_HALFWIDTH_X 100.0f
-        case HOLL_TWO_WAY_VERTICAL_FADING:
-          p_min  = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MIN_Y , 150.0f };
-          p_max  = (z64_xyzf_t){  HOLL_HALFWIDTH_X , HOLL_MAX_Y , 200.0f };
-          p2_min = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MIN_Y ,   0.0f };
-          p2_max = (z64_xyzf_t){  HOLL_HALFWIDTH_X , HOLL_MAX_Y , 150.0f };
-          if (z64_game.scene_index == 6)
-          {
+        case HOLL_TWO_WAY_VERTICAL_FADING: {
+          p_min  = (z64_xyzf_t){-HOLL_HALFWIDTH_X, HOLL_MIN_Y, 150.0f};
+          p_max  = (z64_xyzf_t){ HOLL_HALFWIDTH_X, HOLL_MAX_Y, 200.0f};
+          p2_min = (z64_xyzf_t){-HOLL_HALFWIDTH_X, HOLL_MIN_Y,   0.0f};
+          p2_max = (z64_xyzf_t){ HOLL_HALFWIDTH_X, HOLL_MAX_Y, 150.0f};
+
+          if (z64_game.scene_index == 6) {
             /* spirit temple special case */
             p_min.z /= 2.0f;
             p_max.z /= 2.0f;
@@ -1620,73 +1690,85 @@ void gz_holl_view(void)
           }
           draw_type = HOLL_DRAW_TYPE_CUBOID_4;
           break;
-        case HOLL_ONE_WAY_HORIZONTAL_FADING:
+        }
+
+        case HOLL_ONE_WAY_HORIZONTAL_FADING: {
           cyl_radius = 500.0f;
           cyl_offset = 0.0f;
           cyl_height = 95.0f - cyl_offset;
           draw_type = HOLL_DRAW_TYPE_CYL_1;
           break;
-        case HOLL_TWO_WAY_HORIZONTAL_NO_FADE:
-          cyl_radius = 120.0f;
-          cyl_offset = 50.0f;
-          cyl_height = 200.0f - cyl_offset;
-          draw_type = HOLL_DRAW_TYPE_CYL_2;
-          break;
-        case HOLL_SWITCH_FLAG_VERTICAL_FADING:
-          {
-            _Bool flag_set;
+        }
 
-            if ((actor->variable & 0x3F) < 0x20)
-              flag_set = z64_game.swch_flags & (1 << (actor->variable & 0x3F));
-            else
-              flag_set = z64_game.temp_swch_flags & (1 << ((actor->variable & 0x3F) - 0x20));
-            if (!flag_set)
-              break; /* draw nothing if the relevant switch flag is not set */
-          }
-          p_min = (z64_xyzf_t){ -2.0f * HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  0.0f };
-          p_max = (z64_xyzf_t){  2.0f * HOLL_HALFWIDTH_X , HOLL_MAX_Y , 50.0f };
-          draw_type = HOLL_DRAW_TYPE_CUBOID_2;
-          break;
-        case HOLL_TWO_WAY_VERTICAL_NO_FADE:
-          p_min = (z64_xyzf_t){ -2.0f * HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  50.0f };
-          p_max = (z64_xyzf_t){  2.0f * HOLL_HALFWIDTH_X , HOLL_MAX_Y , 100.0f };
-          draw_type = HOLL_DRAW_TYPE_CUBOID_2;
-          break;
-        case HOLL_TWO_WAY_HORIZONTAL_FADING:
+        case HOLL_TWO_WAY_HORIZONTAL_NO_FADE: {
           cyl_radius = 120.0f;
           cyl_offset = 50.0f;
           cyl_height = 200.0f - cyl_offset;
           draw_type = HOLL_DRAW_TYPE_CYL_2;
           break;
-        case HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE:
-          p_min = (z64_xyzf_t){ -HOLL_HALFWIDTH_X , HOLL_MIN_Y ,  50.0f };
-          p_max = (z64_xyzf_t){  HOLL_HALFWIDTH_X , HOLL_MAX_Y , 100.0f };
+        }
+
+        case HOLL_SWITCH_FLAG_VERTICAL_FADING: {
+          _Bool flag_set;
+
+          int flag = actor->variable & 0x1F;
+          if (actor->variable & 0x20)
+            flag_set = z64_game.temp_swch_flags & (1 << flag);
+          else
+            flag_set = z64_game.swch_flags & (1 << flag);
+          /* draw nothing if the relevant switch flag is not set */
+          if (!flag_set)
+            break;
+
+          draw_type = HOLL_DRAW_TYPE_CUBOID_2;
+          p_min = (z64_xyzf_t){-2.0f * HOLL_HALFWIDTH_X, HOLL_MIN_Y,  0.0f};
+          p_max = (z64_xyzf_t){ 2.0f * HOLL_HALFWIDTH_X, HOLL_MAX_Y, 50.0f};
+          break;
+        }
+
+        case HOLL_TWO_WAY_VERTICAL_NO_FADE: {
+          p_min = (z64_xyzf_t){-2.0f * HOLL_HALFWIDTH_X, HOLL_MIN_Y,  50.0f};
+          p_max = (z64_xyzf_t){ 2.0f * HOLL_HALFWIDTH_X, HOLL_MAX_Y, 100.0f};
           draw_type = HOLL_DRAW_TYPE_CUBOID_2;
           break;
+        }
+
+        case HOLL_TWO_WAY_HORIZONTAL_FADING: {
+          cyl_radius = 120.0f;
+          cyl_offset = 50.0f;
+          cyl_height = 200.0f - cyl_offset;
+          draw_type = HOLL_DRAW_TYPE_CYL_2;
+          break;
+        }
+
+        case HOLL_TWO_WAY_VERTICAL_NO_FADE_WIDE: {
+          p_min = (z64_xyzf_t){-HOLL_HALFWIDTH_X, HOLL_MIN_Y,  50.0f};
+          p_max = (z64_xyzf_t){ HOLL_HALFWIDTH_X, HOLL_MAX_Y, 100.0f};
+          draw_type = HOLL_DRAW_TYPE_CUBOID_2;
+          break;
+        }
       }
 
       /* draw it */
-      switch (draw_type)
-      {
+      switch (draw_type) {
         case HOLL_DRAW_TYPE_NONE:
           break;
+
         case HOLL_DRAW_TYPE_CUBOID_4:
-          if (side == 1)
-          {
+          if (side == 1) {
             p2_max.z = -p2_max.z;
             p2_min.z = -p2_min.z;
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
           }
 
-          _Bool both_rooms_loaded = (z64_game.room_ctxt.rooms[0].file != NULL && z64_game.room_ctxt.rooms[1].file != NULL);
-
-          if (both_rooms_loaded)
+          if (z64_game.room_ctxt.rooms[0].file != NULL &&
+              z64_game.room_ctxt.rooms[1].file != NULL)
           {
-            if (show_all)
-            {
+            if (show_all) {
               gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+
               p2_min.z = -p2_min.z;
               p2_max.z = -p2_max.z;
               gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
@@ -1695,24 +1777,25 @@ void gz_holl_view(void)
 
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
           }
-          else
-          {
+          else {
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
+
             p2_min.z = -p2_min.z;
             p2_max.z = -p2_max.z;
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
 
-            if (show_all)
-            {
+            if (show_all) {
               gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
+
               p_min.z = -p_min.z;
               p_max.z = -p_max.z;
               gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
@@ -1720,57 +1803,57 @@ void gz_holl_view(void)
             }
           }
           break;
+
         case HOLL_DRAW_TYPE_CUBOID_2:
-          if (side == 0)
-          {
+          if (side == 0) {
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
           }
           gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
           draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
 
-          if (show_all)
-          {
+          if (show_all) {
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
           }
           break;
-        case HOLL_DRAW_TYPE_CYL_2:
-          {
-            float offset = (side == 1) ? -(cyl_offset + cyl_height) : cyl_offset;
 
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+        case HOLL_DRAW_TYPE_CYL_2: {
+          float offset = (side == 1) ? -(cyl_offset + cyl_height) : cyl_offset;
+
+          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+          draw_cyl(&holl_gfx_p, &holl_gfx_d,
+                   actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+                   cyl_radius, cyl_height);
+
+          if (show_all) {
+            offset = (side == 0) ? -(cyl_offset + cyl_height) : cyl_offset;
+
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
             draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                    actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
-                    cyl_radius, cyl_height);
-
-            if (show_all)
-            {
-              offset = (side == 0) ? -(cyl_offset + cyl_height) : cyl_offset;
-
-              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
-              draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                      actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
-                      cyl_radius, cyl_height); 
-            }
+                     actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+                     cyl_radius, cyl_height);
           }
-          break;
-        case HOLL_DRAW_TYPE_CYL_1:
-          {
-            if (side == 0)
-              break;
 
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
-            draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                    actor->pos_2.x, actor->pos_2.y + cyl_offset, actor->pos_2.z,
-                    cyl_radius, cyl_height);
-          }
           break;
+        }
+
+        case HOLL_DRAW_TYPE_CYL_1: {
+          if (side == 0)
+            break;
+
+          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+          draw_cyl(&holl_gfx_p, &holl_gfx_d,
+                   actor->pos_2.x, actor->pos_2.y + cyl_offset, actor->pos_2.z,
+                   cyl_radius, cyl_height);
+          break;
+        }
       }
       gSPPopMatrix(holl_gfx_p++);
     }
+
     gSPEndDisplayList(holl_gfx_p++);
     dcache_wb(holl_gfx, sizeof(*holl_gfx) * holl_gfx_cap);
 
