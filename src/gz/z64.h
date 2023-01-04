@@ -905,6 +905,27 @@ typedef struct
                                               /* 0x0004 */
 } z64_controller_t;
 
+enum z64_actor_id
+{
+  Z64_ACTOR_EN_HOLL = 0x0023
+};
+
+enum z64_actor_type
+{
+  Z64_ACTORTYPE_SWITCH,
+  Z64_ACTORTYPE_BG,
+  Z64_ACTORTYPE_PLAYER,
+  Z64_ACTORTYPE_EXPLOSIVE,
+  Z64_ACTORTYPE_NPC,
+  Z64_ACTORTYPE_ENEMY,
+  Z64_ACTORTYPE_PROP,
+  Z64_ACTORTYPE_ITEMACTION,
+  Z64_ACTORTYPE_MISC,
+  Z64_ACTORTYPE_BOSS,
+  Z64_ACTORTYPE_DOOR,
+  Z64_ACTORTYPE_CHEST
+};
+
 typedef struct z64_actor_s z64_actor_t;
 struct z64_actor_s
 {

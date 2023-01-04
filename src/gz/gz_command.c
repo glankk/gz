@@ -356,6 +356,14 @@ void command_pathview(void)
     gz.path_view_state = PATHVIEW_STOP;
 }
 
+void command_hollview(void)
+{
+  if (gz.holl_view_state == HOLLVIEW_INACTIVE)
+    gz.holl_view_state = HOLLVIEW_START;
+  else
+    gz.holl_view_state = HOLLVIEW_BEGIN_STOP;
+}
+
 void command_resetlag(void)
 {
   gz.frame_counter = 0;
