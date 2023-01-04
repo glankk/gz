@@ -1760,39 +1760,39 @@ void gz_holl_view(void)
               z64_game.room_ctxt.rooms[1].file != NULL)
           {
             if (show_all) {
-              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
 
               p2_min.z = -p2_min.z;
               p2_max.z = -p2_max.z;
-              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
             }
 
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0x00, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
 
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
           }
           else {
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
 
             p2_min.z = -p2_min.z;
             p2_max.z = -p2_max.z;
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0, 0xFF);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0xFF, 0x00, 0xFF);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p2_min, &p2_max);
 
             if (show_all) {
-              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
 
               p_min.z = -p_min.z;
               p_max.z = -p_max.z;
-              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0xFF);
+              gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0xFF);
               draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
             }
           }
@@ -1803,13 +1803,13 @@ void gz_holl_view(void)
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
           }
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
           draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
 
           if (show_all) {
             p_min.z = -p_min.z;
             p_max.z = -p_max.z;
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0x80);
             draw_cuboid(&holl_gfx_p, &holl_gfx_d, &p_min, &p_max);
           }
           break;
@@ -1817,7 +1817,7 @@ void gz_holl_view(void)
         case HOLL_DRAW_TYPE_CYL_2: {
           float offset = (side == 1) ? -(cyl_offset + cyl_height) : cyl_offset;
 
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
           draw_cyl(&holl_gfx_p, &holl_gfx_d,
                    actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
                    cyl_radius, cyl_height);
@@ -1825,7 +1825,7 @@ void gz_holl_view(void)
           if (show_all) {
             offset = (side == 0) ? -(cyl_offset + cyl_height) : cyl_offset;
 
-            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0, 0, 0x80);
+            gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0x80);
             draw_cyl(&holl_gfx_p, &holl_gfx_d,
                      actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
                      cyl_radius, cyl_height);
@@ -1838,7 +1838,7 @@ void gz_holl_view(void)
           if (side == 0)
             break;
 
-          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0, 0xFF, 0, 0xFF);
+          gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
           draw_cyl(&holl_gfx_p, &holl_gfx_d,
                    actor->pos_2.x, actor->pos_2.y + cyl_offset, actor->pos_2.z,
                    cyl_radius, cyl_height);
