@@ -107,56 +107,50 @@ static void draw_quad(Gfx **p_gfx_p, Gfx **p_gfx_d,
 static void draw_cuboid(Gfx **p_gfx_p, Gfx **p_gfx_d,
                         z64_xyzf_t *v_min, z64_xyzf_t *v_max)
 {
-  static Gfx *p_cube_gfx = NULL;
+  static Vtx cube_vtx[24] =
+  {
+    gdSPDefVtxN(-128, -128, -128, 0, 0, -127,    0,    0, 0xFF),
+    gdSPDefVtxN(-128,  128, -128, 0, 0, -127,    0,    0, 0xFF),
+    gdSPDefVtxN(-128,  128,  128, 0, 0, -127,    0,    0, 0xFF),
+    gdSPDefVtxN(-128, -128,  128, 0, 0, -127,    0,    0, 0xFF),
 
-  if (!p_cube_gfx) {
-    static Vtx cube_vtx[24] =
-    {
-      gdSPDefVtxN(-128, -128, -128, 0, 0, -127,    0,    0, 0xFF),
-      gdSPDefVtxN(-128,  128, -128, 0, 0, -127,    0,    0, 0xFF),
-      gdSPDefVtxN(-128,  128,  128, 0, 0, -127,    0,    0, 0xFF),
-      gdSPDefVtxN(-128, -128,  128, 0, 0, -127,    0,    0, 0xFF),
+    gdSPDefVtxN( 128,  128, -128, 0, 0,  127,    0,    0, 0xFF),
+    gdSPDefVtxN( 128, -128, -128, 0, 0,  127,    0,    0, 0xFF),
+    gdSPDefVtxN( 128, -128,  128, 0, 0,  127,    0,    0, 0xFF),
+    gdSPDefVtxN( 128,  128,  128, 0, 0,  127,    0,    0, 0xFF),
 
-      gdSPDefVtxN( 128,  128, -128, 0, 0,  127,    0,    0, 0xFF),
-      gdSPDefVtxN( 128, -128, -128, 0, 0,  127,    0,    0, 0xFF),
-      gdSPDefVtxN( 128, -128,  128, 0, 0,  127,    0,    0, 0xFF),
-      gdSPDefVtxN( 128,  128,  128, 0, 0,  127,    0,    0, 0xFF),
+    gdSPDefVtxN(-128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
+    gdSPDefVtxN(-128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
+    gdSPDefVtxN( 128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
+    gdSPDefVtxN( 128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
 
-      gdSPDefVtxN(-128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
-      gdSPDefVtxN(-128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
-      gdSPDefVtxN( 128, -128,  128, 0, 0,    0, -127,    0, 0xFF),
-      gdSPDefVtxN( 128, -128, -128, 0, 0,    0, -127,    0, 0xFF),
+    gdSPDefVtxN( 128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
+    gdSPDefVtxN( 128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
+    gdSPDefVtxN(-128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
+    gdSPDefVtxN(-128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
 
-      gdSPDefVtxN( 128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
-      gdSPDefVtxN( 128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
-      gdSPDefVtxN(-128,  128,  128, 0, 0,    0,  127,    0, 0xFF),
-      gdSPDefVtxN(-128,  128, -128, 0, 0,    0,  127,    0, 0xFF),
+    gdSPDefVtxN(-128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
+    gdSPDefVtxN( 128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
+    gdSPDefVtxN( 128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
+    gdSPDefVtxN(-128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
 
-      gdSPDefVtxN(-128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
-      gdSPDefVtxN( 128, -128, -128, 0, 0,    0,    0, -127, 0xFF),
-      gdSPDefVtxN( 128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
-      gdSPDefVtxN(-128,  128, -128, 0, 0,    0,    0, -127, 0xFF),
+    gdSPDefVtxN( 128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
+    gdSPDefVtxN(-128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
+    gdSPDefVtxN(-128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
+    gdSPDefVtxN( 128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
+  };
 
-      gdSPDefVtxN( 128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
-      gdSPDefVtxN(-128, -128,  128, 0, 0,    0,    0,  127, 0xFF),
-      gdSPDefVtxN(-128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
-      gdSPDefVtxN( 128,  128,  128, 0, 0,    0,    0,  127, 0xFF),
-    };
-
-    static Gfx cube_gfx[] =
-    {
-      gsSPVertex(cube_vtx, 24, 0),
-      gsSP2Triangles( 0,  1,  2, 0,  0,  2,  3, 0),
-      gsSP2Triangles( 4,  5,  6, 0,  4,  6,  7, 0),
-      gsSP2Triangles( 8,  9, 10, 0,  8, 10, 11, 0),
-      gsSP2Triangles(12, 13, 14, 0, 12, 14, 15, 0),
-      gsSP2Triangles(16, 17, 18, 0, 16, 18, 19, 0),
-      gsSP2Triangles(20, 21, 22, 0, 20, 22, 23, 0),
-      gsSPEndDisplayList(),
-    };
-
-    p_cube_gfx = cube_gfx;
-  }
+  static Gfx cube_gfx[] =
+  {
+    gsSPVertex(cube_vtx, 24, 0),
+    gsSP2Triangles( 0,  1,  2, 0,  0,  2,  3, 0),
+    gsSP2Triangles( 4,  5,  6, 0,  4,  6,  7, 0),
+    gsSP2Triangles( 8,  9, 10, 0,  8, 10, 11, 0),
+    gsSP2Triangles(12, 13, 14, 0, 12, 14, 15, 0),
+    gsSP2Triangles(16, 17, 18, 0, 16, 18, 19, 0),
+    gsSP2Triangles(20, 21, 22, 0, 20, 22, 23, 0),
+    gsSPEndDisplayList(),
+  };
 
   float x = (v_max->x + v_min->x) / 2;
   float y = (v_max->y + v_min->y) / 2;
@@ -177,7 +171,7 @@ static void draw_cuboid(Gfx **p_gfx_p, Gfx **p_gfx_d,
 
   gSPMatrix((*p_gfx_p)++, gDisplayListData(p_gfx_d, m),
             G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
-  gSPDisplayList((*p_gfx_p)++, p_cube_gfx);
+  gSPDisplayList((*p_gfx_p)++, cube_gfx);
   gSPPopMatrix((*p_gfx_p)++, G_MTX_MODELVIEW);
 }
 
