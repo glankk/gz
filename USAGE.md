@@ -562,6 +562,12 @@ The following commands are available:
     *Default: `unbound`*
 -   **reset:** Reset the game, as if the reset button had been pressed.
     *Default: `unbound`*
+    **equip irons:** Equip or unequip iron boots, if you have them.
+    *Default: `unbound`*
+    **equip hovers:** Equip or unequip hover boots, if you have them.
+    *Default: `unbound`*
+    **use ocarina:** Use ocarina, if you have one.
+    *Default: `unbound`*
 
 **_Warning:_** Unbinding the *show/hide menu* or *return from menu* commands,
 or binding them to a button combination that will interfere with menu

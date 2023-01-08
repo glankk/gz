@@ -271,6 +271,9 @@ void          command_resettimer(void);
 void          command_starttimer(void);
 void          command_stoptimer(void);
 void          command_reset(void);
+void          command_equip_irons(void);
+void          command_equip_hovers(void);
+void          command_use_ocarina(void);
 
 void          z_to_movie(int movie_frame, z64_input_t *zi, _Bool reset);
 void          movie_to_z(int movie_frame, z64_input_t *zi, _Bool *reset);

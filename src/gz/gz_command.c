@@ -50,6 +50,9 @@ struct command_info command_info[COMMAND_MAX] =
   {"start timer",       command_starttimer,    CMDACT_PRESS_ONCE},
   {"stop timer",        command_stoptimer,     CMDACT_PRESS_ONCE},
   {"reset",             command_reset,         CMDACT_PRESS_ONCE},
+  {"equip irons",       command_equip_irons,   CMDACT_PRESS_ONCE},
+  {"equip hovers",      command_equip_hovers,  CMDACT_PRESS_ONCE},
+  {"use ocarina",       command_use_ocarina,   CMDACT_PRESS_ONCE},
 };
 
 void gz_apply_settings()
@@ -405,4 +408,52 @@ void command_stoptimer(void)
 void command_reset(void)
 {
   gz.reset_flag = 1;
+}
+
+#define BLOCK_DPAD (0x00000001 | \
+	                0x00000002 | \
+                    0x00000080 | \
+                    0x00000400 | \
+                    0x10000000 | \
+                    0x20000000)
+
+#define BLOCK_OCARINA (0x00800000 | \
+                       0x00000800 | \
+                       0x00200000 | \
+                       0x08000000)
+
+#define DISPLAY_DPAD        (((z64_file.iron_boots || z64_file.hover_boots) && z64_file.link_age==0) || z64_file.items[0x07] == 0x07 || z64_file.items[0x07] == 0x08)
+
+#define CAN_USE_DPAD        (((z64_link.state_flags_1 & BLOCK_DPAD) == 0) && \
+                            ((uint32_t)z64_ctxt.state_dtor==z64_state_ovl_tab[3].vram_dtor) && \
+                            (z64_file.interface_flag!=1) && \
+                            ((z64_event_state_1 & 0x20)==0))
+
+#define CAN_USE_OCARINA     (z64_game.pause_ctxt.state==0 && (z64_file.items[0x07] == 0x07 || z64_file.items[0x07] == 0x08) && !z64_game.if_ctxt.restriction_flags.ocarina && ((z64_link.state_flags_1 & BLOCK_OCARINA) == 0))
+
+void command_equip_irons(void)
+{
+  if(z64_file.link_age == 0 && CAN_USE_DPAD && DISPLAY_DPAD && z64_file.iron_boots) {
+    if (z64_file.equip_boots == 2) z64_file.equip_boots = 1;
+    else z64_file.equip_boots = 2;
+    z64_UpdateEquipment(&z64_game, &z64_link);
+    z64_PlaySfx(0x835, &z64_sfx_unk1, 0x04, &z64_sfx_unk2, &z64_sfx_unk2, &z64_sfx_unk3);
+  }
+}
+
+void command_equip_hovers(void)
+{
+  if(z64_file.link_age == 0 && CAN_USE_DPAD && DISPLAY_DPAD && z64_file.hover_boots) {
+    if (z64_file.equip_boots == 3) z64_file.equip_boots = 1;
+    else z64_file.equip_boots = 3;
+    z64_UpdateEquipment(&z64_game, &z64_link);
+    z64_PlaySfx(0x835, &z64_sfx_unk1, 0x04, &z64_sfx_unk2, &z64_sfx_unk2, &z64_sfx_unk3);
+  }
+}
+
+void command_use_ocarina(void)
+{
+  if(CAN_USE_OCARINA) {
+    z64_UseButton(&z64_game,&z64_link,z64_file.items[0x07], 2);
+  }
 }
