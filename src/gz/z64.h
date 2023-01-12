@@ -2272,7 +2272,7 @@ z64_extern  uint8_t               z64_sfx_write_pos;
 z64_extern  uint8_t               z64_sfx_read_pos;
 z64_extern  z64_xyzf_t            z64_sfx_unk1;
 z64_extern  float                 z64_sfx_unk2;
-z64_extern  float                 z64_sfx_unk3;
+z64_extern  int8_t                z64_sfx_unk3;
 z64_extern  uint8_t               z64_audio_cmd_write_pos;
 z64_extern  uint8_t               z64_audio_cmd_read_pos;
 z64_extern  uint8_t               z64_afx_cfg;
@@ -2373,9 +2373,9 @@ void      z64_ConfigureAfx            (uint8_t cfg);
 uint32_t  z64_AfxRand                 (void);
 void      z64_OcarinaUpdate           (void);
 void      z64_ResetAudio              (uint8_t cfg);
-void      z64_PlaySfx                 (uint16_t sfx, z64_xyzf_t *unk_00_,
-                                       int8_t unk_01_ , float *unk_02_,
-                                       float *unk_03_, float *unk_04_);
+void      z64_PlaySfx                 (uint16_t sfx, z64_xyzf_t *a1,
+                                       uint8_t a2, float *a3,
+                                       float *sp10, int8_t *sp14);
 int       z64_CheckAfxConfigBusy      (void);
 uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,

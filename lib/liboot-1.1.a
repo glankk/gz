@@ -169,6 +169,6 @@ z64_disp                          = 0x8016A800 ;
 z64_ctxt                          = 0x801C8660 ;
 z64_game                          = z64_ctxt ;
 z64_link                          = 0x801DABF0 ;
-z64_cimg                          = 0x803B5000 ;
 z64_UseButton                     = 0x8038CB18 ;
+z64_cimg                          = 0x803B5000 ;
 z64_item_highlight_vram           = 0x80829D9C ;
