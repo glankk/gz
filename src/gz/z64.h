@@ -2270,6 +2270,9 @@ z64_extern  char                  z64_song_ptr[];
 z64_extern  uint8_t               z64_ocarina_button_state;
 z64_extern  uint8_t               z64_sfx_write_pos;
 z64_extern  uint8_t               z64_sfx_read_pos;
+z64_extern  z64_xyzf_t            z64_sfx_unk1;
+z64_extern  float                 z64_sfx_unk2;
+z64_extern  float                 z64_sfx_unk3;
 z64_extern  uint8_t               z64_audio_cmd_write_pos;
 z64_extern  uint8_t               z64_audio_cmd_read_pos;
 z64_extern  uint8_t               z64_afx_cfg;
@@ -2317,9 +2320,6 @@ z64_extern  z64_game_t            z64_game;
 z64_extern  z64_link_t            z64_link;
 z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
-z64_extern  z64_xyzf_t            z64_sfx_unk1;
-z64_extern  float                 z64_sfx_unk2;
-z64_extern  float                 z64_sfx_unk3;
 
 /* functions */
 void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
@@ -2373,12 +2373,15 @@ void      z64_ConfigureAfx            (uint8_t cfg);
 uint32_t  z64_AfxRand                 (void);
 void      z64_OcarinaUpdate           (void);
 void      z64_ResetAudio              (uint8_t cfg);
-void      z64_PlaySfx                 (uint16_t sfx, z64_xyzf_t *unk_00_, int8_t unk_01_ , float *unk_02_, float *unk_03_, float *unk_04_);
+void      z64_PlaySfx                 (uint16_t sfx, z64_xyzf_t *unk_00_,
+                                       int8_t unk_01_ , float *unk_02_,
+                                       float *unk_03_, float *unk_04_);
 int       z64_CheckAfxConfigBusy      (void);
 uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,
                                        void *dst);
 void      z64_SeedRandom              (uint32_t seed);
-void      z64_UseButton               (z64_game_t *game, z64_link_t *link, uint8_t item, uint8_t button);
+void      z64_UseButton               (z64_game_t *game, z64_link_t *link,
+                                       uint8_t item, uint8_t button);
 
 #endif

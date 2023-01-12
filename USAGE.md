@@ -515,6 +515,12 @@ The following commands are available:
     entrance as if Link voided out. *Default: `A + B + L`*
 -   **toggle age:** Toggles between Adult and Child Link. Takes effect when
     entering a new area. *Default: `unbound`*
+    **equip iron boots:** Equip or unequip iron boots, if you have them.
+    *Default: `unbound`*
+    **equip hover boots:** Equip or unequip hover boots, if you have them.
+    *Default: `unbound`*
+    **use ocarina:** Use ocarina, if you have one.
+    *Default: `unbound`*
 -   **save state:** Save the state of the game to the currently selected state
     slot. *Default: `D-Left`*
 -   **load state:** Load the state saved in the currently selected state slot.
@@ -561,12 +567,6 @@ The following commands are available:
 -   **stop timer:** Stops the on-screen timer if it is running.
     *Default: `unbound`*
 -   **reset:** Reset the game, as if the reset button had been pressed.
-    *Default: `unbound`*
-    **equip irons:** Equip or unequip iron boots, if you have them.
-    *Default: `unbound`*
-    **equip hovers:** Equip or unequip hover boots, if you have them.
-    *Default: `unbound`*
-    **use ocarina:** Use ocarina, if you have one.
     *Default: `unbound`*
 
 **_Warning:_** Unbinding the *show/hide menu* or *return from menu* commands,

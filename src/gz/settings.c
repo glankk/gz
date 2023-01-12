@@ -110,6 +110,9 @@ void settings_load_default(void)
   d->binds[COMMAND_RELOAD] = bind_make(2, BUTTON_A, BUTTON_L);
   d->binds[COMMAND_VOID] = bind_make(3, BUTTON_A, BUTTON_B, BUTTON_L);
   d->binds[COMMAND_AGE] = bind_make(0);
+  d->binds[COMMAND_EQUIP_IRONS] = bind_make(0);
+  d->binds[COMMAND_EQUIP_HOVERS] = bind_make(0);
+  d->binds[COMMAND_USE_OCARINA] = bind_make(0);
   d->binds[COMMAND_SAVESTATE] = bind_make(1, BUTTON_D_LEFT);
   d->binds[COMMAND_LOADSTATE] = bind_make(1, BUTTON_D_RIGHT);
   d->binds[COMMAND_SAVEPOS] = bind_make(0);
@@ -135,9 +138,6 @@ void settings_load_default(void)
   d->binds[COMMAND_STARTTIMER] = bind_make(0);
   d->binds[COMMAND_STOPTIMER] = bind_make(0);
   d->binds[COMMAND_RESET] = bind_make(0);
-  d->binds[COMMAND_EQUIP_IRONS] = bind_make(0);
-  d->binds[COMMAND_EQUIP_HOVERS] = bind_make(0);
-  d->binds[COMMAND_USE_OCARINA] = bind_make(0);
 }
 
 void settings_save(int profile)
