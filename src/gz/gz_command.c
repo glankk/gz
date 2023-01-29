@@ -26,6 +26,9 @@ struct command_info command_info[COMMAND_MAX] =
   {"reload scene",      command_reload,        CMDACT_PRESS_ONCE},
   {"void out",          command_void,          CMDACT_PRESS_ONCE},
   {"toggle age",        command_age,           CMDACT_PRESS_ONCE},
+  {"equip iron boots",  command_equip_irons,   CMDACT_PRESS_ONCE},
+  {"equip hover boots", command_equip_hovers,  CMDACT_PRESS_ONCE},
+  {"use ocarina",       command_use_ocarina,   CMDACT_PRESS_ONCE},
   {"save state",        command_savestate,     CMDACT_PRESS_ONCE},
   {"load state",        command_loadstate,     CMDACT_PRESS_ONCE},
   {"save position",     command_savepos,       CMDACT_HOLD},
@@ -207,6 +210,57 @@ void command_age(void)
     if (z64_file.button_items[i] != Z64_ITEM_NULL)
       z64_UpdateItemButton(&z64_game, i);
   z64_UpdateEquipment(&z64_game, &z64_link);
+}
+
+void command_equip_irons(void)
+{
+  if (zu_in_game()
+      && z64_file.link_age == 0
+      && z64_file.iron_boots
+      && (z64_link.state_flags_1 & 0x30000483) == 0
+      && z64_file.interface_flag != 1
+      && (z64_event_state_1 & 0x20) == 0)
+  {
+    if (z64_file.equip_boots == 2)
+      z64_file.equip_boots = 1;
+    else
+      z64_file.equip_boots = 2;
+    z64_UpdateEquipment(&z64_game, &z64_link);
+    z64_PlaySfx(0x0835, &z64_sfx_unk1, 0x04, &z64_sfx_unk2, &z64_sfx_unk2,
+                &z64_sfx_unk3);
+  }
+}
+
+void command_equip_hovers(void)
+{
+  if (zu_in_game()
+      && z64_file.link_age == 0
+      && z64_file.hover_boots
+      && (z64_link.state_flags_1 & 0x30000483) == 0
+      && z64_file.interface_flag != 1
+      && (z64_event_state_1 & 0x20) == 0)
+  {
+    if (z64_file.equip_boots == 3)
+      z64_file.equip_boots = 1;
+    else
+      z64_file.equip_boots = 3;
+    z64_UpdateEquipment(&z64_game, &z64_link);
+    z64_PlaySfx(0x0835, &z64_sfx_unk1, 0x04, &z64_sfx_unk2, &z64_sfx_unk2,
+                &z64_sfx_unk3);
+  }
+}
+
+void command_use_ocarina(void)
+{
+  if (zu_in_game()
+      && z64_game.pause_ctxt.state == 0
+      && !z64_game.if_ctxt.restriction_flags.ocarina
+      && (z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_FAIRY_OCARINA
+          || z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_OCARINA_OF_TIME)
+      && (z64_link.state_flags_1 & 0x08C00800) == 0)
+  {
+    z64_UseButton(&z64_game, &z64_link, z64_file.items[Z64_SLOT_OCARINA], 2);
+  }
 }
 
 void command_savestate(void)

@@ -1700,7 +1700,7 @@ void load_state(const struct state_meta *state)
   }
   else {
     /* event state */
-    serial_read(&p, z64_event_state_1, 0x0008);
+    serial_read(&p, &z64_event_state_1, 0x0008);
     serial_read(&p, z64_event_state_2, 0x0004);
     /* event camera parameters */
     for (int i = 0; i < 24; ++i)
