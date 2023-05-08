@@ -20,16 +20,13 @@ if make_result ~= 0 then error("failed to build gz", 0) end
 print("loading file system")
 local fs = gru.z64fs_load_blob(rom)
 
-print("patching code file")
-local code_file = fs:get(rom_info.code_ind)
-local hooks = gru.gsc_load("hooks/gz/" .. gz_version .. "/gz.gsc")
-hooks:shift(-rom_info.code_ram)
-hooks:apply_be(code_file)
+print("patching files")
+local mem_patch = gru.gsc_load("gsc/" .. rom_info.data_dir .. "/mem_patch.gsc")
 local ups_size_patch = gru.gsc_load("gsc/" .. rom_info.data_dir ..
                                     "/ups_size_patch.gsc")
-ups_size_patch:shift(-rom_info.code_ram)
-ups_size_patch:apply_be(code_file)
-fs:replace(rom_info.code_ind, code_file, fs:compressed(rom_info.code_ind))
+local hooks = gru.gsc_load("hooks/gz/" .. gz_version .. "/gz.gsc")
+local do_hooks = loadfile("lua/hooks.lua")
+do_hooks(rom_info, fs, { mem_patch, ups_size_patch, hooks })
 
 print("reassembling rom")
 local patched_rom = fs:assemble_rom()
@@ -51,8 +48,6 @@ local _,_,make_result = os.execute(string.format(make .. " clean-ldr && " ..
 if make_result ~= 0 then error("failed to build ldr", 0) end
 
 print("inserting payload")
-local mem_patch = gru.gsc_load("gsc/" .. rom_info.data_dir .. "/mem_patch.gsc")
-mem_patch:apply_be(patched_rom)
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
 local old_ldr = patched_rom:copy(0x1000, 0x60)
 patched_rom:write(0x1000, ldr)
