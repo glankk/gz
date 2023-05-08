@@ -656,9 +656,6 @@ uint32_t save_state(struct state_meta *state)
   /* poly color filter state (sepia effect) */
   serial_write(&p, z64_poly_colorfilter_state, 0x001C);
 
-  /* sound state */
-  serial_write(&p, z64_sound_state, 0x004C);
-
   /*
    *  Variables from z_camera.c(.data) (zeldaret/oot.git@e632b9a)
    *  Overhead limit is 8 bytes per record
@@ -677,12 +674,8 @@ uint32_t save_state(struct state_meta *state)
    *    D_8011D724[1].eyeTargetInit.x
    *    D_8011D724[1].timerInit
    *    D_8011D79C[0].actionFlags
-   *    D_8011D79C[0].atTargetInit.x
-   *    D_8011D79C[0].atTargetInit.y
-   *    D_8011D79C[0].atTargetInit.z
-   *    D_8011D79C[0].eyeTargetInit.x
-   *    D_8011D79C[0].eyeTargetInit.y
-   *    D_8011D79C[0].eyeTargetInit.z
+   *    D_8011D79C[0].atTargetInit
+   *    D_8011D79C[0].eyeTargetInit
    *    D_8011D79C[1].timerInit
    *    D_8011D83C[0].timerInit
    *    D_8011D88C[0].timerInit
@@ -719,17 +712,17 @@ uint32_t save_state(struct state_meta *state)
    *    D_8015CE58.pos.y
    *    D_8015CE58.pos.z
    *
-   *    Offsets from the z_camera.c(.data) section start are different from
-   *    mq-e-debug because the following are missing from release versions
-   *      sOREGInit             0x0000 - 0x006C (- 0x006C)
-   *      sOREGInitCnt          0x006C - 0x0070 (- 0x0070)
-   *      sCameraSettingNames   0x00AC - 0x03C4 (- 0x0388)
-   *      sCameraModeNames      0x03C4 - 0x04C0 (- 0x0484)
-   *      sDbgModeIdx           0x34B8 - 0x34BC (- 0x0488)
-   *      sCameraFunctionNames  0x3518 - 0x3778 (- 0x06E8)
-   *      D_8011DAFC            0x3C1C - 0x3C28 (- 0x06F4)
+   *  Offsets from the z_camera.c(.data) section start are different from
+   *  mq-e-debug because the following are missing from release versions
+   *    sOREGInit             0x0000 - 0x006C (- 0x006C)
+   *    sOREGInitCnt          0x006C - 0x0070 (- 0x0070)
+   *    sCameraSettingNames   0x00AC - 0x03C4 (- 0x0388)
+   *    sCameraModeNames      0x03C4 - 0x04C0 (- 0x0484)
+   *    sDbgModeIdx           0x34B8 - 0x34BC (- 0x0488)
+   *    sCameraFunctionNames  0x3518 - 0x3778 (- 0x06E8)
+   *    D_8011DAFC            0x3C1C - 0x3C28 (- 0x06F4)
    *
-   *    .bss variables are covered by z64_camera_state
+   *  .bss variables are covered by z64_camera_state
    */
   serial_write(&p, &z_camera_c_data[0x302C], 0x001C); /* 6b overhead */
   serial_write(&p, &z_camera_c_data[0x3088], 0x0008);
@@ -792,107 +785,65 @@ uint32_t save_state(struct state_meta *state)
    *    D_80120ACC[0].eyeTargetInit.x
    *    D_80120B94[0].atTargetInit.x
    *    D_80120B94[0].atTargetInit.z
-   *    D_80120B94[0].eyeTargetInit.x
-   *    D_80120B94[0].eyeTargetInit.y
-   *    D_80120B94[0].eyeTargetInit.z
+   *    D_80120B94[0].eyeTargetInit
    *    D_80120B94[1].atTargetInit.x
    *    D_80120B94[1].atTargetInit.z
-   *    D_80120B94[1].eyeTargetInit.x
-   *    D_80120B94[1].eyeTargetInit.y
-   *    D_80120B94[1].eyeTargetInit.z
+   *    D_80120B94[1].eyeTargetInit
    *    D_80120B94[2].atTargetInit.x
    *    D_80120B94[2].atTargetInit.z
-   *    D_80120B94[2].eyeTargetInit.x
-   *    D_80120B94[2].eyeTargetInit.y
-   *    D_80120B94[2].eyeTargetInit.z
+   *    D_80120B94[2].eyeTargetInit
    *    D_80120B94[3].atTargetInit.x
    *    D_80120B94[3].atTargetInit.z
-   *    D_80120B94[3].eyeTargetInit.x
-   *    D_80120B94[3].eyeTargetInit.y
-   *    D_80120B94[3].eyeTargetInit.z
+   *    D_80120B94[3].eyeTargetInit
    *    D_80120B94[4].atTargetInit.x
    *    D_80120B94[4].atTargetInit.z
-   *    D_80120B94[4].eyeTargetInit.x
-   *    D_80120B94[4].eyeTargetInit.y
-   *    D_80120B94[4].eyeTargetInit.z
+   *    D_80120B94[4].eyeTargetInit
    *    D_80120B94[5].atTargetInit.x
    *    D_80120B94[5].atTargetInit.z
-   *    D_80120B94[5].eyeTargetInit.x
-   *    D_80120B94[5].eyeTargetInit.y
-   *    D_80120B94[5].eyeTargetInit.z
+   *    D_80120B94[5].eyeTargetInit
    *    D_80120B94[6].atTargetInit.x
    *    D_80120B94[6].atTargetInit.z
-   *    D_80120B94[6].eyeTargetInit.x
-   *    D_80120B94[6].eyeTargetInit.y
-   *    D_80120B94[6].eyeTargetInit.z
+   *    D_80120B94[6].eyeTargetInit
    *    D_80120B94[7].atTargetInit.x
    *    D_80120B94[7].atTargetInit.z
-   *    D_80120B94[7].eyeTargetInit.x
-   *    D_80120B94[7].eyeTargetInit.y
-   *    D_80120B94[7].eyeTargetInit.z
+   *    D_80120B94[7].eyeTargetInit
    *    D_80120B94[8].atTargetInit.x
    *    D_80120B94[8].atTargetInit.z
-   *    D_80120B94[8].eyeTargetInit.x
-   *    D_80120B94[8].eyeTargetInit.y
-   *    D_80120B94[8].eyeTargetInit.z
+   *    D_80120B94[8].eyeTargetInit
    *    D_80120B94[9].atTargetInit.x
    *    D_80120B94[9].atTargetInit.z
-   *    D_80120B94[9].eyeTargetInit.x
-   *    D_80120B94[9].eyeTargetInit.y
-   *    D_80120B94[9].eyeTargetInit.z
+   *    D_80120B94[9].eyeTargetInit
    *    D_80120B94[10].atTargetInit.x
    *    D_80120B94[10].atTargetInit.z
-   *    D_80120B94[10].eyeTargetInit.x
-   *    D_80120B94[10].eyeTargetInit.y
-   *    D_80120B94[10].eyeTargetInit.z
+   *    D_80120B94[10].eyeTargetInit
    *    D_80120D4C[0].atTargetInit.x
    *    D_80120D4C[0].atTargetInit.z
-   *    D_80120D4C[0].eyeTargetInit.x
-   *    D_80120D4C[0].eyeTargetInit.y
-   *    D_80120D4C[0].eyeTargetInit.z
+   *    D_80120D4C[0].eyeTargetInit
    *    D_80120D4C[1].atTargetInit.x
    *    D_80120D4C[1].atTargetInit.z
-   *    D_80120D4C[1].eyeTargetInit.x
-   *    D_80120D4C[1].eyeTargetInit.y
-   *    D_80120D4C[1].eyeTargetInit.z
+   *    D_80120D4C[1].eyeTargetInit
    *    D_80120D4C[2].atTargetInit.x
    *    D_80120D4C[2].atTargetInit.z
-   *    D_80120D4C[2].eyeTargetInit.x
-   *    D_80120D4C[2].eyeTargetInit.y
-   *    D_80120D4C[2].eyeTargetInit.z
+   *    D_80120D4C[2].eyeTargetInit
    *    D_80120D4C[3].atTargetInit.x
    *    D_80120D4C[3].atTargetInit.z
-   *    D_80120D4C[3].eyeTargetInit.x
-   *    D_80120D4C[3].eyeTargetInit.y
-   *    D_80120D4C[3].eyeTargetInit.z
+   *    D_80120D4C[3].eyeTargetInit
    *    D_80120D4C[4].atTargetInit.x
    *    D_80120D4C[4].atTargetInit.z
-   *    D_80120D4C[4].eyeTargetInit.x
-   *    D_80120D4C[4].eyeTargetInit.y
-   *    D_80120D4C[4].eyeTargetInit.z
+   *    D_80120D4C[4].eyeTargetInit
    *    D_80120D4C[5].atTargetInit.x
    *    D_80120D4C[5].atTargetInit.z
-   *    D_80120D4C[5].eyeTargetInit.x
-   *    D_80120D4C[5].eyeTargetInit.y
-   *    D_80120D4C[5].eyeTargetInit.z
+   *    D_80120D4C[5].eyeTargetInit
    *    D_80120D4C[6].atTargetInit.x
    *    D_80120D4C[6].atTargetInit.z
-   *    D_80120D4C[6].eyeTargetInit.x
-   *    D_80120D4C[6].eyeTargetInit.y
-   *    D_80120D4C[6].eyeTargetInit.z
+   *    D_80120D4C[6].eyeTargetInit
    *    D_80120FA4[0].eyeTargetInit.x
    *    D_80120FA4[2].eyeTargetInit.x
    *    D_80121184[0].fovTargetInit
-   *    D_80121184[0].atTargetInit.x
-   *    D_80121184[0].atTargetInit.y
-   *    D_80121184[0].atTargetInit.z
+   *    D_80121184[0].atTargetInit
    *    D_80121184[0].eyeTargetInit
-   *    D_801211D4[0].atTargetInit.x
-   *    D_801211D4[0].atTargetInit.y
-   *    D_801211D4[0].atTargetInit.z
-   *    D_801211D4[0].eyeTargetInit.x
-   *    D_801211D4[0].eyeTargetInit.y
-   *    D_801211D4[0].eyeTargetInit.z
+   *    D_801211D4[0].atTargetInit
+   *    D_801211D4[0].eyeTargetInit
    *    D_8012133C[0].eyeTargetInit
    *    D_801213B4[0].eyeTargetInit.y
    *    D_801213B4[2].atTargetInit.y
@@ -1050,9 +1001,7 @@ uint32_t save_state(struct state_meta *state)
 
   /* message state */
   serial_write(&p, z64_message_state, 0x0028);
-  if (state->state_version >= 0x0004)
-    serial_write(&p, &z64_message_select_state,
-                 sizeof(z64_message_select_state));
+  serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
   /* save display lists */
@@ -1103,18 +1052,217 @@ uint32_t save_state(struct state_meta *state)
   }
 #endif
 
-  /* save ocarina state */
-  serial_write(&p, z64_ocarina_state, 0x0060);
-  if (state->state_version >= 0x0004)
-    serial_write(&p, &z64_ocarina_button_state,
-                 sizeof(z64_ocarina_button_state));
-  /* ocarina minigame parameters */
-  serial_write(&p, &z64_ocarina_state[0x0068], 0x0001);
-  serial_write(&p, &z64_ocarina_state[0x006C], 0x0001);
+  /*
+   *  Variables from code_800EC960.c(.data) (zeldaret/oot.git@8e04ae9)
+   *  Overhead limit is 8 bytes per record
+   *    D_801305B8
+   *    D_801305BC
+   *    D_801305C0
+   *    sAudioIncreasingTranspose
+   *    sPrevChargeLevel
+   *    D_801305F4
+   *    sEnterGanonsTowerTimer
+   *    sSoundMode
+   *    D_80130608
+   *    sAudioCutsceneFlag
+   *    sSpecReverb
+   *    sAudioEnvReverb
+   *    sAudioCodeReverb
+   *    sPrevSeqMode
+   *    sAudioEnemyDist
+   *    sAudioEnemyVol
+   *    sPrevMainBgmSeqId
+   *    sSeqResumePoint
+   *    sPrevSceneSeqId
+   *    sNumFramesStill
+   *    sNumFramesMoving
+   *    sAudioBaseFilter
+   *    sAudioExtraFilter
+   *    sAudioBaseFilter2
+   *    sAudioExtraFilter2
+   *    sSariaBgmPtr
+   *    D_80130650
+   *    sIsOcarinaInputEnabled
+   *    sOcarinaInstrumentId
+   *    sCurOcarinaPitch
+   *    sPrevOcarinaPitch
+   *    sCurOcarinaButtonIndex
+   *    sMusicStaffPrevPitch
+   *    sCurOcarinaBendFreq
+   *    sCurOcarinaBendIndex
+   *    sCurOcarinaVibrato
+   *    sPlaybackState
+   *    sOcarinaFlags
+   *    sPlaybackNoteTimer
+   *    sPlaybackNotePos
+   *    sPlaybackStaffPos
+   *    sPlaybackPitch
+   *    sNotePlaybackVolume
+   *    sNotePlaybackVibrato
+   *    sNotePlaybackBend
+   *    sRelativeNotePlaybackBend
+   *    sRelativeNotePlaybackVolume
+   *    sOcarinaPlaybackTaskStart
+   *    sOcaMemoryGameAppendPos
+   *    sOcaMemoryGameEndPos
+   *    sOcarinaSongNotes[OCARINA_SONG_SCARECROW_SPAWN]
+   *    sOcarinaSongNotes[OCARINA_SONG_MEMORY_GAME]
+   *    sPlaybackSong
+   *    sRecordingState
+   *    sRecordSongPos
+   *    sOcarinaRecordTaskStart
+   *    sRecordOcarinaPitch
+   *    sRecordOcarinaVolume
+   *    sRecordOcarinaVibrato
+   *    sRecordOcarinaBendIndex
+   *    sRecordOcarinaButtonIndex
+   *    sPlayedOcarinaSongIndexPlusOne
+   *    sMusicStaffNumNotesPerTest
+   *    sOcarinaDropInputTimer
+   *    sScarecrowsLongSongNotes
+   *    gOcarinaSongButtons[OCARINA_SONG_SCARECROW_SPAWN]
+   *    sScarecrowAfterCreditsState
+   *    sScarecrowAfterCreditsIntrumentId
+   *    sScarecrowAfterCreditsTimer
+   *
+   *  Offset changes due to missing or changed debug variables;
+   *    sSeqModeInput               0x00E4 - 0x00E8 (- 0x0004)
+   *    D_80131C8C & Co.            0x171C - 0x19FC (- 0x02E4)
+   *
+   * gc releases have different offsets due to the following variables, which
+   * are not present on n64 releases;
+   *    sOcarinaAllowedButtonMask   0x0988 - 0x098C (- 0x0004)
+   *    sOcarinaAButtonMap          0x098C - 0x0990 (- 0x0008)
+   *    sOcarinaCUpButtonMap        0x0990 - 0x0994 (- 0x000C)
+   *    sOcarinaCDownButtonMap      0x0994 - 0x0998 (- 0x0010)
+   */
+  serial_write(&p, &code_800EC960_c_data[0x0048], 0x000C);
+  serial_write(&p, &code_800EC960_c_data[0x005C], 0x0004);
+  serial_write(&p, &code_800EC960_c_data[0x0070], 0x0004);
+  serial_write(&p, &code_800EC960_c_data[0x0084], 0x0004);
+  serial_write(&p, &code_800EC960_c_data[0x0090], 0x0054);
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
+  serial_write(&p, &code_800EC960_c_data[0x0988], 0x0060); /* 12b overhead */
+  serial_write(&p, &code_800EC960_c_data[0x09F0], 0x0008);
+  serial_write(&p, &code_800EC960_c_data[0x117C], 0x0144);
+  serial_write(&p, &code_800EC960_c_data[0x12D4], 0x038C);
+  serial_write(&p, &code_800EC960_c_data[0x16E8], 0x0009);
+  serial_write(&p, &code_800EC960_c_data[0x16FC], 0x000A);
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
+      Z64_VERSION == Z64_OOTGCJ || \
+      Z64_VERSION == Z64_OOTGCU || \
+      Z64_VERSION == Z64_OOTCEJ
+  serial_write(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
+  serial_write(&p, &code_800EC960_c_data[0x0A00], 0x0008);
+  serial_write(&p, &code_800EC960_c_data[0x118C], 0x0144);
+  serial_write(&p, &code_800EC960_c_data[0x12E4], 0x038C);
+  serial_write(&p, &code_800EC960_c_data[0x16F8], 0x0009);
+  serial_write(&p, &code_800EC960_c_data[0x170C], 0x000A);
+#endif
+
+  /*
+   *  Variables from code_800EC960.c(.bss) (zeldaret/oot.git@8e04ae9)
+   *  Overhead limit is 8 bytes per record
+   *  D_8016B7A8
+   *  D_8016B7AC
+   *  D_8016B7B0
+   *  sRiverFreqScaleLerp
+   *  sWaterfallFreqScaleLerp
+   *  sWaterfallFreqScaleLerp
+   *  D_8016B7D8
+   *  D_8016B7DC
+   *  D_8016B7E0
+   *  sRiverSoundMainBgmVol
+   *  sRiverSoundMainBgmCurrentVol
+   *  sRiverSoundMainBgmLower
+   *  sRiverSoundMainBgmRestore
+   *  sGanonsTowerVol
+   *  sSfxChannelState
+   *  sMalonSingingTimer
+   *  sMalonSingingDisabled
+   *  D_8016B9F3
+   *  sFanfareStartTimer
+   *  sFanfareSeqId
+   *  sPlayingStaff
+   *  sPlaybackStaff
+   *  sRecordingStaff
+   *  sOcarinaUpdateTaskStart
+   *  sOcarinaInputButtonStart
+   *  sCurOcarinaSongWithoutMusicStaff
+   *  sOcarinaWithoutMusicStaffPos
+   *  sOcarinaHasStartedSong
+   *  sFirstOcarinaSongIndex
+   *  sLastOcarinaSongIndex
+   *  sAvailOcarinaSongFlags
+   *  sStaffOcarinaPlayingPos
+   *  sMusicStaffPos
+   *  sMusicStaffCurHeldLength
+   *  sMusicStaffExpectedLength
+   *  sMusicStaffExpectedPitch
+   *  sScarecrowsLongSongSecondNote
+   *  sIsMalonSinging
+   *  sMalonSingingDist
+   *
+   *  Offset changes due to missing or changed debug variables;
+   *    sAudioUpdateStartTime       0x0000 - 0x0004 (- 0x0004)
+   *    sAudioUpdateEndTime         0x0004 - 0x0008 (- 0x0008)
+   *    -D_8016B7E4                 0x0044 - 0x0048 (- 0x000C)
+   *    sAudioScrPrtBuf             0x0048 - 0x0110 (- 0x00D4)
+   *    +D_8016B7E4                 0x0118 - 0x011C (- 0x00D0)
+   *    sBinToStrBuf                0x0218 - 0x0238 (- 0x00F0)
+   *    sAudioSpecPeakNumNotes      0x0240 - 0x0252 (- 0x0102)
+   *    +(alignment)                0x0264 - 0x0266 (- 0x0100)
+   *    sDebugPadHold & Co.         0x0310 - 0x0324 (- 0x0114)
+   */
+  serial_write(&p, &code_800EC960_c_bss[0x0000], 0x0160); /* 10b overhead */
+  serial_write(&p, &code_800EC960_c_bss[0x0168], 0x0004);
+  serial_write(&p, &code_800EC960_c_bss[0x0178], 0x0090);
+
+  /*
+   *  Variables from z_message_PAL.c(.data) (zeldaret/oot.git@8e04ae9)
+   *    sIconPrimR
+   *    sIconPrimG
+   *    sIconPrimB
+   *    sIconFlashTimer
+   *    sIconFlashColorIdx
+   *    sIconEnvR
+   *    sIconEnvG
+   *    sIconEnvB
+   *    sOcarinaNoteFlashTimer
+   *    sOcarinaNoteFlashColorIndex
+   */
+  serial_write(&p, z64_message_icon_state, 0x001E);
+  serial_write(&p, z64_message_note_icon_state, 0x0006);
+
+  /*
+   *  Variables from z_message_PAL.c(.bss) (zeldaret/oot.git@8e04ae9)
+   *    sCharTexSize
+   *    sCharTexScale
+   *    sOcarinaButtonAPrimR
+   *    sOcarinaButtonAPrimB
+   *    sOcarinaButtonAPrimG
+   *    sOcarinaButtonAEnvR
+   *    sOcarinaButtonAEnvB
+   *    sOcarinaButtonAEnvG
+   *    sOcarinaButtonCPrimR
+   *    sOcarinaButtonCPrimB
+   *    sOcarinaButtonCPrimG
+   *    sOcarinaButtonCEnvR
+   *    sOcarinaButtonCEnvB
+   *    sOcarinaButtonCEnvG
+   */
+  serial_write(&p, &z_message_c_bss[0x0000], 0x0020);
+
+  /* save metronome timer */
+  serial_write(&p, &gz.metronome_timer, sizeof(gz.metronome_timer));
+
+  /* save frame flag to indicate whether an audio frame has been executed */
+  serial_write(&p, &gz.frame_flag, sizeof(gz.frame_flag));
+
   /* save song state */
-  serial_write(&p, z64_song_state, 0x00AC);
-  serial_write(&p, z64_scarecrow_song, 0x0140);
-  serial_write(&p, z64_song_ptr, 0x0004);
   serial_write(&p, z64_staff_notes, 0x001E);
 
   //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
@@ -1595,8 +1743,10 @@ void load_state(const struct state_meta *state)
   /* poly color filter state (sepia effect) */
   serial_read(&p, z64_poly_colorfilter_state, 0x001C);
 
-  /* sound state */
-  serial_read(&p, z64_sound_state, 0x004C);
+  if (state->state_version < 0x0005) {
+    /* sound state, handled by code_800EC960_c_data since state version 5 */
+    serial_read(&p, z64_sound_state, 0x004C);
+  }
 
   if (state->state_version >= 0x0004) {
     /* see save_state() for comments */
@@ -1955,25 +2105,73 @@ void load_state(const struct state_meta *state)
   }
 #endif
 
-  /* load ocarina state */
-  serial_read(&p, z64_ocarina_state, 0x0060);
-  if (state->state_version >= 0x0004)
-    serial_read(&p, &z64_ocarina_button_state,
-                sizeof(z64_ocarina_button_state));
-  /* ocarina minigame parameters */
-  serial_read(&p, &z64_ocarina_state[0x0068], 0x0001);
-  serial_read(&p, &z64_ocarina_state[0x006C], 0x0001);
-  /* load song state */
-  serial_read(&p, z64_song_state, 0x00AC);
-  serial_read(&p, z64_scarecrow_song, 0x0140);
-  serial_read(&p, z64_song_ptr, 0x0004);
-  serial_read(&p, z64_staff_notes, 0x001E);
-  /* fix audio counters */
-  {
-    uint32_t delta = z64_song_counter - z64_ocarina_counter;
-    z64_song_counter = z64_afx_counter;
-    z64_ocarina_counter = z64_song_counter - delta;
+  if (state->state_version >= 0x0005) {
+    /* see save_state() for comments */
+    serial_read(&p, &code_800EC960_c_data[0x0048], 0x000C);
+    serial_read(&p, &code_800EC960_c_data[0x005C], 0x0004);
+    serial_read(&p, &code_800EC960_c_data[0x0070], 0x0004);
+    serial_read(&p, &code_800EC960_c_data[0x0084], 0x0004);
+    serial_read(&p, &code_800EC960_c_data[0x0090], 0x0054);
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12
+    serial_read(&p, &code_800EC960_c_data[0x0988], 0x0060); /* 12b overhead */
+    serial_read(&p, &code_800EC960_c_data[0x09F0], 0x0008);
+    serial_read(&p, &code_800EC960_c_data[0x117C], 0x0144);
+    serial_read(&p, &code_800EC960_c_data[0x12D4], 0x038C);
+    serial_read(&p, &code_800EC960_c_data[0x16E8], 0x0009);
+    serial_read(&p, &code_800EC960_c_data[0x16FC], 0x000A);
+#elif Z64_VERSION == Z64_OOTMQJ || \
+      Z64_VERSION == Z64_OOTMQU || \
+      Z64_VERSION == Z64_OOTGCJ || \
+      Z64_VERSION == Z64_OOTGCU || \
+      Z64_VERSION == Z64_OOTCEJ
+    serial_read(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
+    serial_read(&p, &code_800EC960_c_data[0x0A00], 0x0008);
+    serial_read(&p, &code_800EC960_c_data[0x118C], 0x0144);
+    serial_read(&p, &code_800EC960_c_data[0x12E4], 0x038C);
+    serial_read(&p, &code_800EC960_c_data[0x16F8], 0x0009);
+    serial_read(&p, &code_800EC960_c_data[0x170C], 0x000A);
+#endif
+    serial_read(&p, &code_800EC960_c_bss[0x0000], 0x0160);
+    serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
+    serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
+    serial_read(&p, z64_message_icon_state, 0x001E);
+    serial_read(&p, z64_message_note_icon_state, 0x0006);
+    serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
+
+    /* load metronome timer */
+    serial_read(&p, &gz.metronome_timer, sizeof(gz.metronome_timer));
+
+    /* load frame flag to decide whether an audio frame needs to be executed */
+    serial_read(&p, &gz.frame_flag, sizeof(gz.frame_flag));
   }
+  else {
+    /* load ocarina state */
+    serial_read(&p, z64_ocarina_state, 0x0060);
+    if (state->state_version >= 0x0004)
+      serial_read(&p, &z64_ocarina_button_state,
+                  sizeof(z64_ocarina_button_state));
+    /* ocarina minigame parameters */
+    serial_read(&p, &z64_ocarina_state[0x0068], 0x0001);
+    serial_read(&p, &z64_ocarina_state[0x006C], 0x0001);
+    /* load song state */
+    serial_read(&p, z64_song_state, 0x00AC);
+    serial_read(&p, z64_scarecrow_song, 0x0140);
+    serial_read(&p, z64_song_ptr, 0x0004);
+  }
+
+  /* load song state (contd.) */
+  serial_read(&p, z64_staff_notes, 0x001E);
+
+  /* fix audio counters */
+  uint32_t play_frames = z64_ocarina_counter - z64_song_play_counter;
+  uint32_t rec_frames = z64_ocarina_counter - z64_song_rec_counter;
+  z64_ocarina_counter = z64_afx_counter;
+  z64_song_play_counter = z64_ocarina_counter - play_frames;
+  /* only saved in state version 5+, so doesn't make sense to fix otherwise */
+  if (state->state_version >= 0x0005)
+    z64_song_rec_counter = z64_ocarina_counter - rec_frames;
 
   //serial_read(&p, (void *)0x800E2FC0, 0x31E10);
   //serial_read(&p, (void *)0x8012143C, 0x41F4);

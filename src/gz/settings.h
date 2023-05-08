@@ -9,7 +9,7 @@
 #define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
 #define SETTINGS_VERSION            0x0004
-#define SETTINGS_STATE_VERSION      0x0004
+#define SETTINGS_STATE_VERSION      0x0005
 #define SETTINGS_STATE_MIN_VER      0x0003
 
 #define SETTINGS_WATCHES_MAX        18
