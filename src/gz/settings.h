@@ -137,6 +137,8 @@ struct settings_bits
   uint32_t holl_view_xlu    : 1;
   uint32_t holl_view_all    : 1;
   uint32_t watches_visible  : 1;
+  uint32_t macro_pause_done : 1;
+  uint32_t macro_sync_timer : 1;
 };
 
 struct settings_data

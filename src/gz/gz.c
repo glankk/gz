@@ -39,7 +39,6 @@ static void update_cpu_counter(void)
 
 static void main_hook(void)
 {
-  update_cpu_counter();
   input_update();
   gfx_mode_init();
 
@@ -365,29 +364,26 @@ static void main_hook(void)
   }
   gz.frame_counter += z64_file.gameinfo->update_rate;
 
-  /* execute and draw timer */
-  if (!gz.timer_active)
-    gz.timer_counter_offset -= gz.cpu_counter - gz.timer_counter_prev;
-  gz.timer_counter_prev = gz.cpu_counter;
+  /* draw timer */
   if (settings->bits.timer) {
     int64_t count = gz.cpu_counter + gz.timer_counter_offset;
-    int tenths = count * 10 / gz.cpu_counter_freq;
-    int seconds = tenths / 10;
+    int hundredths = count * 100 / gz.cpu_counter_freq;
+    int seconds = hundredths / 100;
     int minutes = seconds / 60;
     int hours = minutes / 60;
-    tenths %= 10;
+    hundredths %= 100;
     seconds %= 60;
     minutes %= 60;
     int x = settings->timer_x;
     int y = settings->timer_y;
     gfx_mode_set(GFX_MODE_COLOR, GPACK_RGBA8888(0xC0, 0xC0, 0xC0, alpha));
     if (hours > 0)
-      gfx_printf(font, x, y, "%d:%02d:%02d.%d",
-                 hours, minutes, seconds, tenths);
+      gfx_printf(font, x, y, "%d:%02d:%02d.%02d",
+                 hours, minutes, seconds, hundredths);
     else if (minutes > 0)
-      gfx_printf(font, x, y, "%d:%02d.%d", minutes, seconds, tenths);
+      gfx_printf(font, x, y, "%d:%02d.%02d", minutes, seconds, hundredths);
     else
-      gfx_printf(font, x, y, "%d.%d", seconds, tenths);
+      gfx_printf(font, x, y, "%d.%02d", seconds, hundredths);
   }
 
   /* draw menus */
@@ -651,6 +647,9 @@ HOOK void input_hook(void)
         }
         else
           gz.reset_flag = reset;
+        if (settings->bits.macro_pause_done &&
+            gz.movie_frame == gz.movie_input.size)
+          gz.frames_queued = 1;
       }
     }
   }
@@ -684,7 +683,16 @@ HOOK void disp_hook(z64_disp_buf_t *disp_buf, Gfx *buf, uint32_t size)
 
 static void state_main_hook(void)
 {
+  /* update timer */
+  update_cpu_counter();
+  if (!gz.timer_active)
+    gz.timer_counter_offset -= gz.cpu_counter - gz.timer_counter_prev;
+  gz.timer_counter_prev = gz.cpu_counter;
+
   if (gz.frames_queued != 0) {
+    if (settings->bits.macro_sync_timer && !gz.game_running)
+      gz.timer_active = 1;
+    gz.game_running = 1;
     if (gz.frames_queued > 0)
       --gz.frames_queued;
     /* reset sync event flags */
@@ -719,6 +727,9 @@ static void state_main_hook(void)
     }
   }
   else {
+    if (settings->bits.macro_sync_timer && gz.game_running)
+      gz.timer_active = 0;
+    gz.game_running = 0;
     z64_gfx_t *gfx = z64_ctxt.gfx;
     if (z64_ctxt.state_frames != 0) {
       /* copy gfx buffer from previous frame */
@@ -1065,6 +1076,7 @@ static void init(void)
   gz.day_time_prev = z64_file.day_time;
   gz.target_day_time = -1;
   gz.frames_queued = -1;
+  gz.game_running = 1;
   gz.movie_state = MOVIE_IDLE;
   vector_init(&gz.movie_input, sizeof(struct movie_input));
   vector_init(&gz.movie_seed, sizeof(struct movie_seed));

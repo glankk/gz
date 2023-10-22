@@ -31,6 +31,7 @@ static _Bool settings_validate(struct settings *settings)
 
 void settings_load_default(void)
 {
+  memset(&settings_store, 0, sizeof(settings_store));
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
@@ -75,6 +76,8 @@ void settings_load_default(void)
   d->bits.holl_view_xlu = 1;
   d->bits.holl_view_all = 0;
   d->bits.watches_visible = 1;
+  d->bits.macro_pause_done = 0;
+  d->bits.macro_sync_timer = 0;
   d->menu_x = 20;
   d->menu_y = 64;
   d->input_display_x = 20;
