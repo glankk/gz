@@ -31,6 +31,7 @@ static _Bool settings_validate(struct settings *settings)
 
 void settings_load_default(void)
 {
+  memset(&settings_store, 0, sizeof(settings_store));
   settings_store.header.version = SETTINGS_VERSION;
   settings_store.header.data_size = sizeof(settings_store.data);
   struct settings_data *d = &settings_store.data;
