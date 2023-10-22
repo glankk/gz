@@ -341,22 +341,29 @@ _Note:_ States can not be used in the file select menu or on the n64 logo.
 _See also:_ [4 Issues with savestates](#4-issues-with-savestates).
 
 #### 2.7.1 Settings
-This menu provides advanced settings for savestates and macro recording. gz
-implements certain hacks to keep macros in sync (See
-[5 About frame advancing and recording](#5-about-frame-advancing-and-recording)).
-All hacks are enabled by default. Disabling the hacks can cause issues and
-desyncs, and should only be done if required. For example, when recording a
-setup that is sensitive to room loading lag. For such use cases, the hacks
-should not be kept disabled longer than necessary (i.e. disable only when
-recording that particular section).
+This menu provides advanced settings for savestates and macro recording:
 
-The **wii vc camera** setting enables a camera quirk that is present on the Wii
-VC versions of the game. This setting can be used to sync macros that were made
-on Wii VC when played back on N64, or vice versa. It is enabled by default on
-Wii VC versions of gz. The **ignore state's z-target** option will keep the
-current z-targetting mode when loading states that have a different setting,
-which is useful for practicing with savestates made by someone with different
-preferences.
+-   **recording settings**: gz implements certain hacks to keep macros in sync
+    (See
+    [5 About frame advancing and recording](#5-about-frame-advancing-and-recording)
+    ). All hacks are enabled by default. Disabling the hacks can cause issues
+    and desyncs, and should only be done if required (for example, when
+    recording a setup that is sensitive to room loading lag). For such use
+    cases, the hacks should not be kept disabled longer than necessary (i.e.
+    disable only when recording that particular section).
+-   **playback settings**: The **pause when playback ends** setting will
+    automatically freeze gameplay when macro playback completes, instead of
+    letting the game continue to run. The **start/stop timer automatically**
+    setting will start or stop the timer when gameplay is unpaused or paused
+    respectively, which can be useful for timing macros especially when
+    combined with **pause when playback ends**.
+-   **game settings**: The **wii vc camera** setting enables a camera quirk
+    that is present on the Wii VC versions of the game. This setting can be
+    used to sync macros that were made on Wii VC when played back on N64, or
+    vice versa. It is enabled by default on Wii VC versions of gz. The
+    **ignore state's z-target** option will keep the current z-targeting mode
+    when loading states that have a different setting, which is useful for
+    practicing with savestates made by someone with different preferences.
 
 #### 2.7.2 Virtual controller
 Press the checkbox next to the controller number to override the game's input
