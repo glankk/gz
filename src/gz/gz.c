@@ -1101,7 +1101,7 @@ static void init(void)
   gz.hide_actors = 0;
   gz.free_cam = 0;
   gz.lock_cam = 0;
-  gz.cam_mode = CAMMODE_CAMERA;
+  gz.cam_mode = CAMMODE_VIEW;
   gz.cam_bhv = CAMBHV_MANUAL;
   gz.cam_dist_min = 100;
   gz.cam_dist_max = 400;

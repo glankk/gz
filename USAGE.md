@@ -162,11 +162,11 @@ trigger. These controls are disabled in the game when controlling the free
 camera. Press **lock** to disable the manual camera controls and restore the
 normal game controls.
 
-The free camera has two **mode** settings; when set to *camera*, the game's
+The free camera has two **mode** settings; when set to *view*, only the
+graphica viewpoint is changed. The game's camera then behaves as usual and is
+disjoint from the user's view of the scene. When set to *camera*, the game's
 camera is physically moved, which affects the behavior of in-game objects that
-react to the camera's position. When set to *view*, only the graphical
-viewpoint is changed. The game's camera then behaves as usual and is disjoint
-from the user's view of the scene.
+react to the camera's position.
 
 The **behavior** setting decides how the camera moves and how the controls
 work;
