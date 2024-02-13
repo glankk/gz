@@ -2385,5 +2385,6 @@ uint32_t  z64_LoadOverlay             (uint32_t vrom_start, uint32_t vrom_end,
                                        uint32_t vram_start, uint32_t vram_end,
                                        void *dst);
 void      z64_SeedRandom              (uint32_t seed);
+void      z64_Actor_UpdateBgCheckInfo (z64_game_t *game, z64_actor_t *actor, float wall_check_height, float wall_check_radius, float ceiling_check_height, int32_t flags);
 
 #endif
