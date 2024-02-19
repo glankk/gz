@@ -1042,17 +1042,20 @@ HOOK uint8_t metronome_check_hook(uint32_t sfx_id)
     return z64_Audio_IsSfxPlaying(sfx_id);
 }
 
-z64_col_poly_t void_poly = {0};
-
-/* Replaces call to Actor_UpdateBgCheckInfo in EnBomChu_WaitForRelease to simulate GC double-explosion
-   behavior, probably caused by reading 0s when the floor poly is NULL. */
-HOOK void chu_hack_floor_poly_hook(z64_game_t *game, z64_actor_t *actor, float wall_check_height, float wall_check_radius, float ceiling_check_height, int32_t flags)
+/* Replaces call to Actor_UpdateBgCheckInfo in EnBomChu_WaitForRelease to
+   simulate GC double-explosion behavior, probably caused by the GC emulator
+   reading 0s when the floor poly is NULL. */
+HOOK void bombchu_floor_poly_hook(z64_game_t *game, z64_actor_t *actor,
+                                  float wall_check_height,
+                                  float wall_check_radius,
+                                  float ceiling_check_height, int32_t flags)
 {
   maybe_init_gp();
-
-  z64_Actor_UpdateBgCheckInfo(game, actor, wall_check_height, wall_check_radius, ceiling_check_height, flags);
+  z64_Actor_UpdateBgCheckInfo(game, actor, wall_check_height,
+                              wall_check_radius, ceiling_check_height, flags);
   if (actor->floor_poly == NULL) {
-    actor->floor_poly = &void_poly;
+    static z64_col_poly_t zero_poly = { 0 };
+    actor->floor_poly = &zero_poly;
   }
 }
 

@@ -184,4 +184,4 @@ z64_metronome_check_2             = ovl_En_Skj + 0x29F4 ;
 z64_metronome_check_3             = ovl_En_Skj + 0x2A3C ;
 z64_metronome_check_4             = ovl_En_Skj + 0x2AC4 ;
 ovl_En_Bom_Chu                    = 0x809B32B0 ;
-z64_chu_hack_floor_poly           = ovl_En_Bom_Chu + 0x654 ;
+z64_bombchu_floor_poly_hook       = ovl_En_Bom_Chu + 0x654 ;
