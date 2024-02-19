@@ -48,6 +48,7 @@ enum cheats
   CHEAT_ISG,
   CHEAT_QUICKTEXT,
   CHEAT_NOHUD,
+  CHEAT_OOBCHU,
   CHEAT_MAX,
 };
 

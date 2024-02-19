@@ -1053,7 +1053,7 @@ HOOK void bombchu_floor_poly_hook(z64_game_t *game, z64_actor_t *actor,
   maybe_init_gp();
   z64_Actor_UpdateBgCheckInfo(game, actor, wall_check_height,
                               wall_check_radius, ceiling_check_height, flags);
-  if (actor->floor_poly == NULL) {
+  if (settings->cheats & (1 << CHEAT_OOBCHU) && actor->floor_poly == NULL) {
     static z64_col_poly_t zero_poly = { 0 };
     actor->floor_poly = &zero_poly;
   }

@@ -208,6 +208,8 @@ are available:
 -   **isg:** Permanently activates the *infinite sword glitch*.
 -   **quick text:** Activates fast scrolling for all textboxes.
 -   **no hud:** Hides hearts, magic, buttons, rupees and the minimap overlays.
+-   **gc oob chu:** Simulates GameCube double-explosion behavior when dropping
+    a bombchu out-of-bounds (i.e. with no floor beneath Link).
 
 To undo the effects of the *no music*, *items usable*, *no minimap*, and *no
 hud* cheats, turn the cheat off and enter a new scene, or reload the current

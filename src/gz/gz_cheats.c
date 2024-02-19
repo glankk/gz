@@ -22,6 +22,7 @@ static const char *cheat_names[] =
   "isg",
   "quick text",
   "no hud",
+  "gc oob chu",
 };
 
 static int cheat_proc(struct menu_item *item,
