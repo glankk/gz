@@ -55,8 +55,8 @@ enum holl_view_state
   HOLLVIEW_INACTIVE,
   HOLLVIEW_START,
   HOLLVIEW_ACTIVE,
-  HOLLVIEW_BEGIN_STOP,
   HOLLVIEW_STOP,
+  HOLLVIEW_STOPPING,
 };
 
 enum path_view_state

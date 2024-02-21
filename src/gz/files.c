@@ -244,7 +244,7 @@ static int overwrite_prompt_proc(int option_index, void *data)
 static void return_path(const char *name)
 {
   char *path = malloc(PATH_MAX);
-  if (getcwd(path, PATH_MAX)) {
+  if (path && getcwd(path, PATH_MAX)) {
     int dl = strlen(path);
     int nl = strlen(name);
     if (dl + 1 + nl + gf_suffix_length < PATH_MAX) {
@@ -264,7 +264,8 @@ static void return_path(const char *name)
         menu_return(&gf_menu);
     }
   }
-  free(path);
+  if (path)
+    free(path);
 }
 
 static int file_enter_proc(struct menu_item *item,
@@ -343,15 +344,17 @@ static int file_activate_proc(struct menu_item *item)
     ds->index = index;
     int l = strlen(entry->name) - gf_suffix_length;
     char *name = malloc(l + 1);
-    memcpy(name, entry->name, l);
-    name[l] = 0;
-    if (gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) {
-      set_name(name, 1);
-      menu_select(&gf_menu, gf_accept);
+    if (name) {
+      memcpy(name, entry->name, l);
+      name[l] = 0;
+      if (gf_mode == GETFILE_SAVE || gf_mode == GETFILE_SAVE_PREFIX_INC) {
+        set_name(name, 1);
+        menu_select(&gf_menu, gf_accept);
+      }
+      else
+        return_path(name);
+      free(name);
     }
-    else
-      return_path(name);
-    free(name);
   }
   return 1;
 }
@@ -586,6 +589,8 @@ void menu_get_file(struct menu *menu, enum get_file_mode mode,
   if (gf_suffix)
     free(gf_suffix);
   gf_suffix = malloc(strlen(suffix) + 1);
+  if (!gf_suffix)
+    return;
   strcpy(gf_suffix, suffix);
   gf_suffix_length = strlen(gf_suffix);
   gf_callback_proc = callback_proc;

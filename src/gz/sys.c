@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdint.h>
 #include "io.h"
 #include "sys.h"
 #include "fat.h"
@@ -716,5 +717,19 @@ void sys_reset(void)
   if (wd) {
     fat_free(wd);
     wd = 0;
+  }
+}
+
+void *sbrk(intptr_t incr)
+{
+  extern char end[];
+  static void *brk = end;
+  if ((uintptr_t)brk + incr > 0x80800000) {
+    return (void *)-1;
+  }
+  else {
+    char *ret = brk;
+    brk += incr;
+    return ret;
   }
 }

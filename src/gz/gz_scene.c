@@ -96,7 +96,7 @@ static int holl_view_proc(struct menu_item *item,
   }
   else if (reason == MENU_CALLBACK_SWITCH_OFF) {
     if (gz.holl_view_state != HOLLVIEW_INACTIVE)
-      gz.holl_view_state = HOLLVIEW_BEGIN_STOP;
+      gz.holl_view_state = HOLLVIEW_STOP;
   }
   else if (reason == MENU_CALLBACK_THINK) {
     _Bool state = gz.holl_view_state == HOLLVIEW_START ||

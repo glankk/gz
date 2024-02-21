@@ -475,6 +475,13 @@ static void main_hook(void)
   gfx_flush();
 }
 
+static void macro_oom(void)
+{
+    gz_log("out of memory, stopping macro");
+    gz.frames_queued = 0;
+    gz.movie_state = MOVIE_IDLE;
+}
+
 HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
 {
   maybe_init_gp();
@@ -495,8 +502,12 @@ HOOK int32_t room_load_sync_hook(OSMesgQueue *mq, OSMesg *msg, int32_t flag)
         rl = vector_insert(&gz.movie_room_load,
                            gz.movie_room_load_pos, 1, NULL);
       }
-      rl->frame_idx = gz.movie_frame;
-      ++gz.movie_room_load_pos;
+      if (rl) {
+        rl->frame_idx = gz.movie_frame;
+        ++gz.movie_room_load_pos;
+      }
+      else
+        macro_oom();
       gz.room_load_flag = 1;
     }
     return result;
@@ -616,12 +627,16 @@ HOOK void input_hook(void)
           vector_reserve(&gz.movie_input, 128);
         vector_push_back(&gz.movie_input, 1, NULL);
       }
-      /* if the last recorded frame is not the previous frame,
-         increment the rerecord count */
-      if (gz.movie_last_recorded_frame >= gz.movie_frame)
-        ++gz.movie_rerecords;
-      gz.movie_last_recorded_frame = gz.movie_frame++;
-      z_to_movie(gz.movie_last_recorded_frame, &zi[0], gz.reset_flag);
+      if (gz.movie_frame < gz.movie_input.size) {
+        /* if the last recorded frame is not the previous frame,
+           increment the rerecord count */
+        if (gz.movie_last_recorded_frame >= gz.movie_frame)
+          ++gz.movie_rerecords;
+        gz.movie_last_recorded_frame = gz.movie_frame++;
+        z_to_movie(gz.movie_last_recorded_frame, &zi[0], gz.reset_flag);
+      }
+      else
+        macro_oom();
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       if (gz.movie_frame >= gz.movie_input.size) {
@@ -765,10 +780,14 @@ HOOK void srand_hook(uint32_t seed)
       /* insert a recorded seed */
       struct movie_seed *ms;
       ms = vector_insert(&gz.movie_seed, gz.movie_seed_pos, 1, NULL);
-      ms->frame_idx = gz.movie_frame;
-      ms->old_seed = z64_random;
-      ms->new_seed = seed;
-      ++gz.movie_seed_pos;
+      if (ms) {
+        ms->frame_idx = gz.movie_frame;
+        ms->old_seed = z64_random;
+        ms->new_seed = seed;
+        ++gz.movie_seed_pos;
+      }
+      else
+        macro_oom();
     }
     else if (gz.movie_state == MOVIE_PLAYING) {
       /* restore a recorded seed, if conditions match */
@@ -842,9 +861,13 @@ HOOK void ocarina_update_hook(void)
           os = vector_insert(&gz.movie_oca_sync,
                              gz.movie_oca_sync_pos, 1, NULL);
         }
-        os->frame_idx = gz.movie_frame;
-        os->audio_frames = audio_frames;
-        ++gz.movie_oca_sync_pos;
+        if (os) {
+          os->frame_idx = gz.movie_frame;
+          os->audio_frames = audio_frames;
+          ++gz.movie_oca_sync_pos;
+        }
+        else
+          macro_oom();
         gz.oca_sync_flag = 1;
       }
     }
@@ -922,11 +945,15 @@ HOOK void ocarina_input_hook(void *a0, z64_input_t *input, int a2)
           oi = vector_insert(&gz.movie_oca_input,
                              gz.movie_oca_input_pos, 1, NULL);
         }
-        oi->frame_idx = gz.movie_frame;
-        oi->pad = input->raw.pad;
-        oi->adjusted_x = input->adjusted_x;
-        oi->adjusted_y = input->adjusted_y;
-        ++gz.movie_oca_input_pos;
+        if (oi) {
+          oi->frame_idx = gz.movie_frame;
+          oi->pad = input->raw.pad;
+          oi->adjusted_x = input->adjusted_x;
+          oi->adjusted_y = input->adjusted_y;
+          ++gz.movie_oca_input_pos;
+        }
+        else
+          macro_oom();
         gz.oca_input_flag = 1;
       }
     }
