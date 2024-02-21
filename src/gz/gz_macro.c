@@ -601,6 +601,21 @@ static int wiivc_cam_proc(struct menu_item *item,
   return 0;
 }
 
+static int gc_oob_chu_proc(struct menu_item *item,
+                           enum menu_callback_reason reason,
+                           void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.gc_oob_chu = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.gc_oob_chu = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.gc_oob_chu)
+      menu_checkbox_set(item, settings->bits.gc_oob_chu);
+  }
+  return 0;
+}
+
 static int vcont_enable_proc(struct menu_item *item,
                              enum menu_callback_reason reason,
                              void *data)
@@ -795,8 +810,10 @@ struct menu *gz_macro_menu(void)
   menu_add_static(&menu_settings, 0, 5, "game settings", 0xC0C0C0);
   menu_add_checkbox(&menu_settings, 2, 6, wiivc_cam_proc, NULL);
   menu_add_static(&menu_settings, 4, 6, "wii vc camera", 0xC0C0C0);
-  menu_add_checkbox(&menu_settings, 2, 7, byte_ztarget_proc, NULL);
-  menu_add_static(&menu_settings, 4, 7, "ignore state's z-target", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 7, gc_oob_chu_proc, NULL);
+  menu_add_static(&menu_settings, 4, 7, "gc oob chu", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 8, byte_ztarget_proc, NULL);
+  menu_add_static(&menu_settings, 4, 8, "ignore state's z-target", 0xC0C0C0);
 
   /* populate virtual pad menu */
   menu_vcont.selector = menu_add_submenu(&menu_vcont, 0, 0, NULL, "return");

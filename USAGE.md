@@ -208,8 +208,6 @@ are available:
 -   **isg:** Permanently activates the *infinite sword glitch*.
 -   **quick text:** Activates fast scrolling for all textboxes.
 -   **no hud:** Hides hearts, magic, buttons, rupees and the minimap overlays.
--   **gc oob chu:** Simulates GameCube double-explosion behavior when dropping
-    a bombchu out-of-bounds (i.e. with no floor beneath Link).
 
 To undo the effects of the *no music*, *items usable*, *no minimap*, and *no
 hud* cheats, turn the cheat off and enter a new scene, or reload the current
@@ -355,7 +353,9 @@ recording that particular section).
 The **wii vc camera** setting enables a camera quirk that is present on the Wii
 VC versions of the game. This setting can be used to sync macros that were made
 on Wii VC when played back on N64, or vice versa. It is enabled by default on
-Wii VC versions of gz. The **ignore state's z-target** option will keep the
+Wii VC versions of gz. The **gc oob chu:** setting simulates GameCube
+double-explosion behavior when dropping a bombchu out-of-bounds (i.e. with no
+floor beneath Link). The **ignore state's z-target** option will keep the
 current z-targetting mode when loading states that have a different setting,
 which is useful for practicing with savestates made by someone with different
 preferences.
