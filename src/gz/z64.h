@@ -2325,6 +2325,11 @@ z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
 
 /* functions */
+void      z64_Actor_UpdateBgCheckInfo (z64_game_t *game, z64_actor_t *actor,
+                                       float wall_check_height,
+                                       float wall_check_radius,
+                                       float ceiling_check_height,
+                                       int32_t flags);
 void      z64_DrawActors              (z64_game_t *game, void *actor_ctxt);
 void      z64_DeleteActor             (z64_game_t *game, void *actor_ctxt,
                                        z64_actor_t *actor);
