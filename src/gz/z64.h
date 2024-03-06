@@ -1017,7 +1017,11 @@ struct z64_actor_s
 typedef struct
 {
   z64_actor_t       common;                   /* 0x0000 */
-  char              unk_0x13C[0x02F8];        /* 0x013C */
+  char              unk_0x13C[0x0070];        /* 0x013C */
+  uint32_t          current_animation;        /* 0x01AC */
+  char              unk_0x1B0[0x000C];        /* 0x01B0 */
+  float             animation_timer;          /* 0x01BC */
+  char              unk_0x1C0[0x0274];        /* 0x01C0 */
   uint8_t           action;                   /* 0x0434 */
   char              unk_0x435[0x0237];        /* 0x0435 */
   uint32_t          state_flags_1;            /* 0x066C */
