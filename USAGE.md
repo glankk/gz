@@ -353,7 +353,7 @@ recording that particular section).
 The **wii vc camera** setting enables a camera quirk that is present on the Wii
 VC versions of the game. This setting can be used to sync macros that were made
 on Wii VC when played back on N64, or vice versa. It is enabled by default on
-Wii VC versions of gz. The **gc oob chu:** setting simulates GameCube
+Wii VC versions of gz. The **gc oob chu** setting simulates GameCube
 double-explosion behavior when dropping a bombchu out-of-bounds (i.e. with no
 floor beneath Link). The **ignore state's z-target** option will keep the
 current z-targetting mode when loading states that have a different setting,
