@@ -1169,8 +1169,8 @@ uint32_t save_state(struct state_meta *state)
    *  D_8016B7A8
    *  D_8016B7AC
    *  D_8016B7B0
+   *  D_8016B7B4
    *  sRiverFreqScaleLerp
-   *  sWaterfallFreqScaleLerp
    *  sWaterfallFreqScaleLerp
    *  D_8016B7D8
    *  D_8016B7DC
@@ -1180,7 +1180,6 @@ uint32_t save_state(struct state_meta *state)
    *  sRiverSoundMainBgmLower
    *  sRiverSoundMainBgmRestore
    *  sGanonsTowerVol
-   *  sSfxChannelState
    *  sMalonSingingTimer
    *  sMalonSingingDisabled
    *  D_8016B9F3
@@ -1203,23 +1202,11 @@ uint32_t save_state(struct state_meta *state)
    *  sMusicStaffExpectedLength
    *  sMusicStaffExpectedPitch
    *  sScarecrowsLongSongSecondNote
-   *  sIsMalonSinging
-   *  sMalonSingingDist
-   *
-   *  Offset changes due to missing or changed debug variables;
-   *    sAudioUpdateStartTime       0x0000 - 0x0004 (- 0x0004)
-   *    sAudioUpdateEndTime         0x0004 - 0x0008 (- 0x0008)
-   *    -D_8016B7E4                 0x0044 - 0x0048 (- 0x000C)
-   *    sAudioScrPrtBuf             0x0048 - 0x0110 (- 0x00D4)
-   *    +D_8016B7E4                 0x0118 - 0x011C (- 0x00D0)
-   *    sBinToStrBuf                0x0218 - 0x0238 (- 0x00F0)
-   *    sAudioSpecPeakNumNotes      0x0240 - 0x0252 (- 0x0102)
-   *    +(alignment)                0x0264 - 0x0266 (- 0x0100)
-   *    sDebugPadHold & Co.         0x0310 - 0x0324 (- 0x0114)
    */
-  serial_write(&p, &code_800EC960_c_bss[0x0000], 0x0160); /* 10b overhead */
+  serial_write(&p, &code_800EC960_c_bss[0x0000], 0x0044); /* 6b overhead */
+  serial_write(&p, &code_800EC960_c_bss[0x0148], 0x0018); /* 2b overhead */
   serial_write(&p, &code_800EC960_c_bss[0x0168], 0x0004);
-  serial_write(&p, &code_800EC960_c_bss[0x0178], 0x0090);
+  serial_write(&p, &code_800EC960_c_bss[0x0178], 0x0088); /* 15b overhead */
 
   /*
    *  Variables from z_message_PAL.c(.data) (zeldaret/oot.git@8e04ae9)
@@ -2133,9 +2120,16 @@ void load_state(const struct state_meta *state)
     serial_read(&p, &code_800EC960_c_data[0x16F8], 0x0009);
     serial_read(&p, &code_800EC960_c_data[0x170C], 0x000A);
 #endif
-    serial_read(&p, &code_800EC960_c_bss[0x0000], 0x0160);
-    serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
-    serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
+    if (state->state_version >= 0x0006) {
+      serial_read(&p, &code_800EC960_c_bss[0x0000], 0x0044);
+      serial_read(&p, &code_800EC960_c_bss[0x0148], 0x0018);
+      serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
+      serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0088);
+    } else {
+      serial_read(&p, &code_800EC960_c_bss[0x0000], 0x0160);
+      serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
+      serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
+    }
     serial_read(&p, z64_message_icon_state, 0x001E);
     serial_read(&p, z64_message_note_icon_state, 0x0006);
     serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
