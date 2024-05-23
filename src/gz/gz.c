@@ -1052,7 +1052,8 @@ HOOK void metronome_start_hook(uint16_t sfx_id, z64_xyzf_t *pos, uint8_t token,
 {
   maybe_init_gp();
 
-  if (gz.ready)
+  //0x4836 is NA_SE_SY_METRONOME - this is for iQue
+  if (gz.ready && sfx_id == 0x4836)
     gz.metronome_timer = 17;
 
   return z64_Audio_PlaySfxGeneral(sfx_id, pos, token, freq_scale, vol,
