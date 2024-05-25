@@ -16,6 +16,7 @@
 #define Z64_OOTGCJ            0x05
 #define Z64_OOTGCU            0x06
 #define Z64_OOTCEJ            0x07
+#define Z64_OOTIQS            0x08
 
 #define Z64_SCREEN_WIDTH      320
 #define Z64_SCREEN_HEIGHT     240
@@ -68,7 +69,8 @@ struct z64_arena
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQS
                                               /* 0x0008 */
 #endif
 };

@@ -165,6 +165,7 @@ $(OBJ-OOT-MQ-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTMQU
 $(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCJ
 $(OBJ-OOT-GC-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCU
 $(OBJ-OOT-CE-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTCEJ
+$(OBJ-OOT-IQS)        : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTIQS
 $(ELF-OOT-1.0)        : ALL_LDLIBS           += -loot-1.0
 $(ELF-OOT-1.1)        : ALL_LDLIBS           += -loot-1.1
 $(ELF-OOT-1.2)        : ALL_LDLIBS           += -loot-1.2
@@ -173,6 +174,7 @@ $(ELF-OOT-MQ-U)       : ALL_LDLIBS           += -loot-mq-u
 $(ELF-OOT-GC-J)       : ALL_LDLIBS           += -loot-gc-j
 $(ELF-OOT-GC-U)       : ALL_LDLIBS           += -loot-gc-u
 $(ELF-OOT-CE-J)       : ALL_LDLIBS           += -loot-ce-j
+$(ELF-OOT-IQS)        : ALL_LDLIBS           += -loot-iqs
 ifeq '$(target)' 'mips64-ultra-elf'
 $(OBJ-VC)             : ALL_CFLAGS           += -n64-wiivc
 $(OBJ-VC)             : ALL_CXXFLAGS         += -n64-wiivc
