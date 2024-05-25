@@ -223,6 +223,26 @@ rom_table =
                     gz_name     = "gz-oot-ce-j" .. version_suffix,
                     title_id    = "NGEJ",
                   },
+[0xF45C5532]    = {
+                    game        = "oot",
+                    version     = "iqs",
+                    region      = "chn",
+                    boot_ind    = 1,
+                    boot_ram    = 0x80000460,
+                    code_ind    = 27,
+                    code_ram    = 0x80018FA0,
+                    ovl_tbls    = {
+                                    part      = { addr = 0x800EF860 },
+                                    actor     = { addr = 0x80031E70 },
+                                    state     = { addr = 0x800F8F30 },
+                                    map_mark  = { addr = 0x800F97E8 },
+                                    play      = { addr = 0x8010607C },
+                                  },
+                    data_dir    = "oot-iqs",
+                    gz_version  = "oot-iqs" .. version_suffix,
+                    gz_name     = "gz-oot-iqs" .. version_suffix,
+                    title_id    = "NIQS",
+                  },
 }
 
 vc_table =
