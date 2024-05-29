@@ -22,11 +22,17 @@ local fs = gru.z64fs_load_blob(rom)
 
 print("patching files")
 local mem_patch = gru.gsc_load("gsc/" .. rom_info.data_dir .. "/mem_patch.gsc")
-local ups_size_patch = gru.gsc_load("gsc/" .. rom_info.data_dir ..
-                                    "/ups_size_patch.gsc")
 local hooks = gru.gsc_load("hooks/gz/" .. gz_version .. "/gz.gsc")
+gsc_list = { }
+if rom_info.version == 'iqs' then 
+      gsc_list = { mem_patch, hooks }
+else 
+      local ups_size_patch = gru.gsc_load("gsc/" .. rom_info.data_dir ..
+                                    "/ups_size_patch.gsc")
+      gsc_list = { mem_patch, ups_size_patch, hooks }
+end
 local do_hooks = loadfile("lua/hooks.lua")
-do_hooks(rom_info, fs, { mem_patch, ups_size_patch, hooks })
+do_hooks(rom_info, fs, gsc_list)
 
 print("reassembling rom")
 local patched_rom = fs:assemble_rom()
