@@ -236,7 +236,7 @@ rom_table =
                                     actor     = { addr = 0x800F0120 },
                                     state     = { addr = 0x800F8F30 },
                                     map_mark  = { addr = 0x800F97E8 },
-                                    play      = { addr = 0x8010607C },
+                                    play      = { addr = 0x80106060 },
                                   },
                     data_dir    = "oot-iqs",
                     gz_version  = "oot-iqs" .. version_suffix,
