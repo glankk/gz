@@ -143,6 +143,7 @@ z64_fw_state_1                    = 0x80118BF8 ;
 z64_fw_state_2                    = 0x80118C00 ;
 z64_camera_state                  = 0x80118E20 ;
 z64_file                          = 0x8011A5D0 ;
+z64_gameinfo                      = z64_file + 0x20 ;
 z64_cs_state                      = 0x8011BC20 ;
 z64_light_queue                   = 0x8011BD60 ;
 z64_game_arena                    = 0x8011BEF0 ;
