@@ -789,23 +789,7 @@ typedef struct
   uint8_t           z_targeting;              /* 0x140C */
   char              unk_0x140D[0x0001];       /* 0x140D */
   uint16_t          disable_music_flag;       /* 0x140E */
-#if Z64_VERSION == Z64_OOT10 || \
-    Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12
-  char              unk_0x1410[0x0020];       /* 0x1410 */
-  z64_gameinfo_t   *gameinfo;                 /* 0x1430 */
-  char              unk_0x1434[0x001C];       /* 0x1434 */
-#elif Z64_VERSION == Z64_OOTMQJ || \
-      Z64_VERSION == Z64_OOTMQU || \
-      Z64_VERSION == Z64_OOTGCJ || \
-      Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ || \
-      Z64_VERSION == Z64_OOTIQS
-  char              unk_0x1410[0x0018];       /* 0x1410 */
-  z64_gameinfo_t   *gameinfo;                 /* 0x1428 */
-  char              unk_0x142C[0x0024];       /* 0x142C */
-#endif
-                                              /* 0x1450 */
+                                              /* 0x1410 */
 } z64_file_t;
 
 typedef struct
@@ -2328,6 +2312,7 @@ z64_extern  z64_game_t            z64_game;
 z64_extern  z64_link_t            z64_link;
 z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
+z64_extern  z64_gameinfo_t        *z64_gameinfo;
 
 /* functions */
 void      z64_Actor_UpdateBgCheckInfo (z64_game_t *game, z64_actor_t *actor,

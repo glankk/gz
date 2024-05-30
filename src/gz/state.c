@@ -489,7 +489,7 @@ uint32_t save_state(struct state_meta *state)
   /* save context */
   serial_write(&p, &z64_game, sizeof(z64_game));
   serial_write(&p, &z64_file, sizeof(z64_file));
-  serial_write(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_write(&p, z64_gameinfo, sizeof(*z64_gameinfo));
   /* save overlays */
   int16_t n_ovl;
   struct set ovl_nodes;
@@ -1367,7 +1367,7 @@ void load_state(const struct state_meta *state)
   else
     serial_read(&p, &z64_file, sizeof(z64_file));
 
-  serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_read(&p, z64_gameinfo, sizeof(*z64_gameinfo));
   /* load overlays */
   int16_t n_ent;
   int16_t next_ent;
@@ -1592,7 +1592,7 @@ void load_state(const struct state_meta *state)
         zu_getfile_idx(z64_icon_item_dungeon_static,
                        z64_game.pause_ctxt.icon_item_s);
         uint32_t vaddr = z64_ftab[z64_map_48x85_static].vrom_start;
-        vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
+        vaddr += z64_gameinfo->dungeon_map_floor * 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture, 0x07F8);
         vaddr += 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture + 0x0800, 0x07F8);
