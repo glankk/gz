@@ -40,8 +40,8 @@ local patched_rom = fs:assemble_rom()
 print("building ldr")
 local gz = gru.blob_load("bin/gz/" .. gz_version .. "/gz.bin")
 local payload_rom = fs:prom_tail()
-local payload_ram = 0x80400060 - 0x60
-local payload_size = gz:size() + 0x60
+local payload_ram = 0x80400000
+local payload_size = gz:size() + 0x50
 local _,_,make_result = os.execute(string.format(make .. " clean-ldr && " ..
                                                  make ..  " ldr" ..
                                                  " CPPFLAGS='" ..
@@ -55,10 +55,10 @@ if make_result ~= 0 then error("failed to build ldr", 0) end
 
 print("inserting payload")
 local ldr = gru.blob_load("bin/ldr/ldr.bin")
-local old_ldr = patched_rom:copy(0x1000, 0x60)
+local old_ldr = patched_rom:copy(0x1000, 0x50)
 patched_rom:write(0x1000, ldr)
 patched_rom:write(payload_rom, old_ldr)
-patched_rom:write(payload_rom + 0x60, gz)
+patched_rom:write(payload_rom + 0x50, gz)
 patched_rom:crc_update()
 
 return rom_info, rom, patched_rom
