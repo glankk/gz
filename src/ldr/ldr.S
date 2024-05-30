@@ -6,10 +6,6 @@
 .ent      _start
 .type     _start, @function
 _start:
-  /* check for homeboy reset */
-  la      $v0, 0xA8050000
-  lw      $v1, 0x0020($v0)
-  beq     $v1, 0x6864, no_dma
   /* begin dma transfer */
   la      $v0, 0xA4600000
   la      $v1, ((DMA_RAM) & 0x1FFFFFFF)
@@ -25,14 +21,13 @@ _start:
     bnez  $v1, dma_busy_loop
   la      $v1, 0x00000002
   sw      $v1, 0x0010($v0)
-  no_dma:
   /* jump to preamble */
   j       (DMA_RAM)
 .end      _start
 .size     _start, . - _start
 
 /* input side channel */
-.fill     0x5E - (. - _start)
+.fill     0x4E - (. - _start)
 .global   input_sch_pad
 .type     input_sch_pad, @object
 .size     input_sch_pad, 2
