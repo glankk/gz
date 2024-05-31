@@ -308,12 +308,18 @@ void zu_vlist_destroy(struct zu_vlist *vlist)
 
 void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
+  if (__osBbIsBb)
+    memcpy(dram_addr, __osBbSramAddress + sram_addr, size);
+  else
+    z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
 }
 
 void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
+  if (__osBbIsBb)
+    memcpy(__osBbSramAddress + sram_addr, dram_addr, size);
+  else
+    z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
 }
 
 _Noreturn
