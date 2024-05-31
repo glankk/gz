@@ -15,7 +15,7 @@ static unsigned int clock_ticks_dflt(void)
 
 static unsigned int clock_freq_dflt(void)
 {
-  return OS_CPU_COUNTER;
+  return (__osBbIsBb) ? 72000000 : OS_CPU_COUNTER;
 }
 
 static void cpu_reset_dflt(void)
@@ -38,6 +38,9 @@ int io_init(void)
   int n_devs = sizeof(devs) / sizeof(devs[0]);
   for (int i = 0; i < n_devs; i++) {
     current_dev = devs[i];
+    if(__osBbIsBb) { 
+      return 0;
+    }
     if (current_dev->probe() == 0)
       return 0;
   }
