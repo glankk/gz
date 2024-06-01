@@ -189,3 +189,4 @@ z64_bombchu_floor_poly_hook       = ovl_En_Bom_Chu + 0x654 ;
 __osBbSramAddress                 = 0x8000036C ;
 __osBbSramSize                    = 0x80000370 ;
 __osBbIsBb                        = 0x80000388 ;
+__osBbHackFlags                   = 0x8000038C ;

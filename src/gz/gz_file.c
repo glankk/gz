@@ -265,6 +265,9 @@ struct menu *gz_file_menu(void)
   menu_add_static(&menu, 0, 13, "z targeting", 0xC0C0C0);
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
-
+  if (__osBbHackFlags) { 
+    menu_add_static(&menu, 0, 14, "iQue controller slot", 0xC0C0C0);
+    menu_add_intinput(&menu, 17, 14, 10, 4, byte_mod_proc, &__osBbHackFlags);
+  }
   return &menu;
 }
