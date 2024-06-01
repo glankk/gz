@@ -11,6 +11,12 @@
 #include "z64.h"
 #include "zu.h"
 
+#if Z64_VERSION == Z64_OOTIQS
+#define ENGLISH "chinese\0"
+#else
+#define ENGLISH "english\0"
+#endif
+
 static int byte_mod_proc(struct menu_item *item,
                          enum menu_callback_reason reason,
                          void *data)
@@ -274,7 +280,7 @@ struct menu *gz_file_menu(void)
   menu_add_static(&menu, 0, 11, "file index", 0xC0C0C0);
   menu_add_intinput(&menu, 17, 11, 16, 2, byte_mod_proc, &z64_file.file_index);
   menu_add_static(&menu, 0, 12, "language", 0xC0C0C0);
-  menu_add_option(&menu, 17, 12, "japanese\0""english\0",
+  menu_add_option(&menu, 17, 12, "japanese\0" ENGLISH,
                   byte_switch_proc, &z64_file.language);
   menu_add_static(&menu, 0, 13, "z targeting", 0xC0C0C0);
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
