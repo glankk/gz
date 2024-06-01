@@ -74,17 +74,17 @@ static int halfword_optionmod_proc(struct menu_item *item,
   return 0;
 }
 
-static int word_mod_proc(struct menu_item *item,
+static int word_optionmod_proc(struct menu_item *item,
                          enum menu_callback_reason reason,
                          void *data)
 {
   uint32_t *p = data;
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     if (menu_intinput_get(item) != *p)
-      menu_intinput_set(item, *p);
+      menu_option_set(item, *p);
   }
   else if (reason == MENU_CALLBACK_CHANGED)
-    *p = menu_intinput_get(item);
+    *p = menu_option_get(item);
   return 0;
 }
 
@@ -286,8 +286,8 @@ struct menu *gz_file_menu(void)
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
   #if Z64_VERSION == Z64_OOTIQS   
-  menu_add_static(&menu, 0, 14, "iQue controller slot", 0xC0C0C0);
-  menu_add_intinput(&menu, 17, 14, 10, 4, word_mod_proc, &__osBbHackFlags);
+  menu_add_static(&menu, 0, 14, "controller", 0xC0C0C0);
+  menu_add_option(&menu, 17, 14, "player 1\0""player 2\0""player 3\0""player 4\0", word_optionmod_proc, &__osBbHackFlags);
   #endif
   return &menu;
 }
