@@ -2316,7 +2316,7 @@ z64_extern  z64_gameinfo_t        *z64_gameinfo;
 z64_extern  void*                 __osBbSramAddress;
 z64_extern  uint32_t              __osBbSramSize;
 z64_extern  uint32_t              __osBbIsBb;
-z64_extern  uint8_t               __osBbHackFlags;
+z64_extern  uint32_t              __osBbHackFlags;
 
 /* functions */
 void      z64_Actor_UpdateBgCheckInfo (z64_game_t *game, z64_actor_t *actor,
