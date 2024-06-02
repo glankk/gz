@@ -7,6 +7,7 @@
 #include "rdb.h"
 #include "sys.h"
 #include "fat.h"
+#include "z64.h"
 
 struct desc
 {
