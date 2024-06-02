@@ -59,7 +59,7 @@ static void save_ovl(void **p, void *addr,
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
   hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
@@ -144,7 +144,7 @@ static void load_ovl(void **p, void **p_addr,
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
   hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
