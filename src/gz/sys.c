@@ -734,7 +734,7 @@ void *sbrk(intptr_t incr)
   extern char end[];
   static void *brk = end;
   #if Z64_VERSION == Z64_OOTIQS
-  #define HEAP_END (__osBbSramAddress)
+  #define HEAP_END (__osBbIsBb ? __osBbSramAddress : 0x80800000)
   #else 
   #define HEAP_END (0x80800000)
   #endif
