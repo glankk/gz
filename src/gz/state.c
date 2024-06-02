@@ -1145,8 +1145,7 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &code_800EC960_c_data[0x0090], 0x0054);
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQS
+    Z64_VERSION == Z64_OOT12 ||
   serial_write(&p, &code_800EC960_c_data[0x0988], 0x0060); /* 12b overhead */
   serial_write(&p, &code_800EC960_c_data[0x09F0], 0x0008);
   serial_write(&p, &code_800EC960_c_data[0x117C], 0x0144);
@@ -1157,7 +1156,8 @@ uint32_t save_state(struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQS
   serial_write(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
   serial_write(&p, &code_800EC960_c_data[0x0A00], 0x0008);
   serial_write(&p, &code_800EC960_c_data[0x118C], 0x0144);
@@ -1453,8 +1453,7 @@ void load_state(const struct state_meta *state)
     node->magic = 0x7373;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQS
+    Z64_VERSION == Z64_OOT12 ||
     node->arena = &z64_game_arena;
     node->filename = NULL,
     node->line = 0;
@@ -2121,7 +2120,8 @@ void load_state(const struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQS
     serial_read(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
     serial_read(&p, &code_800EC960_c_data[0x0A00], 0x0008);
     serial_read(&p, &code_800EC960_c_data[0x118C], 0x0144);
