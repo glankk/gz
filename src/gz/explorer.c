@@ -241,6 +241,8 @@ static int draw_proc(struct menu_item *item,
       uint32_t scene_vrom_end = scene_entry->scene_vrom_end;
       uint32_t scene_vrom_size = scene_vrom_end - scene_vrom_start;
       data->scene_file = malloc(scene_vrom_size);
+      if (!data->scene_file)
+        return 0;
       zu_getfile(scene_vrom_start, data->scene_file, scene_vrom_size);
     }
     stab.seg[Z64_SEG_SCENE] = MIPS_KSEG0_TO_PHYS(data->scene_file);
@@ -260,6 +262,8 @@ static int draw_proc(struct menu_item *item,
       uint32_t room_vrom_end = room_files[data->room_index].vrom_end;
       uint32_t room_vrom_size = room_vrom_end - room_vrom_start;
       data->room_file = malloc(room_vrom_size);
+      if (!data->room_file)
+        return 0;
       zu_getfile(room_vrom_start, data->room_file, room_vrom_size);
       stab.seg[Z64_SEG_ROOM] = MIPS_KSEG0_TO_PHYS(data->room_file);
       /* populate mesh */
@@ -301,6 +305,8 @@ static int draw_proc(struct menu_item *item,
     static void *zbuf = NULL;
     if (!zbuf)
       zbuf = memalign(64, 2 * Z64_SCREEN_WIDTH * Z64_SCREEN_HEIGHT);
+    if (!zbuf)
+      return 0;
 
     static Gfx init_rcp[] = {
       /* rsp settings */

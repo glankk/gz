@@ -214,9 +214,15 @@ void command_savestate(void)
   if (!zu_in_game())
     gz_log("can not save here");
   else {
-    if (gz.state_buf[gz.state_slot])
+    if (gz.state_buf[gz.state_slot]) {
       free(gz.state_buf[gz.state_slot]);
+      gz.state_buf[gz.state_slot] = NULL;
+    }
     struct state_meta *state = malloc(368 * 1024);
+    if (!state) {
+      gz_log("out of memory, can't save");
+      return;
+    }
     state->z64_version = Z64_VERSION;
     state->state_version = SETTINGS_STATE_VERSION;
     state->scene_idx = z64_game.scene_index;
@@ -361,7 +367,7 @@ void command_hollview(void)
   if (gz.holl_view_state == HOLLVIEW_INACTIVE)
     gz.holl_view_state = HOLLVIEW_START;
   else
-    gz.holl_view_state = HOLLVIEW_BEGIN_STOP;
+    gz.holl_view_state = HOLLVIEW_STOP;
 }
 
 void command_resetlag(void)

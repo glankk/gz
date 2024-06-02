@@ -937,6 +937,11 @@ void gz_col_view(void)
 
     /* allocate static polygon display list */
     stc_poly = malloc(sizeof(*stc_poly) * stc_poly_cap);
+    if (!stc_poly) {
+      gz.col_view_state = COLVIEW_STOPPING;
+      gz_log("out of memory, stopping colview");
+      return;
+    }
     Gfx *stc_poly_p = stc_poly;
     Gfx *stc_poly_d = stc_poly + stc_poly_cap;
     poly_writer_t *p_poly_writer = &poly_writer;
@@ -949,6 +954,11 @@ void gz_col_view(void)
     struct vector line_set;
     if (col_view_line) {
       stc_line = malloc(sizeof(*stc_line) * stc_line_cap);
+      if (!stc_line) {
+        gz.col_view_state = COLVIEW_STOPPING;
+        gz_log("out of memory, stopping colview");
+        return;
+      }
       stc_line_p = stc_line;
       stc_line_d = stc_line + stc_line_cap;
       p_line_writer = &line_writer;
@@ -960,9 +970,21 @@ void gz_col_view(void)
     dyn_poly_buf[0] = malloc(sizeof(*dyn_poly_buf[0]) * dyn_poly_cap);
     dyn_poly_buf[1] = malloc(sizeof(*dyn_poly_buf[1]) * dyn_poly_cap);
 
+    if (!dyn_poly_buf[0] || !dyn_poly_buf[1]) {
+      gz.col_view_state = COLVIEW_STOPPING;
+      gz_log("out of memory, stopping colview");
+      return;
+    }
+
     if (col_view_line) {
       dyn_line_buf[0] = malloc(sizeof(*dyn_line_buf[0]) * dyn_line_cap);
       dyn_line_buf[1] = malloc(sizeof(*dyn_line_buf[1]) * dyn_line_cap);
+
+      if (!dyn_line_buf[0] || !dyn_line_buf[1]) {
+        gz.col_view_state = COLVIEW_STOPPING;
+        gz_log("out of memory, stopping colview");
+        return;
+      }
     }
 
     /* generate static display lists */
@@ -1179,6 +1201,12 @@ void gz_hit_view(void)
     hit_gfx_buf[0] = malloc(sizeof(*hit_gfx_buf[0]) * hit_gfx_cap);
     hit_gfx_buf[1] = malloc(sizeof(*hit_gfx_buf[1]) * hit_gfx_cap);
 
+    if (!hit_gfx_buf[0] || !hit_gfx_buf[1]) {
+      gz.hit_view_state = HITVIEW_STOPPING;
+      gz_log("out of memory, stopping hitview");
+      return;
+    }
+
     gz.hit_view_state = HITVIEW_ACTIVE;
   }
   if (enable && gz.hit_view_state == HITVIEW_ACTIVE) {
@@ -1291,11 +1319,23 @@ void gz_path_view(void)
     if (path_view_points) {
       poly_gfx_buf[0] = malloc(sizeof(*poly_gfx_buf[0]) * poly_gfx_cap);
       poly_gfx_buf[1] = malloc(sizeof(*poly_gfx_buf[1]) * poly_gfx_cap);
+
+      if (!poly_gfx_buf[0] || !poly_gfx_buf[1]) {
+        gz.path_view_state = PATHVIEW_STOPPING;
+        gz_log("out of memory, stopping pathview");
+        return;
+      }
     }
 
     if (path_view_lines) {
       line_gfx_buf[0] = malloc(sizeof(*line_gfx_buf[0]) * line_gfx_cap);
       line_gfx_buf[1] = malloc(sizeof(*line_gfx_buf[1]) * line_gfx_cap);
+
+      if (!line_gfx_buf[0] || !line_gfx_buf[1]) {
+        gz.path_view_state = PATHVIEW_STOPPING;
+        gz_log("out of memory, stopping pathview");
+        return;
+      }
     }
 
     gz.path_view_state = PATHVIEW_ACTIVE;
@@ -1477,12 +1517,19 @@ void gz_cull_view(void)
     cull_gfx_buf[0] = malloc(sizeof(*cull_gfx_buf[0]) * cull_gfx_cap);
     cull_gfx_buf[1] = malloc(sizeof(*cull_gfx_buf[1]) * cull_gfx_cap);
 
+    if (!cull_gfx_buf[0] || !cull_gfx_buf[1]) {
+      gz.cull_view_state = CULLVIEW_STOPPING;
+      gz_log("out of memory, stopping cullview");
+      return;
+    }
+
     gz.cull_view_state = CULLVIEW_ACTIVE;
   }
   if (enable && gz.cull_view_state == CULLVIEW_ACTIVE) {
     /* If no actor is selected, stop */
     if (!gz.selected_actor.ptr) {
       gz.cull_view_state = CULLVIEW_STOP;
+      gz_log("out of memory, stopping cullview");
       return;
     }
     /* Now look through actor type list */
@@ -1622,6 +1669,12 @@ void gz_holl_view(void)
   if (enable && gz.holl_view_state == HOLLVIEW_START) {
     holl_gfx_buf[0] = malloc(sizeof(*holl_gfx_buf[0]) * holl_gfx_cap);
     holl_gfx_buf[1] = malloc(sizeof(*holl_gfx_buf[1]) * holl_gfx_cap);
+
+    if (!holl_gfx_buf[0] || !holl_gfx_buf[1]) {
+      gz.holl_view_state = HOLLVIEW_STOPPING;
+      gz_log("out of memory, stopping hollview");
+      return;
+    }
 
     gz.holl_view_state = HOLLVIEW_ACTIVE;
   }
@@ -1869,9 +1922,9 @@ void gz_holl_view(void)
     gSPDisplayList((*p_gfx_p)++, holl_gfx);
   }
 
-  if (gz.holl_view_state == HOLLVIEW_BEGIN_STOP)
-    gz.holl_view_state = HOLLVIEW_STOP;
-  else if (gz.holl_view_state == HOLLVIEW_STOP) {
+  if (gz.holl_view_state == HOLLVIEW_STOP)
+    gz.holl_view_state = HOLLVIEW_STOPPING;
+  else if (gz.holl_view_state == HOLLVIEW_STOPPING) {
     release_mem(&holl_gfx_buf[0]);
     release_mem(&holl_gfx_buf[1]);
 
