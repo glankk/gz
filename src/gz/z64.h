@@ -2068,7 +2068,7 @@ typedef struct
 /* file indices */
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
 # define z64_icon_item_static                   8
 # define z64_icon_item_24_static                9
 # define z64_icon_item_field_static             10
