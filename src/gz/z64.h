@@ -84,7 +84,7 @@ struct z64_arena_node
   z64_arena_node_t *prev;                     /* 0x000C */
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
   char             *filename;                 /* 0x0010 */
   int32_t           line;                     /* 0x0014 */
   OSId              thread_id;                /* 0x0018 */
