@@ -151,7 +151,7 @@ static void load_ovl(void **p, void **p_addr,
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ ||      
+      Z64_VERSION == Z64_OOTCEJ      
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   serial_read(p, hdr, sizeof(*hdr));
@@ -1453,7 +1453,7 @@ void load_state(const struct state_meta *state)
     node->magic = 0x7373;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
     node->arena = &z64_game_arena;
     node->filename = NULL,
     node->line = 0;
