@@ -738,7 +738,7 @@ void *sbrk(intptr_t incr)
   #else 
   #define HEAP_END (0x80800000)
   #endif
-  if ((uintptr_t)brk + incr > HEAP_END) {
+  if ((uintptr_t)brk + incr >= HEAP_END) {
     return (void *)-1;
   }
   else {
