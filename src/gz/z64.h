@@ -61,8 +61,7 @@ struct z64_arena
   void             *start;                    /* 0x0004 */
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQS
+    Z64_VERSION == Z64_OOT12 || 
   uint32_t          size;                     /* 0x0008 */
   char              unk_0xC[0x0004];          /* 0x000C */
                                               /* 0x0010 */
@@ -70,7 +69,8 @@ struct z64_arena
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ ||
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQS
                                               /* 0x0008 */
 #endif
 };
@@ -84,8 +84,7 @@ struct z64_arena_node
   z64_arena_node_t *prev;                     /* 0x000C */
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQS
+    Z64_VERSION == Z64_OOT12 ||
   char             *filename;                 /* 0x0010 */
   int32_t           line;                     /* 0x0014 */
   OSId              thread_id;                /* 0x0018 */
@@ -98,7 +97,8 @@ struct z64_arena_node
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ ||
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQS
   char              data[];                   /* 0x0010 */
 #endif
 };
