@@ -83,7 +83,7 @@ static int word_optionmod_proc(struct menu_item *item,
     if (menu_intinput_get(item) != *p)
       menu_option_set(item, *p);
   }
-  else if (reason == MENU_CALLBACK_CHANGED)
+  else if (reason == MENU_CALLBACK_DEACTIVATE)
     *p = menu_option_get(item);
   return 0;
 }
@@ -286,8 +286,8 @@ struct menu *gz_file_menu(void)
   menu_add_option(&menu, 17, 13, "switch\0""hold\0",
                   byte_switch_proc, &z64_file.z_targeting);
   #if Z64_VERSION == Z64_OOTIQS   
-  menu_add_static(&menu, 0, 14, "controller", 0xC0C0C0);
-  menu_add_option(&menu, 17, 14, "player 1\0""player 2\0""player 3\0""player 4\0", word_optionmod_proc, &__osBbHackFlags);
+  menu_add_static(&menu, 0, 14, "input via", 0xC0C0C0);
+  menu_add_option(&menu, 17, 14, "iQue Player\0""controller 2\0""controller 3\0""controller 4\0", word_optionmod_proc, &__osBbHackFlags);
   #endif
   return &menu;
 }
