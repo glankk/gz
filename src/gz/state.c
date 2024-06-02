@@ -1145,7 +1145,7 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &code_800EC960_c_data[0x0090], 0x0054);
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 ||
+    Z64_VERSION == Z64_OOT12
   serial_write(&p, &code_800EC960_c_data[0x0988], 0x0060); /* 12b overhead */
   serial_write(&p, &code_800EC960_c_data[0x09F0], 0x0008);
   serial_write(&p, &code_800EC960_c_data[0x117C], 0x0144);
