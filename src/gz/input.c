@@ -79,7 +79,8 @@ const uint32_t input_button_color[] =
   0xC8C8C8,
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12
+    Z64_VERSION == Z64_OOT12 || \
+    Z64_VERSION == Z64_OOTIQS
   0xC80000,
   0xC0C0C0,
   0x009600,
