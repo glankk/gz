@@ -61,7 +61,7 @@ struct z64_arena
   void             *start;                    /* 0x0004 */
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || 
+    Z64_VERSION == Z64_OOT12
   uint32_t          size;                     /* 0x0008 */
   char              unk_0xC[0x0004];          /* 0x000C */
                                               /* 0x0010 */
