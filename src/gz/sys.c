@@ -724,7 +724,12 @@ void *sbrk(intptr_t incr)
 {
   extern char end[];
   static void *brk = end;
-  if ((uintptr_t)brk + incr > 0x80800000) {
+  #if Z64_VERSION == Z64_OOTIQS
+  #define HEAP_END (__osBbSramAddress)
+  #else 
+  #define HEAP_END (0x80800000)
+  #endif
+  if ((uintptr_t)brk + incr > HEAP_END) {
     return (void *)-1;
   }
   else {
