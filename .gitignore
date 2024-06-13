@@ -2,6 +2,7 @@
 *.cbp
 *.layout
 *.kdev4
+.vscode/
 
 # Generated files
 obj/

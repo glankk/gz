@@ -165,6 +165,9 @@ struct settings_data
   struct watch_info     watch_info[SETTINGS_WATCHES_MAX];
   uint8_t               teleport_slot;
   uint8_t               n_watches;
+  uint32_t              trainer_roll_pb;
+  uint32_t              trainer_equip_swap_pb;
+  uint32_t              trainer_sidehop_pb;
 };
 
 struct settings_header
