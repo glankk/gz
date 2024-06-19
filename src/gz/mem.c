@@ -7,6 +7,7 @@
 #include <vector/vector.h>
 #include "gz.h"
 #include "input.h"
+#include "ique.h"
 #include "mem.h"
 #include "menu.h"
 #include "resource.h"
@@ -259,12 +260,20 @@ void mem_menu_create(struct menu *menu)
   add_domain(0xA4002000, 0x000FE000, "sp regs");
   add_domain(0xA4100000, 0x00100000, "dp com");
   add_domain(0xA4200000, 0x00100000, "dp span");
-  add_domain(0xA4300000, 0x00100000, "mi regs");
+  if (is_ique())
+    add_domain(0xA4300000, 0x00000010, "mi regs");
+  else
+    add_domain(0xA4300000, 0x00100000, "mi regs");
   add_domain(0xA4400000, 0x00100000, "vi regs");
   add_domain(0xA4500000, 0x00100000, "ai regs");
   add_domain(0xA4600000, 0x00100000, "pi regs");
   add_domain(0xA4800000, 0x00100000, "si regs");
-  add_domain(0xA8000000, 0x08000000, "cart dom2");
+  if (is_ique()) {
+    add_domain(0xA4900000, 0x00100000, "usb0 regs");
+    add_domain(0xA4A00000, 0x00100000, "usb1 regs");
+  }
+  else
+    add_domain(0xA8000000, 0x08000000, "cart dom2");
   add_domain(0xB0000000, 0x0FC00000, "cart dom1");
 #endif
   add_domain(0xBFC00000, 0x000007C0, "pif rom");
