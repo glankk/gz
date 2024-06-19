@@ -13,9 +13,9 @@
 #include "z64.h"
 
 #if Z64_VERSION == Z64_OOTIQC
-# define compr(fn, ...) inflate_ ## fn (__VA_ARGS__)
+# define compr(fn) inflate_ ## fn
 #else
-# define compr(fn, ...) yaz0_ ## fn (__VA_ARGS__)
+# define compr(fn) yaz0_ ## fn
 #endif
 
 static void serial_write(void **p, void *data, uint32_t length)
@@ -66,33 +66,33 @@ static void save_ovl(void **p, void *addr,
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQC
+    Z64_VERSION == Z64_OOT12
   hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
-  compr(begin, file->prom_start);
-  compr(advance, end - *hdr_off - start);
-  compr(read, hdr, sizeof(*hdr));
+  compr(begin)(file->prom_start);
+  compr(advance)(end - *hdr_off - start);
+  compr(read)(hdr, sizeof(*hdr));
   serial_write(p, hdr, sizeof(*hdr));
 #endif
   char *data = start + hdr->text_size;
   char *bss = end;
   /* save data segment */
   if (hdr->data_size > 0) {
-    compr(begin, file->prom_start);
-    compr(advance, hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   uint16_t n_copy = 0;
   uint16_t n_save = 0;
   char *save_data = NULL;
   for (uint32_t i = 0; i < hdr->data_size; ++i) {
-    if (yaz0_get_byte() == data[i]) {
+    if (compr(get_byte)() == data[i]) {
       if (n_save > 0) {
         serial_write(p, &n_copy, sizeof(n_copy));
         serial_write(p, &n_save, sizeof(n_save));
@@ -151,14 +151,14 @@ static void load_ovl(void **p, void **p_addr,
   z64_ovl_hdr_t *hdr;
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12 || \
-    Z64_VERSION == Z64_OOTIQC
+    Z64_VERSION == Z64_OOT12
   hdr = (void *)(end - *hdr_off);
 #elif Z64_VERSION == Z64_OOTMQJ || \
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   serial_read(p, hdr, sizeof(*hdr));
@@ -167,20 +167,20 @@ static void load_ovl(void **p, void **p_addr,
   char *bss = end;
   /* restore data segment */
   if (hdr->data_size > 0) {
-    compr(begin, file->prom_start);
-    compr(advance, hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   for (uint32_t i = 0; i < hdr->data_size; ) {
     uint16_t n_copy = 0;
     uint16_t n_save = 0;
     serial_read(p, &n_copy, sizeof(n_copy));
     serial_read(p, &n_save, sizeof(n_save));
-    compr(read, &data[i], n_copy);
+    compr(read)(&data[i], n_copy);
     i += n_copy;
     serial_read(p, &data[i], n_save);
     i += n_save;
     if (i < hdr->data_size)
-      compr(advance, n_save);
+      compr(advance)(n_save);
   }
   /* restore bss segment */
   serial_read(p, bss, hdr->bss_size);
