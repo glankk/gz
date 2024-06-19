@@ -776,7 +776,8 @@ typedef struct
   uint8_t           z_targeting;              /* 0x140C */
   char              unk_0x140D[0x0001];       /* 0x140D */
   uint16_t          disable_music_flag;       /* 0x140E */
-                                              /* 0x1410 */
+  char              unk_0x1410[0x0018];       /* 0x1410 */
+                                              /* 0x1428 */
 } z64_file_t;
 
 typedef struct

@@ -498,6 +498,7 @@ uint32_t save_state(struct state_meta *state)
   /* save context */
   serial_write(&p, &z64_game, sizeof(z64_game));
   serial_write(&p, &z64_file, sizeof(z64_file));
+  serial_write(&p, &z64_gameinfo, sizeof(z64_gameinfo));
   serial_write(&p, z64_gameinfo, sizeof(*z64_gameinfo));
   /* save overlays */
   int16_t n_ovl;
@@ -1262,10 +1263,6 @@ uint32_t save_state(struct state_meta *state)
   /* save song state */
   serial_write(&p, z64_staff_notes, 0x001E);
 
-  //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
-  //serial_write(&p, (void *)0x8012143C, 0x41F4);
-  //serial_write(&p, (void *)0x801DAA00, 0x1D4790);
-
   return (char *)p - (char *)state;
 }
 
@@ -1369,15 +1366,19 @@ void load_state(const struct state_meta *state)
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
-  if (settings->bits.ignore_target == 1) {
+  {
     uint8_t last_target = z64_file.z_targeting;
-    serial_read(&p, &z64_file, sizeof(z64_file));
-    z64_file.z_targeting = last_target;
+    if (state->state_version < 0x0007)
+      serial_read(&p, &z64_file, 0x1450);
+    else {
+      serial_read(&p, &z64_file, sizeof(z64_file));
+      serial_read(&p, &z64_gameinfo, sizeof(z64_gameinfo));
+    }
+    if (settings->bits.ignore_target == 1)
+      z64_file.z_targeting = last_target;
   }
-  else
-    serial_read(&p, &z64_file, sizeof(z64_file));
-
   serial_read(&p, z64_gameinfo, sizeof(*z64_gameinfo));
+
   /* load overlays */
   int16_t n_ent;
   int16_t next_ent;
