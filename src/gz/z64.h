@@ -3,20 +3,7 @@
 #include <stdint.h>
 #include <n64.h>
 #include "gu.h"
-
-#ifndef Z64_VERSION
-# error no z64 version specified
-#endif
-
-#define Z64_OOT10             0x00
-#define Z64_OOT11             0x01
-#define Z64_OOT12             0x02
-#define Z64_OOTMQJ            0x03
-#define Z64_OOTMQU            0x04
-#define Z64_OOTGCJ            0x05
-#define Z64_OOTGCU            0x06
-#define Z64_OOTCEJ            0x07
-#define Z64_OOTIQS            0x08
+#include "z64_version.h"
 
 #define Z64_SCREEN_WIDTH      320
 #define Z64_SCREEN_HEIGHT     240
@@ -70,7 +57,7 @@ struct z64_arena
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
       Z64_VERSION == Z64_OOTCEJ || \
-      Z64_VERSION == Z64_OOTIQS
+      Z64_VERSION == Z64_OOTIQC
                                               /* 0x0008 */
 #endif
 };
@@ -98,7 +85,7 @@ struct z64_arena_node
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
       Z64_VERSION == Z64_OOTCEJ || \
-      Z64_VERSION == Z64_OOTIQS
+      Z64_VERSION == Z64_OOTIQC
   char              data[];                   /* 0x0010 */
 #endif
 };
@@ -2138,7 +2125,7 @@ typedef struct
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
       Z64_VERSION == Z64_OOTCEJ || \
-      Z64_VERSION == Z64_OOTIQS
+      Z64_VERSION == Z64_OOTIQC
 # define z64_icon_item_static                   8
 # define z64_icon_item_24_static                9
 # define z64_icon_item_field_static             10
@@ -2207,6 +2194,10 @@ typedef struct
 
 /* data */
 #define     z64_extern            extern __attribute__ ((section(".data")))
+z64_extern  void                 *__osBbSramAddress;
+z64_extern  uint32_t              __osBbSramSize;
+z64_extern  uint32_t              __osBbIsBb;
+z64_extern  uint32_t              __osBbHackFlags;
 z64_extern  OSThread              z64_thread_idle;
 z64_extern  OSThread              z64_thread_main;
 z64_extern  OSThread              z64_thread_dmamgr;
@@ -2277,6 +2268,7 @@ z64_extern  char                  z64_fw_state_1[];
 z64_extern  char                  z64_fw_state_2[];
 z64_extern  char                  z64_camera_state[];
 z64_extern  z64_file_t            z64_file;
+z64_extern  z64_gameinfo_t       *z64_gameinfo;
 z64_extern  char                  z64_cs_state[];
 z64_extern  z64_light_queue_t     z64_light_queue;
 z64_extern  z64_arena_t           z64_game_arena;
@@ -2312,11 +2304,6 @@ z64_extern  z64_game_t            z64_game;
 z64_extern  z64_link_t            z64_link;
 z64_extern  char                  z64_cimg[];
 z64_extern  char                  z64_item_highlight_vram[];
-z64_extern  z64_gameinfo_t        *z64_gameinfo;
-z64_extern  void*                 __osBbSramAddress;
-z64_extern  uint32_t              __osBbSramSize;
-z64_extern  uint32_t              __osBbIsBb;
-z64_extern  uint32_t              __osBbHackFlags;
 
 /* functions */
 void      z64_Actor_UpdateBgCheckInfo (z64_game_t *game, z64_actor_t *actor,

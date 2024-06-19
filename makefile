@@ -19,7 +19,7 @@ NM                    = $(program_prefix)nm
 GENHOOKS              = AS='$(AS)' OBJCOPY='$(OBJCOPY)' NM='$(NM)' ./genhooks
 LUAPATCH              = luapatch
 GRC                   = AS='$(AS)' grc
-LDSCRIPT              = gl-n64.ld
+LDSCRIPT              = gz.ld
 ALL_CPPFLAGS          = -DPACKAGE_TARNAME='$(PACKAGE_TARNAME)' -DPACKAGE_URL='$(PACKAGE_URL)' -DPACKAGE_VERSION='$(PACKAGE_VERSION)' -DF3DEX_GBI_2 $(CPPFLAGS)
 ALL_CFLAGS            = -std=gnu11 -Wall -ffunction-sections -fdata-sections -mno-check-zero-division $(CFLAGS)
 ALL_CXXFLAGS          = -std=gnu++14 -Wall -ffunction-sections -fdata-sections -mno-check-zero-division $(CXXFLAGS)
@@ -27,9 +27,8 @@ ALL_LDFLAGS           = -T $(LDSCRIPT) -L$(LIBDIR) -nostartfiles -specs=nosys.sp
 ALL_LDLIBS            = $(LDLIBS)
 LUAFILE               = $(EMUDIR)/Lua/patch-data.lua
 RESDESC               = $(RESDIR)/resources.json
-GZ_VERSIONS           = oot-iqs
-GZ_ADDRESS            = 80400050
-LDR_ADDRESS           = 80000400
+GZ_VERSIONS           = oot-1.0 oot-1.1 oot-1.2 oot-mq-j oot-mq-u oot-gc-j oot-gc-u oot-ce-j oot-ique-cn oot-1.0-vc oot-1.1-vc oot-1.2-vc oot-mq-j-vc oot-mq-u-vc oot-gc-j-vc oot-gc-u-vc oot-ce-j-vc
+GZ_ADDRESS            = 80400000
 SRCDIR                = src
 RESDIR                = res
 LIBDIR                = lib
@@ -48,7 +47,7 @@ OBJ-OOT-MQ-U          = $(OBJ-gz-oot-mq-u) $(OBJ-gz-oot-mq-u-vc)
 OBJ-OOT-GC-J          = $(OBJ-gz-oot-gc-j) $(OBJ-gz-oot-gc-j-vc)
 OBJ-OOT-GC-U          = $(OBJ-gz-oot-gc-u) $(OBJ-gz-oot-gc-u-vc)
 OBJ-OOT-CE-J          = $(OBJ-gz-oot-ce-j) $(OBJ-gz-oot-ce-j-vc)
-OBJ-OOT-IQS 		  = $(OBJ-gz-oot-iqs) $(OBJ-gz-oot-iqs-vc)
+OBJ-OOT-IQUE-CN       = $(OBJ-gz-oot-ique-cn)
 ELF-OOT-1.0           = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.0-vc)
 ELF-OOT-1.1           = $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.1-vc)
 ELF-OOT-1.2           = $(ELF-gz-oot-1.2) $(ELF-gz-oot-1.2-vc)
@@ -57,11 +56,11 @@ ELF-OOT-MQ-U          = $(ELF-gz-oot-mq-u) $(ELF-gz-oot-mq-u-vc)
 ELF-OOT-GC-J          = $(ELF-gz-oot-gc-j) $(ELF-gz-oot-gc-j-vc)
 ELF-OOT-GC-U          = $(ELF-gz-oot-gc-u) $(ELF-gz-oot-gc-u-vc)
 ELF-OOT-CE-J          = $(ELF-gz-oot-ce-j) $(ELF-gz-oot-ce-j-vc)
-ELF-OOT-IQS           = $(ELF-gz-oot-iqs) $(ELF-gz-oot-iqs-vc)
-OBJ-N64               = $(OBJ-gz-oot-1.0) $(OBJ-gz-oot-1.1) $(OBJ-gz-oot-1.2) $(OBJ-gz-oot-mq-j) $(OBJ-gz-oot-mq-u) $(OBJ-gz-oot-gc-j) $(OBJ-gz-oot-gc-u) $(OBJ-gz-oot-ce-j) $(OBJ-gz-oot-iqs)
-OBJ-VC                = $(OBJ-gz-oot-1.0-vc) $(OBJ-gz-oot-1.1-vc) $(OBJ-gz-oot-1.2-vc) $(OBJ-gz-oot-mq-j-vc) $(OBJ-gz-oot-mq-u-vc) $(OBJ-gz-oot-gc-j-vc) $(OBJ-gz-oot-gc-u-vc) $(OBJ-gz-oot-ce-j-vc) $(OBJ-gz-oot-ce-j-vc)
-ELF-N64               = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.2) $(ELF-gz-oot-mq-j) $(ELF-gz-oot-mq-u) $(ELF-gz-oot-gc-j) $(ELF-gz-oot-gc-u) $(ELF-gz-oot-ce-j) $(ELF-gz-oot-iqs)
-ELF-VC                = $(ELF-gz-oot-1.0-vc) $(ELF-gz-oot-1.1-vc) $(ELF-gz-oot-1.2-vc) $(ELF-gz-oot-mq-j-vc) $(ELF-gz-oot-mq-u-vc) $(ELF-gz-oot-gc-j-vc) $(ELF-gz-oot-gc-u-vc) $(ELF-gz-oot-ce-j-vc) $(ELF-gz-oot-iqs-vc)
+ELF-OOT-IQUE-CN       = $(ELF-gz-oot-ique-cn)
+OBJ-N64               = $(OBJ-gz-oot-1.0) $(OBJ-gz-oot-1.1) $(OBJ-gz-oot-1.2) $(OBJ-gz-oot-mq-j) $(OBJ-gz-oot-mq-u) $(OBJ-gz-oot-gc-j) $(OBJ-gz-oot-gc-u) $(OBJ-gz-oot-ce-j) $(OBJ-gz-oot-ique-cn)
+OBJ-VC                = $(OBJ-gz-oot-1.0-vc) $(OBJ-gz-oot-1.1-vc) $(OBJ-gz-oot-1.2-vc) $(OBJ-gz-oot-mq-j-vc) $(OBJ-gz-oot-mq-u-vc) $(OBJ-gz-oot-gc-j-vc) $(OBJ-gz-oot-gc-u-vc) $(OBJ-gz-oot-ce-j-vc)
+ELF-N64               = $(ELF-gz-oot-1.0) $(ELF-gz-oot-1.1) $(ELF-gz-oot-1.2) $(ELF-gz-oot-mq-j) $(ELF-gz-oot-mq-u) $(ELF-gz-oot-gc-j) $(ELF-gz-oot-gc-u) $(ELF-gz-oot-ce-j) $(ELF-gz-oot-ique-cn)
+ELF-VC                = $(ELF-gz-oot-1.0-vc) $(ELF-gz-oot-1.1-vc) $(ELF-gz-oot-1.2-vc) $(ELF-gz-oot-mq-j-vc) $(ELF-gz-oot-mq-u-vc) $(ELF-gz-oot-gc-j-vc) $(ELF-gz-oot-gc-u-vc) $(ELF-gz-oot-ce-j-vc)
 
 GZ                    = $(foreach v,$(GZ_VERSIONS),gz-$(v))
 HOOKS                 = $(foreach v,$(GZ_VERSIONS),gz-$(v)-hooks)
@@ -164,7 +163,7 @@ $(OBJ-OOT-MQ-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTMQU
 $(OBJ-OOT-GC-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCJ
 $(OBJ-OOT-GC-U)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTGCU
 $(OBJ-OOT-CE-J)       : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTCEJ
-$(OBJ-OOT-IQS)        : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTIQS
+$(OBJ-OOT-IQUE-CN)    : ALL_CPPFLAGS         += -DZ64_VERSION=Z64_OOTIQC
 $(ELF-OOT-1.0)        : ALL_LDLIBS           += -loot-1.0
 $(ELF-OOT-1.1)        : ALL_LDLIBS           += -loot-1.1
 $(ELF-OOT-1.2)        : ALL_LDLIBS           += -loot-1.2
@@ -173,7 +172,7 @@ $(ELF-OOT-MQ-U)       : ALL_LDLIBS           += -loot-mq-u
 $(ELF-OOT-GC-J)       : ALL_LDLIBS           += -loot-gc-j
 $(ELF-OOT-GC-U)       : ALL_LDLIBS           += -loot-gc-u
 $(ELF-OOT-CE-J)       : ALL_LDLIBS           += -loot-ce-j
-$(ELF-OOT-IQS)        : ALL_LDLIBS           += -loot-iqs
+$(ELF-OOT-IQUE-CN)    : ALL_LDLIBS           += -loot-ique-cn
 ifeq '$(shell $(CC) -dumpmachine 2>/dev/null)' 'mips64-ultra-elf'
 $(OBJ-VC)             : ALL_CFLAGS           += -n64-wiivc
 $(OBJ-VC)             : ALL_CXXFLAGS         += -n64-wiivc
@@ -191,5 +190,3 @@ $(ELF-N64)            : LDFLAGS              ?= -O2 -g -flto
 $(OBJ-VC)             : CFLAGS               ?= -Os -g -flto -ffat-lto-objects
 $(OBJ-VC)             : CXXFLAGS             ?= -Os -g -flto -ffat-lto-objects
 $(ELF-VC)             : LDFLAGS              ?= -Os -g -flto
-
-$(eval $(call bin_template,ldr,ldr,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(HOOKDIR)/ldr,$(LDR_ADDRESS)))
