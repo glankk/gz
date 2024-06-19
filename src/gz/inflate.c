@@ -266,21 +266,18 @@ static void compr_cont(void)
         return;
       }
       else {
-        if (sym < 265) {
+        if (sym < 265)
           block_len = sym - 254;
-        }
         else if (sym < 285) {
           int n = (sym - 261) >> 2;
           block_len = 3 + ((4 + ((sym - 261) & 3)) << n) + get_bits(n);
         }
-        else {
+        else
           block_len = 258;
-        }
 
         sym = huf_get(&dst_huf);
-        if (sym < 4) {
+        if (sym < 4)
           block_dst = 1 + sym;
-        }
         else {
           int n = (sym >> 1) - 1;
           block_dst = 1 + ((2 + (sym & 1)) << n) + get_bits(n);
