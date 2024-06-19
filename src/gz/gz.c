@@ -1052,7 +1052,7 @@ HOOK void metronome_start_hook(uint16_t sfx_id, z64_xyzf_t *pos, uint8_t token,
 {
   maybe_init_gp();
 
-  //0x4836 is NA_SE_SY_METRONOME - this is for iQue
+  /* 0x4836 is NA_SE_SY_METRONOME - this is for iQue */
   if (gz.ready && sfx_id == 0x4836)
     gz.metronome_timer = 17;
 

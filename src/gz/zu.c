@@ -3,8 +3,22 @@
 #include <n64.h>
 #include <vector/vector.h>
 #include "gu.h"
+#include "ique.h"
 #include "z64.h"
 #include "zu.h"
+
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12 || \
+    Z64_VERSION == Z64_OOTMQJ || \
+    Z64_VERSION == Z64_OOTMQU || \
+    Z64_VERSION == Z64_OOTGCJ || \
+    Z64_VERSION == Z64_OOTGCU || \
+    Z64_VERSION == Z64_OOTCEJ
+# define CIC 6105
+#elif Z64_VERSION == Z64_OOTIQC
+# define CIC 6102
+#endif
 
 static const size_t work_length     = 0x0080;
 static const size_t poly_opa_length = 0x17E0;
@@ -308,7 +322,7 @@ void zu_vlist_destroy(struct zu_vlist *vlist)
 
 void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  if (__osBbIsBb)
+  if (is_ique())
     memcpy(dram_addr, __osBbSramAddress + sram_addr, size);
   else
     z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
@@ -316,7 +330,7 @@ void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size)
 
 void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  if (__osBbIsBb)
+  if (is_ique())
     memcpy(__osBbSramAddress + sram_addr, dram_addr, size);
   else
     z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
@@ -328,84 +342,340 @@ void zu_reset(void)
   /* reset cp0 status */
   __asm__ ("la      $t0, 0b00110100000000000000000000000000;"
            "mtc0    $t0, $12;" ::: "t0");
-
   /* halt rsp */
   __asm__ ("la      $t0, 0xA4040000;"
            "la      $t1, 0b0101010101010101010101110;"
            "sw      $t1, 0x0010($t0);" ::: "t0", "t1");
-
   /* flush data cache */
   for (uint32_t p = 0x80000000; p < 0x80002000; p += 0x10)
     __asm__ ("cache   0x01, 0x0000(%[p]);" :: [p] "r"(p));
+  /* copy pif code to rsp imem */
+  uint32_t imem[] =
+  {
+    MIPS_LUI(MIPS_T5, 0xBFC0),
+    MIPS_LW(MIPS_T0, 0x07FC, MIPS_T5),
+    MIPS_ADDIU(MIPS_T5, MIPS_T5, 0x07C0),
+    MIPS_ANDI(MIPS_T0, MIPS_T0, 0x0080),
+    MIPS_BNEL(MIPS_T0, MIPS_R0, -4 * 4),
+    MIPS_LUI(MIPS_T5, 0xBFC0),
+    MIPS_LW(MIPS_T0, 0x0024, MIPS_T5),
+    MIPS_LUI(MIPS_T3, 0xB000),
+  };
+  memcpy((void *)0xA4001000, imem, sizeof(imem));
+  /* copy cic boot code to rsp dmem */
+  memcpy((void *)0xA4000040, (void *)0xB0000040, 0x0FC0);
+  /* simulate boot from cic boot code */
+  __asm__ (".set    push;"
+           ".set    noat;"
+           ".set    noreorder;"
 
-  // Jump to k1
-  __asm__(
-    "la  $t0, 0f;"
-    "and $t0, 0x1FFFFFFF;"
-    "or  $t0, 0xA0000000;"
-    "jr  $t0; "
-    "0:"
-    :::"$t0"
-  );
+           /* set up parameters */
+           "lui     $t0, 0x8000;"
+           /* osRomType (0: N64, 1: 64DD) */
+           "li      $s3, 0x0000;"
+           /* osTvType (0: PAL, 1: NTSC, 2: MPAL) */
+           "lw      $s4, 0x0300($t0);"
+           /* osResetType (0: Cold, 1: NMI) */
+           "li      $s5, 0x0001;"
+           /* osCicId (3F: 6101/6102, 78: 6103, 91: 6105, 85: 6106) */
+#if CIC == 6102
+           "li      $s6, 0x003F;"
+#elif CIC == 6105
+           "li      $s6, 0x0091;"
+#endif
+           /* osVersion */
+           "lw      $s7, 0x0314($t0);"
+           /* set up environment */
+           "la      $t3, 0xA4000040;"
+           "la      $sp, 0xA4001FF0;"
+           "la      $ra, 0xA4001550;"
+           /* jump to k1 */
+           "la      $t0, 0f;"
+           "la      $t1, 0x1FFFFFFF;"
+           "la      $t2, 0xA0000000;"
+           "and     $t0, $t0, $t1;"
+           "or      $t0, $t0, $t2;"
+           "jr      $t0;"
+           "nop;"
+           "0:"
 
-  __asm__("mtc0 $zero, $28");
-  __asm__("mtc0 $zero, $29");
+#if CIC == 6105
+           /* decode rsp boot code */
+           "add     $t1, $sp, $zero;"
+           "lw      $t0, -0x0FF0($t1);"
+           "lw      $t2, 0x0044($t3);"
+           "xor     $t2, $t2, $t0;"
+           "sw      $t2, -0x0FF0($t1);"
+           "addi    $t3, $t3, 0x0004;"
+           "andi    $t0, $t0, 0x0FFF;"
+           "bnez    $t0, . - 0x0018;"
+           "addi    $t1, $t1, 0x0004;"
+           "lw      $t0, 0x0044($t3);"
+           "lw      $t2, 0x0048($t3);"
+           "sw      $t0, -0x0FF0($t1);"
+           "sw      $t2, -0x0FEC($t1);"
+           "sw      $zero, -0x0FE8($t1);"
+#endif
 
-  /* reset icache (index-store-tag all) */
-  for (uint32_t p = 0x80000000; p < 0x80004000; p += 0x20)
-    __asm__ ("cache   0x08, 0x0000(%[p]);" :: [p] "r"(p));
+           "mtc0    $zero, $13;" /* cp0_cause */
+           "mtc0    $zero, $9;" /* cp0_count */
+           "mtc0    $zero, $11;" /* cp0_compare */
 
-  /* reset dcache (hit-writeback-invalidate all) */
-  for (uint32_t p = 0x80000000; p < 0x80002000; p += 0x10)
-    __asm__ ("cache   0x15, 0x0000(%[p]);" :: [p] "r"(p));
-  
-  /* jump to k0 */
-  __asm__(
-    "la  $t0, 0f;"
-    "jr  $t0; "
-    "0:"
-    :::"$t0"
-  );
+           /* clear cache */
+           "lui     $t0, 0x8000;"
+           "addiu   $t0, $t0, 0x0000;"
+           "addiu   $t1, $t0, 0x4000;"
+           "addiu   $t1, $t1, 0xFFE0;"
+           "mtc0    $zero, $28;" /* cp0_taglo */
+           "mtc0    $zero, $29;" /* cp0_taghi */
+           "cache   0x08, 0x0000($t0);"
+           "sltu    $at, $t0, $t1;"
+           "bnez    $at, . - 0x0008;"
+           "addiu   $t0, $t0, 0x0020;"
+           "lui     $t0, 0x8000;"
+           "addiu   $t0, 0x0000;"
+           "addiu   $t1, $t0, 0x2000;"
+           "addiu   $t1, $t1, 0xFFF0;"
+           "cache   0x01, 0x0000($t0);"
+           "sltu    $at, $t0, $t1;"
+           "bnez    $at, . - 0x0008;"
+           "addiu   $t0, $t0, 0x0010;"
 
-  void (*gz_entrypoint)() = *(volatile void**)0xB0000008;
+#if CIC == 6105
+           /* start rsp */
+           "addiu   $t2, $zero, 0x00CE;"
+           "lui     $at, 0xA404;"
+           "sw      $t2, 0x0010($at);"
+           "lui     $t2, 0xB000;"
+           "addiu   $t2, $t2, 0x0000;"
+           "lui     $t3, 0xFFF0;"
+           "lui     $t1, 0x0010;"
+           "and     $t2, $t2, $t3;"
+           "lui     $t0, 0xB000;"
+           "addiu   $t1, $t1, 0xFFFF;"
+           "lui     $t3, 0xB000;"
+           "addiu   $t0, $t0, 0x0554;"
+           "addiu   $t3, $t3, 0x0888;"
+           "and     $t0, $t0, $t1;"
+           "and     $t3, $t3, $t1;"
+           "lui     $at, 0xA408;"
+           "lui     $t1, 0xA000;"
+           "sw      $zero, 0x0000($at);"
+           "or      $t0, $t0, $t2;"
+           "or      $t3, $t3, $t2;"
+           "addiu   $t1, $t1, 0x0004;"
+           "lw      $t5, 0x0000($t0);"
+           "addiu   $t0, $t0, 0x0004;"
+           "sltu    $at, $t0, $t3;"
+           "addiu   $t1, $t1, 0x0004;"
+           "bnez    $at, . - 0x0010;"
+           "sw      $t5, -0x0004($t1);"
+           "addiu   $t2, $zero, 0x00AD;"
+           "lui     $at, 0xA404;"
+           "sw      $t2, 0x0010($at);"
+#endif
 
-  /* dma rom to ram */
-  *(volatile uint32_t*)0xA4600000 = (uint32_t)gz_entrypoint;
-  *(volatile uint32_t*)0xA4600004 = 0x10001000;
-  *(volatile uint32_t*)0xA460000C = 0x100000-1;
+           /* jump to k0 */
+           "la      $t0, 0f;"
+           "la      $t1, 0x1FFFFFFF;"
+           "la      $t2, 0x80000000;"
+           "and     $t0, $t0, $t1;"
+           "or      $t0, $t0, $t2;"
+           "jr      $t0;"
+           "nop;"
+           "0:"
 
-  /* wait for dma to complete */
-  while (*(uint32_t*)0xA4600010 & 0b11);
+           /* dma rom to ram */
+           "lui     $t3, 0xB000;"
+           "lw      $t1, 0x0008($t3);"
+           "lui     $t2, 0x1FFF;"
+           "ori     $t2, $t2, 0xFFFF;"
+           "lui     $at, 0xA460;"
+           "and     $t1, $t1, $t2;"
+           "sw      $t1, 0x0000($at);"
+           "lui     $t0, 0xA460;"
+           "lw      $t0, 0x0010($t0);"
+           "andi    $t0, $t0, 0x0002;"
+           "bnel    $t0, $zero, . - 0x0008;"
+           "lui     $t0, 0xA460;"
+           "addiu   $t0, $zero, 0x1000;"
+           "add     $t0, $t0, $t3;"
+           "and     $t0, $t0, $t2;"
+           "lui     $at, 0xA460;"
+           "sw      $t0, 0x0004($at);"
+           "lui     $t2, 0x0010;"
+           "addiu   $t2, $t2, 0xFFFF;"
+           "lui     $at, 0xA460;"
+           "sw      $t2, 0x000C($at);"
+           /* wait for dma to complete */
+           ".rept   0x10;"
+           "nop;"
+           ".endr;"
+           "lui     $t3, 0xA460;"
+           "lw      $t3, 0x0010($t3);"
+           "andi    $t3, $t3, 0x0001;"
+           "bnez    $t3, . - 0x4C;"
+           "nop;"
 
-  /* halt rsp */
-  *(volatile uint32_t*)0xA4040010 = 0xAAAAAE;
-  /* set mi intr mask (clear all) */
-  *(volatile uint32_t*)0xA430000C = 0x555;
-  /* clear si interrupt */
-  *(volatile uint32_t*)0xA4800018 = 0;
-  /* clear ai  interrupt */
-  *(volatile uint32_t*)0xA450000C = 0;
-  /* clear dp interrupt */
-  *(volatile uint32_t*)0xA4300000 = 0x800;
-  /* clear pi interrupt */
-  *(volatile uint32_t*)0xA4600010 = 2;
-  
-  /* clear sp mem */
-  uint32_t i;
-  for (i = 0; i < 0x2000/4; i += 4);
-    *(uint32_t*)(0xA4000000 + i) = 0;
+           /* clear sp semaphore */
+           "lui     $at, 0xA404;"
+           "sw      $zero, 0x001C($at);"
 
-  *((uint32_t*)0x80000304/* osRomType */) = 0;
-  *((uint32_t*)0x80000300/* osTvType */) = 1;
-  *((uint32_t*)0x8000030C/* osResetType */) = 1;
+           /* compute checksum */
+           "lui     $t3, 0xB000;"
+           "lw      $a0, 0x0008($t3);"
+           "or      $a1, $s6, $zero;"
+           "lui     $at, 0x5D58;"
+           "ori     $at, 0x8B65;"
+           "multu   $a1, $at;"
+           "addiu   $sp, $sp, 0xFFE0;"
+           "sw      $ra, 0x001C($sp);"
+           "sw      $s0, 0x0014($sp);"
+#if CIC == 6105
+           "lui     $s6, 0xA000;"
+           "addiu   $s6, $s6, 0x0200;"
+#endif
+           "lui     $ra, 0x0010;"
+           "or      $v1, $zero, $zero;"
+           "or      $t0, $zero, $zero;"
+           "or      $t1, $a0, $zero;"
+           "mflo    $v0;"
+           "addiu   $v0, $v0, 0x0001;"
+           "or      $a3, $v0, $zero;"
+           "or      $t2, $v0, $zero;"
+           "or      $t3, $v0, $zero;"
+           "or      $s0, $v0, $zero;"
+           "or      $a2, $v0, $zero;"
+           "or      $t4, $v0, $zero;"
+           "addiu   $t5, $zero, 0x0020;"
+           "lw      $v0, 0x0000($t1);"
+           "addu    $v1, $a3, $v0;"
+           "sltu    $at, $v1, $a3;"
+           "beq     $at, $zero, . + 0x000C;"
+           "or      $a1, $v1, $zero;"
+           "addiu   $t2, $t2, 0x0001;"
+           "andi    $v1, $v0, 0x001F;"
+           "subu    $t7, $t5, $v1;"
+           "srlv    $t8, $v0, $t7;"
+           "sllv    $t6, $v0, $v1;"
+           "or      $a0, $t6, $t8;"
+           "sltu    $at, $a2, $v0;"
+           "or      $a3, $a1, $zero;"
+           "xor     $t3, $t3, $v0;"
+           "beq     $at, $zero, . + 0x0014;"
+           "addu    $s0, $s0, $a0;"
+           "xor     $t9, $a3, $v0;"
+           "beq     $zero, $zero, . + 0x000C;"
+           "xor     $a2, $t9, $a2;"
+           "xor     $a2, $a2, $a0;"
+#if CIC == 6105
+           "lw      $t7, 0x0000($s6);"
+           "addiu   $t0, $t0, 0x0004;"
+           "addiu   $s6, $s6, 0x0004;"
+           "xor     $t7, $v0, $t7;"
+           "addu    $t4, $t7, $t4;"
+           "lui     $t7, 0xA000;"
+           "ori     $t7, $t7, 0x02FF;"
+           "addiu   $t1, $t1, 0x0004;"
+           "bne     $t0, $ra, . - 0x0070;"
+           "and     $s6, $s6, $t7;"
+#else
+           "addiu   $t0, $t0, 0x0004;"
+           "xor     $t7, $v0, $s0;"
+           "addiu   $t1, $t1, 0x0004;"
+           "bne     $t0, $ra, . - 0x005C;"
+           "addu    $t4, $t7, $t4;"
+#endif
+           "xor     $t6, $a3, $t2;"
+           "xor     $a3, $t6, $t3;"
+           "xor     $t8, $s0, $a2;"
+           "xor     $s0, $t8, $t4;"
 
-  /* jump to game preamble */
-  void (*game_entrypoint)() = (void*)0x80400000;
-  if (*(uint32_t*)gz_entrypoint == 0x3C02A460) {
-    game_entrypoint();
-  } else {
-    gz_entrypoint();
-  }
+           /* halt rsp */
+           "lui     $t3, 0x00AA;"
+           "ori     $t3, 0xAAAE;"
+           "lui     $at, 0xA404;"
+           "sw      $t3, 0x0010($at);"
+
+           /* set mi intr mask (clear all) */
+           "lui     $at, 0xA430;"
+           "addiu   $t0, $zero, 0x0555;"
+           "sw      $t0, 0x000C($at);"
+           /* clear si interrupt */
+           "lui     $at, 0xA480;"
+           "sw      $zero, 0x0018($at);"
+           /* clear ai  interrupt */
+           "lui     $at, 0xA450;"
+           "sw      $zero, 0x000C($at);"
+           /* clear dp interrupt */
+           "lui     $at, 0xA430;"
+           "addiu   $t1, $zero, 0x0800;"
+           "sw      $t1, 0x0000($at);"
+           /* clear pi interrupt */
+           "addiu   $t1, $zero, 0x0002;"
+           "lui     $at, 0xA460;"
+           "sw      $t1, 0x0010($at);"
+
+           /* save startup info */
+           "lui     $t0, 0xA000;"
+           "ori     $t0, $t0, 0x0300;"
+#if CIC == 6105
+           "addiu   $t1, $zero, 0x17D9;"
+           "sw      $t1, 0x0010($t0);"
+#endif
+           "sw      $s4, 0x0000($t0);"
+           "sw      $s3, 0x0004($t0);"
+           "sw      $s5, 0x000C($t0);"
+           "beq     $s3, $zero, . + 0x0014;" /* check reset type */
+           "sw      $s7, 0x0014($t0);"
+           "lui     $t1, 0xA600;"
+           "beq     $zero, $zero, . + 0x0010;"
+           "addiu   $t1, 0x0000;"
+           "lui     $t1, 0xB000;"
+           "addiu   $t1, $t1, 0x0000;"
+           "sw      $t1, 0x0008($t0);"
+#if CIC == 6105
+           "lw      $t1, 0x00F0($t0);"
+           "sw      $t1, 0x0018($t0);"
+#endif
+
+           /* check checksum */
+           "lui     $t3, 0xB000;"
+           "lw      $t0, 0x0010($t3);"
+           "bne     $a3, $t0, . + 0x001C;"
+           "nop;"
+           "lw      $t0, 0x0014($t3);"
+           "bne     $s0, $t0, . + 0x0010;"
+           "nop;"
+           "bgezal  $zero, . + 0x0010;"
+           "nop;"
+           "bgezal  $zero, .;"
+           "nop;"
+
+           /* clear sp mem */
+           "lui     $t0, 0xA400;"
+           "addiu   $t0, $t0, 0x0000;"
+           "lw      $s0, 0x0014($sp);" /* checksum code */
+           "lw      $ra, 0x001C($sp);" /* checksum code */
+           "addiu   $sp, $sp, 0x0020;" /* checksum code */
+           "addi    $t1, $t0, 0x2000;"
+           "addiu   $t0, $t0, 0x0004;"
+           "bne     $t0, $t1, . - 0x0004;"
+           "sw      $t1, -0x0004($t0);"
+
+           /* jump to game preamble */
+           "lui     $t0, 0xB000;"
+           "lw      $t0, 0x0008($t0);"
+           "la      $t1, start;"
+           "lw      $t2, 0x0000($t0);"
+           "la      $t3, 0x3C02A460;"
+           "beq     $t2, $t3, . + 0x0010;"
+           "nop;"
+           "jr      $t0;"
+           "nop;"
+           "jr      $t1;"
+           "nop;"
+           ".set    pop;");
   __builtin_unreachable();
 }
 

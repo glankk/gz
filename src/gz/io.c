@@ -4,6 +4,7 @@
 #include "hb_io.h"
 #include "sc64_io.h"
 #include "iodev.h"
+#include "ique.h"
 #include "zu.h"
 
 static unsigned int clock_ticks_dflt(void)
@@ -15,7 +16,7 @@ static unsigned int clock_ticks_dflt(void)
 
 static unsigned int clock_freq_dflt(void)
 {
-  return (__osBbIsBb) ? 72000000 : OS_CPU_COUNTER;
+  return is_ique() ? 72000000 : OS_CPU_COUNTER;
 }
 
 static void cpu_reset_dflt(void)
@@ -35,7 +36,7 @@ int io_init(void)
     &sc64,
   };
 
-  if (!__osBbIsBb) { 
+  if (!is_ique()) {
     int n_devs = sizeof(devs) / sizeof(devs[0]);
     for (int i = 0; i < n_devs; i++) {
       current_dev = devs[i];
@@ -43,7 +44,7 @@ int io_init(void)
         return 0;
     }
   }
-  
+
   current_dev = NULL;
   errno = ENODEV;
   return -1;
