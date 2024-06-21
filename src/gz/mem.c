@@ -98,8 +98,8 @@ static int cell_proc(struct menu_item *item,
   uint32_t addr = d->start + d->view_offset + cell_index;
   /* sp semaphore and ique mi skc safety check */
   int hidden = item->text[0] == '?';
-  if ((d->start == 0xA4040000 && (addr & 0x1C) == 0x1C) ||
-      (is_ique() && d->start == 0xA4300000 && (addr & 0x3C) == 0x14))
+  if ((addr & 0x1FFC001C) == 0x0404001C ||
+      (is_ique() && (addr & 0x1FF0003C) == 0x04300014))
   {
     if (reason == MENU_CALLBACK_ACTIVATE) {
       if (view_unsafe != cell_index && (input_pad() & BUTTON_Z)) {
