@@ -5,11 +5,18 @@
 #include <n64.h>
 #include <set/set.h>
 #include "gz.h"
+#include "inflate.h"
 #include "state.h"
 #include "sys.h"
 #include "yaz0.h"
 #include "zu.h"
 #include "z64.h"
+
+#if Z64_VERSION == Z64_OOTIQC
+# define compr(fn) inflate_ ## fn
+#else
+# define compr(fn) yaz0_ ## fn
+#endif
 
 static void serial_write(void **p, void *data, uint32_t length)
 {
@@ -65,26 +72,27 @@ static void save_ovl(void **p, void *addr,
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
-  yaz0_begin(file->prom_start);
-  yaz0_advance(end - *hdr_off - start);
-  yaz0_read(hdr, sizeof(*hdr));
+  compr(begin)(file->prom_start);
+  compr(advance)(end - *hdr_off - start);
+  compr(read)(hdr, sizeof(*hdr));
   serial_write(p, hdr, sizeof(*hdr));
 #endif
   char *data = start + hdr->text_size;
   char *bss = end;
   /* save data segment */
   if (hdr->data_size > 0) {
-    yaz0_begin(file->prom_start);
-    yaz0_advance(hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   uint16_t n_copy = 0;
   uint16_t n_save = 0;
   char *save_data = NULL;
   for (uint32_t i = 0; i < hdr->data_size; ++i) {
-    if (yaz0_get_byte() == data[i]) {
+    if (compr(get_byte)() == data[i]) {
       if (n_save > 0) {
         serial_write(p, &n_copy, sizeof(n_copy));
         serial_write(p, &n_save, sizeof(n_save));
@@ -149,7 +157,8 @@ static void load_ovl(void **p, void **p_addr,
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   serial_read(p, hdr, sizeof(*hdr));
@@ -158,20 +167,20 @@ static void load_ovl(void **p, void **p_addr,
   char *bss = end;
   /* restore data segment */
   if (hdr->data_size > 0) {
-    yaz0_begin(file->prom_start);
-    yaz0_advance(hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   for (uint32_t i = 0; i < hdr->data_size; ) {
     uint16_t n_copy = 0;
     uint16_t n_save = 0;
     serial_read(p, &n_copy, sizeof(n_copy));
     serial_read(p, &n_save, sizeof(n_save));
-    yaz0_read(&data[i], n_copy);
+    compr(read)(&data[i], n_copy);
     i += n_copy;
     serial_read(p, &data[i], n_save);
     i += n_save;
     if (i < hdr->data_size)
-      yaz0_advance(n_save);
+      compr(advance)(n_save);
   }
   /* restore bss segment */
   serial_read(p, bss, hdr->bss_size);
@@ -489,7 +498,8 @@ uint32_t save_state(struct state_meta *state)
   /* save context */
   serial_write(&p, &z64_game, sizeof(z64_game));
   serial_write(&p, &z64_file, sizeof(z64_file));
-  serial_write(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_write(&p, &z64_gameinfo, sizeof(z64_gameinfo));
+  serial_write(&p, z64_gameinfo, sizeof(*z64_gameinfo));
   /* save overlays */
   int16_t n_ovl;
   struct set ovl_nodes;
@@ -1154,7 +1164,8 @@ uint32_t save_state(struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   serial_write(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
   serial_write(&p, &code_800EC960_c_data[0x0A00], 0x0008);
   serial_write(&p, &code_800EC960_c_data[0x118C], 0x0144);
@@ -1251,10 +1262,6 @@ uint32_t save_state(struct state_meta *state)
 
   /* save song state */
   serial_write(&p, z64_staff_notes, 0x001E);
-
-  //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
-  //serial_write(&p, (void *)0x8012143C, 0x41F4);
-  //serial_write(&p, (void *)0x801DAA00, 0x1D4790);
 
   return (char *)p - (char *)state;
 }
@@ -1359,15 +1366,19 @@ void load_state(const struct state_meta *state)
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
-  if (settings->bits.ignore_target == 1) {
+  {
     uint8_t last_target = z64_file.z_targeting;
-    serial_read(&p, &z64_file, sizeof(z64_file));
-    z64_file.z_targeting = last_target;
+    if (state->state_version < 0x0007)
+      serial_read(&p, &z64_file, 0x1450);
+    else {
+      serial_read(&p, &z64_file, sizeof(z64_file));
+      serial_read(&p, &z64_gameinfo, sizeof(z64_gameinfo));
+    }
+    if (settings->bits.ignore_target == 1)
+      z64_file.z_targeting = last_target;
   }
-  else
-    serial_read(&p, &z64_file, sizeof(z64_file));
+  serial_read(&p, z64_gameinfo, sizeof(*z64_gameinfo));
 
-  serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */
   int16_t n_ent;
   int16_t next_ent;
@@ -1592,7 +1603,7 @@ void load_state(const struct state_meta *state)
         zu_getfile_idx(z64_icon_item_dungeon_static,
                        z64_game.pause_ctxt.icon_item_s);
         uint32_t vaddr = z64_ftab[z64_map_48x85_static].vrom_start;
-        vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
+        vaddr += z64_gameinfo->dungeon_map_floor * 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture, 0x07F8);
         vaddr += 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture + 0x0800, 0x07F8);
@@ -2112,7 +2123,8 @@ void load_state(const struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
     serial_read(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
     serial_read(&p, &code_800EC960_c_data[0x0A00], 0x0008);
     serial_read(&p, &code_800EC960_c_data[0x118C], 0x0144);
@@ -2166,8 +2178,4 @@ void load_state(const struct state_meta *state)
   /* only saved in state version 5+, so doesn't make sense to fix otherwise */
   if (state->state_version >= 0x0005)
     z64_song_rec_counter = z64_ocarina_counter - rec_frames;
-
-  //serial_read(&p, (void *)0x800E2FC0, 0x31E10);
-  //serial_read(&p, (void *)0x8012143C, 0x41F4);
-  //serial_read(&p, (void *)0x801DAA00, 0x1D4790);
 }

@@ -7,6 +7,7 @@
 #include <vector/vector.h>
 #include "gz.h"
 #include "input.h"
+#include "ique.h"
 #include "mem.h"
 #include "menu.h"
 #include "resource.h"
@@ -20,6 +21,7 @@
 static int                view_domain_index;
 static int                view_data_size;
 static _Bool              view_float;
+static int                view_unsafe;
 static struct menu_item  *view_address;
 static struct menu_item  *view_type;
 static struct menu_item  *view_domain_name;
@@ -58,6 +60,7 @@ static void update_view(void)
   menu_intinput_set(view_address, d->start + d->view_offset);
   strcpy(view_domain_name->text, d->name);
   view_pageup->enabled = view_pagedown->enabled = (d->size > MEM_VIEW_SIZE);
+  view_unsafe = -1;
   for (int y = 0; y < MEM_VIEW_ROWS; ++y) {
     struct menu_item *row = view_rows[y];
     row->enabled = (d->view_offset + y * MEM_VIEW_COLS < d->size);
@@ -92,12 +95,36 @@ static int cell_proc(struct menu_item *item,
 {
   int cell_index = (int)data;
   struct mem_domain *d = vector_at(&domains, view_domain_index);
+  uint32_t addr = d->start + d->view_offset + cell_index;
+  /* sp semaphore and ique mi skc safety check */
+  int hidden = item->text[0] == '?';
+  if ((addr & 0x1FFC001C) == 0x0404001C ||
+      (is_ique() && (addr & 0x1FF0003C) == 0x04300014))
+  {
+    if (reason == MENU_CALLBACK_ACTIVATE) {
+      if (view_unsafe != cell_index && (input_pad() & BUTTON_Z)) {
+        view_unsafe = cell_index;
+        item->think_proc(item);
+        return 1;
+      }
+    }
+    else if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+      if (view_unsafe == cell_index && item->owner->selector != item)
+        view_unsafe = -1;
+      if (view_unsafe != cell_index) {
+        if (!hidden)
+          for (int i = 0; item->text[i] != '\0'; i++)
+            item->text[i] = '?';
+        return 0;
+      }
+    }
+  }
   switch (view_data_size) {
     case 1: {
-      uint8_t *p = (void *)(d->start + d->view_offset + cell_index);
+      uint8_t *p = (void *)addr;
       if (reason == MENU_CALLBACK_THINK_INACTIVE) {
         uint8_t v = *p;
-        if (menu_intinput_get(item) != v)
+        if (menu_intinput_get(item) != v || hidden)
           menu_intinput_set(item, v);
       }
       else if (reason == MENU_CALLBACK_CHANGED)
@@ -105,10 +132,10 @@ static int cell_proc(struct menu_item *item,
       break;
     }
     case 2: {
-      uint16_t *p = (void *)(d->start + d->view_offset + cell_index);
+      uint16_t *p = (void *)addr;
       if (reason == MENU_CALLBACK_THINK_INACTIVE) {
         uint16_t v = *p;
-        if (menu_intinput_get(item) != v)
+        if (menu_intinput_get(item) != v || hidden)
           menu_intinput_set(item, v);
       }
       else if (reason == MENU_CALLBACK_CHANGED)
@@ -116,34 +143,29 @@ static int cell_proc(struct menu_item *item,
       break;
     }
     case 4: {
-      uint32_t *p = (void *)(d->start + d->view_offset + cell_index);
-      if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-        uint32_t v = *p;
-        if (menu_intinput_get(item) != v)
-          menu_intinput_set(item, v);
+      if (view_float) {
+        float *p = (void *)addr;
+        if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+          float v = *p;
+          if (is_nan(v) || !isnormal(v) || menu_floatinput_get(item) != v)
+            menu_floatinput_set(item, v || hidden);
+        }
+        else if (reason == MENU_CALLBACK_CHANGED)
+          *p = menu_floatinput_get(item);
       }
-      else if (reason == MENU_CALLBACK_CHANGED)
-        *p = menu_intinput_get(item);
+      else {
+        uint32_t *p = (void *)addr;
+        if (reason == MENU_CALLBACK_THINK_INACTIVE) {
+          uint32_t v = *p;
+          if (menu_intinput_get(item) != v || hidden)
+            menu_intinput_set(item, v);
+        }
+        else if (reason == MENU_CALLBACK_CHANGED)
+          *p = menu_intinput_get(item);
+      }
       break;
     }
   }
-  return 0;
-}
-
-static int float_cell_proc(struct menu_item *item,
-                           enum menu_callback_reason reason,
-                           void *data)
-{
-  int cell_index = (int)data;
-  struct mem_domain *d = vector_at(&domains, view_domain_index);
-  float *p = (void *)(d->start + d->view_offset + cell_index);
-  if (reason == MENU_CALLBACK_THINK_INACTIVE) {
-    float v = *p;
-    if (is_nan(v) || !isnormal(v) || menu_floatinput_get(item) != v)
-      menu_floatinput_set(item, v);
-  }
-  else if (reason == MENU_CALLBACK_CHANGED)
-    *p = menu_floatinput_get(item);
   return 0;
 }
 
@@ -157,7 +179,7 @@ static void make_cells(struct menu *menu)
       if (n % view_data_size == 0) {
         if (view_float) {
           view_cells[n] = menu_add_floatinput(menu, 9 + x / 4 * 14, 3 + y,
-                                              7, 2, float_cell_proc, (void *)n);
+                                              7, 2, cell_proc, (void *)n);
         }
         else {
           view_cells[n] = menu_add_intinput(menu, 9 + x * 2, 3 + y,
@@ -253,10 +275,12 @@ void mem_menu_create(struct menu *menu)
   add_domain(0x80000000, 0x00C00000, "k0 rdram");
 #ifndef WIIVC
   add_domain(0xA0000000, 0x00C00000, "k1 rdram");
-  add_domain(0xA3F00000, 0x00100000, "rdram regs");
-  add_domain(0xA4000000, 0x00001000, "sp dmem");
-  add_domain(0xA4001000, 0x00001000, "sp imem");
-  add_domain(0xA4002000, 0x000FE000, "sp regs");
+  if (is_ique())
+    add_domain(0xA1000000, 0x01000000, "bb sdram");
+  else
+    add_domain(0xA3F00000, 0x00100000, "rdram regs");
+  add_domain(0xA4000000, 0x00040000, "sp mem");
+  add_domain(0xA4040000, 0x00040000, "sp regs");
   add_domain(0xA4100000, 0x00100000, "dp com");
   add_domain(0xA4200000, 0x00100000, "dp span");
   add_domain(0xA4300000, 0x00100000, "mi regs");
@@ -264,11 +288,27 @@ void mem_menu_create(struct menu *menu)
   add_domain(0xA4500000, 0x00100000, "ai regs");
   add_domain(0xA4600000, 0x00100000, "pi regs");
   add_domain(0xA4800000, 0x00100000, "si regs");
-  add_domain(0xA8000000, 0x08000000, "cart dom2");
-  add_domain(0xB0000000, 0x0FC00000, "cart dom1");
-#endif
+  if (is_ique()) {
+    add_domain(0xA4900000, 0x00100000, "usb0 regs");
+    add_domain(0xA4A00000, 0x00100000, "usb1 regs");
+    add_domain(0xB0000000, 0x0FC00000, "cart dom1");
+    add_domain(0xBFC00000, 0x00020000, "boot/sk 1");
+    add_domain(0xBFC20000, 0x00020000, "boot/sk 2");
+    add_domain(0xBFC40000, 0x00040000, "bb sram");
+    add_domain(0xBFC80000, 0x00010000, "virage0");
+    add_domain(0xBFC90000, 0x00010000, "virage1");
+    add_domain(0xBFCA0000, 0x00010000, "virage2");
+  }
+  else {
+    add_domain(0xA8000000, 0x08000000, "cart dom2");
+    add_domain(0xB0000000, 0x0FC00000, "cart dom1");
+    add_domain(0xBFC00000, 0x000007C0, "pif rom");
+    add_domain(0xBFC007C0, 0x00000040, "pif ram");
+  }
+#else
   add_domain(0xBFC00000, 0x000007C0, "pif rom");
   add_domain(0xBFC007C0, 0x00000040, "pif ram");
+#endif
   /* initialize menus */
   menu_init(menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu->selector = menu_add_submenu(menu, 0, 0, NULL, "return");
