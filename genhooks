@@ -41,8 +41,12 @@ asmgsc  "$sym_z64_ocarina_sync"             "nop;"
 asmgsc  "$sym_z64_afx_rand_call"            "jal $sym_afx_rand_hook;"
 asmgsc  "$sym_z64_room_load_sync_hook"      "jal $sym_room_load_sync_hook;"
 asmgsc  "$sym_z64_camera_hook"              "jal $sym_camera_hook;"
-asmgsc  "$sym_z64_guPerspectiveF_hook"      "jal $sym_guPerspectiveF_hook; sw \$a2, 0x0038(\$sp);"
-asmgsc  "$sym_z64_guPerspective_camo"       "nop; nop;"
+if [ -n "$sym_z64_guPerspective_camo" ]; then
+  asmgsc  "$sym_z64_guPerspectiveF_hook"      "jal $sym_guPerspectiveF_hook; sw \$a2, 0x0038(\$sp);"
+  asmgsc  "$sym_z64_guPerspective_camo"       "nop; nop;"
+else
+  asmgsc  "$sym_z64_guPerspectiveF_hook"      "jal $sym_guPerspectiveF_hook;"
+fi
 asmgsc  "$sym_z64_disp_swap_1"              "jal $sym_disp_hook;"
 asmgsc  "$sym_z64_disp_swap_2"              "jal $sym_disp_hook;"
 asmgsc  "$sym_z64_disp_swap_3"              "jal $sym_disp_hook;"
