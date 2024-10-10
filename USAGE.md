@@ -575,13 +575,10 @@ _Note:_ Button combos that interfere with menu navigation for commands that
 aren't related to menuing are disabled while the utility menu is active.
 
 ## 3 VC Issues
-There are some known issues with the Wii VC version of gz;
-
--   The D-Pad on the Classic/Gamecube Controller is mapped to the L button on
-    the Virtual Console. The WAD patcher remaps the D-Pad to be functional
-    again, and maps C-Stick Down to L on the Virtual Console to provide access
-    to the utility menu.
--   The scene explorer has graphical glitches due to poor emulation.
+On Wii Virtual Console, the D-Pad on the Classic/Gamecube Controller is mapped
+to the L button. The WAD patcher remaps the D-Pad to be functional
+again, and maps C-Stick Down to L on the Virtual Console to provide access
+to the utility menu.
 
 ## 4 Issues with savestates
 
