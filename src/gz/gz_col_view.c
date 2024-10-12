@@ -881,7 +881,7 @@ void gz_col_view(void)
   _Bool enable = zu_in_game() &&
                  (z64_game.pause_ctxt.state < 2 ||
                   (z64_game.pause_ctxt.state == 2 &&
-                   z64_file.gameinfo->screenshot_state < 3));
+                   z64_gameinfo->screenshot_state < 3));
   _Bool init = gz.col_view_state == COLVIEW_START ||
                gz.col_view_state == COLVIEW_RESTARTING;
 
@@ -1195,7 +1195,7 @@ void gz_hit_view(void)
   _Bool enable = zu_in_game() &&
                  (z64_game.pause_ctxt.state < 2 ||
                   (z64_game.pause_ctxt.state == 2 &&
-                   z64_file.gameinfo->screenshot_state < 3));
+                   z64_gameinfo->screenshot_state < 3));
 
   if (enable && gz.hit_view_state == HITVIEW_START) {
     hit_gfx_buf[0] = malloc(sizeof(*hit_gfx_buf[0]) * hit_gfx_cap);
@@ -1276,7 +1276,7 @@ void gz_path_view(void)
   _Bool enable = zu_in_game() &&
                  (z64_game.pause_ctxt.state < 2 ||
                   (z64_game.pause_ctxt.state == 2 &&
-                   z64_file.gameinfo->screenshot_state < 3)) &&
+                   z64_gameinfo->screenshot_state < 3)) &&
                  z64_game.path_list != NULL;
   _Bool init = gz.path_view_state == PATHVIEW_START ||
                gz.path_view_state == PATHVIEW_RESTARTING;
@@ -1511,7 +1511,7 @@ void gz_cull_view(void)
   _Bool enable = zu_in_game() &&
                  (z64_game.pause_ctxt.state < 2 ||
                   (z64_game.pause_ctxt.state == 2 &&
-                   z64_file.gameinfo->screenshot_state < 3));
+                   z64_gameinfo->screenshot_state < 3));
 
   if (enable && gz.cull_view_state == CULLVIEW_START) {
     cull_gfx_buf[0] = malloc(sizeof(*cull_gfx_buf[0]) * cull_gfx_cap);
@@ -1664,7 +1664,7 @@ void gz_holl_view(void)
   _Bool enable = zu_in_game() &&
                  (z64_game.pause_ctxt.state < 2 ||
                   (z64_game.pause_ctxt.state == 2 &&
-                   z64_file.gameinfo->screenshot_state < 3));
+                   z64_gameinfo->screenshot_state < 3));
 
   if (enable && gz.holl_view_state == HOLLVIEW_START) {
     holl_gfx_buf[0] = malloc(sizeof(*holl_gfx_buf[0]) * holl_gfx_cap);

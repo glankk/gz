@@ -3,9 +3,11 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdint.h>
-#include "io.h"
-#include "sys.h"
 #include "fat.h"
+#include "io.h"
+#include "ique.h"
+#include "sys.h"
+#include "z64.h"
 
 struct desc
 {
@@ -724,7 +726,8 @@ void *sbrk(intptr_t incr)
 {
   extern char end[];
   static void *brk = end;
-  if ((uintptr_t)brk + incr > 0x80800000) {
+  uintptr_t heap_end = is_ique() ? (uintptr_t)__osBbSramAddress : 0x80800000;
+ if ((uintptr_t)brk + incr > heap_end) {
     return (void *)-1;
   }
   else {
