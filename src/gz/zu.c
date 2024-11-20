@@ -683,10 +683,13 @@ void zu_execute_game(int16_t entrance_index, uint16_t cutscene_index)
 
 void zu_execute_filemenu(void)
 {
-  z64_file.interface_flag = 0;
-  z64_ctxt.state_continue = 0;
-  z64_ctxt.next_ctor = z64_state_ovl_tab[5].vram_ctor;
-  z64_ctxt.next_size = z64_state_ovl_tab[5].ctxt_size;
+  if( (uint32_t)z64_ctxt.state_dtor != z64_state_ovl_tab[5].vram_dtor){
+    z64_file.interface_flag = 0;
+    z64_ctxt.state_continue = 0;
+    z64_ctxt.next_ctor = z64_state_ovl_tab[5].vram_ctor;
+    z64_ctxt.next_size = z64_state_ovl_tab[5].ctxt_size;
+  } else
+      gz_log("Can not change to file select here");
 }
 
 _Bool zu_in_game(void)
