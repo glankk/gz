@@ -732,6 +732,7 @@ static void state_main_hook(void)
       gz.frame_counter = 0;
       cpu_reset();
     }
+    gz.frame_ran = 1;
   }
   else {
     z64_gfx_t *gfx = z64_ctxt.gfx;
@@ -769,6 +770,7 @@ static void state_main_hook(void)
     --z64_ctxt.state_frames;
     /* do not execute an ocarina frame */
     gz.frame_flag = 0;
+    gz.frame_ran = 0;
   }
 }
 
@@ -1109,6 +1111,7 @@ static void init(void)
   gz.day_time_prev = z64_file.day_time;
   gz.target_day_time = -1;
   gz.frames_queued = -1;
+  gz.frame_ran = 1;
   gz.movie_state = MOVIE_IDLE;
   vector_init(&gz.movie_input, sizeof(struct movie_input));
   vector_init(&gz.movie_seed, sizeof(struct movie_seed));
@@ -1197,9 +1200,10 @@ static void init(void)
     menu_add_submenu(&menu, 0, 5, gz_equips_menu(), "equips");
     menu_add_submenu(&menu, 0, 6, gz_file_menu(), "file");
     menu_add_submenu(&menu, 0, 7, gz_macro_menu(), "macro");
-    menu_add_submenu(&menu, 0, 8, &watches, "watches");
-    menu_add_submenu(&menu, 0, 9, gz_debug_menu(), "debug");
-    menu_add_submenu(&menu, 0, 10, gz_settings_menu(), "settings");
+    menu_add_submenu(&menu, 0, 8, gz_trainer_menu(), "trainer");
+    menu_add_submenu(&menu, 0, 9, &watches, "watches");
+    menu_add_submenu(&menu, 0, 10, gz_debug_menu(), "debug");
+    menu_add_submenu(&menu, 0, 11, gz_settings_menu(), "settings");
 
     /* populate watches menu */
     watches.selector = menu_add_submenu(&watches, 0, 0, NULL, "return");
