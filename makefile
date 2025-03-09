@@ -6,7 +6,8 @@ ifeq ('$(PACKAGE_VERSION)', '')
 PACKAGE_VERSION       = Unknown version
 endif
 endif
-target                = mips64
+TARGET_TOOLS          = mips64-ultra-elf mips64
+target               := $(shell for i in $(TARGET_TOOLS); do if type $${i}-gcc >/dev/null 2>&1; then echo $${i}; break; fi done)
 program_prefix        = $(target)-
 AS                    = $(program_prefix)as
 CCAS                  = $(program_prefix)gcc -x assembler-with-cpp
@@ -170,7 +171,7 @@ $(ELF-OOT-MQ-U)       : ALL_LDLIBS           += -loot-mq-u
 $(ELF-OOT-GC-J)       : ALL_LDLIBS           += -loot-gc-j
 $(ELF-OOT-GC-U)       : ALL_LDLIBS           += -loot-gc-u
 $(ELF-OOT-CE-J)       : ALL_LDLIBS           += -loot-ce-j
-ifeq '$(shell $(CC) -dumpmachine 2>/dev/null)' 'mips64-ultra-elf'
+ifeq '$(target)' 'mips64-ultra-elf'
 $(OBJ-VC)             : ALL_CFLAGS           += -n64-wiivc
 $(OBJ-VC)             : ALL_CXXFLAGS         += -n64-wiivc
 $(ELF-VC)             : ALL_LDFLAGS          += -n64-wiivc
