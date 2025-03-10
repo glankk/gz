@@ -15,9 +15,10 @@
     -   [2.7 Macro](#27-macro)
         -   [2.7.1 Settings](#271-settings)
         -   [2.7.2 Virtual controller](#272-virtual-controller)
-    -   [2.8 Watches](#28-watches)
-    -   [2.9 Debug](#29-debug)
-    -   [2.10 Settings](#210-settings)
+    -   [2.8 Trainer](#28-trainer)
+    -   [2.9 Watches](#29-watches)
+    -   [2.10 Debug](#210-debug)
+    -   [2.11 Settings](#211-settings)
 -   [3 VC issues](#3-vc-issues)
 -   [4 Issues with savestates](#4-issues-with-savestates)
     -   [4.1 Dangling pointers](#41-dangling-pointers)
@@ -368,7 +369,22 @@ be connected to the system. The **joystick** controls set the x and y
 coordinates of the joystick on the virtual controller, and the **buttons**
 controls decide what buttons are held down on the virtual controller.
 
-### 2.8 Watches
+### 2.8 Trainer
+This menu lets you practice and get instant feedback on supported tricks or
+techniques. Select a checkbox to enable a specific trainer. It will remain
+visible even if the menu is hidden. Savestates do not affect the trainer's
+state **at all**, but trainers should reset after advancing enough frames.
+Trainers currently available:
+
+-   **Roll Timing:** Gives feedback on rolling for optimal speed.
+-   **Sidehop Timing:** Gives feedback on optimal sidehops. Supports any
+    manner of height difference (up hills, down hills, flat ground, etc.).
+-   **Equip Swap:** Gives feedback about equip swapping. Does not ensure proper 
+    inventory setup, only proper inputs and timing. Makes sure the stick is
+    moved in 1 frame and is diagonal in that frame, and makes sure a c button
+    is pressed on the correct frame.
+
+### 2.9 Watches
 This menu lets you add custom RAM watches to observe arbitrary parts of game's
 memory in real-time. Pressing the plus icon will add a new watch, and pressing
 the cross next to a watch will remove that watch. After adding a watch, enter a
@@ -401,7 +417,7 @@ the watches you need, press **return** to go back to the watches menu. The
 format of watch files is described in the wiki,
 [here](https://github.com/glankk/gz/wiki/Watch-File-Syntax).
 
-### 2.9 Debug
+### 2.10 Debug
 _Note: These features are for advanced users. Be careful._
 
 This menu contains various debug features to use for testing;
@@ -449,7 +465,7 @@ This menu contains various debug features to use for testing;
     detach the debugger. Press **break** to hit a breakpoint on the graph
     thread.
 
-### 2.10 Settings
+### 2.11 Settings
 This is where most of the functionality of gz is configured. The **profile**
 option selects which profile to save and load settings to and from. When the
 game starts, the settings saved to profile zero are automatically loaded, if
