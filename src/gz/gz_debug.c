@@ -456,8 +456,19 @@ static void goto_actor_proc(struct menu_item *item, void *data)
     z64_actor_t *actor = z64_game.actor_list[adi->type].first;
     for (int i = 0; i < adi->index; ++i)
       actor = actor->next;
-    z64_link.common.pos_1 = actor->pos_2;
+    //z64_link.common.pos_1 = actor->pos_2;
     z64_link.common.pos_2 = actor->pos_2;
+  }
+}
+
+static void bring_to_link(struct menu_item* item, void * data)
+{
+  struct actor_debug_info *adi = data;
+  if (adi->index < z64_game.actor_list[adi->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[adi->type].first;
+    for (int i = 0; i < adi->index; ++i)
+      actor = actor->next;
+     actor->pos_2 = z64_link.common.pos_2;
   }
 }
 
@@ -630,6 +641,7 @@ struct menu *gz_debug_menu(void)
   adi.edit_item = item;
   menu_add_button(&actors, 0, 5, "kill", &kill_actor_proc, &adi);
   menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &adi);
+  menu_add_button(&actors, 10, 12, "bring to link", &bring_to_link, &adi);
   menu_add_button(&actors, 17, 5, "cull zone", &toggle_cullzone_proc, &adi);
   /* actor spawn controls */
   static struct actor_spawn_info asi;
