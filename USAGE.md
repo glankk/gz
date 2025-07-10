@@ -7,7 +7,8 @@
     -   [2.1 Warps](#21-warps)
     -   [2.2 Scene](#22-scene)
         -   [2.2.1 Collision](#221-collision)
-        -   [2.2.2 Free camera](#222-free-camera)
+        -   [2.2.2 Visuals](#222-visuals)
+        -   [2.2.3 Free camera](#223-free-camera)
     -   [2.3 Cheats](#23-cheats)
     -   [2.4 Inventory](#24-inventory)
     -   [2.5 Equips](#25-equips)
@@ -149,13 +150,24 @@ The types of colliders to show can be selected with the **hit**, **hurt**, and
 **bump** options. It's common for objects to have multiple overlapping hitboxes
 of different types.
 
+#### 2.2.2 Visuals
 Enabling **show paths** will display all of the paths that are defined in the
 current scene. These are usually waypoints for NPC's. Each point in the path
 will be displayed when **points** is enabled, and a line will be drawn between
 subsequent points when **lines** is enabled. The path display can be
 translucent or opaque as selected by the **translucent** option.
 
-#### 2.2.2 Free camera
+**show transitions** displays room transition actors, such as those between
+the different sections of Lost Woods. When **show inactive** is enabled the
+area where the transition actor becomes inactive is shown.
+
+**hide rooms** and **hide actors** prevents scene and actor graphics from
+displaying.
+
+**show guards view** displays the vision particles of the castle courtyard
+guards.
+
+#### 2.2.3 Free camera
 The free camera function provides full control of the game's camera. When
 enabled, the camera can be controlled with the joystick, C buttons, and Z
 trigger. These controls are disabled in the game when controlling the free
