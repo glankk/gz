@@ -1932,61 +1932,48 @@ void gz_holl_view(void)
   }
 }
 
-void gz_guard_view(void){
-    const int guard_view_cap = 0x800;
-    static Gfx *guard_view_buf[2] = { NULL, NULL };
-    static int guard_view_idx = 0;
-    _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
-    uint8_t alpha;
+void gz_guard_view(void)
+{
+  const int guard_view_cap = 0x800;
+  static Gfx *guard_view_buf[2] = { NULL, NULL };
+  static int guard_view_idx = 0;
+  _Bool enable = zu_in_game() && z64_game.pause_ctxt.state == 0;
 
-    if(gz.guard_view_state == GUARDVIEW_START){
-        guard_view_buf[0] = malloc(sizeof(*guard_view_buf[0]) * guard_view_cap);
-        guard_view_buf[1] = malloc(sizeof(*guard_view_buf[1]) * guard_view_cap);
-        gz.guard_view_state = GUARDVIEW_ACTIVE;
+  if (gz.guard_view_state == GUARDVIEW_START) {
+    guard_view_buf[0] = malloc(sizeof(*guard_view_buf[0]) * guard_view_cap);
+    guard_view_buf[1] = malloc(sizeof(*guard_view_buf[1]) * guard_view_cap);
+    gz.guard_view_state = GUARDVIEW_ACTIVE;
+  }
+
+  if (enable && gz.guard_view_state == GUARDVIEW_ACTIVE) {
+    Gfx *guard_gfx = guard_view_buf[guard_view_idx];
+    Gfx *guard_gfx_p = guard_gfx;
+    Gfx *guard_gfx_d = guard_gfx + guard_view_cap;
+    guard_view_idx = (guard_view_idx + 1) % 2;
+
+    init_poly_gfx(&guard_gfx_p, &guard_gfx_d, SETTINGS_COLVIEW_SURFACE, 1, 1);
+
+    gDPSetPrimColor(guard_gfx_p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x80);
+
+    for (int i = 0; i < z64_part_max; i++) {
+      z64_part_t *part = &z64_part_space[i];
+      if (part->time > 0 && part->part_id == 0x18) {
+        draw_ico_sphere(&guard_gfx_p, &guard_gfx_d,
+                        part->pos.x, part->pos.y, part->pos.z, 30);
+      }
     }
 
-    if(enable && gz.guard_view_state == GUARDVIEW_ACTIVE){
-        Gfx **p_gfx_p;
+    gSPEndDisplayList(guard_gfx_p++);
+    dcache_wb(guard_gfx, sizeof(*guard_gfx) * guard_view_cap);
 
-        if (settings->bits.hit_view_xlu) {
-            p_gfx_p = &z64_ctxt.gfx->poly_xlu.p;
-            alpha = 0x80;
-        } else {
-            p_gfx_p = &z64_ctxt.gfx->poly_opa.p;
-            alpha = 0xFF;
-        }
+    gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, guard_gfx);
+  }
 
-        Gfx *guard_gfx = guard_view_buf[guard_view_idx];
-        Gfx *guard_gfx_p = guard_gfx;
-        Gfx *guard_gfx_d = guard_gfx + guard_view_cap;
-        guard_view_idx = (guard_view_idx + 1) % 2;
-
-        init_poly_gfx(&guard_gfx_p, &guard_gfx_d, SETTINGS_COLVIEW_SURFACE, settings->bits.hit_view_xlu, settings->bits.hit_view_shade);
-
-        gDPSetPrimColor(guard_gfx_p++, 0, 0,
-                        0xFF,
-                        0xFF,
-                        0xFF,
-                        alpha);
-
-        for(int i = 0;i < z64_part_max;i++){
-            z64_part_t *part = &z64_part_space[i];
-            if(part->time > 0 && part->part_id == 0x18){
-                draw_ico_sphere(&guard_gfx_p, &guard_gfx_d, part->pos.x, part->pos.y, part->pos.z, 30);
-            }
-        }
-
-        gSPEndDisplayList(guard_gfx_p++);
-
-        dcache_wb(guard_gfx, sizeof(*guard_gfx) * guard_view_cap);
-
-        gSPDisplayList((*p_gfx_p)++, guard_gfx);
-    }
-    if(gz.guard_view_state == GUARDVIEW_BEGIN_STOP){
-        gz.guard_view_state = GUARDVIEW_STOP;
-    }else if(gz.guard_view_state == GUARDVIEW_STOP){
-        release_mem(&guard_view_buf[0]);
-        release_mem(&guard_view_buf[1]);
-        gz.guard_view_state = GUARDVIEW_INACTIVE;
-    }
+  if (gz.guard_view_state == GUARDVIEW_BEGIN_STOP
+    gz.guard_view_state = GUARDVIEW_STOP;
+  else if (gz.guard_view_state == GUARDVIEW_STOP) {
+    release_mem(&guard_view_buf[0]);
+    release_mem(&guard_view_buf[1]);
+    gz.guard_view_state = GUARDVIEW_INACTIVE;
+  }
 }
