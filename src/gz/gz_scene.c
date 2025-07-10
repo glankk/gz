@@ -599,12 +599,10 @@ struct menu *gz_scene_menu(void)
   /* populate collision menu */
   collision.selector = menu_add_submenu(&collision, 0, 0, NULL, "return");
   /* collision view controls */
-  menu_add_static(&collision, 0, 1, "collision", 0xC0C0C0);
+  menu_add_static(&collision, 0, 1, "show collision", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 1, col_view_proc, NULL);
-  menu_add_static(&collision, 2, 2, "auto update", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 2, col_view_upd_proc, NULL);
-  menu_add_static(&collision, 2, 3, "mode", 0xC0C0C0);
-  menu_add_option(&collision, 16, 3, "decal\0""surface\0",
+  menu_add_static(&collision, 2, 2, "mode", 0xC0C0C0);
+  menu_add_option(&collision, 16, 2, "decal\0""surface\0",
                   col_view_mode_proc, NULL);
   menu_add_static(&collision, 2, 3, "translucent", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 3, col_view_xlu_proc, NULL);
@@ -633,9 +631,6 @@ struct menu *gz_scene_menu(void)
   menu_add_checkbox(&collision, 16, 14, hit_view_xlu_proc, NULL);
   menu_add_static(&collision, 2, 15, "shaded", 0xC0C0C0);
   menu_add_checkbox(&collision, 16, 15, hit_view_shade_proc, NULL);
-  /* guard vision control */
-  menu_add_static(&collision, 0, 10, "show guards view", 0xC0C0C0);
-  menu_add_checkbox(&collision, 16, 16, guard_view_proc, NULL);
 
   /* populate visuals menu */
   visuals.selector = menu_add_submenu(&visuals, 0, 0, NULL, "return");
@@ -660,6 +655,9 @@ struct menu *gz_scene_menu(void)
   menu_add_checkbox(&visuals, 18, 8, hide_rooms_proc, NULL);
   menu_add_static(&visuals, 0, 9, "hide actors", 0xC0C0C0);
   menu_add_checkbox(&visuals, 18, 9, hide_actors_proc, NULL);
+  /* guard vision control */
+  menu_add_static(&visuals, 0, 10, "show guards view", 0xC0C0C0);
+  menu_add_checkbox(&visuals, 18, 10, guard_view_proc, NULL);
 
   /* populate camera menu */
   camera.selector = menu_add_submenu(&camera, 0, 0, NULL, "return");
