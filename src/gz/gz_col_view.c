@@ -1969,7 +1969,7 @@ void gz_guard_view(void)
     gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, guard_gfx);
   }
 
-  if (gz.guard_view_state == GUARDVIEW_BEGIN_STOP
+  if (gz.guard_view_state == GUARDVIEW_BEGIN_STOP)
     gz.guard_view_state = GUARDVIEW_STOP;
   else if (gz.guard_view_state == GUARDVIEW_STOP) {
     release_mem(&guard_view_buf[0]);
