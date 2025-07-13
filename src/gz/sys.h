@@ -46,6 +46,7 @@ int             lstat(const char *path, struct stat *buf);
 int             chdir(const char *path);
 char           *getcwd(char *buf, size_t size);
 time_t          time(time_t *tloc);
+void            abort();
 void            sys_reset(void);
 
 #endif

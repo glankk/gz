@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "io.h"
+#include "rdb.h"
 #include "sys.h"
 #include "fat.h"
 
@@ -707,6 +708,13 @@ time_t time(time_t *tloc)
   return 0;
 }
 
+void abort()
+{
+  rdb_interrupt();
+  cpu_reset();
+  __builtin_unreachable();
+}
+
 void sys_reset(void)
 {
   fat_ready = 0;
@@ -732,4 +740,26 @@ void *sbrk(intptr_t incr)
     brk += incr;
     return ret;
   }
+}
+
+/* stubs */
+void (*signal(int sig, void (*handler)(int)))(int)
+{
+  return NULL;
+}
+
+int raise(int sig)
+{
+  return -1;
+}
+
+pid_t getpid(void)
+{
+  return 0;
+}
+
+int kill(pid_t pid, int sig)
+{
+  errno = ENOSYS;
+  return -1;
 }
