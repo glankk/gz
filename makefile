@@ -182,11 +182,11 @@ $(OBJ-VC)             : ALL_CXXFLAGS         += -fno-reorder-blocks -fno-optimiz
 $(ELF-VC)             : ALL_LDFLAGS          += -fno-reorder-blocks -fno-optimize-sibling-calls
 endif
 
-$(OBJ-N64)            : CFLAGS               ?= -O2 -g -flto -ffat-lto-objects
-$(OBJ-N64)            : CXXFLAGS             ?= -O2 -g -flto -ffat-lto-objects
-$(ELF-N64)            : LDFLAGS              ?= -O2 -g -flto
-$(OBJ-VC)             : CFLAGS               ?= -Os -g -flto -ffat-lto-objects
-$(OBJ-VC)             : CXXFLAGS             ?= -Os -g -flto -ffat-lto-objects
-$(ELF-VC)             : LDFLAGS              ?= -Os -g -flto
+$(OBJ-N64)            : CFLAGS               ?= -O2 -g -flto=auto
+$(OBJ-N64)            : CXXFLAGS             ?= -O2 -g -flto=auto
+$(ELF-N64)            : LDFLAGS              ?= -O2 -g -flto=auto
+$(OBJ-VC)             : CFLAGS               ?= -Os -g -flto=auto
+$(OBJ-VC)             : CXXFLAGS             ?= -Os -g -flto=auto
+$(ELF-VC)             : LDFLAGS              ?= -Os -g -flto=auto
 
 $(eval $(call bin_template,ldr,ldr,$(SRCDIR)/ldr,$(RESDIR)/ldr,$(OBJDIR)/ldr,$(BINDIR)/ldr,$(HOOKDIR)/ldr,$(LDR_ADDRESS)))
