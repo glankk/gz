@@ -169,7 +169,7 @@ static int disk_write(size_t lba, size_t n_blocks, const void *src)
   }
 
   cart_unlock();
-  return ret;    
+  return ret;
 }
 
 /* TODO: usb fifo needs more thorough testing */
