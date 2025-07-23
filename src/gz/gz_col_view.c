@@ -1886,16 +1886,14 @@ void gz_holl_view(void)
           float offset = (side == 1) ? -(cyl_offset + cyl_height) : cyl_offset;
 
           gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
-          draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                   actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+          draw_cyl(&holl_gfx_p, &holl_gfx_d, 0.0f, offset, 0.0f,
                    cyl_radius, cyl_height);
 
           if (show_all) {
             offset = (side == 0) ? -(cyl_offset + cyl_height) : cyl_offset;
 
             gDPSetPrimColor(holl_gfx_p++, 0, 0, 0xFF, 0x00, 0x00, 0x80);
-            draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                     actor->pos_2.x, actor->pos_2.y + offset, actor->pos_2.z,
+            draw_cyl(&holl_gfx_p, &holl_gfx_d, 0.0f, offset, 0.0f,
                      cyl_radius, cyl_height);
           }
 
@@ -1907,8 +1905,7 @@ void gz_holl_view(void)
             break;
 
           gDPSetPrimColor(holl_gfx_p++, 0, 0, 0x00, 0xFF, 0x00, 0xFF);
-          draw_cyl(&holl_gfx_p, &holl_gfx_d,
-                   actor->pos_2.x, actor->pos_2.y + cyl_offset, actor->pos_2.z,
+          draw_cyl(&holl_gfx_p, &holl_gfx_d, 0.0f, cyl_offset, 0.0f,
                    cyl_radius, cyl_height);
           break;
         }
