@@ -1,0 +1,93 @@
+name: Build release packages
+
+on:
+  push:
+    branch: master
+  schedule:
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      pkg_name:
+        description: 'Package name'
+        default: 'gz'
+        required: true
+        type: string
+      pkg_version:
+        description: 'Package version (empty for default)'
+        default: ''
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: practicerom/practicerom-dev
+      options: --privileged
+
+    steps:
+      - name: Update system package index
+        run: |
+          sudo apt-get update
+
+      - name: Install system packages
+        run: |
+          sudo apt-get install -y gpg hfsprogs libguestfs-tools linux-image-generic nodejs unzip xz-utils zip
+          sudo chmod a+r /boot/vmlinuz-*
+          sudo chmod 0666 /dev/kvm
+
+      - name: Checkout gz-release
+        uses: actions/checkout@v4
+        with:
+          repository: PracticeROM/gz-release
+
+      - name: Checkout git repository
+        uses: actions/checkout@v4
+        with:
+          path: gz
+          fetch-depth: 0
+          submodules: true
+
+      - name: Fetch source binaries
+        env:
+          SOURCES_CMD: ${{ secrets.SOURCES_CMD }}
+        # Put the desired source binaries under roms/
+        run: sh -c "${SOURCES_CMD}"
+
+      - name: Run gz-release
+        env:
+          PKG_NAME: ${{ inputs.pkg_name }}
+          PKG_VERSION: ${{ inputs.pkg_version }}
+        run: |
+          EXTRA_CPPFLAGS='-DNO_GP' \
+          EXTRA_CFLAGS='-n64-dynamic' \
+          EXTRA_CXXFLAGS='-n64-dynamic' \
+          EXTRA_LDFLAGS='-n64-dynamic' \
+          ./gz-release -j$(nproc) -p all gz \
+            ${PKG_NAME:+-n "${PKG_NAME}"} \
+            ${PKG_VERSION:+-v "${PKG_VERSION}"}
+
+      - name: Install artifact client
+        uses: lhotari/gh-actions-artifact-client@v2
+
+      - name: Upload artifacts
+        run: |
+          files=$(
+            find . -maxdepth 1 -type f \( \
+            -name '*.tar.gz' -o \
+            -name '*.tar.xz' -o \
+            -name '*.zip' -o \
+            -name '*.7z' -o \
+            -name '*.dmg' \)
+          )
+          for f in ${files}; do
+            if (echo "${f}" | grep -q '\.zip$'); then
+              f=$(echo "${f}" | sed 's/\.zip$//')
+            else
+              zip "${f}".zip "${f}"
+            fi
+            cat "${f}".zip | gh-actions-artifact-client.js upload $(basename "${f}")
+          done
