@@ -10,12 +10,10 @@ on:
       pkg_name:
         description: 'Package name'
         default: 'gz'
-        required: true
         type: string
       pkg_version:
         description: 'Package version (empty for default)'
         default: ''
-        required: true
         type: string
 
 jobs:
