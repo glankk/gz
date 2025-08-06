@@ -1,20 +1,19 @@
-name: Build release packages
+name: Build development release
 
 on:
-  push:
-    branch: master
-  schedule:
-    - cron: "0 2 * * 0"
   workflow_dispatch:
     inputs:
       pkg_name:
-        description: 'Package name'
-        default: 'gz'
+        description: 'Package name (empty for default)'
+        default: ''
         type: string
       pkg_version:
         description: 'Package version (empty for default)'
         default: ''
         type: string
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -71,21 +70,29 @@ jobs:
       - name: Install artifact client
         uses: lhotari/gh-actions-artifact-client@v2
 
-      - name: Upload artifacts
+      - name: Collect and upload artifacts
+        id: artifacts
         run: |
           files=$(
             find . -maxdepth 1 -type f \( \
-            -name '*.tar.gz' -o \
-            -name '*.tar.xz' -o \
-            -name '*.zip' -o \
-            -name '*.7z' -o \
-            -name '*.dmg' \)
+              -name '*.tar.gz' -o \
+              -name '*.tar.xz' -o \
+              -name '*.zip' -o \
+              -name '*.7z' -o \
+              -name '*.dmg' \)
           )
+          echo "files<<EOF" >> "${GITHUB_OUTPUT}"
           for f in ${files}; do
-            if (echo "${f}" | grep -q '\.zip$'); then
-              f=$(echo "${f}" | sed 's/\.zip$//')
-            else
-              zip "${f}".zip "${f}"
-            fi
-            cat "${f}".zip | gh-actions-artifact-client.js upload $(basename "${f}")
+            echo "${f}" >> "${GITHUB_OUTPUT}"
+            cat "${f}" | gh-actions-artifact-client.js upload $(basename "${f}")
           done
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+
+      - name: Update development build
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: dev-latest
+          prerelease: true
+          title: Latest development build
+          files: ${{ steps.artifacts.outputs.files }}

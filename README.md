@@ -5,9 +5,7 @@ _"the practice rom"_.
 
 ## Download
 The latest release can be found on the
-[releases page](https://github.com/glankk/gz/releases). Development release
-packages are available as artifacts from completed
-[workflow builds](https://github.com/glankk/gz/actions/workflows/build-release.yml?branch=master&status=success).
+[releases page](https://github.com/glankk/gz/releases).
 
 ## Usage
 See the
