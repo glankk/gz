@@ -703,6 +703,21 @@ static int byte_ztarget_proc(struct menu_item *item,
   return 0;
 }
 
+static int state_rng_proc(struct menu_item *item,
+                          enum menu_callback_reason reason,
+                          void *data)
+{
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    settings->bits.ignore_state_rng = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    settings->bits.ignore_state_rng = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != settings->bits.ignore_state_rng)
+      menu_checkbox_set(item, settings->bits.ignore_state_rng);
+  }
+  return 0;
+}
+
 struct menu *gz_macro_menu(void)
 {
   static struct menu menu;
@@ -814,6 +829,8 @@ struct menu *gz_macro_menu(void)
   menu_add_static(&menu_settings, 4, 7, "gc oob chu", 0xC0C0C0);
   menu_add_checkbox(&menu_settings, 2, 8, byte_ztarget_proc, NULL);
   menu_add_static(&menu_settings, 4, 8, "ignore state's z-target", 0xC0C0C0);
+  menu_add_checkbox(&menu_settings, 2, 9, state_rng_proc, NULL);
+  menu_add_static(&menu_settings, 4, 9, "ignore state's rng", 0xC0C0C0);
 
   /* populate virtual pad menu */
   menu_vcont.selector = menu_add_submenu(&menu_vcont, 0, 0, NULL, "return");

@@ -1850,7 +1850,12 @@ void load_state(const struct state_meta *state)
   serial_read(&p, &z64_gameover_countdown, sizeof(z64_gameover_countdown));
 
   /* rng */
-  serial_read(&p, &z64_random, sizeof(z64_random));
+  {
+    uint32_t rng;
+    serial_read(&p, &rng, sizeof(rng));
+    if (settings->bits.ignore_state_rng == 0 || gz.movie_state != MOVIE_IDLE)
+      z64_random = rng;
+  }
 
   /* spell states */
   if (state->state_version < 0x0004) {
