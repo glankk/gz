@@ -16,11 +16,17 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build
+  build-platforms:
+    name: Build platform packages
+    uses: PracticeROM/gz-release/.github/workflows/build-platforms.yml@master
+    with:
+      repository: PracticeROM/gz-release
+      ref: master
 
+  build-gz:
+    name: Build gz
+    needs: build-platforms
     runs-on: ubuntu-latest
-
     container:
       image: practicerom/practicerom-dev
       options: --privileged
@@ -40,6 +46,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: PracticeROM/gz-release
+          ref: master
+
+      - name: Fetch platform packages
+        uses: actions/download-artifact@v5
+        with:
+          path: platforms
+          pattern: platform-*
+          merge-multiple: true
 
       - name: Checkout git repository
         uses: actions/checkout@v4
