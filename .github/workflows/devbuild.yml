@@ -29,7 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: practicerom/practicerom-dev
-      options: --privileged
 
     steps:
       - name: Update system package index
@@ -38,9 +37,7 @@ jobs:
 
       - name: Install system packages
         run: |
-          sudo apt-get install -y gpg hfsprogs libguestfs-tools linux-image-generic nodejs unzip xz-utils zip
-          sudo chmod a+r /boot/vmlinuz-*
-          sudo chmod 0666 /dev/kvm
+          sudo apt-get install -y genisoimage gpg libdmg-hfsplus nodejs unzip xz-utils zip
 
       - name: Checkout gz-release
         uses: actions/checkout@v4
@@ -55,7 +52,7 @@ jobs:
           pattern: platform-*
           merge-multiple: true
 
-      - name: Checkout git repository
+      - name: Checkout gz
         uses: actions/checkout@v4
         with:
           path: gz
