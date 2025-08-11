@@ -37,7 +37,7 @@ jobs:
 
       - name: Install system packages
         run: |
-          sudo apt-get install -y genisoimage gpg libdmg-hfsplus nodejs unzip xz-utils zip
+          sudo apt-get install -y apple-codesign genisoimage gpg libdmg-hfsplus nodejs unzip xz-utils zip
 
       - name: Checkout gz-release
         uses: actions/checkout@v4
