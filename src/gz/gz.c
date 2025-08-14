@@ -160,7 +160,7 @@ static void main_hook(void)
            sizeof(z64_game.if_ctxt.restriction_flags));
   }
   if (settings->cheats & (1 << CHEAT_NOMAP))
-    z64_gameinfo->minimap_disabled = 1;
+    z64_file.gameinfo->minimap_disabled = 1;
   if (settings->cheats & (1 << CHEAT_ISG))
     z64_link.sword_state = 1;
   if (settings->cheats & (1 << CHEAT_QUICKTEXT))
@@ -363,7 +363,7 @@ static void main_hook(void)
     else if (settings->bits.lag_unit == SETTINGS_LAG_SECONDS)
       gfx_printf(font, x, settings->lag_counter_y, "%8.2f", lag_frames / 60.f);
   }
-  gz.frame_counter += z64_gameinfo->update_rate;
+  gz.frame_counter += z64_file.gameinfo->update_rate;
 
   /* execute and draw timer */
   if (!gz.timer_active)
@@ -839,7 +839,7 @@ HOOK void ocarina_update_hook(void)
     int audio_frames;
     /* sync hack by default when frame advancing or the song will softlock */
     if (gz.frames_queued >= 0)
-      audio_frames = z64_gameinfo->update_rate;
+      audio_frames = z64_file.gameinfo->update_rate;
     else
       audio_frames = z64_afx_counter - z64_ocarina_counter;
     /* if recording, use the sync hack setting to decide the value to use */
@@ -853,9 +853,9 @@ HOOK void ocarina_update_hook(void)
           loading a state (regardless of being paused or not). this seems to be
           unavoidable due to how states are currently implemented. **/
       if (settings->bits.hack_oca_sync)
-        audio_frames = z64_gameinfo->update_rate;
+        audio_frames = z64_file.gameinfo->update_rate;
       /* record the value if it differs from the sync hack */
-      if (audio_frames != z64_gameinfo->update_rate) {
+      if (audio_frames != z64_file.gameinfo->update_rate) {
         struct movie_oca_sync *os;
         os = vector_at(&gz.movie_oca_sync, gz.movie_oca_sync_pos);
         if (!os || os->frame_idx != gz.movie_frame) {
@@ -881,7 +881,7 @@ HOOK void ocarina_update_hook(void)
         ++gz.movie_oca_sync_pos;
       }
       else
-        audio_frames = z64_gameinfo->update_rate;
+        audio_frames = z64_file.gameinfo->update_rate;
     }
     /* update audio counters */
     {
