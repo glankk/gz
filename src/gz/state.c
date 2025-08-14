@@ -1368,8 +1368,10 @@ void load_state(const struct state_meta *state)
   serial_read(&p, &z64_game, sizeof(z64_game));
   {
     uint8_t last_target = z64_file.z_targeting;
-    if (state->state_version < 0x0007)
+    if (state->state_version < 0x0007) {
+      /* Generates -Wstringop-overflow warning, can be ignored */
       serial_read(&p, &z64_file, 0x1450);
+    }
     else {
       serial_read(&p, &z64_file, sizeof(z64_file));
       serial_read(&p, &z64_gameinfo, sizeof(z64_gameinfo));
