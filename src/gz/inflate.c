@@ -130,7 +130,7 @@ static int huf_get(struct huf *huf)
     val = (val << 1) | get_bits(1);
   } while (val >= huf->max[len++]);
 
-  return huf->tbl[huf->idx[len - 1] + val];  
+  return huf->tbl[huf->idx[len - 1] + val];
 }
 
 static void gen_fix_huf(void)
