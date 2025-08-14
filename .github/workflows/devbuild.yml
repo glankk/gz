@@ -1,0 +1,109 @@
+name: Build development release
+
+on:
+  workflow_dispatch:
+    inputs:
+      pkg_name:
+        description: 'Package name (empty for default)'
+        default: ''
+        type: string
+      pkg_version:
+        description: 'Package version (empty for default)'
+        default: ''
+        type: string
+  push:
+    branches:
+      - master
+
+jobs:
+  build-platforms:
+    name: Build platform packages
+    uses: PracticeROM/gz-release/.github/workflows/build-platforms.yml@master
+    with:
+      repository: PracticeROM/gz-release
+      ref: master
+
+  build-gz:
+    name: Build gz
+    needs: build-platforms
+    runs-on: ubuntu-latest
+    container:
+      image: practicerom/practicerom-dev
+
+    steps:
+      - name: Update system package index
+        run: |
+          sudo apt-get update
+
+      - name: Install system packages
+        run: |
+          sudo apt-get install -y apple-codesign genisoimage gpg libdmg-hfsplus nodejs unzip xz-utils zip
+
+      - name: Checkout gz-release
+        uses: actions/checkout@v4
+        with:
+          repository: PracticeROM/gz-release
+          ref: master
+
+      - name: Fetch platform packages
+        uses: actions/download-artifact@v5
+        with:
+          path: platforms
+          pattern: platform-*
+          merge-multiple: true
+
+      - name: Checkout gz
+        uses: actions/checkout@v4
+        with:
+          path: gz
+          fetch-depth: 0
+          submodules: true
+
+      - name: Fetch source binaries
+        env:
+          SOURCES_CMD: ${{ secrets.SOURCES_CMD }}
+        # Put the desired source binaries under roms/
+        run: sh -c "${SOURCES_CMD}"
+
+      - name: Run gz-release
+        env:
+          PKG_NAME: ${{ inputs.pkg_name }}
+          PKG_VERSION: ${{ inputs.pkg_version }}
+        run: |
+          EXTRA_CPPFLAGS='-DNO_GP' \
+          EXTRA_CFLAGS='-n64-dynamic' \
+          EXTRA_CXXFLAGS='-n64-dynamic' \
+          EXTRA_LDFLAGS='-n64-dynamic' \
+          ./gz-release -j$(nproc) -p all gz \
+            ${PKG_NAME:+-n "${PKG_NAME}"} \
+            ${PKG_VERSION:+-v "${PKG_VERSION}"}
+
+      - name: Install artifact client
+        uses: lhotari/gh-actions-artifact-client@v2
+
+      - name: Collect and upload artifacts
+        id: artifacts
+        run: |
+          files=$(
+            find . -maxdepth 1 -type f \( \
+              -name '*.tar.gz' -o \
+              -name '*.tar.xz' -o \
+              -name '*.zip' -o \
+              -name '*.7z' -o \
+              -name '*.dmg' \)
+          )
+          echo "files<<EOF" >> "${GITHUB_OUTPUT}"
+          for f in ${files}; do
+            echo "${f}" >> "${GITHUB_OUTPUT}"
+            cat "${f}" | gh-actions-artifact-client.js upload $(basename "${f}")
+          done
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+
+      - name: Update development build
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: dev-latest
+          prerelease: true
+          title: Latest development build
+          files: ${{ steps.artifacts.outputs.files }}
