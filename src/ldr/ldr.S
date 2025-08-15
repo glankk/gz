@@ -1,4 +1,4 @@
-#include "z64_version.h"
+#include "../gz/z64_version.h"
 
 .section  .text.startup, "ax", @progbits
 .set      nomips16
