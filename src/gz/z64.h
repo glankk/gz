@@ -2259,6 +2259,7 @@ z64_extern  uint8_t               z64_afx_cfg;
 z64_extern  uint8_t               z64_afx_config_busy;
 z64_extern  uint32_t              z64_random;
 z64_extern  char                  z64_message_state[];
+z64_extern  char                  z64_textbox_skipped;
 z64_extern  char                  z64_staff_notes[];
 z64_extern  int16_t               z64_message_select_state;
 z64_extern  char                  z64_message_icon_state[];

@@ -11,6 +11,7 @@
 #include "yaz0.h"
 #include "zu.h"
 #include "z64.h"
+#include "ique.h"
 
 #if Z64_VERSION == Z64_OOTIQC
 # define compr(fn) inflate_ ## fn
@@ -650,7 +651,12 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  serial_write(&p, z64_hazard_state, 0x0008);
+  if(is_ique()) { 
+    serial_write(&p, z64_hazard_state, 0x0004);
+  }
+  else { 
+    serial_write(&p, z64_hazard_state, 0x0008);
+  }
 
   /* timer state */
   serial_write(&p, z64_timer_state, 0x0008);
@@ -1010,7 +1016,7 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  if(Z64_VERSION == Z64_OOTIQC) { 
+  if(is_ique()) { 
     serial_write(&p, z64_message_state, 0x0018);
   }
   else { 
@@ -1237,8 +1243,19 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaNoteFlashTimer
    *    sOcarinaNoteFlashColorIndex
    */
-  serial_write(&p, z64_message_icon_state, 0x001E);
-  serial_write(&p, z64_message_note_icon_state, 0x0006);
+   if(is_ique()) { 
+      serial_write(&p, z64_message_icon_state, 0x0010);
+   }
+   else { 
+      serial_write(&p, z64_message_icon_state, 0x0020);
+   }
+
+   if(is_ique()) { 
+      serial_write(&p, z64_message_note_icon_state, 0x0004);
+   }
+   else { 
+      serial_write(&p, z64_message_note_icon_state, 0x0008);
+   }
 
   /*
    *  Variables from z_message_PAL.c(.bss) (zeldaret/oot.git@8e04ae9)
@@ -1266,7 +1283,7 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &gz.frame_flag, sizeof(gz.frame_flag));
 
   /* save song state */
-  serial_write(&p, z64_staff_notes, 0x001E);
+  serial_write(&p, z64_staff_notes, 0x0020);
 
   return (char *)p - (char *)state;
 }
@@ -1732,7 +1749,12 @@ void load_state(const struct state_meta *state)
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  serial_read(&p, z64_hazard_state, 0x0008);
+  if(is_ique()) { 
+    serial_read(&p, z64_hazard_state, 0x0004);
+  }
+  else { 
+    serial_read(&p, z64_hazard_state, 0x0008);
+  }
 
   /* timer state */
   serial_read(&p, z64_timer_state, 0x0008);
@@ -1896,7 +1918,12 @@ void load_state(const struct state_meta *state)
   serial_read(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  serial_read(&p, z64_message_state, 0x0028);
+  if(is_ique()) { 
+    serial_read(&p, z64_message_state, 0x0018);
+  }
+  else { 
+    serial_read(&p, z64_message_state, 0x0028);
+  }
   if (state->state_version >= 0x0004)
     serial_read(&p, &z64_message_select_state,
                 sizeof(z64_message_select_state));
@@ -2154,8 +2181,14 @@ void load_state(const struct state_meta *state)
       serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
       serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
     }
-    serial_read(&p, z64_message_icon_state, 0x001E);
-    serial_read(&p, z64_message_note_icon_state, 0x0006);
+    if(is_ique()) { 
+      serial_read(&p, z64_message_icon_state, 0x0010);
+      serial_read(&p, z64_message_note_icon_state, 0x0004);
+    }
+    else { 
+      serial_read(&p, z64_message_icon_state, 0x0020);
+      serial_read(&p, z64_message_note_icon_state, 0x0008);
+    }
     serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
 
     /* load metronome timer */
@@ -2180,7 +2213,7 @@ void load_state(const struct state_meta *state)
   }
 
   /* load song state (contd.) */
-  serial_read(&p, z64_staff_notes, 0x001E);
+  serial_read(&p, z64_staff_notes, 0x0020);
 
   /* fix audio counters */
   uint32_t play_frames = z64_ocarina_counter - z64_song_play_counter;

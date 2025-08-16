@@ -128,6 +128,7 @@ z64_afx_cfg                       = 0x80103410 ;
 z64_afx_config_busy               = 0x80103414 ;
 z64_random                        = 0x801044B0 ;
 z64_message_state                 = 0x80109E44 ;
+z64_textbox_skipped               = z64_message_state + 0xC ;
 z64_staff_notes                   = 0x801123AC ;
 z64_message_select_state          = 0x801123E4 ;
 z64_message_icon_state            = 0x80112440 ;
