@@ -1010,7 +1010,12 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  serial_write(&p, z64_message_state, 0x0028);
+  if(Z64_VERSION == Z64_OOTIQC) { 
+    serial_write(&p, z64_message_state, 0x0018);
+  }
+  else { 
+    serial_write(&p, z64_message_state, 0x0028);
+  }
   serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
