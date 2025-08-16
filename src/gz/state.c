@@ -42,7 +42,8 @@ static void serial_skip(void **p, uint32_t length)
 }
 
 static void save_ovl(void **p, void *addr,
-                     uint32_t vrom_start, uint32_t vrom_end)
+                     uint32_t vrom_start, uint32_t vrom_end,
+                     uint32_t vram_start, uint32_t vram_end)
 {
   /* locate file table entry */
   z64_ftab_t *file = NULL;
@@ -114,7 +115,13 @@ static void save_ovl(void **p, void *addr,
     serial_write(p, save_data, n_save);
   }
   /* save bss segment */
-  serial_write(p, bss, hdr->bss_size);
+#if Z64_VERSION == Z64_OOTIQC
+  /* workaround for bss size bug */
+  uint32_t bss_size = (vram_end - vram_start) - (end - start);
+#else
+  uint32_t bss_size = hdr->bss_size;
+#endif
+  serial_write(p, bss, bss_size);
 }
 
 static void load_ovl(void **p, void **p_addr,
@@ -183,7 +190,13 @@ static void load_ovl(void **p, void **p_addr,
       compr(advance)(n_save);
   }
   /* restore bss segment */
-  serial_read(p, bss, hdr->bss_size);
+#if Z64_VERSION == Z64_OOTIQC
+  /* workaround for bss size bug */
+  uint32_t bss_size = (vram_end - vram_start) - (end - start);
+#else
+  uint32_t bss_size = hdr->bss_size;
+#endif
+  serial_read(p, bss, bss_size);
 }
 
 static void reloc_col_hdr(z64_col_hdr_t *col_hdr)
@@ -511,7 +524,9 @@ uint32_t save_state(struct state_meta *state)
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
       serial_write(&p, &ovl->n_inst, sizeof(ovl->n_inst));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -522,7 +537,9 @@ uint32_t save_state(struct state_meta *state)
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -534,7 +551,9 @@ uint32_t save_state(struct state_meta *state)
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -543,7 +562,9 @@ uint32_t save_state(struct state_meta *state)
   if (z64_map_mark_ovl.ptr) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
     serial_write(&p, &sot, sizeof(sot));
-    save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+    save_ovl(&p, ovl->ptr,
+             ovl->vrom_start, ovl->vrom_end,
+             ovl->vram_start, ovl->vram_end);
     set_insert(&ovl_nodes, &ovl->ptr);
   }
   serial_write(&p, &eot, sizeof(eot));
