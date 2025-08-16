@@ -164,7 +164,7 @@ static void main_hook(void)
   if (settings->cheats & (1 << CHEAT_ISG))
     z64_link.sword_state = 1;
   if (settings->cheats & (1 << CHEAT_QUICKTEXT))
-    *(uint8_t *)(&z64_textbox_skipped) = 0x01;
+    z64_textbox_skipped = 1;
   if (settings->cheats & (1 << CHEAT_NOHUD))
       z64_file.hud_flag = 0x001;
 
