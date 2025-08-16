@@ -610,6 +610,10 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &eot, sizeof(eot));
   /* save camera shake effects */
   serial_write(&p, &z64_n_camera_shake, sizeof(z64_n_camera_shake));
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sQuakeRequests
+   */
   serial_write(&p, z64_camera_shake, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
@@ -646,10 +650,24 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* weather / daytime state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gWeatherMode
+   *    gLightConfigAfterUnderwater
+   *    gInterruptSongOfStorms
+   *    gSkyboxIsChanging
+   *    gTimeSpeed
+   *    sSunScreenDepth
+   */
   serial_write(&p, z64_weather_state, 0x0018);
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sEnvHazard
+   *    sEnvHazardActive
+   */
 #if Z64_VERSION == Z64_OOTIQC
   serial_write(&p, z64_hazard_state, 0x0004);
 #else
@@ -657,9 +675,21 @@ uint32_t save_state(struct state_meta *state)
 #endif
 
   /* timer state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sTimerNextSecondTimer
+   *    sTimerStateTimer
+   *    sSubTimerNextSecondTimer
+   *    sSubTimerStateTimer
+   */
   serial_write(&p, z64_timer_state, 0x0008);
 
   /* hud state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sCameraInterfaceField
+   *    sCameraHudVisibilityMode
+   */
   serial_write(&p, z64_hud_state, 0x0008);
 
   /* letterboxing */
@@ -668,6 +698,11 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
   /* poly color filter state (sepia effect) */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gPlayVisMono
+   *    gVisMonoColor
+   */
   serial_write(&p, z64_poly_colorfilter_state, 0x001C);
 
   /*
@@ -722,9 +757,7 @@ uint32_t save_state(struct state_meta *state)
    *    sOOBTimer
    *    D_8015CE50
    *    D_8015CE54
-   *    D_8015CE58.pos.x
-   *    D_8015CE58.pos.y
-   *    D_8015CE58.pos.z
+   *    D_8015CE58.pos
    *
    *  Offsets from the z_camera.c(.data) section start are different from
    *  mq-e-debug because the following are missing from release versions
@@ -1002,24 +1035,74 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8015BC14
+   */
   serial_write(&p, z64_fw_state_1, 0x0004);
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8015BC18
+   */
   serial_write(&p, z64_fw_state_2, 0x0004);
 
   /* camera state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sFloorYNear
+   *    sFloorYFar
+   *    sFarColChk.pos
+   *    sFarColChk.norm
+   */
   serial_write(&p, z64_camera_state, 0x0020);
 
   /* cutscene state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sDebugObjectListHead        (redundant)
+   *    gUseCutsceneCam
+   *    D_8015FCCC
+   *    D_8015FCD0
+   *    D_8015FCE4
+   *    gCamAtSplinePointsAppliedFrame
+   *    gCamEyePointAppliedFrame
+   *    gCamAtPointAppliedFrame
+   *    sReturnToCamId
+   *    sQuakeIndex
+   */
   serial_write(&p, z64_cs_state, 0x0140);
   /* cutscene message id */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sCurTextId
+   *    sCurOcarinaAction
+   */
   serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8014B2F4
+   *    sOcarinaButtonIndexBufPos
+   *    sOcarinaButtonIndexBufLen
+   *    sTextboxSkipped
+   *    sNextTextId
+   *    sTextIsCredits
+   *    sLastPlayedSong
+   *    sHasSunsSong
+   *    sMessageHasSetSfx
+   *    sOcarinaSongBitFlags
+   */
 #if Z64_VERSION == Z64_OOTIQC
   serial_write(&p, z64_message_state, 0x0018);
-#else 
+#else
   serial_write(&p, z64_message_state, 0x0028);
 #endif
 
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sAnalogStickHeld
+   */
   serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
@@ -1054,6 +1137,10 @@ uint32_t save_state(struct state_meta *state)
     serial_write(&p, &eot, sizeof(eot));
 
   /* save sfx mutes */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gSfxBankMuted               (1 byte overrun)
+   */
   serial_write(&p, z64_sfx_mute, 0x0008);
   /* save pending audio commands */
   {
@@ -1148,8 +1235,8 @@ uint32_t save_state(struct state_meta *state)
    *    sSeqModeInput               0x00E4 - 0x00E8 (- 0x0004)
    *    D_80131C8C & Co.            0x171C - 0x19FC (- 0x02E4)
    *
-   * gc releases have different offsets due to the following variables, which
-   * are not present on n64 releases;
+   * ique/gc releases have different offsets due to the following variables,
+   * which are not present on n64 releases;
    *    sOcarinaAllowedButtonMask   0x0988 - 0x098C (- 0x0004)
    *    sOcarinaAButtonMap          0x098C - 0x0990 (- 0x0008)
    *    sOcarinaCUpButtonMap        0x0990 - 0x0994 (- 0x000C)
@@ -1265,6 +1352,8 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaButtonCEnvR
    *    sOcarinaButtonCEnvB
    *    sOcarinaButtonCEnvG
+   *
+   *  Reordered on iQue but the range still contains the same set of variables
    */
   serial_write(&p, &z_message_c_bss[0x0000], 0x0020);
 
@@ -1275,6 +1364,11 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &gz.frame_flag, sizeof(gz.frame_flag));
 
   /* save song state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sOcarinaButtonIndexBuf
+   *    sOcarinaButtonAlphaValues   (2 byte overrun)
+   */
   serial_write(&p, z64_staff_notes, 0x001E);
 
   return (char *)p - (char *)state;
@@ -1911,7 +2005,7 @@ void load_state(const struct state_meta *state)
   /* message state */
 #if Z64_VERSION == Z64_OOTIQC
   serial_read(&p, z64_message_state, 0x0018);
-#else 
+#else
   serial_read(&p, z64_message_state, 0x0028);
 #endif
 
@@ -2175,7 +2269,7 @@ void load_state(const struct state_meta *state)
 #if Z64_VERSION == Z64_OOTIQC
     serial_read(&p, z64_message_icon_state, 0x0010);
     serial_read(&p, z64_message_note_icon_state, 0x0004);
-#else 
+#else
     serial_read(&p, z64_message_icon_state, 0x001E);
     serial_read(&p, z64_message_note_icon_state, 0x0006);
 #endif
