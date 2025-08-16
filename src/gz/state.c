@@ -651,9 +651,9 @@ uint32_t save_state(struct state_meta *state)
 
   /* hazard state */
 #if Z64_VERSION == Z64_OOTIQC
-    serial_write(&p, z64_hazard_state, 0x0004);
+  serial_write(&p, z64_hazard_state, 0x0004);
 #else
-    serial_write(&p, z64_hazard_state, 0x0008);
+  serial_write(&p, z64_hazard_state, 0x0008);
 #endif
 
   /* timer state */
@@ -1015,9 +1015,9 @@ uint32_t save_state(struct state_meta *state)
 
   /* message state */
 #if Z64_VERSION == Z64_OOTIQC
-    serial_write(&p, z64_message_state, 0x0018);
+  serial_write(&p, z64_message_state, 0x0018);
 #else 
-    serial_write(&p, z64_message_state, 0x0028);
+  serial_write(&p, z64_message_state, 0x0028);
 #endif
 
   serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
@@ -1242,11 +1242,11 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaNoteFlashColorIndex
    */
 #if Z64_VERSION == Z64_OOTIQC
-      serial_write(&p, z64_message_icon_state, 0x0010);
-      serial_write(&p, z64_message_note_icon_state, 0x0004);
+  serial_write(&p, z64_message_icon_state, 0x0010);
+  serial_write(&p, z64_message_note_icon_state, 0x0004);
 #else
-      serial_write(&p, z64_message_icon_state, 0x001E);
-      serial_write(&p, z64_message_note_icon_state, 0x0006);
+  serial_write(&p, z64_message_icon_state, 0x001E);
+  serial_write(&p, z64_message_note_icon_state, 0x0006);
 #endif
 
   /*
@@ -1275,7 +1275,7 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &gz.frame_flag, sizeof(gz.frame_flag));
 
   /* save song state */
-  serial_write(&p, z64_staff_notes, 0x0020);
+  serial_write(&p, z64_staff_notes, 0x001E);
 
   return (char *)p - (char *)state;
 }
@@ -1742,9 +1742,9 @@ void load_state(const struct state_meta *state)
 
   /* hazard state */
 #if Z64_VERSION == Z64_OOTIQC
-    serial_read(&p, z64_hazard_state, 0x0004);
+  serial_read(&p, z64_hazard_state, 0x0004);
 #else
-    serial_read(&p, z64_hazard_state, 0x0008);
+  serial_read(&p, z64_hazard_state, 0x0008);
 #endif
 
   /* timer state */
@@ -1910,9 +1910,9 @@ void load_state(const struct state_meta *state)
 
   /* message state */
 #if Z64_VERSION == Z64_OOTIQC
-    serial_read(&p, z64_message_state, 0x0018);
+  serial_read(&p, z64_message_state, 0x0018);
 #else 
-    serial_read(&p, z64_message_state, 0x0028);
+  serial_read(&p, z64_message_state, 0x0028);
 #endif
 
   if (state->state_version >= 0x0004)
@@ -2173,11 +2173,11 @@ void load_state(const struct state_meta *state)
       serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
     }
 #if Z64_VERSION == Z64_OOTIQC
-      serial_read(&p, z64_message_icon_state, 0x0010);
-      serial_read(&p, z64_message_note_icon_state, 0x0004);
+    serial_read(&p, z64_message_icon_state, 0x0010);
+    serial_read(&p, z64_message_note_icon_state, 0x0004);
 #else 
-      serial_read(&p, z64_message_icon_state, 0x001E);
-      serial_read(&p, z64_message_note_icon_state, 0x0006);
+    serial_read(&p, z64_message_icon_state, 0x001E);
+    serial_read(&p, z64_message_note_icon_state, 0x0006);
 #endif
     serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
 
