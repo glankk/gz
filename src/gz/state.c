@@ -651,12 +651,11 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  if(is_ique()) { 
+  #if Z64_VERSION == Z64_OOTIQC
     serial_write(&p, z64_hazard_state, 0x0004);
-  }
-  else { 
+  #else
     serial_write(&p, z64_hazard_state, 0x0008);
-  }
+  #endif
 
   /* timer state */
   serial_write(&p, z64_timer_state, 0x0008);
@@ -1016,12 +1015,12 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  if(is_ique()) { 
+  #if Z64_VERSION == Z64_OOTIQC
     serial_write(&p, z64_message_state, 0x0018);
-  }
-  else { 
+  #else 
     serial_write(&p, z64_message_state, 0x0028);
-  }
+  #endif
+
   serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
@@ -1243,19 +1242,13 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaNoteFlashTimer
    *    sOcarinaNoteFlashColorIndex
    */
-   if(is_ique()) { 
+   #if Z64_VERSION == Z64_OOTIQC
       serial_write(&p, z64_message_icon_state, 0x0010);
-   }
-   else { 
-      serial_write(&p, z64_message_icon_state, 0x0020);
-   }
-
-   if(is_ique()) { 
       serial_write(&p, z64_message_note_icon_state, 0x0004);
-   }
-   else { 
-      serial_write(&p, z64_message_note_icon_state, 0x0008);
-   }
+   #else
+      serial_write(&p, z64_message_icon_state, 0x001E);
+      serial_write(&p, z64_message_note_icon_state, 0x0006);
+   #endif
 
   /*
    *  Variables from z_message_PAL.c(.bss) (zeldaret/oot.git@8e04ae9)
@@ -1749,12 +1742,11 @@ void load_state(const struct state_meta *state)
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
-  if(is_ique()) { 
+  #if Z64_VERSION == Z64_OOTIQC
     serial_read(&p, z64_hazard_state, 0x0004);
-  }
-  else { 
+  #else
     serial_read(&p, z64_hazard_state, 0x0008);
-  }
+  #endif
 
   /* timer state */
   serial_read(&p, z64_timer_state, 0x0008);
@@ -1918,12 +1910,12 @@ void load_state(const struct state_meta *state)
   serial_read(&p, z64_cs_message, 0x0008);
 
   /* message state */
-  if(is_ique()) { 
+  #if Z64_VERSION == Z64_OOTIQC
     serial_read(&p, z64_message_state, 0x0018);
-  }
-  else { 
+  #else 
     serial_read(&p, z64_message_state, 0x0028);
-  }
+  #endif
+
   if (state->state_version >= 0x0004)
     serial_read(&p, &z64_message_select_state,
                 sizeof(z64_message_select_state));
@@ -2181,14 +2173,13 @@ void load_state(const struct state_meta *state)
       serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
       serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
     }
-    if(is_ique()) { 
+    #if Z64_VERSION == Z64_OOTIQC
       serial_read(&p, z64_message_icon_state, 0x0010);
       serial_read(&p, z64_message_note_icon_state, 0x0004);
-    }
-    else { 
-      serial_read(&p, z64_message_icon_state, 0x0020);
-      serial_read(&p, z64_message_note_icon_state, 0x0008);
-    }
+    #else 
+      serial_read(&p, z64_message_icon_state, 0x001E);
+      serial_read(&p, z64_message_note_icon_state, 0x0006);
+    #endif
     serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
 
     /* load metronome timer */
@@ -2213,7 +2204,7 @@ void load_state(const struct state_meta *state)
   }
 
   /* load song state (contd.) */
-  serial_read(&p, z64_staff_notes, 0x0020);
+  serial_read(&p, z64_staff_notes, 0x001E);
 
   /* fix audio counters */
   uint32_t play_frames = z64_ocarina_counter - z64_song_play_counter;
