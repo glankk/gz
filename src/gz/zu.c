@@ -3,8 +3,22 @@
 #include <n64.h>
 #include <vector/vector.h>
 #include "gu.h"
+#include "ique.h"
 #include "z64.h"
 #include "zu.h"
+
+#if Z64_VERSION == Z64_OOT10 || \
+    Z64_VERSION == Z64_OOT11 || \
+    Z64_VERSION == Z64_OOT12 || \
+    Z64_VERSION == Z64_OOTMQJ || \
+    Z64_VERSION == Z64_OOTMQU || \
+    Z64_VERSION == Z64_OOTGCJ || \
+    Z64_VERSION == Z64_OOTGCU || \
+    Z64_VERSION == Z64_OOTCEJ
+# define CIC 6105
+#elif Z64_VERSION == Z64_OOTIQC
+# define CIC 6102
+#endif
 
 static const size_t work_length     = 0x0080;
 static const size_t poly_opa_length = 0x17E0;
@@ -308,12 +322,18 @@ void zu_vlist_destroy(struct zu_vlist *vlist)
 
 void zu_sram_read(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
+  if (is_ique())
+    memcpy(dram_addr, __osBbSramAddress + sram_addr, size);
+  else
+    z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_READ);
 }
 
 void zu_sram_write(void *dram_addr, uint32_t sram_addr, size_t size)
 {
-  z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
+  if (is_ique())
+    memcpy(__osBbSramAddress + sram_addr, dram_addr, size);
+  else
+    z64_Io(0x08000000 + sram_addr, dram_addr, size, OS_WRITE);
 }
 
 _Noreturn
@@ -358,7 +378,11 @@ void zu_reset(void)
            /* osResetType (0: Cold, 1: NMI) */
            "li      $s5, 0x0001;"
            /* osCicId (3F: 6101/6102, 78: 6103, 91: 6105, 85: 6106) */
+#if CIC == 6102
+           "li      $s6, 0x003F;"
+#elif CIC == 6105
            "li      $s6, 0x0091;"
+#endif
            /* osVersion */
            "lw      $s7, 0x0314($t0);"
            /* set up environment */
@@ -375,6 +399,7 @@ void zu_reset(void)
            "nop;"
            "0:"
 
+#if CIC == 6105
            /* decode rsp boot code */
            "add     $t1, $sp, $zero;"
            "lw      $t0, -0x0FF0($t1);"
@@ -390,6 +415,8 @@ void zu_reset(void)
            "sw      $t0, -0x0FF0($t1);"
            "sw      $t2, -0x0FEC($t1);"
            "sw      $zero, -0x0FE8($t1);"
+#endif
+
            "mtc0    $zero, $13;" /* cp0_cause */
            "mtc0    $zero, $9;" /* cp0_count */
            "mtc0    $zero, $11;" /* cp0_compare */
@@ -414,6 +441,7 @@ void zu_reset(void)
            "bnez    $at, . - 0x0008;"
            "addiu   $t0, $t0, 0x0010;"
 
+#if CIC == 6105
            /* start rsp */
            "addiu   $t2, $zero, 0x00CE;"
            "lui     $at, 0xA404;"
@@ -445,6 +473,7 @@ void zu_reset(void)
            "addiu   $t2, $zero, 0x00AD;"
            "lui     $at, 0xA404;"
            "sw      $t2, 0x0010($at);"
+#endif
 
            /* jump to k0 */
            "la      $t0, 0f;"
@@ -502,8 +531,10 @@ void zu_reset(void)
            "addiu   $sp, $sp, 0xFFE0;"
            "sw      $ra, 0x001C($sp);"
            "sw      $s0, 0x0014($sp);"
+#if CIC == 6105
            "lui     $s6, 0xA000;"
            "addiu   $s6, $s6, 0x0200;"
+#endif
            "lui     $ra, 0x0010;"
            "or      $v1, $zero, $zero;"
            "or      $t0, $zero, $zero;"
@@ -537,6 +568,7 @@ void zu_reset(void)
            "beq     $zero, $zero, . + 0x000C;"
            "xor     $a2, $t9, $a2;"
            "xor     $a2, $a2, $a0;"
+#if CIC == 6105
            "lw      $t7, 0x0000($s6);"
            "addiu   $t0, $t0, 0x0004;"
            "addiu   $s6, $s6, 0x0004;"
@@ -547,8 +579,17 @@ void zu_reset(void)
            "addiu   $t1, $t1, 0x0004;"
            "bne     $t0, $ra, . - 0x0070;"
            "and     $s6, $s6, $t7;"
+#else
+           "addiu   $t0, $t0, 0x0004;"
+           "xor     $t7, $v0, $s0;"
+           "addiu   $t1, $t1, 0x0004;"
+           "bne     $t0, $ra, . - 0x005C;"
+           "addu    $t4, $t7, $t4;"
+#endif
            "xor     $t6, $a3, $t2;"
            "xor     $a3, $t6, $t3;"
+           "xor     $t8, $s0, $a2;"
+           "xor     $s0, $t8, $t4;"
 
            /* halt rsp */
            "lui     $t3, 0x00AA;"
@@ -578,10 +619,10 @@ void zu_reset(void)
            /* save startup info */
            "lui     $t0, 0xA000;"
            "ori     $t0, $t0, 0x0300;"
-           "xor     $t8, $s0, $a2;" /* checksum code */
+#if CIC == 6105
            "addiu   $t1, $zero, 0x17D9;"
-           "xor     $s0, $t8, $t4;" /* checksum code */
            "sw      $t1, 0x0010($t0);"
+#endif
            "sw      $s4, 0x0000($t0);"
            "sw      $s3, 0x0004($t0);"
            "sw      $s5, 0x000C($t0);"
@@ -593,11 +634,13 @@ void zu_reset(void)
            "lui     $t1, 0xB000;"
            "addiu   $t1, $t1, 0x0000;"
            "sw      $t1, 0x0008($t0);"
+#if CIC == 6105
            "lw      $t1, 0x00F0($t0);"
-           "lui     $t3, 0xB000;"
            "sw      $t1, 0x0018($t0);"
+#endif
 
            /* check checksum */
+           "lui     $t3, 0xB000;"
            "lw      $t0, 0x0010($t3);"
            "bne     $a3, $t0, . + 0x001C;"
            "nop;"
@@ -623,9 +666,9 @@ void zu_reset(void)
            /* jump to game preamble */
            "lui     $t0, 0xB000;"
            "lw      $t0, 0x0008($t0);"
-           "la      $t1, 0x80400000;"
+           "la      $t1, start;"
            "lw      $t2, 0x0000($t0);"
-           "la      $t3, 0x3C02A805;"
+           "la      $t3, 0x3C02A460;"
            "beq     $t2, $t3, . + 0x0010;"
            "nop;"
            "jr      $t0;"

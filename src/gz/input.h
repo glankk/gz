@@ -3,9 +3,6 @@
 #include <stdint.h>
 #include "menu.h"
 
-#define input_sch_pad_addr    0x8000045E
-#define input_sch_pad         (*(uint16_t *)input_sch_pad_addr)
-
 #define INPUT_REPEAT_DELAY    8
 #define BIND_END              6
 

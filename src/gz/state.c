@@ -5,11 +5,18 @@
 #include <n64.h>
 #include <set/set.h>
 #include "gz.h"
+#include "inflate.h"
 #include "state.h"
 #include "sys.h"
 #include "yaz0.h"
 #include "zu.h"
 #include "z64.h"
+
+#if Z64_VERSION == Z64_OOTIQC
+# define compr(fn) inflate_ ## fn
+#else
+# define compr(fn) yaz0_ ## fn
+#endif
 
 static void serial_write(void **p, void *data, uint32_t length)
 {
@@ -35,7 +42,8 @@ static void serial_skip(void **p, uint32_t length)
 }
 
 static void save_ovl(void **p, void *addr,
-                     uint32_t vrom_start, uint32_t vrom_end)
+                     uint32_t vrom_start, uint32_t vrom_end,
+                     uint32_t vram_start, uint32_t vram_end)
 {
   /* locate file table entry */
   z64_ftab_t *file = NULL;
@@ -65,26 +73,27 @@ static void save_ovl(void **p, void *addr,
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
-  yaz0_begin(file->prom_start);
-  yaz0_advance(end - *hdr_off - start);
-  yaz0_read(hdr, sizeof(*hdr));
+  compr(begin)(file->prom_start);
+  compr(advance)(end - *hdr_off - start);
+  compr(read)(hdr, sizeof(*hdr));
   serial_write(p, hdr, sizeof(*hdr));
 #endif
   char *data = start + hdr->text_size;
   char *bss = end;
   /* save data segment */
   if (hdr->data_size > 0) {
-    yaz0_begin(file->prom_start);
-    yaz0_advance(hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   uint16_t n_copy = 0;
   uint16_t n_save = 0;
   char *save_data = NULL;
   for (uint32_t i = 0; i < hdr->data_size; ++i) {
-    if (yaz0_get_byte() == data[i]) {
+    if (compr(get_byte)() == data[i]) {
       if (n_save > 0) {
         serial_write(p, &n_copy, sizeof(n_copy));
         serial_write(p, &n_save, sizeof(n_save));
@@ -106,7 +115,13 @@ static void save_ovl(void **p, void *addr,
     serial_write(p, save_data, n_save);
   }
   /* save bss segment */
-  serial_write(p, bss, hdr->bss_size);
+#if Z64_VERSION == Z64_OOTIQC
+  /* workaround for bss size bug */
+  uint32_t bss_size = (vram_end - vram_start) - (end - start);
+#else
+  uint32_t bss_size = hdr->bss_size;
+#endif
+  serial_write(p, bss, bss_size);
 }
 
 static void load_ovl(void **p, void **p_addr,
@@ -149,7 +164,8 @@ static void load_ovl(void **p, void **p_addr,
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   z64_ovl_hdr_t l_hdr;
   hdr = &l_hdr;
   serial_read(p, hdr, sizeof(*hdr));
@@ -158,23 +174,29 @@ static void load_ovl(void **p, void **p_addr,
   char *bss = end;
   /* restore data segment */
   if (hdr->data_size > 0) {
-    yaz0_begin(file->prom_start);
-    yaz0_advance(hdr->text_size);
+    compr(begin)(file->prom_start);
+    compr(advance)(hdr->text_size);
   }
   for (uint32_t i = 0; i < hdr->data_size; ) {
     uint16_t n_copy = 0;
     uint16_t n_save = 0;
     serial_read(p, &n_copy, sizeof(n_copy));
     serial_read(p, &n_save, sizeof(n_save));
-    yaz0_read(&data[i], n_copy);
+    compr(read)(&data[i], n_copy);
     i += n_copy;
     serial_read(p, &data[i], n_save);
     i += n_save;
     if (i < hdr->data_size)
-      yaz0_advance(n_save);
+      compr(advance)(n_save);
   }
   /* restore bss segment */
-  serial_read(p, bss, hdr->bss_size);
+#if Z64_VERSION == Z64_OOTIQC
+  /* workaround for bss size bug */
+  uint32_t bss_size = (vram_end - vram_start) - (end - start);
+#else
+  uint32_t bss_size = hdr->bss_size;
+#endif
+  serial_read(p, bss, bss_size);
 }
 
 static void reloc_col_hdr(z64_col_hdr_t *col_hdr)
@@ -489,7 +511,8 @@ uint32_t save_state(struct state_meta *state)
   /* save context */
   serial_write(&p, &z64_game, sizeof(z64_game));
   serial_write(&p, &z64_file, sizeof(z64_file));
-  serial_write(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
+  serial_write(&p, &z64_gameinfo, sizeof(z64_gameinfo));
+  serial_write(&p, z64_gameinfo, sizeof(*z64_gameinfo));
   /* save overlays */
   int16_t n_ovl;
   struct set ovl_nodes;
@@ -501,7 +524,9 @@ uint32_t save_state(struct state_meta *state)
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
       serial_write(&p, &ovl->n_inst, sizeof(ovl->n_inst));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -512,7 +537,9 @@ uint32_t save_state(struct state_meta *state)
     z64_play_ovl_t *ovl = &z64_play_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -524,7 +551,9 @@ uint32_t save_state(struct state_meta *state)
     z64_part_ovl_t *ovl = &z64_part_ovl_tab[i];
     if (ovl->ptr) {
       serial_write(&p, &i, sizeof(i));
-      save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+      save_ovl(&p, ovl->ptr,
+               ovl->vrom_start, ovl->vrom_end,
+               ovl->vram_start, ovl->vram_end);
       set_insert(&ovl_nodes, &ovl->ptr);
     }
   }
@@ -533,7 +562,9 @@ uint32_t save_state(struct state_meta *state)
   if (z64_map_mark_ovl.ptr) {
     z64_map_mark_ovl_t *ovl = &z64_map_mark_ovl;
     serial_write(&p, &sot, sizeof(sot));
-    save_ovl(&p, ovl->ptr, ovl->vrom_start, ovl->vrom_end);
+    save_ovl(&p, ovl->ptr,
+             ovl->vrom_start, ovl->vrom_end,
+             ovl->vram_start, ovl->vram_end);
     set_insert(&ovl_nodes, &ovl->ptr);
   }
   serial_write(&p, &eot, sizeof(eot));
@@ -600,6 +631,10 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &eot, sizeof(eot));
   /* save camera shake effects */
   serial_write(&p, &z64_n_camera_shake, sizeof(z64_n_camera_shake));
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sQuakeRequests
+   */
   serial_write(&p, z64_camera_shake, 0x0090);
 
   /* save transition actor list (it may have been modified during gameplay) */
@@ -636,16 +671,46 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_minimap_entrance_r, sizeof(z64_minimap_entrance_r));
 
   /* weather / daytime state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gWeatherMode
+   *    gLightConfigAfterUnderwater
+   *    gInterruptSongOfStorms
+   *    gSkyboxIsChanging
+   *    gTimeSpeed
+   *    sSunScreenDepth
+   */
   serial_write(&p, z64_weather_state, 0x0018);
   serial_write(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sEnvHazard
+   *    sEnvHazardActive
+   */
+#if Z64_VERSION == Z64_OOTIQC
+  serial_write(&p, z64_hazard_state, 0x0004);
+#else
   serial_write(&p, z64_hazard_state, 0x0008);
+#endif
 
   /* timer state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sTimerNextSecondTimer
+   *    sTimerStateTimer
+   *    sSubTimerNextSecondTimer
+   *    sSubTimerStateTimer
+   */
   serial_write(&p, z64_timer_state, 0x0008);
 
   /* hud state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sCameraInterfaceField
+   *    sCameraHudVisibilityMode
+   */
   serial_write(&p, z64_hud_state, 0x0008);
 
   /* letterboxing */
@@ -654,6 +719,11 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_letterbox_time, sizeof(z64_letterbox_time));
 
   /* poly color filter state (sepia effect) */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gPlayVisMono
+   *    gVisMonoColor
+   */
   serial_write(&p, z64_poly_colorfilter_state, 0x001C);
 
   /*
@@ -708,9 +778,7 @@ uint32_t save_state(struct state_meta *state)
    *    sOOBTimer
    *    D_8015CE50
    *    D_8015CE54
-   *    D_8015CE58.pos.x
-   *    D_8015CE58.pos.y
-   *    D_8015CE58.pos.z
+   *    D_8015CE58.pos
    *
    *  Offsets from the z_camera.c(.data) section start are different from
    *  mq-e-debug because the following are missing from release versions
@@ -988,19 +1056,74 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &z64_random, sizeof(z64_random));
 
   /* spell states */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8015BC14
+   */
   serial_write(&p, z64_fw_state_1, 0x0004);
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8015BC18
+   */
   serial_write(&p, z64_fw_state_2, 0x0004);
 
   /* camera state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sFloorYNear
+   *    sFloorYFar
+   *    sFarColChk.pos
+   *    sFarColChk.norm
+   */
   serial_write(&p, z64_camera_state, 0x0020);
 
   /* cutscene state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sDebugObjectListHead        (redundant)
+   *    gUseCutsceneCam
+   *    D_8015FCCC
+   *    D_8015FCD0
+   *    D_8015FCE4
+   *    gCamAtSplinePointsAppliedFrame
+   *    gCamEyePointAppliedFrame
+   *    gCamAtPointAppliedFrame
+   *    sReturnToCamId
+   *    sQuakeIndex
+   */
   serial_write(&p, z64_cs_state, 0x0140);
   /* cutscene message id */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sCurTextId
+   *    sCurOcarinaAction
+   */
   serial_write(&p, z64_cs_message, 0x0008);
 
   /* message state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    D_8014B2F4
+   *    sOcarinaButtonIndexBufPos
+   *    sOcarinaButtonIndexBufLen
+   *    sTextboxSkipped
+   *    sNextTextId
+   *    sTextIsCredits
+   *    sLastPlayedSong
+   *    sHasSunsSong
+   *    sMessageHasSetSfx
+   *    sOcarinaSongBitFlags
+   */
+#if Z64_VERSION == Z64_OOTIQC
+  serial_write(&p, z64_message_state, 0x0018);
+#else
   serial_write(&p, z64_message_state, 0x0028);
+#endif
+
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sAnalogStickHeld
+   */
   serial_write(&p, &z64_message_select_state, sizeof(z64_message_select_state));
 
   _Bool save_gfx = 1;
@@ -1035,6 +1158,10 @@ uint32_t save_state(struct state_meta *state)
     serial_write(&p, &eot, sizeof(eot));
 
   /* save sfx mutes */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    gSfxBankMuted               (1 byte overrun)
+   */
   serial_write(&p, z64_sfx_mute, 0x0008);
   /* save pending audio commands */
   {
@@ -1129,8 +1256,8 @@ uint32_t save_state(struct state_meta *state)
    *    sSeqModeInput               0x00E4 - 0x00E8 (- 0x0004)
    *    D_80131C8C & Co.            0x171C - 0x19FC (- 0x02E4)
    *
-   * gc releases have different offsets due to the following variables, which
-   * are not present on n64 releases;
+   * ique/gc releases have different offsets due to the following variables,
+   * which are not present on n64 releases;
    *    sOcarinaAllowedButtonMask   0x0988 - 0x098C (- 0x0004)
    *    sOcarinaAButtonMap          0x098C - 0x0990 (- 0x0008)
    *    sOcarinaCUpButtonMap        0x0990 - 0x0994 (- 0x000C)
@@ -1154,7 +1281,8 @@ uint32_t save_state(struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
   serial_write(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
   serial_write(&p, &code_800EC960_c_data[0x0A00], 0x0008);
   serial_write(&p, &code_800EC960_c_data[0x118C], 0x0144);
@@ -1221,8 +1349,13 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaNoteFlashTimer
    *    sOcarinaNoteFlashColorIndex
    */
+#if Z64_VERSION == Z64_OOTIQC
+  serial_write(&p, z64_message_icon_state, 0x0010);
+  serial_write(&p, z64_message_note_icon_state, 0x0004);
+#else
   serial_write(&p, z64_message_icon_state, 0x001E);
   serial_write(&p, z64_message_note_icon_state, 0x0006);
+#endif
 
   /*
    *  Variables from z_message_PAL.c(.bss) (zeldaret/oot.git@8e04ae9)
@@ -1240,6 +1373,8 @@ uint32_t save_state(struct state_meta *state)
    *    sOcarinaButtonCEnvR
    *    sOcarinaButtonCEnvB
    *    sOcarinaButtonCEnvG
+   *
+   *  Reordered on iQue but the range still contains the same set of variables
    */
   serial_write(&p, &z_message_c_bss[0x0000], 0x0020);
 
@@ -1250,11 +1385,12 @@ uint32_t save_state(struct state_meta *state)
   serial_write(&p, &gz.frame_flag, sizeof(gz.frame_flag));
 
   /* save song state */
+  /*
+   *  (zeldaret/oot.git@4c2a451b9)
+   *    sOcarinaButtonIndexBuf
+   *    sOcarinaButtonAlphaValues   (2 byte overrun)
+   */
   serial_write(&p, z64_staff_notes, 0x001E);
-
-  //serial_write(&p, (void *)0x800E2FC0, 0x31E10);
-  //serial_write(&p, (void *)0x8012143C, 0x41F4);
-  //serial_write(&p, (void *)0x801DAA00, 0x1D4790);
 
   return (char *)p - (char *)state;
 }
@@ -1359,15 +1495,21 @@ void load_state(const struct state_meta *state)
 
   /* load context */
   serial_read(&p, &z64_game, sizeof(z64_game));
-  if (settings->bits.ignore_target == 1) {
+  {
     uint8_t last_target = z64_file.z_targeting;
-    serial_read(&p, &z64_file, sizeof(z64_file));
-    z64_file.z_targeting = last_target;
+    if (state->state_version < 0x0007) {
+      /* Generates -Wstringop-overflow warning, can be ignored */
+      serial_read(&p, &z64_file, 0x1450);
+    }
+    else {
+      serial_read(&p, &z64_file, sizeof(z64_file));
+      serial_read(&p, &z64_gameinfo, sizeof(z64_gameinfo));
+    }
+    if (settings->bits.ignore_target == 1)
+      z64_file.z_targeting = last_target;
   }
-  else
-    serial_read(&p, &z64_file, sizeof(z64_file));
+  serial_read(&p, z64_gameinfo, sizeof(*z64_gameinfo));
 
-  serial_read(&p, z64_file.gameinfo, sizeof(*z64_file.gameinfo));
   /* load overlays */
   int16_t n_ent;
   int16_t next_ent;
@@ -1592,7 +1734,7 @@ void load_state(const struct state_meta *state)
         zu_getfile_idx(z64_icon_item_dungeon_static,
                        z64_game.pause_ctxt.icon_item_s);
         uint32_t vaddr = z64_ftab[z64_map_48x85_static].vrom_start;
-        vaddr += z64_file.gameinfo->dungeon_map_floor * 0x07F8;
+        vaddr += z64_gameinfo->dungeon_map_floor * 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture, 0x07F8);
         vaddr += 0x07F8;
         zu_getfile(vaddr, z64_game.if_ctxt.minimap_texture + 0x0800, 0x07F8);
@@ -1714,7 +1856,11 @@ void load_state(const struct state_meta *state)
   serial_read(&p, &z64_temp_day_speed, sizeof(z64_temp_day_speed));
 
   /* hazard state */
+#if Z64_VERSION == Z64_OOTIQC
+  serial_read(&p, z64_hazard_state, 0x0004);
+#else
   serial_read(&p, z64_hazard_state, 0x0008);
+#endif
 
   /* timer state */
   serial_read(&p, z64_timer_state, 0x0008);
@@ -1878,7 +2024,12 @@ void load_state(const struct state_meta *state)
   serial_read(&p, z64_cs_message, 0x0008);
 
   /* message state */
+#if Z64_VERSION == Z64_OOTIQC
+  serial_read(&p, z64_message_state, 0x0018);
+#else
   serial_read(&p, z64_message_state, 0x0028);
+#endif
+
   if (state->state_version >= 0x0004)
     serial_read(&p, &z64_message_select_state,
                 sizeof(z64_message_select_state));
@@ -2117,7 +2268,8 @@ void load_state(const struct state_meta *state)
       Z64_VERSION == Z64_OOTMQU || \
       Z64_VERSION == Z64_OOTGCJ || \
       Z64_VERSION == Z64_OOTGCU || \
-      Z64_VERSION == Z64_OOTCEJ
+      Z64_VERSION == Z64_OOTCEJ || \
+      Z64_VERSION == Z64_OOTIQC
     serial_read(&p, &code_800EC960_c_data[0x0998], 0x0060); /* 12b overhead */
     serial_read(&p, &code_800EC960_c_data[0x0A00], 0x0008);
     serial_read(&p, &code_800EC960_c_data[0x118C], 0x0144);
@@ -2135,8 +2287,13 @@ void load_state(const struct state_meta *state)
       serial_read(&p, &code_800EC960_c_bss[0x0168], 0x0004);
       serial_read(&p, &code_800EC960_c_bss[0x0178], 0x0090);
     }
+#if Z64_VERSION == Z64_OOTIQC
+    serial_read(&p, z64_message_icon_state, 0x0010);
+    serial_read(&p, z64_message_note_icon_state, 0x0004);
+#else
     serial_read(&p, z64_message_icon_state, 0x001E);
     serial_read(&p, z64_message_note_icon_state, 0x0006);
+#endif
     serial_read(&p, &z_message_c_bss[0x0000], 0x0020);
 
     /* load metronome timer */
@@ -2171,8 +2328,4 @@ void load_state(const struct state_meta *state)
   /* only saved in state version 5+, so doesn't make sense to fix otherwise */
   if (state->state_version >= 0x0005)
     z64_song_rec_counter = z64_ocarina_counter - rec_frames;
-
-  //serial_read(&p, (void *)0x800E2FC0, 0x31E10);
-  //serial_read(&p, (void *)0x8012143C, 0x41F4);
-  //serial_read(&p, (void *)0x801DAA00, 0x1D4790);
 }

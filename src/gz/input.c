@@ -79,7 +79,8 @@ const uint32_t input_button_color[] =
   0xC8C8C8,
 #if Z64_VERSION == Z64_OOT10 || \
     Z64_VERSION == Z64_OOT11 || \
-    Z64_VERSION == Z64_OOT12
+    Z64_VERSION == Z64_OOT12 || \
+    Z64_VERSION == Z64_OOTIQC
   0xC80000,
   0xC0C0C0,
   0x009600,
@@ -182,7 +183,7 @@ void input_update(void)
 
 uint16_t input_z_pad(void)
 {
-  return z64_input_direct.raw.pad | input_sch_pad;
+  return z64_input_direct.raw.pad;
 }
 
 int8_t input_x(void)

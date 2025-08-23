@@ -1,6 +1,6 @@
 .equ      stack_size, 0x2000
 
-.section  .text.startup, "ax", @progbits
+.section  .text, "ax", @progbits
 .set      nomips16
 .set      nomicromips
 .global   _start

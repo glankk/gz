@@ -21,6 +21,7 @@ rom_table =
                     data_dir    = "oot-1.0",
                     gz_version  = "oot-1.0" .. version_suffix,
                     gz_name     = "gz-oot-1.0-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG0J",
                   },
   [0xCD16C529]  = {
@@ -41,6 +42,7 @@ rom_table =
                     data_dir    = "oot-1.0",
                     gz_version  = "oot-1.0" .. version_suffix,
                     gz_name     = "gz-oot-1.0-u" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG0E",
                   },
   [0x26E73887]  = {
@@ -61,6 +63,7 @@ rom_table =
                     data_dir    = "oot-1.1",
                     gz_version  = "oot-1.1" .. version_suffix,
                     gz_name     = "gz-oot-1.1-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG1J",
                   },
   [0x3FD2151E]  = {
@@ -81,6 +84,7 @@ rom_table =
                     data_dir    = "oot-1.1",
                     gz_version  = "oot-1.1" .. version_suffix,
                     gz_name     = "gz-oot-1.1-u" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG1E",
                   },
   [0x2B2721BA]  = {
@@ -101,6 +105,7 @@ rom_table =
                     data_dir    = "oot-1.2",
                     gz_version  = "oot-1.2" .. version_suffix,
                     gz_name     = "gz-oot-1.2-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG2J",
                   },
   [0x32120C23]  = {
@@ -121,6 +126,7 @@ rom_table =
                     data_dir    = "oot-1.2",
                     gz_version  = "oot-1.2" .. version_suffix,
                     gz_name     = "gz-oot-1.2-u" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NG2E",
                   },
   [0x122FF261]  = {
@@ -141,6 +147,7 @@ rom_table =
                     data_dir    = "oot-mq-j",
                     gz_version  = "oot-mq-j" .. version_suffix,
                     gz_name     = "gz-oot-mq-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NGQJ",
                   },
   [0xC744C4DB]  = {
@@ -161,6 +168,7 @@ rom_table =
                     data_dir    = "oot-mq-u",
                     gz_version  = "oot-mq-u" .. version_suffix,
                     gz_name     = "gz-oot-mq-u" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NGQE",
                   },
   [0x1C6CE8CB]  = {
@@ -181,6 +189,7 @@ rom_table =
                     data_dir    = "oot-gc-j",
                     gz_version  = "oot-gc-j" .. version_suffix,
                     gz_name     = "gz-oot-gc-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NGCJ",
                   },
   [0x346DE3AE]  = {
@@ -201,6 +210,7 @@ rom_table =
                     data_dir    = "oot-gc-u",
                     gz_version  = "oot-gc-u" .. version_suffix,
                     gz_name     = "gz-oot-gc-u" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NGCE",
                   },
   [0x8C5B90C1]  = {
@@ -221,7 +231,29 @@ rom_table =
                     data_dir    = "oot-ce-j",
                     gz_version  = "oot-ce-j" .. version_suffix,
                     gz_name     = "gz-oot-ce-j" .. version_suffix,
+                    patches     = { "mem_patch", "ups_size_patch" },
                     title_id    = "NGEJ",
+                  },
+[0xF45C5532]    = {
+                    game        = "oot",
+                    version     = "ique",
+                    region      = "cn",
+                    boot_ind    = 1,
+                    boot_ram    = 0x80000450,
+                    code_ind    = 27,
+                    code_ram    = 0x80018FA0,
+                    ovl_tbls    = {
+                                    part      = { addr = 0x800EF860 },
+                                    actor     = { addr = 0x800F0120 },
+                                    state     = { addr = 0x800F8F30 },
+                                    map_mark  = { addr = 0x800F97E8 },
+                                    play      = { addr = 0x80106060 },
+                                  },
+                    data_dir    = "oot-ique-cn",
+                    gz_version  = "oot-ique-cn" .. version_suffix,
+                    gz_name     = "gz-oot-ique-cn" .. version_suffix,
+                    patches     = { "mem_patch", "hungup_patch" },
+                    title_id    = "NGBC",
                   },
 }
 
