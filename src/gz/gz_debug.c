@@ -15,13 +15,6 @@
 #include "z64.h"
 
 
-struct actor_debug_info
-{
-  struct menu_item     *edit_item;
-  uint8_t               type;
-  uint8_t               index;
-};
-
 struct actor_spawn_info
 {
   uint16_t              actor_no;
@@ -343,10 +336,67 @@ static void actor_index_inc_proc(struct menu_item *item, void *data)
   adi->index = index;
 }
 
+void gz_actor_debug_view(void)
+{
+  struct actor_debug_info *adi = &gz.actor_debug_info;
+  if (!(adi->persistent | adi->menu_open))
+    return;
+  if (adi->index < z64_game.actor_list[adi->type].length) {
+    z64_actor_t *actor = z64_game.actor_list[adi->type].first;
+    for (int i = 0; i < adi->index; ++i)
+      actor = actor->next;
+    Mtx m;
+    {
+      MtxF mf;
+      guTranslateF(&mf, actor->pos_2.x, actor->pos_2.y, actor->pos_2.z);
+      MtxF mt;
+      guRotateRPYF(&mt,
+                   actor->rot_2.x * M_PI / 0x8000,
+                   actor->rot_2.y * M_PI / 0x8000,
+                   actor->rot_2.z * M_PI / 0x8000);
+      guMtxCatF(&mt, &mf, &mf);
+      guMtxF2L(&mf, &m);
+    }
+    static Vtx v[6] =
+    {
+      gdSPDefVtxC(-8192, 0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
+      gdSPDefVtxC(8192,  0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
+      gdSPDefVtxC(0,      -8192, 0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
+      gdSPDefVtxC(0,      8192,  0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
+      gdSPDefVtxC(0,      0,      -8192, 0, 0, 0x00, 0x00, 0xFF, 0x80),
+      gdSPDefVtxC(0,      0,      8192,  0, 0, 0x00, 0x00, 0xFF, 0x80),
+    };
+    load_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
+    static Gfx draw_lines[] = {
+      gsDPPipeSync(),
+      gsDPSetCycleType(G_CYC_1CYCLE),
+      gsDPSetRenderMode(G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2),
+      gsDPSetCombineMode(G_CC_PRIMITIVE, G_CC_PRIMITIVE),
+      gsSPLoadGeometryMode(G_ZBUFFER),
+      gsSPTexture(0, 0, 0, 0, G_OFF),
+      gsSPVertex(&v, 6, 0),
+      gsDPSetPrimColor(0, 0, 0xFF, 0x00, 0x00, 0x80),
+      gsSPLine3D(0, 1, 0),
+      gsDPSetPrimColor(0, 0, 0x00, 0xFF, 0x00, 0x80),
+      gsSPLine3D(2, 3, 0),
+      gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x80),
+      gsSPLine3D(4, 5, 0),
+      gsSPEndDisplayList(),
+    };
+    gSPMatrix(z64_ctxt.gfx->poly_xlu.p++,
+              gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, m),
+              G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
+    gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++, draw_lines);
+    unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
+    zu_set_lighting();
+  }
+}
+
 static int actor_draw_proc(struct menu_item *item,
                            struct menu_draw_params *draw_params)
 {
-  struct actor_debug_info *adi = item->data;
+  struct actor_debug_info *adi = &gz.actor_debug_info;
+  adi->menu_open = 1;
   int x = draw_params->x;
   int y = draw_params->y;
   struct gfx_font *font = draw_params->font;
@@ -370,54 +420,6 @@ static int actor_draw_proc(struct menu_item *item,
     sprintf(adi->edit_item->text, "%08" PRIx32, (uint32_t)actor);
     gfx_printf(font, x + cw * 10, y + ch * 1, "%04" PRIx16, actor->actor_id);
     gfx_printf(font, x, y + ch * 2, "variable  %04" PRIx16, actor->variable);
-
-    {
-      Mtx m;
-      {
-        MtxF mf;
-        guTranslateF(&mf, actor->pos_2.x, actor->pos_2.y, actor->pos_2.z);
-        MtxF mt;
-        guRotateRPYF(&mt,
-                     actor->rot_2.x * M_PI / 0x8000,
-                     actor->rot_2.y * M_PI / 0x8000,
-                     actor->rot_2.z * M_PI / 0x8000);
-        guMtxCatF(&mt, &mf, &mf);
-        guMtxF2L(&mf, &m);
-      }
-      static Vtx v[6] =
-      {
-        gdSPDefVtxC(-8192, 0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
-        gdSPDefVtxC(8192,  0,      0,      0, 0, 0xFF, 0x00, 0x00, 0x80),
-        gdSPDefVtxC(0,      -8192, 0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
-        gdSPDefVtxC(0,      8192,  0,      0, 0, 0x00, 0xFF, 0x00, 0x80),
-        gdSPDefVtxC(0,      0,      -8192, 0, 0, 0x00, 0x00, 0xFF, 0x80),
-        gdSPDefVtxC(0,      0,      8192,  0, 0, 0x00, 0x00, 0xFF, 0x80),
-      };
-      load_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
-      static Gfx draw_lines[] = {
-        gsDPPipeSync(),
-        gsDPSetCycleType(G_CYC_1CYCLE),
-        gsDPSetRenderMode(G_RM_AA_ZB_XLU_LINE, G_RM_AA_ZB_XLU_LINE2),
-        gsDPSetCombineMode(G_CC_PRIMITIVE, G_CC_PRIMITIVE),
-        gsSPLoadGeometryMode(G_ZBUFFER),
-        gsSPTexture(0, 0, 0, 0, G_OFF),
-        gsSPVertex(&v, 6, 0),
-        gsDPSetPrimColor(0, 0, 0xFF, 0x00, 0x00, 0x80),
-        gsSPLine3D(0, 1, 0),
-        gsDPSetPrimColor(0, 0, 0x00, 0xFF, 0x00, 0x80),
-        gsSPLine3D(2, 3, 0),
-        gsDPSetPrimColor(0, 0, 0x00, 0x00, 0xFF, 0x80),
-        gsSPLine3D(4, 5, 0),
-        gsSPEndDisplayList(),
-      };
-      gSPMatrix(z64_ctxt.gfx->poly_xlu.p++,
-                    gDisplayListData(&z64_ctxt.gfx->poly_xlu.d, m),
-                    G_MTX_LOAD | G_MTX_NOPUSH | G_MTX_MODELVIEW);
-      gSPDisplayList(z64_ctxt.gfx->poly_xlu.p++,
-                        draw_lines);
-      unload_l3dex2(&z64_ctxt.gfx->poly_xlu.p);
-      zu_set_lighting();
-    }
   }
   else
     strcpy(adi->edit_item->text, "<none>");
@@ -556,6 +558,22 @@ static int rdb_draw_proc(struct menu_item *item,
 }
 #endif
 
+static int actor_debug_proc(struct menu_item *item,
+                            enum menu_callback_reason reason,
+                            void *data)
+{
+  struct actor_debug_info *adi = (struct actor_debug_info *)data;
+  if (reason == MENU_CALLBACK_SWITCH_ON)
+    adi->persistent = 1;
+  else if (reason == MENU_CALLBACK_SWITCH_OFF)
+    adi->persistent = 0;
+  else if (reason == MENU_CALLBACK_THINK) {
+    if (menu_checkbox_get(item) != adi->persistent)
+      menu_checkbox_set(item, adi->persistent);
+  }
+  return 0;
+}
+
 struct menu *gz_debug_menu(void)
 {
   static struct menu menu;
@@ -611,47 +629,48 @@ struct menu *gz_debug_menu(void)
   /* populate actors menu */
   actors.selector = menu_add_submenu(&actors, 0, 0, NULL, "return");
   /* actor debug controls */
-  static struct actor_debug_info adi;
+  static struct actor_debug_info *adi = &gz.actor_debug_info;
   menu_add_static(&actors, 0, 1, "type", 0xC0C0C0);
   menu_add_option(&actors, 10, 1,
                   "switch\0""prop (1)\0""player\0""bomb\0""npc\0"
                   "enemy\0""prop (2)\0""item/action\0""misc\0""boss\0"
                   "door\0""chest\0",
-                  byte_optionmod_proc, &adi.type);
+                  byte_optionmod_proc, &adi->type);
   item = menu_add_static_custom(&actors, 0, 2, actor_draw_proc,
                                 NULL, 0xC0C0C0);
-  item->data = &adi;
   menu_add_static(&actors, 0, 2, "index", 0xC0C0C0);
-  menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, &adi);
-  menu_add_button(&actors, 12, 2, ">", actor_index_inc_proc, &adi);
-  item = menu_add_button(&actors, 0, 3, NULL, &edit_actor_proc, &adi);
+  menu_add_button(&actors, 10, 2, "<", actor_index_dec_proc, adi);
+  menu_add_button(&actors, 12, 2, ">", actor_index_inc_proc, adi);
+  item = menu_add_button(&actors, 0, 3, NULL, &edit_actor_proc, adi);
   item->text = malloc(9);
   item->text[0] = 0;
-  adi.edit_item = item;
-  menu_add_button(&actors, 0, 5, "kill", &kill_actor_proc, &adi);
-  menu_add_button(&actors, 10, 5, "go to", &goto_actor_proc, &adi);
-  menu_add_button(&actors, 17, 5, "cull zone", &toggle_cullzone_proc, &adi);
+  adi->edit_item = item;
+  menu_add_checkbox(&actors, 0, 6, actor_debug_proc, adi);
+  menu_add_static(&actors, 10, 6, "keep lines", 0xC0C0C0);
+  menu_add_button(&actors, 0, 7, "kill", &kill_actor_proc, adi);
+  menu_add_button(&actors, 10, 7, "go to", &goto_actor_proc, adi);
+  menu_add_button(&actors, 17, 7, "cull zone", &toggle_cullzone_proc, adi);
   /* actor spawn controls */
   static struct actor_spawn_info asi;
-  menu_add_static(&actors, 0, 7, "actor id", 0xC0C0C0);
-  menu_add_intinput(&actors, 10, 7, 16, 4, halfword_mod_proc, &asi.actor_no);
-  menu_add_static(&actors, 0, 8, "variable", 0xC0C0C0);
-  menu_add_intinput(&actors, 10, 8, 16, 4, halfword_mod_proc, &asi.variable);
-  menu_add_static(&actors, 0, 9, "position", 0xC0C0C0);
-  menu_add_intinput(&actors, 10, 9, -10, 6, word_mod_proc, &asi.x);
-  menu_add_intinput(&actors, 17, 9, -10, 6, word_mod_proc, &asi.y);
-  menu_add_intinput(&actors, 24, 9, -10, 6, word_mod_proc, &asi.z);
-  menu_add_static(&actors, 0, 10, "rotation", 0xC0C0C0);
-  menu_add_intinput(&actors, 10, 10, 10, 5, halfword_mod_proc, &asi.rx);
-  menu_add_intinput(&actors, 17, 10, 10, 5, halfword_mod_proc, &asi.ry);
-  menu_add_intinput(&actors, 24, 10, 10, 5, halfword_mod_proc, &asi.rz);
+  menu_add_static(&actors, 0, 9, "actor id", 0xC0C0C0);
+  menu_add_intinput(&actors, 10, 9, 16, 4, halfword_mod_proc, &asi.actor_no);
+  menu_add_static(&actors, 0, 10, "variable", 0xC0C0C0);
+  menu_add_intinput(&actors, 10, 10, 16, 4, halfword_mod_proc, &asi.variable);
+  menu_add_static(&actors, 0, 11, "position", 0xC0C0C0);
+  menu_add_intinput(&actors, 10, 11, -10, 6, word_mod_proc, &asi.x);
+  menu_add_intinput(&actors, 17, 11, -10, 6, word_mod_proc, &asi.y);
+  menu_add_intinput(&actors, 24, 11, -10, 6, word_mod_proc, &asi.z);
+  menu_add_static(&actors, 0, 12, "rotation", 0xC0C0C0);
+  menu_add_intinput(&actors, 10, 12, 10, 5, halfword_mod_proc, &asi.rx);
+  menu_add_intinput(&actors, 17, 12, 10, 5, halfword_mod_proc, &asi.ry);
+  menu_add_intinput(&actors, 24, 12, 10, 5, halfword_mod_proc, &asi.rz);
   static struct actor_info ai;
-  ai.adi = &adi;
+  ai.adi = adi;
   ai.asi = &asi;
-  menu_add_button(&actors, 0, 11, "spawn",spawn_actor_proc , &asi);
-  menu_add_button(&actors, 10, 11, "spawn as child",
+  menu_add_button(&actors, 0, 13, "spawn",spawn_actor_proc , &asi);
+  menu_add_button(&actors, 10, 13, "spawn as child",
                   spawn_actor_attached_b_proc, &ai);
-  menu_add_button(&actors, 0, 12, "fetch from link",
+  menu_add_button(&actors, 0, 14, "fetch from link",
                   &fetch_actor_info_proc, &asi);
 
   /* create flags menu */

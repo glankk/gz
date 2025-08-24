@@ -390,6 +390,8 @@ static void main_hook(void)
       gfx_printf(font, x, y, "%d.%d", seconds, tenths);
   }
 
+  gz.actor_debug_info.menu_open = 0;
+
   /* draw menus */
   if (gz.menu_active)
     menu_draw(gz.menu_main);
@@ -402,6 +404,7 @@ static void main_hook(void)
   gz_path_view();
   gz_holl_view();
   gz_guard_view();
+  gz_actor_debug_view();
 
   /* execute free camera in view mode */
   gz_free_view();
