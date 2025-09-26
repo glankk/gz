@@ -145,6 +145,15 @@ struct selected_actor
   int32_t               type;
 };
 
+struct actor_debug_info
+{
+  struct menu_item     *edit_item;
+  uint8_t               type;
+  uint8_t               index;
+  _Bool                 persistent;
+  _Bool                 menu_open;
+};
+
 struct gz
 {
   _Bool                 ready;
@@ -218,6 +227,7 @@ struct gz
   _Bool                 frame_flag;
   struct selected_actor selected_actor;
   int                   metronome_timer;
+  struct actor_debug_info actor_debug_info;
 };
 
 void          gz_apply_settings();
@@ -274,6 +284,7 @@ void          gz_cull_view(void);
 void          gz_path_view(void);
 void          gz_holl_view(void);
 void          gz_guard_view(void);
+void          gz_actor_debug_view(void);
 
 void          gz_update_cam(void);
 void          gz_free_view(void);
