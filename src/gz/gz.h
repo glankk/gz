@@ -81,8 +81,8 @@ enum guard_view_state
 
 enum cam_mode
 {
-  CAMMODE_CAMERA,
   CAMMODE_VIEW,
+  CAMMODE_CAMERA,
 };
 
 enum cam_bhv
