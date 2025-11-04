@@ -184,3 +184,6 @@ z64_metronome_check_3             = ovl_En_Skj + 0x2A3C ;
 z64_metronome_check_4             = ovl_En_Skj + 0x2AC4 ;
 ovl_En_Bom_Chu                    = 0x809B32B0 ;
 z64_bombchu_floor_poly_hook       = ovl_En_Bom_Chu + 0x654 ;
+Health_UpdateBeatingHeart         = 0x800656D0 ;
+Health_UpdateBeatingHeart_hook    = Health_UpdateBeatingHeart + 0xA0 ;
+Sfx_PlaySfxCentered               = 0x800643B0 ;

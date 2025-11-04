@@ -48,6 +48,7 @@ enum cheats
   CHEAT_ISG,
   CHEAT_QUICKTEXT,
   CHEAT_NOHUD,
+  CHEAT_NOHEALTHBEEP,
   CHEAT_MAX,
 };
 
@@ -139,6 +140,7 @@ struct settings_bits
   uint32_t watches_visible  : 1;
   uint32_t gc_oob_chu       : 1;
   uint32_t ignore_state_rng : 1;
+  uint32_t disable_health_beep : 1;
 };
 
 struct settings_data
