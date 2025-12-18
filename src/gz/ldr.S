@@ -11,7 +11,8 @@
     Z64_VERSION == Z64_OOTMQU || \
     Z64_VERSION == Z64_OOTGCJ || \
     Z64_VERSION == Z64_OOTGCU || \
-    Z64_VERSION == Z64_OOTCEJ
+    Z64_VERSION == Z64_OOTCEJ || \
+    Z64_VERSION == Z64_OOTGCEU
 .equ      entry_size, 0x60
 #elif Z64_VERSION == Z64_OOTIQC
 .equ      entry_size, 0x50

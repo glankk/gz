@@ -14,5 +14,6 @@
 #define Z64_OOTGCU            0x06
 #define Z64_OOTCEJ            0x07
 #define Z64_OOTIQC            0x08
+#define Z64_OOTGCEU           0x09
 
 #endif
