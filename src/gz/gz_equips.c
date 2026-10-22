@@ -75,7 +75,6 @@ static inline uint8_t adjust_item(int item) {
 
 static inline uint8_t get_pref(uint8_t item_id) {
   int index = item_id / 2;
-
   uint8_t value;
 
   // when uneven we want the upper bytes
@@ -121,6 +120,10 @@ static int byte_switch_proc(struct menu_item *item, enum menu_callback_reason re
   return 0;
 }
 
+static void equips_pref_clear_proc(struct menu_item *item, void *data) {
+  memset(settings->equip_prefs, 0, sizeof(settings->equip_prefs));
+}
+
 static struct menu* gz_equips_prefs_menu(void) {
   static struct menu menu;
 
@@ -150,7 +153,6 @@ static struct menu* gz_equips_prefs_menu(void) {
     {Z64_ITEM_HAMMER, "hammer"},
   };
 
-  static uint8_t bottle_id = (uint8_t)Z64_ITEM_NULL;
   static uint8_t bottle_list[] = {
     Z64_ITEM_BOTTLE,
     Z64_ITEM_RED_POTION,
@@ -167,7 +169,6 @@ static struct menu* gz_equips_prefs_menu(void) {
     Z64_ITEM_POE,
   };
 
-  static uint8_t ta_id = (uint8_t)Z64_ITEM_NULL; 
   static uint8_t ta_list[] = {
     Z64_ITEM_POCKET_EGG,
     Z64_ITEM_POCKET_CUCCO,
@@ -182,7 +183,6 @@ static struct menu* gz_equips_prefs_menu(void) {
     Z64_ITEM_CLAIM_CHECK,
   };
 
-  static uint8_t tc_id = (uint8_t)Z64_ITEM_NULL; 
   static uint8_t tc_list[] = {
     Z64_ITEM_WEIRD_EGG,
     Z64_ITEM_CHICKEN,
@@ -197,6 +197,10 @@ static struct menu* gz_equips_prefs_menu(void) {
     Z64_ITEM_MASK_OF_TRUTH,
   };
 
+  static uint8_t bottle_id = Z64_ITEM_BOTTLE;
+  static uint8_t ta_id = Z64_ITEM_POCKET_EGG;
+  static uint8_t tc_id = Z64_ITEM_WEIRD_EGG;
+
   #define E_NONE "none\0"
   #define E_CLEFT "c-left\0"
   #define E_CDOWN "c-down\0"
@@ -209,10 +213,11 @@ static struct menu* gz_equips_prefs_menu(void) {
   struct gfx_texture *t_ab = resource_get(RES_ZICON_ACTION_BUTTONS);
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
+  menu_add_button(&menu, 0, 1, "clear all", equips_pref_clear_proc, NULL);
   
   // add most items
   pos_x = 0;
-  pos_y = 2;
+  pos_y = 3;
   n_row = 0;
   for (int i = 0; i < 18; i++) {
     struct s_item_data* pItem = &item_data[i];
@@ -226,7 +231,7 @@ static struct menu* gz_equips_prefs_menu(void) {
     n_row++;
     if (n_row > 0 && (n_row % 6) == 0) {
       pos_x += 10;
-      pos_y = 2;
+      pos_y = 3;
       n_row = 0;
     }
   }
@@ -234,16 +239,16 @@ static struct menu* gz_equips_prefs_menu(void) {
   // add bottles
   int ppos_x = 0;
   pos_x = 0;
-  pos_y = 14;
+  pos_y = 15;
   int n_bottle_opt = sizeof(bottle_list) / sizeof(*bottle_list);
-  item = item_option_create(&menu, 0, 2,
+  item = item_option_create(&menu, 0, 3,
                             n_bottle_opt, (int8_t*)bottle_list,
                             (int8_t*)&bottle_id,
                             NULL, t_ab, 1, NULL, 0,
                             0xFFFFFF, .5f, .5625f, 0.f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 100;
+  item->pyoffset = 101;
   item->tooltip = "bottles";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
   item->tooltip = "bottles";
@@ -252,14 +257,14 @@ static struct menu* gz_equips_prefs_menu(void) {
   pos_x += 10;
   ppos_x += 80;
   int n_ta_opt = sizeof(ta_list) / sizeof(*ta_list);
-  item = item_option_create(&menu, 0, 2,
+  item = item_option_create(&menu, 0, 3,
                             n_ta_opt, (int8_t*)ta_list,
                             (int8_t*)&ta_id,
                             NULL, t_ab, 1, NULL, 0,
                             0xFFFFFF, .5f, .5625f, 0.f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 100;
+  item->pyoffset = 101;
   item->tooltip = "adult trade item";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
   item->tooltip = "adult trade item";
@@ -268,14 +273,14 @@ static struct menu* gz_equips_prefs_menu(void) {
   pos_x += 10;
   ppos_x += 80;
   int n_tc_opt = sizeof(tc_list) / sizeof(*tc_list);
-  item = item_option_create(&menu, 0, 2,
+  item = item_option_create(&menu, 0, 3,
                             n_tc_opt, (int8_t*)tc_list,
                             (int8_t*)&tc_id,
                             NULL, t_ab, 1, NULL, 0,
                             0xFFFFFF, 0.5f, 0.5625f, 0.0f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 100;
+  item->pyoffset = 101;
   item->tooltip = "child trade item";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &tc_id);
   item->tooltip = "child trade item";
