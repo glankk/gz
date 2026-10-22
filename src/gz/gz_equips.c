@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "gfx.h"
 #include "gz.h"
 #include "input.h"
@@ -91,6 +93,11 @@ static inline uint8_t get_pref(uint8_t item_id) {
 
 static int byte_switch_proc(struct menu_item *item, enum menu_callback_reason reason, void *data) {
   uint8_t *p = data;
+
+  if (*p == (uint8_t)Z64_ITEM_NULL) {
+    return 0;
+  }
+
   uint8_t item_id = adjust_item(*p);
   int index = item_id / 2;
   
@@ -142,17 +149,70 @@ static struct menu* gz_equips_prefs_menu(void) {
     Z64_ITEM_HAMMER,
   };
 
+  static uint8_t bottle_id = (uint8_t)Z64_ITEM_NULL;
+  static uint8_t bottle_list[] = {
+    Z64_ITEM_BOTTLE,
+    Z64_ITEM_RED_POTION,
+    Z64_ITEM_GREEN_POTION,
+    Z64_ITEM_BLUE_POTION,
+    Z64_ITEM_FAIRY,
+    Z64_ITEM_FISH,
+    Z64_ITEM_MILK,
+    Z64_ITEM_LETTER,
+    Z64_ITEM_BLUE_FIRE,
+    Z64_ITEM_BUG,
+    Z64_ITEM_BIG_POE,
+    Z64_ITEM_HALF_MILK,
+    Z64_ITEM_POE,
+  };
+
+  static uint8_t ta_id = (uint8_t)Z64_ITEM_NULL; 
+  static uint8_t ta_list[] = {
+    Z64_ITEM_POCKET_EGG,
+    Z64_ITEM_POCKET_CUCCO,
+    Z64_ITEM_COJIRO,
+    Z64_ITEM_ODD_MUSHROOM,
+    Z64_ITEM_ODD_POTION,
+    Z64_ITEM_POACHERS_SAW,
+    Z64_ITEM_BROKEN_GORONS_SWORD,
+    Z64_ITEM_PRESCRIPTION,
+    Z64_ITEM_EYEBALL_FROG,
+    Z64_ITEM_EYE_DROPS,
+    Z64_ITEM_CLAIM_CHECK,
+  };
+
+  static uint8_t tc_id = (uint8_t)Z64_ITEM_NULL; 
+  static uint8_t tc_list[] = {
+    Z64_ITEM_WEIRD_EGG,
+    Z64_ITEM_CHICKEN,
+    Z64_ITEM_ZELDAS_LETTER,
+    Z64_ITEM_KEATON_MASK,
+    Z64_ITEM_SKULL_MASK,
+    Z64_ITEM_SPOOKY_MASK,
+    Z64_ITEM_BUNNY_HOOD,
+    Z64_ITEM_GORON_MASK,
+    Z64_ITEM_ZORA_MASK,
+    Z64_ITEM_GERUDO_MASK,
+    Z64_ITEM_MASK_OF_TRUTH,
+  };
+
   #define E_NONE "none\0"
   #define E_CLEFT "c-left\0"
   #define E_CDOWN "c-down\0"
   #define E_CRIGHT "c-right\0"
   #define EQUIP_OPTIONS E_NONE E_CLEFT E_CDOWN E_CRIGHT
 
+  int pos_x, pos_y, n_row;
+  struct menu_item* item;
   struct gfx_texture *t_icon = resource_get(RES_ZICON_ITEM);
+  struct gfx_texture *t_ab = resource_get(RES_ZICON_ACTION_BUTTONS);
   menu_init(&menu, MENU_NOVALUE, MENU_NOVALUE, MENU_NOVALUE);
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
-
-  int pos_x = 0, pos_y = 2, n_row = 0;
+  
+  // add most items
+  pos_x = 0;
+  pos_y = 2;
+  n_row = 0;
   for (int i = 0; i < (sizeof(item_list) / sizeof(*item_list)); i++) {
     uint8_t item = adjust_item(item_list[i]);
     menu_add_static_icon(&menu, pos_x, pos_y, t_icon, item, 0xFFFFFF, 0.5f);
@@ -168,19 +228,65 @@ static struct menu* gz_equips_prefs_menu(void) {
     }
   }
 
+  // add bottles
+  int ppos_x = 0;
+  pos_x = 0;
+  pos_y = 14;
+  int n_bottle_opt = sizeof(bottle_list) / sizeof(*bottle_list);
+  item = item_option_create(&menu, 0, 2,
+                            n_bottle_opt, (int8_t*)bottle_list,
+                            (int8_t*)&bottle_id,
+                            NULL, t_ab, 1, NULL, 0,
+                            0xFFFFFF, .5f, .5625f, 0.f,
+                            NULL, NULL);
+  item->pxoffset = ppos_x;
+  item->pyoffset = 100;
+  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
+
+  // add adult trade items
+  pos_x += 10;
+  ppos_x += 80;
+  int n_ta_opt = sizeof(ta_list) / sizeof(*ta_list);
+  item = item_option_create(&menu, 0, 2,
+                            n_ta_opt, (int8_t*)ta_list,
+                            (int8_t*)&ta_id,
+                            NULL, t_ab, 1, NULL, 0,
+                            0xFFFFFF, .5f, .5625f, 0.f,
+                            NULL, NULL);
+  item->pxoffset = ppos_x;
+  item->pyoffset = 100;
+  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
+
+  // add child trade items
+  pos_x += 10;
+  ppos_x += 80;
+  int n_tc_opt = sizeof(tc_list) / sizeof(*tc_list);
+  item = item_option_create(&menu, 0, 2,
+                            n_tc_opt, (int8_t*)tc_list,
+                            (int8_t*)&tc_id,
+                            NULL, t_ab, 1, NULL, 0,
+                            0xFFFFFF, 0.5f, 0.5625f, 0.0f,
+                            NULL, NULL);
+  item->pxoffset = ppos_x;
+  item->pyoffset = 100;
+  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &tc_id);
+
   return &menu;
 }
 
 void apply_equips_prefs(void) {
   for (int i = 1; i < (sizeof(z64_file.button_items) / sizeof(*z64_file.button_items)); i++) {
     uint8_t cur_item = z64_file.button_items[i];
+    uint8_t cur_slot = z64_file.c_button_slots[i - 1];
     uint8_t value = get_pref(cur_item);
 
     if (value > 0 && value != i) {
       z64_file.button_items[i] = z64_file.button_items[value];
+      z64_file.c_button_slots[i - 1] = z64_file.c_button_slots[value - 1];
       z64_UpdateItemButton(&z64_game, i);
 
       z64_file.button_items[value] = cur_item;
+      z64_file.c_button_slots[value - 1] = cur_slot;
       z64_UpdateItemButton(&z64_game, value);
     }
   }
@@ -233,11 +339,11 @@ struct menu *gz_equips_menu(void)
                             input_button_color[2], .5f, 0.f, 0.f,
                             button_item_proc, (void *)Z64_ITEMBTN_CD);
   item->pxoffset = 34;
-  item->pyoffset = 86;
+  item->pyoffset = 87;
   item = item_option_create(&menu, 0, 3, 91, NULL,
                             &z64_file.button_items[Z64_ITEMBTN_CR],
                             NULL, t_ab, 0, t_ab, 4,
-                            input_button_color[0], .5, 0.f, 0.f,
+                            input_button_color[0], .5f, 0.f, 0.f,
                             button_item_proc, (void *)Z64_ITEMBTN_CR);
   item->pxoffset = 48;
   item->pyoffset = 75;
