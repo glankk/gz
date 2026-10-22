@@ -18,6 +18,8 @@
 # define compr(fn) yaz0_ ## fn
 #endif
 
+extern void apply_equips_prefs(void);
+
 static void serial_write(void **p, void *data, uint32_t length)
 {
   char *cp = *p;
@@ -1509,6 +1511,9 @@ void load_state(const struct state_meta *state)
       z64_file.z_targeting = last_target;
   }
   serial_read(&p, z64_gameinfo, sizeof(*z64_gameinfo));
+
+  /* apply equips preferences */
+  apply_equips_prefs();
 
   /* load overlays */
   int16_t n_ent;
