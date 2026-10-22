@@ -16,6 +16,7 @@ hooks/
 *.n64
 *.v64
 *.wad
+*.iso
 
 # Windows image file caches
 Thumbs.db
