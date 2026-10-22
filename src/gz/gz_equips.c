@@ -1,7 +1,5 @@
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "gfx.h"
 #include "gz.h"
 #include "input.h"
@@ -126,27 +124,30 @@ static int byte_switch_proc(struct menu_item *item, enum menu_callback_reason re
 static struct menu* gz_equips_prefs_menu(void) {
   static struct menu menu;
 
-  static uint8_t item_list[] = {
-    Z64_ITEM_STICK,
-    Z64_ITEM_NUT,
-    Z64_ITEM_BOW,
-    Z64_ITEM_FIRE_ARROW,
-    Z64_ITEM_ICE_ARROW,
-    Z64_ITEM_LIGHT_ARROW,
-
-    Z64_ITEM_BOMB,
-    Z64_ITEM_DINS_FIRE,
-    Z64_ITEM_FARORES_WIND,
-    Z64_ITEM_NAYRUS_LOVE,
-    Z64_ITEM_SLINGSHOT,
-    Z64_ITEM_FAIRY_OCARINA,
-
-    Z64_ITEM_BOMBCHU,
-    Z64_ITEM_HOOKSHOT,
-    Z64_ITEM_BOOMERANG,
-    Z64_ITEM_LENS,
-    Z64_ITEM_BEANS,
-    Z64_ITEM_HAMMER,
+  static struct s_item_data {
+    uint8_t item;
+    char tooltip[14];
+  } item_data[] = {
+    {Z64_ITEM_STICK, "deku sticks"},
+    {Z64_ITEM_NUT, "deku nuts"},
+    {Z64_ITEM_BOW, "bow"},
+    {Z64_ITEM_FIRE_ARROW, "fire arrow"},
+    {Z64_ITEM_ICE_ARROW, "ice arrow"},
+    {Z64_ITEM_LIGHT_ARROW, "light arrow"},
+  
+    {Z64_ITEM_BOMB, "bombs"},
+    {Z64_ITEM_DINS_FIRE, "dins fire"},
+    {Z64_ITEM_FARORES_WIND, "farores wind"},
+    {Z64_ITEM_NAYRUS_LOVE, "nayrus love"},
+    {Z64_ITEM_SLINGSHOT, "slingshot"},
+    {Z64_ITEM_FAIRY_OCARINA, "ocarinas"},
+  
+    {Z64_ITEM_BOMBCHU, "bombchus"},
+    {Z64_ITEM_HOOKSHOT, "hookshots"},
+    {Z64_ITEM_BOOMERANG, "boomerang"},
+    {Z64_ITEM_LENS, "lens of truth"},
+    {Z64_ITEM_BEANS, "beans"},
+    {Z64_ITEM_HAMMER, "hammer"},
   };
 
   static uint8_t bottle_id = (uint8_t)Z64_ITEM_NULL;
@@ -213,10 +214,12 @@ static struct menu* gz_equips_prefs_menu(void) {
   pos_x = 0;
   pos_y = 2;
   n_row = 0;
-  for (int i = 0; i < (sizeof(item_list) / sizeof(*item_list)); i++) {
-    uint8_t item = adjust_item(item_list[i]);
-    menu_add_static_icon(&menu, pos_x, pos_y, t_icon, item, 0xFFFFFF, 0.5f);
-    menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &item_list[i]);
+  for (int i = 0; i < 18; i++) {
+    struct s_item_data* pItem = &item_data[i];
+    uint8_t item_id = adjust_item(pItem->item);
+    menu_add_static_icon(&menu, pos_x, pos_y, t_icon, item_id, 0xFFFFFF, 0.5f);
+    item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &pItem->item);
+    item->tooltip = pItem->tooltip;
 
     // handle row/columns display
     pos_y += 2;
@@ -241,7 +244,9 @@ static struct menu* gz_equips_prefs_menu(void) {
                             NULL, NULL);
   item->pxoffset = ppos_x;
   item->pyoffset = 100;
-  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
+  item->tooltip = "bottles";
+  item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
+  item->tooltip = "bottles";
 
   // add adult trade items
   pos_x += 10;
@@ -255,7 +260,9 @@ static struct menu* gz_equips_prefs_menu(void) {
                             NULL, NULL);
   item->pxoffset = ppos_x;
   item->pyoffset = 100;
-  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
+  item->tooltip = "adult trade item";
+  item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
+  item->tooltip = "adult trade item";
 
   // add child trade items
   pos_x += 10;
@@ -269,8 +276,11 @@ static struct menu* gz_equips_prefs_menu(void) {
                             NULL, NULL);
   item->pxoffset = ppos_x;
   item->pyoffset = 100;
-  menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &tc_id);
+  item->tooltip = "child trade item";
+  item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &tc_id);
+  item->tooltip = "child trade item";
 
+  menu_add_tooltip(&menu, 0, pos_y + 3, gz.menu_main, 0xC0C0C0);
   return &menu;
 }
 
