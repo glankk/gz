@@ -63,7 +63,7 @@ static int button_item_proc(struct menu_item *item,
 }
 
 static inline uint8_t adjust_item(int item) {
-  // don't separate ocarinas and hookshots
+  /* don't separate ocarinas and hookshots */
   if (item == Z64_ITEM_FAIRY_OCARINA && z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_OCARINA_OF_TIME) {
     return Z64_ITEM_OCARINA_OF_TIME;
   } else if (item == Z64_ITEM_HOOKSHOT && z64_file.items[Z64_SLOT_HOOKSHOT] == Z64_ITEM_LONGSHOT) {
@@ -77,14 +77,14 @@ static inline uint8_t get_pref(uint8_t item_id) {
   int index = item_id / 2;
   uint8_t value;
 
-  // when uneven we want the upper bytes
+  /* when odd we want the upper bytes */
   if (item_id % 2) {
     value = settings->equip_prefs[index] >> 4;
   } else {
     value = settings->equip_prefs[index];
   }
 
-  value &= 0x0F; // unnecessary but better make sure
+  value &= 0x0F; /* unnecessary but better make sure */
   return value;
 }
 
@@ -127,10 +127,12 @@ static void equips_pref_clear_proc(struct menu_item *item, void *data) {
 static struct menu* gz_equips_prefs_menu(void) {
   static struct menu menu;
 
-  static struct s_item_data {
+  struct s_item_data {
     uint8_t item;
     char tooltip[14];
-  } item_data[] = {
+  };
+
+  static struct s_item_data item_data[] = {
     {Z64_ITEM_STICK, "deku sticks"},
     {Z64_ITEM_NUT, "deku nuts"},
     {Z64_ITEM_BOW, "bow"},
@@ -215,7 +217,7 @@ static struct menu* gz_equips_prefs_menu(void) {
   menu.selector = menu_add_submenu(&menu, 0, 0, NULL, "return");
   menu_add_button(&menu, 0, 1, "clear all", equips_pref_clear_proc, NULL);
   
-  // add most items
+  /* add most items */
   pos_x = 0;
   pos_y = 3;
   n_row = 0;
@@ -226,7 +228,7 @@ static struct menu* gz_equips_prefs_menu(void) {
     item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &pItem->item);
     item->tooltip = pItem->tooltip;
 
-    // handle row/columns display
+    /* handle row/columns display */
     pos_y += 2;
     n_row++;
     if (n_row > 0 && (n_row % 6) == 0) {
@@ -236,7 +238,7 @@ static struct menu* gz_equips_prefs_menu(void) {
     }
   }
 
-  // add bottles
+  /* add bottles */
   int ppos_x = 0;
   pos_x = 0;
   pos_y = 15;
@@ -253,7 +255,7 @@ static struct menu* gz_equips_prefs_menu(void) {
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
   item->tooltip = "bottles";
 
-  // add adult trade items
+  /* add adult trade items */
   pos_x += 10;
   ppos_x += 80;
   int n_ta_opt = sizeof(ta_list) / sizeof(*ta_list);
@@ -269,7 +271,7 @@ static struct menu* gz_equips_prefs_menu(void) {
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
   item->tooltip = "adult trade item";
 
-  // add child trade items
+  /* add child trade items */
   pos_x += 10;
   ppos_x += 80;
   int n_tc_opt = sizeof(tc_list) / sizeof(*tc_list);
