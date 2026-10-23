@@ -62,7 +62,7 @@ static int button_item_proc(struct menu_item *item,
   return 0;
 }
 
-static inline uint8_t adjust_item(int item) {
+static uint8_t adjust_item(uint8_t item) {
   /* don't separate ocarinas and hookshots */
   if (item == Z64_ITEM_FAIRY_OCARINA && z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_OCARINA_OF_TIME) {
     return Z64_ITEM_OCARINA_OF_TIME;
@@ -96,16 +96,15 @@ static int byte_switch_proc(struct menu_item *item, enum menu_callback_reason re
   }
 
   uint8_t item_id = adjust_item(*p);
-  int index = item_id / 2;
-  
+
   if (reason == MENU_CALLBACK_THINK_INACTIVE) {
     uint8_t value = get_pref(item_id);
     
     if (menu_option_get(item) != value) {
       menu_option_set(item, value);
     }
-  
   } else if (reason == MENU_CALLBACK_DEACTIVATE) {
+    int index = item_id / 2;
     uint8_t value = menu_option_get(item) & 0x0F;
     
     if (item_id % 2) {
@@ -250,7 +249,7 @@ static struct menu* gz_equips_prefs_menu(void) {
                             0xFFFFFF, .5f, .5625f, 0.f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 101;
+  item->pyoffset = 97;
   item->tooltip = "bottles";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &bottle_id);
   item->tooltip = "bottles";
@@ -266,7 +265,7 @@ static struct menu* gz_equips_prefs_menu(void) {
                             0xFFFFFF, .5f, .5625f, 0.f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 101;
+  item->pyoffset = 97;
   item->tooltip = "adult trade item";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &ta_id);
   item->tooltip = "adult trade item";
@@ -282,12 +281,12 @@ static struct menu* gz_equips_prefs_menu(void) {
                             0xFFFFFF, 0.5f, 0.5625f, 0.0f,
                             NULL, NULL);
   item->pxoffset = ppos_x;
-  item->pyoffset = 101;
+  item->pyoffset = 97;
   item->tooltip = "child trade item";
   item = menu_add_option(&menu, pos_x + 2, pos_y, EQUIP_OPTIONS, byte_switch_proc, &tc_id);
   item->tooltip = "child trade item";
 
-  menu_add_tooltip(&menu, 0, pos_y + 3, gz.menu_main, 0xC0C0C0);
+  menu_add_tooltip(&menu, 0, pos_y + 2, gz.menu_main, 0xC0C0C0);
   return &menu;
 }
 
@@ -295,7 +294,22 @@ void apply_equips_prefs(void) {
   for (int i = 1; i < (sizeof(z64_file.button_items) / sizeof(*z64_file.button_items)); i++) {
     uint8_t cur_item = z64_file.button_items[i];
     uint8_t cur_slot = z64_file.c_button_slots[i - 1];
-    uint8_t value = get_pref(cur_item);
+    uint8_t value;
+
+    switch (cur_item) {
+      case Z64_ITEM_BOW_FIRE_ARROW:
+        value = get_pref(Z64_ITEM_FIRE_ARROW);
+        break;
+      case Z64_ITEM_BOW_ICE_ARROW:
+        value = get_pref(Z64_ITEM_ICE_ARROW);
+        break;
+      case Z64_ITEM_BOW_LIGHT_ARROW:
+        value = get_pref(Z64_ITEM_LIGHT_ARROW);
+        break;
+      default:
+        value = get_pref(cur_item);
+        break;
+    }
 
     if (value > 0 && value != i) {
       z64_file.button_items[i] = z64_file.button_items[value];
