@@ -73,7 +73,7 @@ static uint8_t adjust_item(uint8_t item) {
   return item;
 }
 
-static inline uint8_t get_pref(uint8_t item_id) {
+static uint8_t get_pref(uint8_t item_id) {
   int index = item_id / 2;
   uint8_t value;
 
