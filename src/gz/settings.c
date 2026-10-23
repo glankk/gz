@@ -135,6 +135,7 @@ void settings_load_default(void)
   d->binds[COMMAND_STARTTIMER] = bind_make(0);
   d->binds[COMMAND_STOPTIMER] = bind_make(0);
   d->binds[COMMAND_RESET] = bind_make(0);
+  memset(d->equip_prefs, 0, sizeof(d->equip_prefs));
 }
 
 void settings_save(int profile)

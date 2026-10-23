@@ -8,7 +8,7 @@
 #define SETTINGS_MAXSIZE            (0x8000-(SETTINGS_ADDRESS))
 #define SETTINGS_PADSIZE            ((sizeof(struct settings)+1)/2*2)
 #define SETTINGS_PROFILE_MAX        ((SETTINGS_MAXSIZE)/(SETTINGS_PADSIZE))
-#define SETTINGS_VERSION            0x0004
+#define SETTINGS_VERSION            0x0005
 #define SETTINGS_STATE_VERSION      0x0007
 #define SETTINGS_STATE_MIN_VER      0x0003
 
@@ -166,6 +166,7 @@ struct settings_data
   struct watch_info     watch_info[SETTINGS_WATCHES_MAX];
   uint8_t               teleport_slot;
   uint8_t               n_watches;
+  uint8_t equip_prefs[(Z64_ITEM_CLAIM_CHECK + 1) / 2];
 };
 
 struct settings_header
